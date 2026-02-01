@@ -1,6 +1,11 @@
-# Ecommerce Premium — App
+# DarkMonkey — Premium E-Commerce
 
 Premium gamified e-commerce platform: commerce, customization, progression.
+
+## 🔗 Links
+
+- **Live Demo:** [https://dark-monkey-ecommerce.vercel.app](https://dark-monkey-ecommerce.vercel.app) *(or custom domain: https://dark-monkey.ch)*
+- **Repository:** [https://github.com/lordrichard6/dark_monkey_ecommerce](https://github.com/lordrichard6/dark_monkey_ecommerce)
 
 ## Tech Stack
 
