@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 function MailIcon({ className }: { className?: string }) {
@@ -44,7 +44,6 @@ function EyeOffIcon({ className }: { className?: string }) {
 }
 
 export function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -95,8 +94,9 @@ export function LoginForm() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.refresh()
-        router.push('/account')
+        // Full page navigation ensures the header/layout gets fresh auth state.
+        // router.push + router.refresh can leave the top bar showing logged-out until manual refresh.
+        window.location.replace('/account')
       }
     } catch (err) {
       setMessage({
