@@ -48,7 +48,7 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
             <DarkMonkeyLogo size="sm" noLink />
           </Link>
           <div className="flex items-center gap-1">
-            {process.env.NODE_ENV === 'development' && (
+            {isAdmin && (
               <Link
                 href="/admin/dashboard"
                 onClick={closeMenu}
