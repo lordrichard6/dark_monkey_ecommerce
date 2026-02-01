@@ -14,46 +14,57 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ sort?: string }>
 }) {
-  const supabase = await createClient()
   const { sort = 'newest' } = await searchParams
 
-  let query = supabase
-    .from('products')
-    .select(
+  let productsWithPrice: Array<{
+    productId: string
+    slug: string
+    name: string
+    priceCents: number
+    imageUrl: string
+    imageAlt: string
+    isInWishlist: boolean
+  }> = []
+
+  try {
+    const supabase = await createClient()
+    let query = supabase
+      .from('products')
+      .select(
+        `
+        id,
+        name,
+        slug,
+        product_images (url, alt, sort_order),
+        product_variants (price_cents)
       `
-      id,
-      name,
-      slug,
-      product_images (url, alt, sort_order),
-      product_variants (price_cents)
-    `
-    )
-    .eq('is_active', true)
+      )
+      .eq('is_active', true)
 
-  if (sort === 'price-asc') {
-    query = query.order('created_at', { ascending: true })
-  } else if (sort === 'price-desc') {
-    query = query.order('created_at', { ascending: false })
-  } else {
-    query = query.order('created_at', { ascending: false })
-  }
+    if (sort === 'price-asc') {
+      query = query.order('created_at', { ascending: true })
+    } else if (sort === 'price-desc') {
+      query = query.order('created_at', { ascending: false })
+    } else {
+      query = query.order('created_at', { ascending: false })
+    }
 
-  const [productsResult, user] = await Promise.all([
-    query,
-    getUserSafe(supabase),
-  ])
-  const { data: products } = productsResult
+    const [productsResult, user] = await Promise.all([
+      query,
+      getUserSafe(supabase),
+    ])
+    const { data: products } = productsResult
 
-  const wishlistProductIds = user?.id
-    ? (
-        await supabase
-          .from('user_wishlist')
-          .select('product_id')
-          .eq('user_id', user.id)
-      ).data?.map((w) => w.product_id) ?? []
-    : []
+    const wishlistProductIds = user?.id
+      ? (
+          await supabase
+            .from('user_wishlist')
+            .select('product_id')
+            .eq('user_id', user.id)
+        ).data?.map((w) => w.product_id) ?? []
+      : []
 
-  const productsWithPrice = (products ?? []).map((p) => {
+    productsWithPrice = (products ?? []).map((p) => {
     const variants = p.product_variants as { price_cents: number }[] | null
     const images = p.product_images as { url: string; alt: string | null; sort_order: number }[] | null
     const minPrice = variants?.length
@@ -69,7 +80,10 @@ export default async function HomePage({
       imageAlt: primaryImage?.alt ?? p.name,
       isInWishlist: wishlistProductIds.includes(p.id),
     }
-  })
+    })
+  } catch {
+    productsWithPrice = []
+  }
 
   // Sort by price on client (Supabase doesn't support ordering by joined table easily)
   const sortedProducts =
