@@ -11,6 +11,7 @@ import {
 type Props = {
   productId: string
   productName: string
+  productSlug: string
   isActive: boolean
 }
 
