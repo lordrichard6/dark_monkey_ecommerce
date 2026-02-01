@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none">
+  <rect width="400" height="500" fill="#27272a"/>
+  <rect x="100" y="120" width="200" height="280" rx="8" fill="#18181b"/>
+  <rect x="110" y="130" width="180" height="260" rx="4" fill="#27272a"/>
+  <path d="M120 140h160v80H120z" fill="#3f3f46"/>
+  <text x="200" y="185" text-anchor="middle" fill="#71717a" font-size="20" font-family="system-ui">Custom</text>
+  <ellipse cx="200" cy="135" rx="70" ry="8" fill="#52525b"/>
+  <rect x="280" y="250" width="40" height="120" rx="4" fill="#3f3f46"/>
+</svg>

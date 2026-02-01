@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none">
+  <rect width="400" height="500" fill="#27272a"/>
+  <rect x="90" y="100" width="220" height="280" rx="12" fill="#3f3f46"/>
+  <rect x="100" y="110" width="200" height="260" rx="8" fill="#52525b"/>
+  <path d="M310 180h50v140c0 15-15 30-30 30" stroke="#71717a" stroke-width="14" fill="none"/>
+  <ellipse cx="200" cy="115" rx="80" ry="10" fill="#71717a"/>
+  <rect x="130" y="180" width="140" height="60" rx="4" fill="#3f3f46"/>
+  <text x="200" y="215" text-anchor="middle" fill="#a1a1aa" font-size="16" font-family="system-ui">Engraved</text>
+</svg>

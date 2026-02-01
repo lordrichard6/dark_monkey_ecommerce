@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none">
+  <rect width="400" height="500" fill="#27272a"/>
+  <path d="M80 280h200v120c0 20-20 40-40 40H120c-20 0-40-20-40-40V280z" fill="#fafafa"/>
+  <path d="M280 300h40v80c0 10-10 20-20 20" stroke="#e4e4e7" stroke-width="12" fill="none"/>
+  <rect x="100" y="200" width="160" height="100" rx="4" fill="#fafafa"/>
+  <path d="M100 200h160v20H100z" fill="#e4e4e7"/>
+  <text x="200" y="255" text-anchor="middle" fill="#a1a1aa" font-size="24" font-family="system-ui">Your Name</text>
+</svg>
