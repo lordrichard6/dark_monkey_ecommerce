@@ -93,7 +93,6 @@ export default async function AdminProductDetailPage({ params }: Props) {
             productId={product.id}
             name={product.name}
             slug={product.slug}
-            description={product.description}
             nameAction={
               <Link
                 href={`/products/${product.slug}`}
