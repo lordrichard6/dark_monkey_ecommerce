@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('de-CH', {
@@ -11,7 +12,7 @@ function formatPrice(cents: number) {
 
 export default async function AdminOrdersPage() {
   const supabase = getAdminClient()
-  if (!supabase) return <div className="p-8 text-red-400">Admin client not configured</div>
+  if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
   const { data: orders } = await supabase
     .from('orders')

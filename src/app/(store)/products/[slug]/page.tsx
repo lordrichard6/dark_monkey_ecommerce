@@ -1,6 +1,6 @@
 import { createClient, getUserSafe } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
+import { ProductImageWithFallback } from '@/components/product/ProductImageWithFallback'
 import Link from 'next/link'
 import { AddToCartForm } from './add-to-cart-form'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
@@ -134,14 +134,19 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid gap-8 md:grid-cols-2">
           <div className="relative aspect-square overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
             {primaryImage ? (
-              <Image
+              <ProductImageWithFallback
                 src={primaryImage.url}
                 alt={primaryImage.alt ?? product.name}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
-                unoptimized={primaryImage.url.endsWith('.svg') || primaryImage.url.includes('picsum.photos')}
+                unoptimized={
+                  primaryImage.url.endsWith('.svg') ||
+                  primaryImage.url.includes('picsum.photos') ||
+                  primaryImage.url.includes('/storage/') ||
+                  primaryImage.url.includes('product-images')
+                }
               />
             ) : (
               <div className="flex h-full items-center justify-center text-zinc-600">

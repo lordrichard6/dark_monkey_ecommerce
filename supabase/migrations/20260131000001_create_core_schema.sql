@@ -1,11 +1,9 @@
 -- Core schema for Ecommerce Premium
 -- Products, orders, users, gamification foundation
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Categories
 CREATE TABLE categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   description TEXT,
@@ -17,7 +15,7 @@ CREATE TABLE categories (
 
 -- Products
 CREATE TABLE products (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
@@ -30,7 +28,7 @@ CREATE TABLE products (
 
 -- Product variants (size, color, etc.)
 CREATE TABLE product_variants (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   sku TEXT UNIQUE,
   name TEXT,
@@ -43,7 +41,7 @@ CREATE TABLE product_variants (
 
 -- Product images
 CREATE TABLE product_images (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
   url TEXT NOT NULL,
@@ -54,7 +52,7 @@ CREATE TABLE product_images (
 
 -- Inventory per variant
 CREATE TABLE product_inventory (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   variant_id UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -63,7 +61,7 @@ CREATE TABLE product_inventory (
 
 -- Customization rules (opt-in per product)
 CREATE TABLE customization_rules (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE UNIQUE,
   rule_def JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -83,7 +81,7 @@ CREATE TABLE user_profiles (
 
 -- Addresses
 CREATE TABLE addresses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('shipping', 'billing')),
   full_name TEXT NOT NULL,
@@ -100,7 +98,7 @@ CREATE TABLE addresses (
 
 -- Orders
 CREATE TABLE orders (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   guest_email TEXT,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded')),
@@ -115,7 +113,7 @@ CREATE TABLE orders (
 
 -- Order items
 CREATE TABLE order_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   variant_id UUID NOT NULL REFERENCES product_variants(id) ON DELETE RESTRICT,
   quantity INTEGER NOT NULL,
@@ -126,7 +124,7 @@ CREATE TABLE order_items (
 
 -- Discounts
 CREATE TABLE discounts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT UNIQUE NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('percentage', 'fixed')),
   value_cents INTEGER NOT NULL,
@@ -140,7 +138,7 @@ CREATE TABLE discounts (
 
 -- XP events (gamification)
 CREATE TABLE user_xp_events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL,
   amount INTEGER NOT NULL,
@@ -150,7 +148,7 @@ CREATE TABLE user_xp_events (
 
 -- Wishlist
 CREATE TABLE user_wishlist (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

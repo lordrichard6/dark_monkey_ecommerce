@@ -9,7 +9,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative overflow-hidden border-b border-white/10 px-4 py-20 md:py-28">
+    <section className="relative flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center overflow-hidden border-b border-white/10 px-4">
       <div className="mx-auto max-w-4xl text-center">
         <HeroLogo />
         <h1 className="text-4xl font-bold tracking-tight text-zinc-50 md:text-5xl lg:text-6xl">

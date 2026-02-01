@@ -13,6 +13,14 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null)
 
+const defaultCartContextValue: CartContextValue = {
+  cart: { items: [] },
+  isOpen: false,
+  openCart: () => {},
+  closeCart: () => {},
+  toggleCart: () => {},
+}
+
 export function CartProvider({
   children,
   initialCart,
@@ -42,8 +50,7 @@ export function CartProvider({
   )
 }
 
-export function useCart() {
+export function useCart(): CartContextValue {
   const ctx = useContext(CartContext)
-  if (!ctx) throw new Error('useCart must be used within CartProvider')
-  return ctx
+  return ctx ?? defaultCartContextValue
 }

@@ -27,5 +27,6 @@ export async function createDiscount(input: {
 
   if (error) return { ok: false, error: error.message }
   revalidatePath('/admin')
+  revalidatePath('/admin/dashboard')
   return { ok: true }
 }

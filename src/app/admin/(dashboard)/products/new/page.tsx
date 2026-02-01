@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { CreateProductForm } from './create-product-form'
 
 export default async function AdminNewProductPage() {
   const supabase = getAdminClient()
-  if (!supabase) return <div className="p-8 text-red-400">Admin client not configured</div>
+  if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
   const { data: categories } = await supabase
     .from('categories')

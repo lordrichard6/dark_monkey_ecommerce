@@ -57,6 +57,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+**Can't create an account?** See [LOCAL_AUTH.md](./LOCAL_AUTH.md) for troubleshooting.
+
 ## Project Structure
 
 ```

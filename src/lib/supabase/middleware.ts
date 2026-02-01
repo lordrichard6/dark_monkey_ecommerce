@@ -36,8 +36,21 @@ export async function updateSession(request: NextRequest) {
   )
 
   const { pathname } = request.nextUrl
-  const isProtected = pathname.startsWith('/account') || pathname.startsWith('/admin')
+  const isAdminLogin = pathname === '/admin/login'
+  const isProtected =
+    pathname.startsWith('/account') ||
+    (pathname.startsWith('/admin') && !isAdminLogin)
   const hasAuthCookies = request.cookies.getAll().some((c) => c.name.startsWith('sb-'))
+
+  // On login pages: clear stale auth cookies and redirect (avoids "Refresh Token Not Found" errors)
+  if ((pathname === '/login' || pathname === '/admin/login') && hasAuthCookies) {
+    const allCookies = request.cookies.getAll()
+    const authCookies = allCookies.filter((c) => c.name.startsWith('sb-'))
+    authCookies.forEach((c) => {
+      supabaseResponse.cookies.set(c.name, '', { maxAge: 0, path: '/' })
+    })
+    return NextResponse.redirect(new URL(pathname, request.url), { headers: supabaseResponse.headers })
+  }
 
   // Validate session: call getUser on any request with auth cookies (to refresh or detect invalid tokens)
   let user = null
@@ -69,8 +82,8 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirectTo', pathname)
+    url.pathname = pathname.startsWith('/admin') ? '/admin/login' : '/login'
+    if (!pathname.startsWith('/admin')) url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 

@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
+import { ProductImageWithFallback } from '@/components/product/ProductImageWithFallback'
 import { redirect } from 'next/navigation'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
 
@@ -83,13 +83,17 @@ export default async function WishlistPage() {
                 >
                   <Link href={`/products/${p.slug}`} className="block">
                     <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
-                      <Image
+                      <ProductImageWithFallback
                         src={img?.url ?? '/next.svg'}
                         alt={img?.alt ?? p.name}
                         fill
                         className="object-cover transition group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, 50vw, 33vw"
-                        unoptimized={img?.url?.includes('picsum.photos')}
+                        unoptimized={
+                          img?.url?.includes('picsum.photos') ||
+                          img?.url?.includes('/storage/') ||
+                          img?.url?.includes('product-images')
+                        }
                       />
                     </div>
                     <div className="p-4">

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import Image from 'next/image'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
@@ -17,7 +18,7 @@ type Props = { params: Promise<{ id: string }> }
 export default async function AdminOrderDetailPage({ params }: Props) {
   const { id } = await params
   const supabase = getAdminClient()
-  if (!supabase) return <div className="p-8 text-red-400">Admin client not configured</div>
+  if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
   const { data: order } = await supabase
     .from('orders')

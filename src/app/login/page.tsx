@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { LoginForm } from './login-form'
+import Link from 'next/link'
 
 export default async function LoginPage({
   searchParams,
@@ -22,22 +23,34 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-zinc-50">Sign in</h1>
-          <p className="mt-2 text-zinc-400">
-            Sign in or create an account to save addresses, track orders, and
-            earn rewards.
-          </p>
-          <a
+    <div className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        <LoginForm />
+        <div className="mt-6 flex flex-col items-center gap-3 text-center">
+          <Link
             href="/categories"
-            className="mt-4 inline-block text-sm text-zinc-500 underline-offset-4 hover:text-zinc-300 hover:underline"
+            className="text-sm text-zinc-500 underline-offset-4 transition hover:text-zinc-300 hover:underline"
           >
             Continue shopping without account
+          </Link>
+          <a
+            href="mailto:support@dark-monkey.ch"
+            className="text-sm text-zinc-500 underline-offset-4 transition hover:text-amber-400 hover:underline"
+          >
+            Contact support — support@dark-monkey.ch
           </a>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-2 space-y-1 text-xs text-zinc-600">
+              <p>Supabase: {process.env.NEXT_PUBLIC_SUPABASE_URL || 'not set'}</p>
+              <a
+                href="/auth/clear"
+                className="text-zinc-500 hover:text-amber-400 hover:underline"
+              >
+                Clear session (fixes Refresh Token errors)
+              </a>
+            </div>
+          )}
         </div>
-        <LoginForm />
       </div>
     </div>
   )

@@ -12,9 +12,11 @@ export async function getAdminUser() {
   }
   if (!user) return null
 
+  // Prefer admin client (service role); fallback to session client when service role key is not set
   const adminClient = getAdminClient()
-  if (!adminClient) return null
-  const { data: profile } = await adminClient
+  const client = adminClient ?? supabase
+
+  const { data: profile } = await client
     .from('user_profiles')
     .select('is_admin')
     .eq('id', user.id)

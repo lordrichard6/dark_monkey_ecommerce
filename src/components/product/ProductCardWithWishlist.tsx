@@ -1,8 +1,8 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
+import { ProductImageWithFallback } from './ProductImageWithFallback'
 import { ProductName } from './ProductName'
 
 type ProductCardProps = {
@@ -40,7 +40,7 @@ export function ProductCardWithWishlist({
       className="group relative block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
-        <Image
+        <ProductImageWithFallback
           src={imageUrl}
           alt={imageAlt}
           fill
@@ -49,7 +49,9 @@ export function ProductCardWithWishlist({
           unoptimized={
             imageUrl.endsWith('.svg') ||
             imageUrl.includes('picsum.photos') ||
-            imageUrl.includes('placehold.co')
+            imageUrl.includes('placehold.co') ||
+            imageUrl.includes('/storage/') ||
+            imageUrl.includes('product-images')
           }
         />
         {showWishlist && (

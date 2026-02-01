@@ -21,6 +21,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
 
   if (error) return { ok: false, error: error.message }
   revalidatePath('/admin')
+  revalidatePath('/admin/dashboard')
   revalidatePath(`/admin/orders/${orderId}`)
   return { ok: true }
 }

@@ -94,9 +94,9 @@ export default async function HomePage({
         : productsWithPrice
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)]">
+    <div>
       <Hero />
-      <div id="products" className="mx-auto max-w-6xl px-4 py-8 scroll-mt-4">
+      <div id="products" className="mx-auto max-w-6xl px-4 py-16 scroll-mt-4">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-zinc-900" />}>
           <ProductGrid
             products={sortedProducts}

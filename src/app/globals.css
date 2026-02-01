@@ -125,3 +125,68 @@ body {
   background: radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%);
   border-radius: 50%;
 }
+
+@keyframes successPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes successFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-success-pop {
+  animation: successPop 0.5s ease-out forwards;
+}
+
+.animate-success-fade-in {
+  animation: successFadeIn 0.4s ease-out 0.2s both;
+}
+
+/* Admin login card entrance */
+@keyframes adminCardIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-admin-card-in {
+  animation: adminCardIn 0.5s ease-out forwards;
+}
+
+/* Admin shield glow pulse */
+@keyframes adminShieldGlow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
+}
+
+.animate-admin-shield-glow {
+  animation: adminShieldGlow 3s ease-in-out infinite;
+}

@@ -4,6 +4,11 @@ import Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import { sendOrderConfirmation } from '@/lib/resend'
 import { awardXpForPurchase } from '@/actions/gamification'
+import {
+  createOrder as createPrintfulOrder,
+  getDefaultPrintFileUrl,
+  isPrintfulConfigured,
+} from '@/lib/printful'
 
 // Use service role for webhook (bypasses RLS) - orders are created server-side
 function getSupabaseAdmin() {
@@ -88,15 +93,17 @@ export async function POST(request: NextRequest) {
     }
   }
   const shippingDetails = sessionWithShipping.shipping_details
-  const shippingAddressJson = shippingDetails?.address
+  const address = shippingDetails?.address
+  const shippingAddressJson = address
     ? {
-        name: shippingDetails.name,
+        name: shippingDetails.name ?? '',
         address: {
-          line1: shippingDetails.address.line1 ?? '',
-          line2: shippingDetails.address.line2 ?? '',
-          city: shippingDetails.address.city ?? '',
-          postalCode: shippingDetails.address.postal_code ?? '',
-          country: shippingDetails.address.country ?? '',
+          line1: address.line1 ?? '',
+          line2: address.line2 ?? '',
+          city: address.city ?? '',
+          postalCode: address.postal_code ?? '',
+          country: address.country ?? '',
+          state: (address as { state?: string }).state ?? '',
         },
       }
     : null
@@ -163,6 +170,78 @@ export async function POST(request: NextRequest) {
     })
     if (!emailResult.ok) {
       console.warn('Order confirmation email not sent:', emailResult.error)
+    }
+  }
+
+  // Printful fulfillment (skipped if not configured or no mappable items)
+  if (isPrintfulConfigured() && shippingAddressJson?.address) {
+    const variantIds = cartItems.map((c) => c.variantId)
+    const { data: variants } = await supabase
+      .from('product_variants')
+      .select('id, printful_variant_id, printful_sync_variant_id')
+      .in('id', variantIds)
+
+    const printfulItems: Array<{
+      variant_id?: number
+      sync_variant_id?: number
+      quantity: number
+      files: { url: string }[]
+      retail_price: string
+    }> = []
+
+    for (const item of cartItems) {
+      const v = (variants ?? []).find((x) => x.id === item.variantId)
+      if (!v) continue
+      const syncId = (v as { printful_sync_variant_id?: number }).printful_sync_variant_id
+      const catalogId = v.printful_variant_id
+      if (syncId != null) {
+        printfulItems.push({
+          sync_variant_id: syncId,
+          quantity: item.quantity,
+          files: [{ url: getDefaultPrintFileUrl() }],
+          retail_price: (item.priceCents / 100).toFixed(2),
+        })
+      } else if (catalogId != null) {
+        printfulItems.push({
+          variant_id: catalogId,
+          quantity: item.quantity,
+          files: [{ url: getDefaultPrintFileUrl() }],
+          retail_price: (item.priceCents / 100).toFixed(2),
+        })
+      }
+    }
+
+    if (printfulItems.length > 0) {
+      const addr = shippingAddressJson.address
+      const pfResult = await createPrintfulOrder(
+        {
+          recipient: {
+            name: shippingAddressJson.name || 'Customer',
+            address1: addr.line1,
+            city: addr.city,
+            state_code: addr.state || undefined,
+            country_code: addr.country,
+            zip: addr.postalCode,
+            email: email ?? undefined,
+          },
+          items: printfulItems,
+          external_id: order.id,
+        },
+        true
+      )
+
+      if (pfResult.ok && pfResult.printfulOrderId) {
+        await supabase
+          .from('orders')
+          .update({ printful_order_id: pfResult.printfulOrderId })
+          .eq('id', order.id)
+      } else {
+        console.warn('Printful order failed:', pfResult.error)
+      }
+    } else if (cartItems.length > 0) {
+      console.warn(
+        'No Printful variant mapping for order items — run migration or printful_fetch_catalog'
+      )
     }
   }
 

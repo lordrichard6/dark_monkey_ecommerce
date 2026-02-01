@@ -5,14 +5,18 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CartTrigger } from '@/components/cart/CartTrigger'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
+import { signOut } from '@/actions/auth'
 
 type Category = { id: string; name: string; slug: string }
 
 type Props = {
   categories: Category[]
+  user: { email?: string | null } | null
+  displayName: string | null
+  isAdmin: boolean
 }
 
-export function MobileHeader({ categories }: Props) {
+export function MobileHeader({ categories, user, displayName, isAdmin }: Props) {
   const [open, setOpen] = useState(false)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
   const pathname = usePathname()
@@ -43,7 +47,17 @@ export function MobileHeader({ categories }: Props) {
           <Link href="/" className="flex flex-1 justify-center" onClick={closeMenu}>
             <DarkMonkeyLogo size="sm" noLink />
           </Link>
-          <div className="flex w-10 items-center justify-end">
+          <div className="flex items-center gap-1">
+            {process.env.NODE_ENV === 'development' && (
+              <Link
+                href="/admin/dashboard"
+                onClick={closeMenu}
+                className="rounded-lg border border-amber-500/40 px-2.5 py-2 text-sm font-medium text-amber-400 transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-300"
+                aria-label="Admin"
+              >
+                Admin
+              </Link>
+            )}
             <CartTrigger />
           </div>
         </nav>
@@ -167,29 +181,52 @@ export function MobileHeader({ categories }: Props) {
         </nav>
 
         <div className="shrink-0 border-t border-white/10 p-4">
-          <Link
-            href="/account"
-            onClick={closeMenu}
-            className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
-          >
-            <UserIcon className="h-5 w-5 shrink-0" />
-            Account
-          </Link>
-          <Link
-            href="/admin"
-            onClick={closeMenu}
-            className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-500 transition hover:bg-white/10 hover:text-zinc-400"
-          >
-            <ShieldIcon className="h-5 w-5 shrink-0" />
-            Admin
-          </Link>
-          <Link
-            href="/login"
-            onClick={closeMenu}
-            className="mt-2 flex w-full items-center justify-center rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-3.5 text-sm font-medium text-amber-400 transition hover:bg-amber-500/20"
-          >
-            Sign in
-          </Link>
+          {user ? (
+            <>
+              <div className="mb-2 px-4 py-2">
+                <p className="truncate text-sm font-medium text-zinc-50">
+                  {displayName ?? user.email?.split('@')[0] ?? 'Account'}
+                </p>
+                {user.email && (
+                  <p className="truncate text-xs text-zinc-500">{user.email}</p>
+                )}
+              </div>
+              <Link
+                href="/account"
+                onClick={closeMenu}
+                className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
+              >
+                <UserIcon className="h-5 w-5 shrink-0" />
+                Account
+              </Link>
+              <Link
+                href="/account/orders"
+                onClick={closeMenu}
+                className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
+              >
+                <OrdersIcon className="h-5 w-5 shrink-0" />
+                Orders
+              </Link>
+              <form action={signOut} className="mt-2">
+                <button
+                  type="submit"
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm text-zinc-500 transition hover:bg-white/10 hover:text-red-400"
+                >
+                  <LogOutIcon className="h-5 w-5 shrink-0" />
+                  Sign out
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              onClick={closeMenu}
+              className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
+            >
+              <UserIcon className="h-5 w-5 shrink-0" />
+              Sign in/up
+            </Link>
+          )}
         </div>
       </aside>
     </>
@@ -323,7 +360,7 @@ function UserIcon({ className }: { className?: string }) {
   )
 }
 
-function ShieldIcon({ className }: { className?: string }) {
+function OrdersIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -335,7 +372,28 @@ function ShieldIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
     >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  )
+}
+
+function LogOutIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" x2="9" y1="12" y2="12" />
     </svg>
   )
 }
