@@ -2,19 +2,19 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Skip Supabase auth when env vars are missing (e.g. Vercel deploy before env setup)
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.next({ request })
-  }
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.next({ request })
+    }
 
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+    let supabaseResponse = NextResponse.next({
+      request,
+    })
 
-  const supabase = createServerClient(
+    const supabase = createServerClient(
     supabaseUrl,
     supabaseAnonKey,
     {
@@ -74,5 +74,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return supabaseResponse
+    return supabaseResponse
+  } catch {
+    return NextResponse.next({ request })
+  }
 }
