@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { updateProfile } from '@/actions/profile'
 
 type Props = { displayName: string | null }
 
 export function ProfileEditForm({ displayName }: Props) {
+  const t = useTranslations('account')
+  const tCommon = useTranslations('common')
   const [name, setName] = useState(displayName ?? '')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -17,9 +20,9 @@ export function ProfileEditForm({ displayName }: Props) {
     const result = await updateProfile(name)
     setLoading(false)
     if (result.ok) {
-      setMessage({ type: 'success', text: 'Profile updated.' })
+      setMessage({ type: 'success', text: t('profileUpdated') })
     } else {
-      setMessage({ type: 'error', text: result.error ?? 'Failed to update' })
+      setMessage({ type: 'error', text: result.error ?? t('failedToUpdate') })
     }
   }
 
@@ -27,7 +30,7 @@ export function ProfileEditForm({ displayName }: Props) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="displayName" className="block text-sm font-medium text-zinc-300">
-          Display name
+          {t('displayName')}
         </label>
         <input
           id="displayName"
@@ -35,7 +38,7 @@ export function ProfileEditForm({ displayName }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-          placeholder="Your name"
+          placeholder={t('displayNamePlaceholder')}
         />
       </div>
       {message && (
@@ -48,7 +51,7 @@ export function ProfileEditForm({ displayName }: Props) {
         disabled={loading}
         className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
       >
-        {loading ? 'Saving...' : 'Save'}
+        {loading ? t('saving') : tCommon('save')}
       </button>
     </form>
   )

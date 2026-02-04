@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import { sendOrderConfirmation } from '@/lib/resend'
-import { awardXpForPurchase } from '@/actions/gamification'
+import { awardXpForPurchase, awardXpForReferral } from '@/actions/gamification'
 import {
   createOrder as createPrintfulOrder,
   getDefaultPrintFileUrl,
@@ -49,6 +49,10 @@ export async function POST(request: NextRequest) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session
+
+  // Retrieve full session to get shipping address
+  const fullSession = await stripe.checkout.sessions.retrieve(session.id)
+
   const supabase = getSupabaseAdmin()
 
   if (!supabase) {
@@ -58,10 +62,10 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const cartItemsJson = session.metadata?.cartItems
-  const totalCentsStr = session.metadata?.totalCents
-  const userId = session.metadata?.user_id ?? null
-  const guestEmail = session.metadata?.guest_email ?? session.customer_email ?? session.customer_details?.email
+  const cartItemsJson = fullSession.metadata?.cartItems
+  const totalCentsStr = fullSession.metadata?.totalCents
+  const userId = fullSession.metadata?.user_id ?? null
+  const guestEmail = fullSession.metadata?.guest_email ?? fullSession.customer_email ?? fullSession.customer_details?.email
 
   if (!cartItemsJson || !totalCentsStr) {
     return NextResponse.json(
@@ -79,34 +83,30 @@ export async function POST(request: NextRequest) {
   }>
   const totalCents = parseInt(totalCentsStr, 10)
 
-  // Shipping address from Stripe Checkout Session
-  const sessionWithShipping = session as Stripe.Checkout.Session & {
-    shipping_details?: {
-      name?: string
-      address?: {
-        line1?: string
-        line2?: string
-        city?: string
-        postal_code?: string
-        country?: string
-      }
-    }
-  }
-  const shippingDetails = sessionWithShipping.shipping_details
+  // Shipping address is in collected_information.shipping_details (newer API structure)
+  const collectedShipping = (fullSession as any).collected_information?.shipping_details
+  const shippingDetails = collectedShipping
   const address = shippingDetails?.address
   const shippingAddressJson = address
     ? {
-        name: shippingDetails.name ?? '',
-        address: {
-          line1: address.line1 ?? '',
-          line2: address.line2 ?? '',
-          city: address.city ?? '',
-          postalCode: address.postal_code ?? '',
-          country: address.country ?? '',
-          state: (address as { state?: string }).state ?? '',
-        },
-      }
+      name: shippingDetails.name ?? '',
+      address: {
+        line1: address.line1 ?? '',
+        line2: address.line2 ?? '',
+        city: address.city ?? '',
+        postalCode: address.postal_code ?? '',
+        country: address.country ?? '',
+        state: address.state ?? '',
+      },
+    }
     : null
+
+  console.log('[Webhook] Parsed shippingAddressJson:', JSON.stringify(shippingAddressJson, null, 2))
+
+  const discountId = fullSession.metadata?.discount_id ?? null
+  const discountCents = fullSession.metadata?.discount_cents
+    ? parseInt(fullSession.metadata.discount_cents, 10)
+    : 0
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -116,8 +116,10 @@ export async function POST(request: NextRequest) {
       status: 'paid',
       total_cents: totalCents,
       currency: 'CHF',
-      stripe_session_id: session.id,
+      stripe_session_id: fullSession.id,
       shipping_address_json: shippingAddressJson,
+      discount_id: discountId || null,
+      discount_cents: Number.isFinite(discountCents) ? discountCents : 0,
     })
     .select('id')
     .single()
@@ -128,6 +130,15 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to create order' },
       { status: 500 }
     )
+  }
+
+  await supabase.from('abandoned_checkouts').delete().eq('stripe_session_id', fullSession.id)
+
+  if (discountId) {
+    const { data: disc } = await supabase.from('discounts').select('use_count').eq('id', discountId).single()
+    if (disc) {
+      await supabase.from('discounts').update({ use_count: (disc.use_count ?? 0) + 1 }).eq('id', discountId)
+    }
   }
 
   const orderItems = cartItems.map((item) => ({
@@ -150,11 +161,47 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Decrement inventory for each purchased item
+  for (const item of cartItems) {
+    const { data: inventory } = await supabase
+      .from('product_inventory')
+      .select('quantity')
+      .eq('variant_id', item.variantId)
+      .single()
+
+    if (inventory) {
+      const newQuantity = Math.max(0, inventory.quantity - item.quantity)
+      await supabase
+        .from('product_inventory')
+        .update({ quantity: newQuantity })
+        .eq('variant_id', item.variantId)
+    }
+  }
+
   // Award XP for logged-in users
   if (userId) {
     const xpResult = await awardXpForPurchase(userId, order.id, totalCents)
     if (!xpResult.ok) {
       console.warn('XP award failed:', xpResult.error)
+    }
+    // Referral: if this user was referred and this is their first paid order, reward referrer
+    const { data: referral } = await supabase
+      .from('referrals')
+      .select('id, referrer_id')
+      .eq('referred_user_id', userId)
+      .is('first_order_id', null)
+      .maybeSingle()
+    if (referral?.referrer_id) {
+      await supabase.from('referrals').update({ first_order_id: order.id }).eq('id', referral.id)
+      const refXp = await awardXpForReferral(referral.referrer_id)
+      if (refXp.ok) {
+        await supabase
+          .from('referrals')
+          .update({ referrer_xp_awarded_at: new Date().toISOString() })
+          .eq('id', referral.id)
+      } else {
+        console.warn('Referral XP award failed:', refXp.error)
+      }
     }
   }
 
@@ -175,11 +222,14 @@ export async function POST(request: NextRequest) {
 
   // Printful fulfillment (skipped if not configured or no mappable items)
   if (isPrintfulConfigured() && shippingAddressJson?.address) {
+    console.log('[Printful] Starting order creation for order:', order.id)
     const variantIds = cartItems.map((c) => c.variantId)
     const { data: variants } = await supabase
       .from('product_variants')
       .select('id, printful_variant_id, printful_sync_variant_id')
       .in('id', variantIds)
+
+    console.log('[Printful] Fetched variants:', JSON.stringify(variants, null, 2))
 
     const printfulItems: Array<{
       variant_id?: number
@@ -191,9 +241,14 @@ export async function POST(request: NextRequest) {
 
     for (const item of cartItems) {
       const v = (variants ?? []).find((x) => x.id === item.variantId)
-      if (!v) continue
+      if (!v) {
+        console.warn('[Printful] Variant not found in DB:', item.variantId)
+        continue
+      }
       const syncId = (v as { printful_sync_variant_id?: number }).printful_sync_variant_id
       const catalogId = v.printful_variant_id
+      console.log(`[Printful] Variant ${item.variantId}: syncId=${syncId}, catalogId=${catalogId}`)
+
       if (syncId != null) {
         printfulItems.push({
           sync_variant_id: syncId,
@@ -208,33 +263,43 @@ export async function POST(request: NextRequest) {
           files: [{ url: getDefaultPrintFileUrl() }],
           retail_price: (item.priceCents / 100).toFixed(2),
         })
+      } else {
+        console.warn('[Printful] No Printful ID for variant:', item.variantId)
       }
     }
 
+    console.log('[Printful] Items to send:', JSON.stringify(printfulItems, null, 2))
+
     if (printfulItems.length > 0) {
       const addr = shippingAddressJson.address
-      const pfResult = await createPrintfulOrder(
-        {
-          recipient: {
-            name: shippingAddressJson.name || 'Customer',
-            address1: addr.line1,
-            city: addr.city,
-            state_code: addr.state || undefined,
-            country_code: addr.country,
-            zip: addr.postalCode,
-            email: email ?? undefined,
-          },
-          items: printfulItems,
-          external_id: order.id,
+      const pfPayload = {
+        recipient: {
+          name: shippingAddressJson.name || 'Customer',
+          address1: addr.line1,
+          city: addr.city,
+          state_code: addr.state || undefined,
+          country_code: addr.country,
+          zip: addr.postalCode,
+          email: email ?? undefined,
         },
-        true
+        items: printfulItems,
+        external_id: order.id.replace(/-/g, ''), // Remove dashes to fit Printful's 32-char limit
+      }
+      console.log('[Printful] Sending order payload:', JSON.stringify(pfPayload, null, 2))
+
+      const pfResult = await createPrintfulOrder(
+        pfPayload,
+        false // create as draft (do not auto-confirm) for testing
       )
+
+      console.log('[Printful] Result:', JSON.stringify(pfResult, null, 2))
 
       if (pfResult.ok && pfResult.printfulOrderId) {
         await supabase
           .from('orders')
           .update({ printful_order_id: pfResult.printfulOrderId })
           .eq('id', order.id)
+        console.log('[Printful] Order created successfully:', pfResult.printfulOrderId)
       } else {
         console.warn('Printful order failed:', pfResult.error)
       }
@@ -243,6 +308,8 @@ export async function POST(request: NextRequest) {
         'No Printful variant mapping for order items — run migration or printful_fetch_catalog'
       )
     }
+  } else {
+    console.log('[Printful] Skipped - not configured or no shipping address')
   }
 
   return NextResponse.json({ received: true, orderId: order.id })

@@ -1,6 +1,10 @@
-import Link from 'next/link'
+'use client'
+
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { CartTrigger } from '@/components/cart/CartTrigger'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { UserMenuDropdown } from '@/components/UserMenuDropdown'
 
 type UserInfo = {
@@ -11,18 +15,20 @@ type UserInfo = {
 }
 
 export function DesktopTopBar({ user, displayName, avatarUrl, isAdmin }: UserInfo) {
+  const t = useTranslations('common')
   return (
     <header className="fixed top-0 left-0 right-0 z-30 hidden h-14 border-b border-white/10 bg-black/40 backdrop-blur-xl md:flex md:pl-16">
       <div className="flex flex-1 items-center justify-between px-4">
         <DarkMonkeyLogo size="sm" textOnly />
         <div className="flex items-center gap-2">
+          <LanguageSwitcher variant="desktop" />
           {isAdmin && (
             <Link
               href="/admin/dashboard"
               className="rounded-lg border border-amber-500/40 px-3 py-2 text-sm font-medium text-amber-400 transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-300"
-              title="Admin"
+              title={t('admin')}
             >
-              Admin
+              {t('admin')}
             </Link>
           )}
           <CartTrigger />

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { useCart } from './CartProvider'
 import { updateCartItem, removeFromCart } from '@/actions/cart'
 import { useRouter } from 'next/navigation'
@@ -15,6 +16,8 @@ function formatPrice(cents: number): string {
 }
 
 export function CartDrawer() {
+  const t = useTranslations('cart')
+  const tCommon = useTranslations('common')
   const { cart, isOpen, closeCart } = useCart()
   const router = useRouter()
   const totalCents = cart.items.reduce((s, i) => s + i.priceCents * i.quantity, 0)
@@ -52,12 +55,12 @@ export function CartDrawer() {
           <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-4">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-50">
               <Image src="/logo.png" alt="" width={32} height={32} className="rounded-full" unoptimized />
-              Cart ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+              {tCommon('cart')} ({itemCount} {itemCount === 1 ? t('item') : t('items')})
             </h2>
             <button
               onClick={closeCart}
               className="rounded p-2 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-              aria-label="Close cart"
+              aria-label={t('closeCart')}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -79,7 +82,7 @@ export function CartDrawer() {
           <div className="flex-1 overflow-y-auto p-4">
             {cart.items.length === 0 ? (
               <p className="py-12 text-center text-zinc-500">
-                Your cart is empty.
+                {t('yourCartEmpty')}
               </p>
             ) : (
               <ul className="space-y-4">
@@ -142,7 +145,7 @@ export function CartDrawer() {
                           onClick={() => handleRemove(item.variantId, item.config)}
                           className="text-sm text-zinc-500 underline hover:text-red-400"
                         >
-                          Remove
+                          {t('remove')}
                         </button>
                       </div>
                     </div>
@@ -160,7 +163,7 @@ export function CartDrawer() {
           {cart.items.length > 0 && (
             <div className="border-t border-zinc-800 p-4">
               <div className="flex justify-between text-lg font-semibold text-zinc-50">
-                <span>Total</span>
+                <span>{t('total')}</span>
                 <span>{formatPrice(totalCents)}</span>
               </div>
               <Link
@@ -168,7 +171,7 @@ export function CartDrawer() {
                 onClick={closeCart}
                 className="mt-4 block rounded-lg bg-white py-3 text-center text-sm font-medium text-zinc-950 transition hover:bg-zinc-200"
               >
-                Checkout
+                {tCommon('checkout')}
               </Link>
             </div>
           )}

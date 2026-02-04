@@ -1,0 +1,339 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import { addToCart } from '@/actions/cart'
+import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { CustomizationPanel } from '@/components/customization/CustomizationPanel'
+import { CustomizationPreview } from '@/components/customization/CustomizationPreview'
+import { ShippingCountdown } from '@/components/product/ShippingCountdown'
+import { getPriceModifierFromConfig } from '@/types/customization'
+import type { CustomizationRuleDef } from '@/types/customization'
+import { colorToHex } from '@/lib/color-swatch'
+
+type Variant = {
+  id: string
+  name: string | null
+  price_cents: number
+  attributes: Record<string, string>
+  stock: number
+}
+
+function getSize(v: Variant): string {
+  const fromAttrs = v.attributes?.size as string | undefined
+  const fromName = v.name?.match(/\([^)]*\s*\/\s*([^)]+)\)$/)?.[1]?.trim()
+  return (fromAttrs || fromName) ?? '-'
+}
+
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']
+
+function sortSizes(sizes: string[]): string[] {
+  return [...sizes].sort((a, b) => {
+    const ia = SIZE_ORDER.indexOf(a.toUpperCase())
+    const ib = SIZE_ORDER.indexOf(b.toUpperCase())
+    if (ia !== -1 && ib !== -1) return ia - ib
+    if (ia !== -1) return -1
+    if (ib !== -1) return 1
+    return a.localeCompare(b)
+  })
+}
+
+type AddToCartFormProps = {
+  productId: string
+  productSlug: string
+  productName: string
+  variants: Variant[]
+  primaryImageUrl?: string
+  customizationRule?: CustomizationRuleDef | null
+  productCategory?: string
+}
+
+import { useCurrency } from '@/components/currency/CurrencyContext'
+
+function inferProductType(category: string | undefined): 'mug' | 'hat' | 'hoodie' {
+  if (!category) return 'mug'
+  const c = category.toLowerCase()
+  if (c.includes('cup') || c.includes('mug') || c.includes('tumbler')) return 'mug'
+  if (c.includes('hat') || c.includes('cap')) return 'hat'
+  return 'hoodie'
+}
+
+export function AddToCartForm({
+  productId,
+  productSlug,
+  productName,
+  variants,
+  primaryImageUrl,
+  customizationRule,
+  productCategory,
+}: AddToCartFormProps) {
+  const t = useTranslations('product')
+  const { format } = useCurrency()
+  const router = useRouter()
+  const colors = useMemo(
+    () =>
+      Array.from(
+        new Set(variants.map((v) => (v.attributes?.color as string) || 'Default'))
+      ).sort((a, b) => (a === 'Default' ? 1 : a.localeCompare(b))),
+    [variants]
+  )
+  const firstColor = colors[0] ?? 'Default'
+  const variantsForFirstColor = useMemo(
+    () =>
+      variants.filter(
+        (v) => ((v.attributes?.color as string) || 'Default') === firstColor
+      ),
+    [variants, firstColor]
+  )
+  const [selectedColor, setSelectedColor] = useState(firstColor)
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
+    variantsForFirstColor.find((v) => v.stock > 0)?.id ?? variantsForFirstColor[0]?.id ?? variants[0]?.id ?? null
+  )
+  const [quantity, setQuantity] = useState(1)
+  const [isAdding, setIsAdding] = useState(false)
+  const [config, setConfig] = useState<Record<string, string>>({})
+
+  const variantsForColor = useMemo(
+    () =>
+      variants.filter(
+        (v) => ((v.attributes?.color as string) || 'Default') === selectedColor
+      ),
+    [variants, selectedColor]
+  )
+
+  const allSizes = useMemo(
+    () =>
+      sortSizes(
+        Array.from(new Set(variants.map((v) => getSize(v)).filter((s) => s && s !== '-')))
+      ),
+    [variants]
+  )
+
+  const variantByColorAndSize = useMemo(() => {
+    const map = new Map<string, Variant>()
+    for (const v of variants) {
+      const color = (v.attributes?.color as string) || 'Default'
+      const size = getSize(v)
+      map.set(`${color}:${size}`, v)
+    }
+    return map
+  }, [variants])
+
+  function handleColorChange(color: string) {
+    setSelectedColor(color)
+    const forColor = variants.filter(
+      (v) => ((v.attributes?.color as string) || 'Default') === color
+    )
+    const next = forColor.find((v) => v.stock > 0) ?? forColor[0]
+    setSelectedVariantId(next?.id ?? null)
+  }
+
+  const selectedVariant = variants.find((v) => v.id === selectedVariantId)
+  const basePriceCents = selectedVariant?.price_cents ?? 0
+  const modifierCents = customizationRule
+    ? getPriceModifierFromConfig(customizationRule, config as Record<string, unknown>)
+    : 0
+  const priceCents = basePriceCents + modifierCents
+  const stock = selectedVariant?.stock ?? 0
+  const canAdd = selectedVariantId && stock > 0 && quantity > 0
+
+  const configForCart =
+    customizationRule && Object.keys(config).some((k) => config[k]?.trim())
+      ? (Object.fromEntries(
+        Object.entries(config).filter(([, v]) => v != null && String(v).trim())
+      ) as Record<string, unknown>)
+      : undefined
+
+  async function handleAddToCart(e: React.FormEvent) {
+    e.preventDefault()
+    if (!canAdd || !selectedVariant) return
+    setIsAdding(true)
+    try {
+      await addToCart({
+        variantId: selectedVariant.id,
+        productId,
+        productSlug,
+        productName,
+        variantName: selectedVariant.name,
+        priceCents,
+        quantity,
+        imageUrl: primaryImageUrl,
+        config: configForCart,
+      })
+      router.refresh()
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  if (variants.length === 0) return null
+
+  const productType = inferProductType(productCategory)
+
+  return (
+    <form onSubmit={handleAddToCart} className="mt-8 space-y-6">
+      {customizationRule && (
+        <>
+          {primaryImageUrl && (
+            <div className="mb-4">
+              <CustomizationPreview
+                imageUrl={primaryImageUrl}
+                config={config}
+                productType={productType}
+              />
+            </div>
+          )}
+          <CustomizationPanel
+            ruleDef={customizationRule}
+            config={config}
+            onChange={setConfig}
+          />
+        </>
+      )}
+
+      {/* Color (square swatches, one default selected) */}
+      {colors.length > 1 && (
+        <div>
+          <span className="block text-sm font-medium text-zinc-400">{t('color')}</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {colors.map((color) => {
+              const hex = colorToHex(color)
+              const isLight = ['#ffffff', '#fff', '#ffc0cb', '#fffdd0', '#f5f5dc'].includes(hex.toLowerCase())
+              const isSelected = selectedColor === color
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => handleColorChange(color)}
+                  title={color}
+                  className={`h-9 w-9 shrink-0 rounded-md border-2 transition ${isSelected
+                    ? 'border-amber-500 ring-2 ring-amber-500/30'
+                    : isLight
+                      ? 'border-zinc-500 hover:border-zinc-400'
+                      : 'border-zinc-600 hover:border-zinc-500'
+                    }`}
+                  style={{ backgroundColor: hex }}
+                >
+                  {isSelected && (
+                    <span className={`flex h-full w-full items-center justify-center ${isLight ? 'text-zinc-900' : 'text-white'}`} aria-hidden>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                        <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Size (all sizes as buttons; unavailable or out-of-stock deactivated) */}
+      {allSizes.length >= 1 && (
+        <div>
+          <span className="block text-sm font-medium text-zinc-400">Size</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {allSizes.map((size) => {
+              const variant = variantByColorAndSize.get(`${selectedColor}:${size}`)
+              const exists = !!variant
+              const outOfStock = variant ? variant.stock === 0 : true
+              const isSelected = variant && selectedVariantId === variant.id
+              const disabled = !exists || outOfStock
+              const title = !exists
+                ? `${size} — Not available in this color`
+                : outOfStock
+                  ? `${size} — Out of stock`
+                  : `${size} — ${format(variant!.price_cents)}`
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => variant && variant.stock > 0 && setSelectedVariantId(variant.id)}
+                  disabled={disabled}
+                  title={title}
+                  className={`flex min-w-[3rem] items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isSelected
+                    ? 'border-amber-500 bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30'
+                    : disabled
+                      ? 'cursor-not-allowed border-zinc-700 bg-zinc-800/50 text-zinc-500 opacity-70'
+                      : 'border-zinc-600 text-zinc-300 hover:border-zinc-400 hover:bg-zinc-800'
+                    }`}
+                >
+                  {size}
+                </button>
+              )
+            })}
+          </div>
+          {selectedVariant && (
+            <p className="mt-1.5 text-sm text-zinc-500">
+              {selectedVariant.name && `${selectedVariant.name} — `}
+              {stock > 0 && stock <= 5 ? (
+                <span className="font-medium text-amber-400">{t('onlyXLeft', { count: stock })}</span>
+              ) : (
+                <>{stock} {t('inStock')}</>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Price and Estimated delivery side-by-side on big devices */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-4">
+          <p className="text-sm font-medium text-zinc-400">{t('priceLabel')}</p>
+          <p className="mt-1 text-2xl font-bold text-zinc-50">
+            {format(priceCents)}
+          </p>
+          <p className="mt-0.5 text-sm text-zinc-500">{t('inclVat')}</p>
+          {modifierCents > 0 && (
+            <p className="mt-1 text-sm text-amber-400/80">{t('includesCustomization')}</p>
+          )}
+        </div>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-4">
+          <p className="text-sm font-medium text-zinc-400">{t('estimatedDelivery')}</p>
+          <p className="mt-1.5 flex items-center gap-2 text-zinc-50">
+            <span className="inline-flex h-5 w-6 shrink-0 items-center justify-center rounded-sm bg-[#ff0000] text-[10px] font-bold text-white" title="Switzerland">
+              CH
+            </span>
+            Switzerland
+          </p>
+          <p className="mt-2 flex items-center gap-1.5 text-lg font-semibold text-zinc-50">
+            {t('deliveryDays')}
+            <button
+              type="button"
+              title="Delivery estimate may vary"
+              className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-600 text-[10px] font-medium text-zinc-300 hover:bg-zinc-500"
+            >
+              i
+            </button>
+          </p>
+          <p className="mt-1 text-sm text-zinc-500">{t('shippingStartsAt')}</p>
+          <ShippingCountdown />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div>
+          <label htmlFor="quantity" className="sr-only">
+            {t('quantity')}
+          </label>
+          <input
+            id="quantity"
+            type="number"
+            min={1}
+            max={stock}
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, Math.min(stock, parseInt(e.target.value, 10) || 1)))}
+            className="w-20 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={!canAdd || isAdding}
+          className="rounded-lg bg-white px-6 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isAdding ? t('adding') : t('addToCart')}
+        </button>
+      </div>
+    </form>
+  )
+}

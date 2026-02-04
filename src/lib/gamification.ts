@@ -50,3 +50,6 @@ export function xpForPurchase(totalCents: number): number {
   const chf = totalCents / 100
   return Math.max(10, Math.round(chf * XP_PER_CHF))
 }
+
+/** XP awarded to referrer when a referred user completes first purchase */
+export const XP_REFERRAL_FIRST_PURCHASE = 50

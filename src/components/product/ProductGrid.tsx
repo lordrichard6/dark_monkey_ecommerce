@@ -1,6 +1,8 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
+import { useSearchParams } from 'next/navigation'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
 
 type Product = {
@@ -11,6 +13,7 @@ type Product = {
   imageUrl: string
   imageAlt: string
   isInWishlist?: boolean
+  isBestseller?: boolean
 }
 
 type ProductGridProps = {
@@ -19,15 +22,16 @@ type ProductGridProps = {
   sort?: string
 }
 
-const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'price-asc', label: 'Price: low to high' },
-  { value: 'price-desc', label: 'Price: high to low' },
-] as const
-
 export function ProductGrid({ products, title, sort = 'newest' }: ProductGridProps) {
+  const t = useTranslations('home')
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  const SORT_OPTIONS = [
+    { value: 'newest', label: t('sortNewest') },
+    { value: 'price-asc', label: t('sortPriceAsc') },
+    { value: 'price-desc', label: t('sortPriceDesc') },
+  ] as const
 
   function handleSortChange(value: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -70,6 +74,7 @@ export function ProductGrid({ products, title, sort = 'newest' }: ProductGridPro
               imageUrl={product.imageUrl}
               imageAlt={product.imageAlt}
               isInWishlist={product.isInWishlist ?? false}
+              isBestseller={product.isBestseller ?? false}
               showWishlist={!!product.productId}
             />
           ))}
@@ -77,11 +82,11 @@ export function ProductGrid({ products, title, sort = 'newest' }: ProductGridPro
       ) : (
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 py-24 text-center">
           <p className="text-zinc-500">
-            No products yet. Run{' '}
+            {t('noProducts')}{' '}
             <code className="rounded bg-zinc-800 px-2 py-1 text-zinc-400">
               supabase db push
             </code>{' '}
-            to load sample products.
+            {t('noProductsHint')}
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { deleteAddress } from '@/actions/addresses'
 import { AddressForm } from './AddressForm'
 
@@ -25,11 +26,12 @@ function formatAddress(a: Address) {
 }
 
 export function AddressList({ addresses: initial }: Props) {
+  const t = useTranslations('account')
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this address?')) return
+    if (!confirm(t('deleteConfirm'))) return
     await deleteAddress(id)
   }
 
@@ -95,7 +97,7 @@ export function AddressList({ addresses: initial }: Props) {
           onClick={() => setAdding(true)}
           className="rounded-lg border border-dashed border-zinc-600 px-4 py-3 text-sm text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-300"
         >
-          + Add address
+          {t('addAddress')}
         </button>
       )}
     </div>

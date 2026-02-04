@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { createAddress, updateAddress, type AddressInput } from '@/actions/addresses'
 
 type AddressRow = {
@@ -35,6 +36,7 @@ const defaultValues: AddressInput = {
 }
 
 export function AddressForm({ address, onCancel, onSuccess }: Props) {
+  const t = useTranslations('account')
   const [form, setForm] = useState<AddressInput>(
     address
       ? {
@@ -64,25 +66,25 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
     if (result.ok) {
       onSuccess?.()
     } else {
-      setError(result.error ?? 'Failed')
+      setError(result.error ?? t('failed'))
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-zinc-300">Type</label>
+        <label className="block text-sm font-medium text-zinc-300">{t('type')}</label>
         <select
           value={form.type}
           onChange={(e) => setForm({ ...form, type: e.target.value as 'shipping' | 'billing' })}
           className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100"
         >
-          <option value="shipping">Shipping</option>
-          <option value="billing">Billing</option>
+          <option value="shipping">{t('shipping')}</option>
+          <option value="billing">{t('billing')}</option>
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300">Full name</label>
+        <label className="block text-sm font-medium text-zinc-300">{t('fullName')}</label>
         <input
           type="text"
           value={form.fullName}
@@ -112,7 +114,7 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-300">City</label>
+          <label className="block text-sm font-medium text-zinc-300">{t('city')}</label>
           <input
             type="text"
             value={form.city}
@@ -122,7 +124,7 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-300">Postal code</label>
+          <label className="block text-sm font-medium text-zinc-300">{t('postalCode')}</label>
           <input
             type="text"
             value={form.postalCode}
@@ -133,7 +135,7 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300">Country</label>
+        <label className="block text-sm font-medium text-zinc-300">{t('country')}</label>
         <input
           type="text"
           value={form.country}
@@ -142,7 +144,7 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300">Phone</label>
+        <label className="block text-sm font-medium text-zinc-300">{t('phone')}</label>
         <input
           type="tel"
           value={form.phone}
@@ -157,7 +159,7 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
           onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
           className="rounded border-zinc-600 bg-zinc-800"
         />
-        <span className="text-sm text-zinc-300">Default address</span>
+        <span className="text-sm text-zinc-300">{t('defaultAddress')}</span>
       </label>
       {error && <p className="text-sm text-red-400">{error}</p>}
       <div className="flex gap-3">
@@ -166,11 +168,11 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
           disabled={loading}
           className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-50"
         >
-          {loading ? 'Saving...' : address ? 'Update' : 'Add address'}
+          {loading ? t('saving') : address ? t('updateAddress') : t('addAddressButton')}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} className="text-sm text-zinc-400 hover:text-zinc-300">
-            Cancel
+            {t('cancel')}
           </button>
         )}
       </div>

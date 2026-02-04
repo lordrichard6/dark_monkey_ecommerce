@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link, usePathname } from '@/i18n/navigation'
 import { CartTrigger } from '@/components/cart/CartTrigger'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { signOut } from '@/actions/auth'
 
 type Category = { id: string; name: string; slug: string }
@@ -17,6 +18,8 @@ type Props = {
 }
 
 export function MobileHeader({ categories, user, displayName, isAdmin }: Props) {
+  const t = useTranslations('common')
+  const tUser = useTranslations('userMenu')
   const [open, setOpen] = useState(false)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
   const pathname = usePathname()
@@ -53,9 +56,9 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
                 href="/admin/dashboard"
                 onClick={closeMenu}
                 className="rounded-lg border border-amber-500/40 px-2.5 py-2 text-sm font-medium text-amber-400 transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-300"
-                aria-label="Admin"
+                aria-label={t('admin')}
               >
-                Admin
+                {t('admin')}
               </Link>
             )}
             <CartTrigger />
@@ -66,18 +69,16 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
       {/* Overlay */}
       <div
         role="presentation"
-        className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+        className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${open ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
         onClick={closeMenu}
         aria-hidden={!open}
       />
 
       {/* Slide-out menu */}
       <aside
-        className={`fixed top-0 right-0 z-[70] flex h-full w-[min(320px,85vw)] flex-col border-l border-white/10 bg-zinc-950/98 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out md:hidden ${
-          open ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed top-0 right-0 z-[70] flex h-full w-[min(320px,85vw)] flex-col border-l border-white/10 bg-zinc-950/98 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out md:hidden ${open ? 'translate-x-0' : 'translate-x-full'
+          }`}
         aria-modal="true"
         aria-label="Navigation menu"
         aria-hidden={!open}
@@ -98,27 +99,25 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
           <Link
             href="/"
             onClick={closeMenu}
-            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
-              pathname === '/'
+            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${pathname === '/'
                 ? 'bg-amber-500/20 text-amber-400'
                 : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-            }`}
+              }`}
           >
             <HomeIcon className="h-5 w-5 shrink-0" />
-            Shop
+            {t('shop')}
           </Link>
 
           <Link
             href="/account/wishlist"
             onClick={closeMenu}
-            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
-              pathname === '/account/wishlist'
+            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${pathname === '/account/wishlist'
                 ? 'bg-amber-500/20 text-amber-400'
                 : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-            }`}
+              }`}
           >
             <HeartIcon className="h-5 w-5 shrink-0" />
-            Wishlist
+            {t('wishlist')}
           </Link>
 
           {/* Categories accordion */}
@@ -126,50 +125,45 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
             <button
               type="button"
               onClick={() => setCategoriesOpen(!categoriesOpen)}
-              className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium transition ${
-                pathname.startsWith('/categories')
+              className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium transition ${pathname.startsWith('/categories')
                   ? 'bg-amber-500/20 text-amber-400'
                   : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-              }`}
+                }`}
             >
               <span className="flex items-center gap-3">
                 <GridIcon className="h-5 w-5 shrink-0" />
-                Categories
+                {t('categories')}
               </span>
               <ChevronIcon
-                className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
-                  categoriesOpen ? 'rotate-90' : ''
-                }`}
+                className={`h-5 w-5 shrink-0 transition-transform duration-200 ${categoriesOpen ? 'rotate-90' : ''
+                  }`}
               />
             </button>
             <div
-              className={`grid transition-all duration-200 ease-out ${
-                categoriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-              }`}
+              className={`grid transition-all duration-200 ease-out ${categoriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                }`}
             >
               <div className="overflow-hidden">
                 <div className="border-t border-white/5 bg-black/30 py-2">
                   <Link
                     href="/categories"
                     onClick={closeMenu}
-                    className={`block px-6 py-2.5 text-sm transition ${
-                      pathname === '/categories'
+                    className={`block px-6 py-2.5 text-sm transition ${pathname === '/categories'
                         ? 'text-amber-400'
                         : 'text-zinc-400 hover:text-zinc-50'
-                    }`}
+                      }`}
                   >
-                    All categories
+                    {t('allCategories')}
                   </Link>
                   {categories.map((cat) => (
                     <Link
                       key={cat.id}
                       href={`/categories/${cat.slug}`}
                       onClick={closeMenu}
-                      className={`block px-6 py-2.5 text-sm transition ${
-                        pathname === `/categories/${cat.slug}`
+                      className={`block px-6 py-2.5 text-sm transition ${pathname === `/categories/${cat.slug}`
                           ? 'text-amber-400'
                           : 'text-zinc-400 hover:text-zinc-50'
-                      }`}
+                        }`}
                     >
                       {cat.name}
                     </Link>
@@ -180,24 +174,60 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
           </div>
         </nav>
 
+        <LanguageSwitcher variant="mobile" />
+
         <div className="shrink-0 border-t border-white/10 p-4">
           {user ? (
             <>
               <div className="mb-2 px-4 py-2">
-                <p className="truncate text-sm font-medium text-zinc-50">
-                  {displayName ?? user.email?.split('@')[0] ?? 'Account'}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-medium text-zinc-50">
+                    {displayName ?? user.email?.split('@')[0] ?? tUser('account')}
+                  </p>
+                  {isAdmin && (
+                    <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500 ring-1 ring-inset ring-amber-500/20">
+                      Admin
+                    </span>
+                  )}
+                </div>
                 {user.email && (
                   <p className="truncate text-xs text-zinc-500">{user.email}</p>
                 )}
               </div>
+              {isAdmin && (
+                <Link
+                  href="/admin/dashboard"
+                  onClick={closeMenu}
+                  className="mb-1 flex items-center gap-3 rounded-xl bg-amber-500/10 px-4 py-3.5 text-sm font-medium text-amber-400 transition hover:bg-amber-500/20 hover:text-amber-300"
+                >
+                  <svg
+                    className="h-5 w-5 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Admin Dashboard
+                </Link>
+              )}
               <Link
                 href="/account"
                 onClick={closeMenu}
                 className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
               >
                 <UserIcon className="h-5 w-5 shrink-0" />
-                Account
+                {tUser('account')}
               </Link>
               <Link
                 href="/account/orders"
@@ -205,7 +235,7 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
                 className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
               >
                 <OrdersIcon className="h-5 w-5 shrink-0" />
-                Orders
+                {tUser('orders')}
               </Link>
               <form action={signOut} className="mt-2">
                 <button
@@ -213,7 +243,7 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
                   className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm text-zinc-500 transition hover:bg-white/10 hover:text-red-400"
                 >
                   <LogOutIcon className="h-5 w-5 shrink-0" />
-                  Sign out
+                  {tUser('signOut')}
                 </button>
               </form>
             </>
@@ -224,7 +254,7 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
               className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
             >
               <UserIcon className="h-5 w-5 shrink-0" />
-              Sign in/up
+              {tUser('signInUp')}
             </Link>
           )}
         </div>

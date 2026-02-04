@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
-import { getCart } from "@/lib/cart";
-import { CartProvider } from "@/components/cart/CartProvider";
-import { CartDrawer } from "@/components/cart/CartDrawer";
-import { GradientBackground } from "@/components/GradientBackground";
-import { Header } from "@/components/Header";
-import { CookieConsent } from "@/components/CookieConsent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,26 +31,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cart = await getCart()
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
         suppressHydrationWarning
       >
-        <CartProvider initialCart={cart}>
-          <GradientBackground />
-          <Header />
-          <main className="relative min-h-screen pt-14 md:pl-16">{children}</main>
-          <CartDrawer />
-          <CookieConsent />
-        </CartProvider>
+        {children}
       </body>
     </html>
   );

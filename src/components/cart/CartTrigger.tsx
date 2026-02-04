@@ -1,8 +1,10 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useCart } from './CartProvider'
 
 export function CartTrigger() {
+  const t = useTranslations('cart')
   const { cart, toggleCart } = useCart()
   const itemCount = cart.items.reduce((s, i) => s + i.quantity, 0)
 
@@ -10,7 +12,7 @@ export function CartTrigger() {
     <button
       onClick={toggleCart}
       className="relative flex items-center gap-2 rounded p-2 text-zinc-400 transition hover:text-zinc-50"
-      aria-label={`Cart with ${itemCount} items`}
+      aria-label={t('cartWithItems', { count: itemCount })}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

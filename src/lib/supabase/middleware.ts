@@ -1,6 +1,17 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const LOCALES = ['en', 'pt', 'de', 'it', 'fr']
+
+function getPathWithoutLocale(pathname: string): { path: string; locale: string } {
+  const segments = pathname.split('/').filter(Boolean)
+  const maybeLocale = segments[0]
+  if (LOCALES.includes(maybeLocale)) {
+    return { path: '/' + segments.slice(1).join('/') || '/', locale: maybeLocale }
+  }
+  return { path: pathname || '/', locale: 'en' }
+}
+
 export async function updateSession(request: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -36,14 +47,15 @@ export async function updateSession(request: NextRequest) {
   )
 
   const { pathname } = request.nextUrl
-  const isAdminLogin = pathname === '/admin/login'
+  const { path: pathWithoutLocale, locale } = getPathWithoutLocale(pathname)
+  const isAdminLogin = pathWithoutLocale === '/admin/login'
   const isProtected =
-    pathname.startsWith('/account') ||
-    (pathname.startsWith('/admin') && !isAdminLogin)
+    pathWithoutLocale.startsWith('/account') ||
+    (pathWithoutLocale.startsWith('/admin') && !isAdminLogin)
   const hasAuthCookies = request.cookies.getAll().some((c) => c.name.startsWith('sb-'))
 
   // On login pages: clear stale auth cookies and redirect (avoids "Refresh Token Not Found" errors)
-  if ((pathname === '/login' || pathname === '/admin/login') && hasAuthCookies) {
+  if ((pathWithoutLocale === '/login' || pathWithoutLocale === '/admin/login') && hasAuthCookies) {
     const allCookies = request.cookies.getAll()
     const authCookies = allCookies.filter((c) => c.name.startsWith('sb-'))
     authCookies.forEach((c) => {
@@ -82,12 +94,22 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = pathname.startsWith('/admin') ? '/admin/login' : '/login'
-    if (!pathname.startsWith('/admin')) url.searchParams.set('redirectTo', pathname)
+    url.pathname = pathWithoutLocale.startsWith('/admin') ? `/${locale}/admin/login` : `/${locale}/login`
+    if (!pathWithoutLocale.startsWith('/admin')) url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 
-    return supabaseResponse
+  // Set referral cookie when ?ref= is present (30 days)
+  const refCode = request.nextUrl.searchParams.get('ref')
+  if (refCode && typeof refCode === 'string' && refCode.length <= 64) {
+    supabaseResponse.cookies.set('dm_ref', refCode.trim(), {
+      maxAge: 30 * 24 * 60 * 60,
+      path: '/',
+      sameSite: 'lax',
+    })
+  }
+
+  return supabaseResponse
   } catch {
     return NextResponse.next({ request })
   }

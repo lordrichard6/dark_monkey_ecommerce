@@ -1,3 +1,5 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -9,13 +11,9 @@ type ProductCardProps = {
   imageAlt: string
 }
 
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat('de-CH', {
-    style: 'currency',
-    currency: 'CHF',
-    minimumFractionDigits: 2,
-  }).format(cents / 100)
-}
+import { useCurrency } from '@/components/currency/CurrencyContext'
+
+// ...
 
 export function ProductCard({
   slug,
@@ -24,6 +22,7 @@ export function ProductCard({
   imageUrl,
   imageAlt,
 }: ProductCardProps) {
+  const { format } = useCurrency()
   return (
     <Link
       href={`/products/${slug}`}
@@ -43,7 +42,7 @@ export function ProductCard({
         <h3 className="font-medium text-zinc-50 group-hover:text-white">
           {name}
         </h3>
-        <p className="mt-1 text-sm text-zinc-400">{formatPrice(priceCents)}</p>
+        <p className="mt-1 text-sm text-zinc-400">{format(priceCents)}</p>
       </div>
     </Link>
   )

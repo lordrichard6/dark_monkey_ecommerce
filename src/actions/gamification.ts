@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { getTierForXp, xpForPurchase } from '@/lib/gamification'
+import { getTierForXp, xpForPurchase, XP_REFERRAL_FIRST_PURCHASE } from '@/lib/gamification'
 
 function getAdminSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -55,6 +55,47 @@ export async function awardXpForPurchase(
   if (profileError) return { ok: false, error: profileError.message }
 
   await checkAndAwardBadges(supabase, userId, newTotal)
+
+  return { ok: true, xp, newTotal }
+}
+
+/**
+ * Award XP to referrer when a referred user completes first purchase.
+ * Called from Stripe webhook after order creation.
+ */
+export async function awardXpForReferral(referrerId: string): Promise<AwardXpResult> {
+  const supabase = getAdminSupabase()
+  if (!supabase) return { ok: false, error: 'Not configured' }
+
+  const xp = XP_REFERRAL_FIRST_PURCHASE
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('total_xp')
+    .eq('id', referrerId)
+    .single()
+
+  const currentXp = profile?.total_xp ?? 0
+  const newTotal = currentXp + xp
+
+  const { error: eventError } = await supabase.from('user_xp_events').insert({
+    user_id: referrerId,
+    event_type: 'referral',
+    amount: xp,
+    metadata: {},
+  })
+
+  if (eventError) return { ok: false, error: eventError.message }
+
+  const newTier = getTierForXp(newTotal)
+  const { error: profileError } = await supabase
+    .from('user_profiles')
+    .update({ total_xp: newTotal, tier: newTier })
+    .eq('id', referrerId)
+
+  if (profileError) return { ok: false, error: profileError.message }
+
+  await checkAndAwardBadges(supabase, referrerId, newTotal)
 
   return { ok: true, xp, newTotal }
 }

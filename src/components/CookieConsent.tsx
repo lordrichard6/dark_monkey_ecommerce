@@ -1,11 +1,14 @@
 'use client'
 
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { useState, useEffect } from 'react'
 
 const CONSENT_KEY = 'darkmonkey-cookie-consent'
 
 export function CookieConsent() {
+  const t = useTranslations('cookie')
+  const tCommon = useTranslations('common')
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -26,13 +29,12 @@ export function CookieConsent() {
       <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-zinc-900/95 px-4 py-4 shadow-xl backdrop-blur-md md:px-6 md:py-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-sm text-zinc-300 md:text-base">
-            We use cookies to provide cart persistence, authentication, and a
-            better shopping experience.{' '}
+            {t('message')}{' '}
             <Link
               href="/privacy"
               className="underline underline-offset-2 hover:text-amber-400"
             >
-              Privacy &amp; Cookies
+              {t('privacyCookies')}
             </Link>
           </p>
           <button
@@ -40,7 +42,7 @@ export function CookieConsent() {
             onClick={accept}
             className="shrink-0 rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-amber-400"
           >
-            Accept
+            {tCommon('accept')}
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser } from '@/lib/auth-admin'
+import { notifyRestockAlerts } from '@/lib/wishlist-notifications'
 import { revalidatePath } from 'next/cache'
 
 export async function createProduct(input: {
@@ -82,29 +83,57 @@ export async function updateStock(variantId: string, quantity: number) {
   const supabase = getAdminClient()
   if (!supabase) return { ok: false, error: 'Admin not configured' }
 
-  const { data: variant } = await supabase
+  console.log('[updateStock] called for variant:', variantId, 'quantity:', quantity)
+
+  const { data: variant, error: varError } = await supabase
     .from('product_variants')
     .select('product_id')
     .eq('id', variantId)
     .single()
 
-  const { data: existing } = await supabase
+  if (varError) console.error('[updateStock] Variant lookup error:', varError)
+  if (!variant) console.error('[updateStock] Variant not found:', variantId)
+
+  const { data: existing, error: invError } = await supabase
     .from('product_inventory')
-    .select('id')
+    .select('id, quantity')
     .eq('variant_id', variantId)
     .single()
 
+  if (invError && invError.code !== 'PGRST116') {
+    console.error('[updateStock] Inventory lookup error:', invError)
+  }
+
+  const previousQty = existing?.quantity ?? 0
+  console.log('[updateStock] Existing inventory:', existing, 'Previous qty:', previousQty)
+
   if (existing) {
+    console.log('[updateStock] Updating existing record...')
     const { error } = await supabase
       .from('product_inventory')
       .update({ quantity })
       .eq('variant_id', variantId)
-    if (error) return { ok: false, error: error.message }
+    if (error) {
+      console.error('[updateStock] Update error:', error)
+      return { ok: false, error: error.message }
+    }
   } else {
+    console.log('[updateStock] Inserting new record...')
     const { error } = await supabase
       .from('product_inventory')
       .insert({ variant_id: variantId, quantity })
-    if (error) return { ok: false, error: error.message }
+    if (error) {
+      console.error('[updateStock] Insert error:', error)
+      return { ok: false, error: error.message }
+    }
+  }
+
+  console.log('[updateStock] Success.')
+
+  if (previousQty === 0 && quantity > 0 && variant?.product_id) {
+    await notifyRestockAlerts(variant.product_id).catch((err) => {
+      console.warn('Restock alerts failed:', err)
+    })
   }
 
   revalidatePath('/admin')

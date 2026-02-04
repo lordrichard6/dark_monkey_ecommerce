@@ -270,6 +270,7 @@ export async function syncPrintfulProducts(debug = false): Promise<{
             attributes: attrs,
             sort_order: i + 1,
             printful_sync_variant_id: sv.id,
+            printful_variant_id: sv.variant_id ?? null,
           })
           .select('id')
           .single()

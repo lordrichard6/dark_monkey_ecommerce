@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
 import { ProductImageWithFallback } from './ProductImageWithFallback'
 import { ProductName } from './ProductName'
@@ -13,16 +13,14 @@ type ProductCardProps = {
   imageUrl: string
   imageAlt: string
   isInWishlist?: boolean
+  isBestseller?: boolean
   showWishlist?: boolean
 }
 
-function formatPrice(cents: number): string {
-  return new Intl.NumberFormat('de-CH', {
-    style: 'currency',
-    currency: 'CHF',
-    minimumFractionDigits: 2,
-  }).format(cents / 100)
-}
+import { useTranslations } from 'next-intl'
+import { useCurrency } from '@/components/currency/CurrencyContext'
+
+// ...
 
 export function ProductCardWithWishlist({
   slug,
@@ -32,14 +30,22 @@ export function ProductCardWithWishlist({
   imageUrl,
   imageAlt,
   isInWishlist = false,
+  isBestseller = false,
   showWishlist = true,
 }: ProductCardProps) {
+  const t = useTranslations('product')
+  const { format } = useCurrency()
   return (
     <Link
       href={`/products/${slug}`}
       className="group relative block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
+        {isBestseller && (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-500/90 px-2 py-0.5 text-xs font-semibold text-zinc-950">
+            {t('bestseller')}
+          </span>
+        )}
         <ProductImageWithFallback
           src={imageUrl}
           alt={imageAlt}
@@ -65,7 +71,7 @@ export function ProductCardWithWishlist({
       </div>
       <div className="p-4">
         <ProductName name={name} />
-        <p className="mt-1 text-sm text-zinc-400">{formatPrice(priceCents)}</p>
+        <p className="mt-1 text-sm text-zinc-400">{format(priceCents)}</p>
       </div>
     </Link>
   )

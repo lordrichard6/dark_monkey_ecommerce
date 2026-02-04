@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link, usePathname } from '@/i18n/navigation'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 
 type Category = { id: string; name: string; slug: string }
@@ -16,22 +16,24 @@ const SIDEBAR_COLLAPSED = 64
 const SIDEBAR_EXPANDED = 240
 
 export function SideNav({ categories, isAdmin }: Props) {
+  const t = useTranslations('common')
   const pathname = usePathname()
   const [expanded, setExpanded] = useState(false)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
 
   const commonItems = [
-    { href: '/', label: 'Shop', icon: HomeIcon },
-    { href: '/account/wishlist', label: 'Wishlist', icon: HeartIcon },
+    { href: '/', label: t('shop'), icon: HomeIcon },
+    { href: '/account/wishlist', label: t('wishlist'), icon: HeartIcon },
   ]
 
   const adminItems = isAdmin
     ? [
-        { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboardIcon },
-        { href: '/admin/products', label: 'Products', icon: BoxIcon },
-        { href: '/admin/orders', label: 'Orders', icon: PackageIcon },
-        { href: '/admin/discounts', label: 'Discounts', icon: TagIcon },
-      ]
+      { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutDashboardIcon },
+      { href: '/admin/products', label: t('products'), icon: BoxIcon },
+      { href: '/admin/categories', label: t('categories'), icon: GridIcon },
+      { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
+      { href: '/admin/discounts', label: t('discounts'), icon: TagIcon },
+    ]
     : []
 
   return (
@@ -56,11 +58,10 @@ export function SideNav({ categories, isAdmin }: Props) {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
-                isActive
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${isActive
                   ? 'bg-white/10 text-zinc-50'
                   : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
-              }`}
+                }`}
             >
               <Icon className="h-5 w-5 shrink-0" />
               {expanded && <span className="truncate">{label}</span>}
@@ -73,15 +74,14 @@ export function SideNav({ categories, isAdmin }: Props) {
           <button
             type="button"
             onClick={() => setCategoriesOpen(!categoriesOpen)}
-            className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
-              pathname.startsWith('/categories')
+            className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${pathname.startsWith('/categories')
                 ? 'bg-white/10 text-zinc-50'
                 : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
-            }`}
+              }`}
           >
             <span className="flex items-center gap-3">
               <GridIcon className="h-5 w-5 shrink-0" />
-              {expanded && <span className="truncate">Categories</span>}
+              {expanded && <span className="truncate">{t('categories')}</span>}
             </span>
             {expanded && categories.length > 0 && (
               <ChevronIcon
@@ -93,23 +93,21 @@ export function SideNav({ categories, isAdmin }: Props) {
             <div className="ml-4 mt-1 space-y-0.5 border-l border-white/10 pl-3">
               <Link
                 href="/categories"
-                className={`block rounded px-2 py-1.5 text-xs transition ${
-                  pathname === '/categories'
+                className={`block rounded px-2 py-1.5 text-xs transition ${pathname === '/categories'
                     ? 'text-amber-400'
                     : 'text-zinc-500 hover:text-zinc-300'
-                }`}
+                  }`}
               >
-                All categories
+                {t('allCategories')}
               </Link>
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/categories/${cat.slug}`}
-                  className={`block rounded px-2 py-1.5 text-xs transition ${
-                    pathname === `/categories/${cat.slug}`
+                  className={`block rounded px-2 py-1.5 text-xs transition ${pathname === `/categories/${cat.slug}`
                       ? 'text-amber-400'
                       : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
+                    }`}
                 >
                   {cat.name}
                 </Link>
@@ -123,7 +121,7 @@ export function SideNav({ categories, isAdmin }: Props) {
             <div className="my-2 border-t border-white/10" role="separator" />
             {expanded && (
               <p className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                Admin
+                {t('admin')}
               </p>
             )}
             {adminItems.map(({ href, label, icon: Icon }) => {
@@ -133,11 +131,10 @@ export function SideNav({ categories, isAdmin }: Props) {
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
-                    isActive
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${isActive
                       ? 'bg-white/10 text-zinc-50'
                       : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
-                  }`}
+                    }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
                   {expanded && <span className="truncate">{label}</span>}
