@@ -51,7 +51,7 @@ export default async function AdminDashboardPage() {
   ])
 
   // Manually fetch related data to avoid foreign key ambiguity
-  let enrichedOrders = []
+  let enrichedOrders: any[] = []
   if (recentOrders && recentOrders.length > 0) {
     const shippingIds = recentOrders.map(o => o.shipping_address_id).filter(Boolean) as string[]
     const userIds = recentOrders.map(o => o.user_id).filter(Boolean) as string[]

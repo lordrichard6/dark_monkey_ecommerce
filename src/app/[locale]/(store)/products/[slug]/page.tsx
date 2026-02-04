@@ -138,7 +138,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     price_cents: number
     attributes: Record<string, string>
     sort_order: number
-    product_inventory: { quantity: number } | null
+    product_inventory: any
   }>) ?? []
   const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
   const sortedImages = [...images].sort((a, b) => a.sort_order - b.sort_order)
@@ -146,7 +146,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const variantsWithStock = variants
     .map((v) => ({
       ...v,
-      stock: v.product_inventory?.quantity ?? 0,
+      stock: Array.isArray(v.product_inventory) ? v.product_inventory[0]?.quantity : (v.product_inventory?.quantity ?? 0),
     }))
     .sort((a, b) => a.sort_order - b.sort_order)
 

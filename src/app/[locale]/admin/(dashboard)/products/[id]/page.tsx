@@ -68,7 +68,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
     name: string | null
     price_cents: number
     attributes: Record<string, unknown>
-    product_inventory: { quantity: number } | null
+    product_inventory: any
   }>
 
   // Debug: Log what inventory data we're actually getting
