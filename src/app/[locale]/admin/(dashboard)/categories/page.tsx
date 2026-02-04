@@ -1,5 +1,5 @@
 import { getCategories } from '@/actions/admin-categories'
-import { Link } from '@/i18n/routing'
+import { Link } from '@/i18n/navigation'
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { deleteCategory } from '@/actions/admin-categories'
 

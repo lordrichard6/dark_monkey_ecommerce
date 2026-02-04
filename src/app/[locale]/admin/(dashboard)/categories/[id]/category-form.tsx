@@ -1,7 +1,7 @@
 'use client'
 
 import { upsertCategory, type Category, type ActionState } from '@/actions/admin-categories'
-import { useRouter } from '@/i18n/routing'
+import { useRouter } from '@/i18n/navigation';
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import clsx from 'clsx'
