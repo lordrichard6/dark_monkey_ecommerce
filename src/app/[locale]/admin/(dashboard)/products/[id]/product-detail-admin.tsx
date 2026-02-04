@@ -19,7 +19,14 @@ type Variant = {
   name: string | null
   price_cents: number
   attributes: Record<string, unknown>
-  product_inventory: { quantity: number } | null
+  product_inventory: any
+}
+
+function getQuantity(v: any): number {
+  const inv = v.product_inventory
+  if (!inv) return 0
+  if (Array.isArray(inv)) return inv[0]?.quantity ?? 0
+  return inv.quantity ?? 0
 }
 
 type Props = {
@@ -63,7 +70,7 @@ export function ProductDetailAdmin({ variants, onRefresh }: Props) {
   // Sync editQuantity when selectedVariant changes (including after refresh)
   useEffect(() => {
     if (selectedVariant) {
-      setEditQuantity(selectedVariant.product_inventory?.quantity ?? 0)
+      setEditQuantity(getQuantity(selectedVariant))
     }
   }, [selectedVariant])
 
@@ -138,7 +145,7 @@ export function ProductDetailAdmin({ variants, onRefresh }: Props) {
           {variantsForColor.map((v) => {
             const size = getSize(v)
             const isSelected = selectedVariant?.id === v.id
-            const qty = v.product_inventory?.quantity ?? 0
+            const qty = getQuantity(v)
             const isOutOfStock = qty === 0
             return (
               <button
