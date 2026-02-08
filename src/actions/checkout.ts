@@ -236,6 +236,18 @@ export async function createCheckoutSession(
   }
 
   try {
+    const key = process.env.STRIPE_SECRET_KEY
+    console.log('[Checkout] Debug: Starting Stripe Session Create')
+    console.log('[Checkout] Debug: Runtime:', process.env.NEXT_RUNTIME ?? 'Node (default)')
+    console.log('[Checkout] Debug: Key Length:', key ? key.length : 'MISSING')
+    console.log('[Checkout] Debug: Key Prefix:', key ? key.substring(0, 7) : 'N/A')
+    console.log('[Checkout] Debug: Key Suffix (last 4):', key ? key.slice(-4) : 'N/A')
+
+    // Check for whitespace
+    if (key && (key.trim() !== key)) {
+      console.error('[Checkout] CRITICAL: Key has whitespace!')
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: lineItems,
@@ -245,6 +257,8 @@ export async function createCheckoutSession(
       shipping_address_collection: { allowed_countries: ['CH', 'PT', 'ES', 'FR', 'DE', 'GB', 'US'] as const },
       metadata,
     })
+
+    console.log('[Checkout] Debug: Session created successfully', session.id)
 
     const emailForAbandoned = input?.email ?? undefined
     // Use fire-and-forget but with a catch to prevent table-missing-500
@@ -288,6 +302,12 @@ export async function createCheckoutSession(
     return { ok: false, error: 'Failed to create checkout session' }
   } catch (err: any) {
     console.error('[Checkout] Stripe Session Error:', err)
+    console.error('[Checkout] Error Type:', err.type)
+    console.error('[Checkout] Error Code:', err.code)
+    console.error('[Checkout] Error Detail:', err.message)
+    if (err.raw) {
+      console.error('[Checkout] Raw Error:', JSON.stringify(err.raw, null, 2))
+    }
     return { ok: false, error: err.message || 'Error occurred during checkout' }
   }
 }
