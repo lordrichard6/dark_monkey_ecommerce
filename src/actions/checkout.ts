@@ -165,7 +165,17 @@ export async function createCheckoutSession(
   }
   const totalCents = Math.max(0, subtotalCents - discountCents)
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const getBaseUrl = () => {
+    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+    return 'http://localhost:3000'
+  }
+  const baseUrl = getBaseUrl()
+
+  console.log('[Checkout] Debug: Base URL resolved to:', baseUrl)
+  console.log('[Checkout] Debug: NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)
+  console.log('[Checkout] Debug: VERCEL_URL:', process.env.VERCEL_URL)
+
   const imageUrl = (url: string) =>
     url?.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
 
@@ -242,6 +252,11 @@ export async function createCheckoutSession(
     console.log('[Checkout] Debug: Key Length:', key ? key.length : 'MISSING')
     console.log('[Checkout] Debug: Key Prefix:', key ? key.substring(0, 7) : 'N/A')
     console.log('[Checkout] Debug: Key Suffix (last 4):', key ? key.slice(-4) : 'N/A')
+    console.log('[Checkout] Debug: URLs:', { successUrl, cancelUrl })
+    console.log('[Checkout] Debug: Line Items:', JSON.stringify(lineItems, null, 2))
+    console.log('[Checkout] Debug: Metadata:', JSON.stringify(metadata, null, 2))
+
+
 
     // Check for whitespace
     if (key && (key.trim() !== key)) {
