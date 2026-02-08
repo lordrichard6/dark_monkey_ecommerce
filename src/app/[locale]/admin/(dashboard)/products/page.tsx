@@ -39,7 +39,7 @@ export default async function AdminProductsPage({
       product_variants (id, price_cents),
       created_at
     `, { count: 'exact' })
-    .is('deleted_at', null)
+    // .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .range(start, end)
 

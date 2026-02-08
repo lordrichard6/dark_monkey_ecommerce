@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .select('name, description')
     .eq('slug', slug)
     .eq('is_active', true)
-    .is('deleted_at', null)
+    // .is('deleted_at', null)
     .single()
 
   if (!product) return { title: 'Product' }
@@ -47,7 +47,7 @@ export async function generateStaticParams() {
     .from('products')
     .select('slug')
     .eq('is_active', true)
-    .is('deleted_at', null)
+  // .is('deleted_at', null)
 
   return (products ?? []).map((p) => ({
     slug: p.slug,
@@ -83,7 +83,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     )
     .eq('slug', slug)
     .eq('is_active', true)
-    .is('deleted_at', null)
+    // .is('deleted_at', null)
     .single()
 
   if (error || !product) notFound()
@@ -140,7 +140,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     sort_order: number
     product_inventory: any
   }>) ?? []
-  const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
+  const minPrice = (variants || []).length ? Math.min(...(variants || []).map((v) => v.price_cents || 0)) : 0
   const sortedImages = images.length ? [...images].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)) : []
   const primaryImage = sortedImages[0]
   const variantsWithStock = variants
