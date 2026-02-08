@@ -259,6 +259,12 @@ export async function syncPrintfulProducts(debug = false): Promise<{
 
       if (existing?.id) {
         productId = existing.id
+        // Restore product if it was soft-deleted, and ensure it's active
+        await supabase
+          .from('products')
+          .update({ deleted_at: null, is_active: true })
+          .eq('id', productId)
+
         await ensureProductImages(supabase, productId, sync_product, sync_variants)
       } else {
         let slug = slugify(sync_product.name)
