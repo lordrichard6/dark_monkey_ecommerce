@@ -46,14 +46,15 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
 
-    const allSelected = products.length > 0 && selectedIds.size === products.length
-    const indeterminate = selectedIds.size > 0 && selectedIds.size < products.length
+    const safeProducts = products || []
+    const allSelected = safeProducts.length > 0 && selectedIds.size === safeProducts.length
+    const indeterminate = selectedIds.size > 0 && selectedIds.size < safeProducts.length
 
     function toggleSelectAll() {
         if (allSelected) {
             setSelectedIds(new Set())
         } else {
-            setSelectedIds(new Set(products.map((p) => p.id)))
+            setSelectedIds(new Set(safeProducts.map((p) => p.id)))
         }
     }
 
@@ -177,7 +178,7 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
                         </tr>
                     </thead>
                     <tbody>
-                        {(products ?? []).map((p) => {
+                        {safeProducts.map((p) => {
                             const variants = (p.product_variants ?? [])
                             const images = ((p.product_images ?? [])).sort(
                                 (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
@@ -269,7 +270,7 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
 
             {/* Mobile Card View */}
             <div className="grid grid-cols-1 gap-4 md:hidden">
-                {(products ?? []).map((p) => {
+                {safeProducts.map((p) => {
                     const variants = (p.product_variants ?? [])
                     const images = ((p.product_images ?? [])).sort(
                         (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
@@ -361,7 +362,7 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
                 })}
             </div>
 
-            {products.length === 0 && (
+            {safeProducts.length === 0 && (
                 <p className="p-8 text-center text-zinc-500">No products yet</p>
             )}
 

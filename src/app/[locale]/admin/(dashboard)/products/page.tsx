@@ -26,7 +26,7 @@ export default async function AdminProductsPage({
   const start = (page - 1) * limit
   const end = start + limit - 1
 
-  const { data: products, count } = await supabase
+  const { data: products, count, error } = await supabase
     .from('products')
     .select(`
       id,
@@ -35,13 +35,17 @@ export default async function AdminProductsPage({
       is_active,
       is_customizable,
       categories (name),
-      product_images (id, url, sort_order, color),
+      product_images (id, url, sort_order),
       product_variants (id, price_cents),
       created_at
     `, { count: 'exact' })
     // .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .range(start, end)
+
+  if (error) {
+    console.error('[AdminProductsPage] Database error:', error)
+  }
 
   const totalPages = count ? Math.ceil(count / limit) : 1
 
@@ -62,7 +66,7 @@ export default async function AdminProductsPage({
 
       <div className="mt-8">
         <ProductListTable
-          products={products as any}
+          products={(products || []) as any}
           currentPage={page}
           totalPages={totalPages}
         />
