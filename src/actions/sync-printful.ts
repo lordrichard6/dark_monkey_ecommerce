@@ -43,66 +43,59 @@ async function ensureProductImages(
   sync_product: SyncProduct,
   sync_variants: SyncVariant[]
 ) {
-  const { data: existing } = await supabase
+  /* Optimization: Fetch all existing images once */
+  const { data: existingImages } = await supabase
     .from('product_images')
-    .select('id')
+    .select('id, url, color')
     .eq('product_id', productId)
-    .limit(1)
-  // Removed early return to allow updating existing images with missing colors
-  // if ((existing ?? []).length > 0) return
+
+  const existingMap = new Map<string, { id: string, color: string | null }>()
+  existingImages?.forEach(img => existingMap.set(img.url, img))
 
   const seen = new Set<string>()
   let sortOrder = 0
+  const toInsert: any[] = []
+  const startSortOrder = (existingImages?.length || 0) + 1 // simple increment strategy or reset? 
+  // actually existing sortOrder logic was just incrementing from 0. 
+  // If we delete all and recreate, 0 is fine.
+  // But here we are merging. usage of 'sortOrder' implies we might want to reorder everything?
+  // Use simple counter for new items.
 
   // 1. Add Thumbnail (colorless / default)
   const thumbUrl = sync_product.thumbnail_url || sync_variants[0]?.product?.image
   if (thumbUrl && !seen.has(thumbUrl)) {
     seen.add(thumbUrl)
-    // Check if image exists
-    const { data: existingImg } = await supabase
-      .from('product_images')
-      .select('id, color')
-      .eq('product_id', productId)
-      .eq('url', thumbUrl)
-      .single()
+    const existingImg = existingMap.get(thumbUrl)
 
     if (!existingImg) {
-      await supabase.from('product_images').insert({
+      toInsert.push({
         product_id: productId,
         url: thumbUrl,
         alt: sync_product.name,
         sort_order: sortOrder++,
         color: null,
       })
+    } else {
+      // preserve existing sort order? The original code didn't update sort_order of existing.
+      // We just increment our local counter to keep relative order of NEW items meaningful?
+      // Actually original code reused sortOrder=0 for every product sync run, effectively ignoring existing sort orders.
+      // We will stick to the same logic: just increment.
+      sortOrder++
     }
   }
 
   // 2. Add Variant Images (with Color)
-  // Group variants by color to find the best image for each color
   const variantsByColor = new Map<string, typeof sync_variants>()
-
   for (const sv of sync_variants) {
     const color = sv.color
-    if (!color) continue // Skip variants with no color for image grouping
-
-    if (!variantsByColor.has(color)) {
-      variantsByColor.set(color, [])
-    }
+    if (!color) continue
+    if (!variantsByColor.has(color)) variantsByColor.set(color, [])
     variantsByColor.get(color)!.push(sv)
   }
 
-  // Process each color
   for (const [color, variants] of variantsByColor.entries()) {
-    // Strategy: Find the best image for this color.
-    // 1. Look for 'preview' files (Mockups) on ANY variant. 
-    //    Prioritize files that are visible.
-    // 2. Fallback to 'product.image' of the newest variant (highest ID).
-
-    // Collect all candidate files
     const allFiles = variants.flatMap(v => v.files || [])
     const previewFile = allFiles.find(f => f.type === 'preview')
-
-    // Find newest variant for fallback
     const newestVariant = variants.sort((a, b) => (b.id || 0) - (a.id || 0))[0]
     const allFilesNewest = newestVariant.files || []
     const mainPreviewFile = allFilesNewest.find(f => f.type === 'preview')
@@ -111,49 +104,51 @@ async function ensureProductImages(
     const imagesToSync = new Set<string>()
     if (mainImageToUse) imagesToSync.add(mainImageToUse)
 
-    // --- Collect Additional Unique Images from ALL variants of this color ---
     const allVariantsFiles = variants.flatMap(v => v.files || [])
     for (const f of allVariantsFiles) {
       if (f.type !== 'preview') continue
       const u = f.preview_url || f.thumbnail_url
       if (u) imagesToSync.add(u)
     }
-    // Also check product.image of all variants
     for (const v of variants) {
       if (v.product?.image) imagesToSync.add(v.product.image)
     }
 
-    // --- Insert Images ---
-    // Convert to array to preserve order: Main Image first, then others
     const sortedImages = [
       ...(mainImageToUse ? [mainImageToUse] : []),
       ...Array.from(imagesToSync).filter(u => u !== mainImageToUse)
     ]
 
     for (const url of sortedImages) {
-      const { data: existingImg } = await supabase
-        .from('product_images')
-        .select('id, color')
-        .eq('product_id', productId)
-        .eq('url', url)
-        .single()
+      if (seen.has(url)) continue;
+      seen.add(url)
 
-      if (!existingImg && !seen.has(url)) {
-        seen.add(url)
-        await supabase.from('product_images').insert({
+      const existingImg = existingMap.get(url)
+
+      if (!existingImg) {
+        toInsert.push({
           product_id: productId,
           url: url,
           alt: `${sync_product.name} (${color})`,
           sort_order: sortOrder++,
           color,
         })
-      } else if (existingImg && color && !existingImg.color) {
-        await supabase
-          .from('product_images')
-          .update({ color })
-          .eq('id', existingImg.id)
+      } else {
+        sortOrder++
+        if (color && !existingImg.color) {
+          // Update existing image with color if it was missing
+          await supabase
+            .from('product_images')
+            .update({ color })
+            .eq('id', existingImg.id)
+          // Update logic remains one-by-one but it is rare
+        }
       }
     }
+  }
+
+  if (toInsert.length > 0) {
+    await supabase.from('product_images').insert(toInsert)
   }
 }
 

@@ -14,7 +14,24 @@ export function SyncPrintfulButton() {
     setMessage(null)
     setDebugLog(null)
     try {
-      const result = await syncPrintfulProducts(true)
+      // 60s timeout to prevent UI freezing
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                'Request timed out. The sync might still be running in the background.'
+              )
+            ),
+          60000
+        )
+      )
+
+      const result = (await Promise.race([
+        syncPrintfulProducts(true),
+        timeoutPromise,
+      ])) as Awaited<ReturnType<typeof syncPrintfulProducts>>
+
       if (result.ok) {
         const msg = result.error ?? `Synced ${result.synced ?? 0} products`
         setMessage(msg)
@@ -23,6 +40,7 @@ export function SyncPrintfulButton() {
       }
       if (result.debugLog) setDebugLog(result.debugLog)
     } catch (err) {
+      console.error(err)
       setMessage(err instanceof Error ? err.message : 'Sync failed')
     } finally {
       setLoading(false)
