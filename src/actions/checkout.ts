@@ -29,37 +29,7 @@ export type GuestCheckoutInput = {
   currency?: string
 }
 
-function validateStripePayload(data: {
-  name: string
-  images: string[]
-  unit_amount: number
-  quantity: number
-  description?: string
-}) {
-  // 1. Truncate strings to Stripe limits
-  const name = data.name.substring(0, 500)
-  const description = data.description?.substring(0, 1000)
 
-  // 2. Validate Images (must be http/https and not empty)
-  // Stripe allows max 8 images
-  const validImages = data.images
-    .filter((img) => img && (img.startsWith('http://') || img.startsWith('https://')))
-    .slice(0, 8)
-
-  // 3. Round amount to integer (cents)
-  const unit_amount = Math.round(data.unit_amount)
-
-  // 4. Ensure quantity is positive integer
-  const quantity = Math.max(1, Math.round(data.quantity))
-
-  return {
-    name,
-    description,
-    images: validImages,
-    unit_amount,
-    quantity,
-  }
-}
 
 export type ValidateDiscountResult =
   | { ok: true; discountId: string; discountCents: number; code: string }
@@ -109,37 +79,7 @@ export async function validateDiscountCode(
   }
 }
 
-function validateStripePayload(data: {
-  name: string
-  images: string[]
-  unit_amount: number
-  quantity: number
-  description?: string
-}) {
-  // 1. Truncate strings to Stripe limits
-  const name = data.name.substring(0, 500)
-  const description = data.description?.substring(0, 1000)
 
-  // 2. Validate Images (must be http/https and not empty)
-  // Stripe allows max 8 images
-  const validImages = data.images
-    .filter((img) => img && (img.startsWith('http://') || img.startsWith('https://')))
-    .slice(0, 8)
-
-  // 3. Round amount to integer (cents)
-  const unit_amount = Math.round(data.unit_amount)
-
-  // 4. Ensure quantity is positive integer
-  const quantity = Math.max(1, Math.round(data.quantity))
-
-  return {
-    name,
-    description,
-    images: validImages,
-    unit_amount,
-    quantity,
-  }
-}
 
 export async function createCheckoutSession(
   input?: GuestCheckoutInput
@@ -257,17 +197,26 @@ export async function createCheckoutSession(
     const desc = item.config && Object.keys(item.config).length > 0
       ? [item.variantName, 'Custom: ' + Object.entries(item.config).map(([k, v]) => `${k}: ${v}`).join(', ')].filter(Boolean).join(' · ')
       : item.variantName
+
+    const validated = validateStripePayload({
+      name: item.productName,
+      description: desc ?? undefined,
+      images: item.imageUrl ? [imageUrl(item.imageUrl)] : [],
+      unit_amount: convertedPrice,
+      quantity: item.quantity,
+    })
+
     return {
       price_data: {
         currency: requestedCurrency.toLowerCase(),
         product_data: {
-          name: item.productName,
-          description: desc ?? undefined,
-          images: item.imageUrl ? [imageUrl(item.imageUrl)] : undefined,
+          name: validated.name,
+          description: validated.description,
+          images: validated.images,
         },
-        unit_amount: convertedPrice,
+        unit_amount: validated.unit_amount,
       },
-      quantity: item.quantity,
+      quantity: validated.quantity,
     }
   })
 
