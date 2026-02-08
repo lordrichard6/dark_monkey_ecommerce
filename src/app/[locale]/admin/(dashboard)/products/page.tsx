@@ -35,7 +35,7 @@ export default async function AdminProductsPage({
       is_active,
       is_customizable,
       categories (name),
-      product_images (id, url, sort_order),
+      product_images (id, url, sort_order, color),
       product_variants (id, price_cents),
       created_at
     `, { count: 'exact' })

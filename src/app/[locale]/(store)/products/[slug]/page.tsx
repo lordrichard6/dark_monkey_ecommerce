@@ -70,7 +70,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
       is_customizable,
       category_id,
       categories (name, slug),
-      product_images (url, alt, sort_order),
+      product_images (url, alt, sort_order, color),
       product_variants (
         id,
         name,
@@ -131,7 +131,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     : { data: null }
   const userReview = userReviewRow as ReviewRow | null
 
-  const images = (product.product_images as { url: string; alt: string | null; sort_order: number }[]) ?? []
+  const images = (product.product_images as { url: string; alt: string | null; sort_order: number; color?: string | null }[]) ?? []
   const variants = (product.product_variants as Array<{
     id: string
     name: string | null
@@ -141,14 +141,14 @@ export default async function ProductPage({ params, searchParams }: Props) {
     product_inventory: any
   }>) ?? []
   const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
-  const sortedImages = [...images].sort((a, b) => a.sort_order - b.sort_order)
+  const sortedImages = images.length ? [...images].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)) : []
   const primaryImage = sortedImages[0]
   const variantsWithStock = variants
     .map((v) => ({
       ...v,
       stock: Array.isArray(v.product_inventory) ? v.product_inventory[0]?.quantity : (v.product_inventory?.quantity ?? 0),
     }))
-    .sort((a, b) => a.sort_order - b.sort_order)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
 
   const jsonLd = {
     '@context': 'https://schema.org',
