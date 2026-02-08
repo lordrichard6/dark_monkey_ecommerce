@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ProductActionsDropdown } from '@/app/[locale]/admin/(dashboard)/products/product-actions-dropdown'
+import { SyncPrintfulButton } from '@/app/[locale]/admin/(dashboard)/products/sync-printful-button'
 import { bulkDeleteProducts, bulkUpdateProductStatus } from '@/actions/admin-products'
 
 type Product = {
@@ -363,7 +364,39 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
             </div>
 
             {safeProducts.length === 0 && (
-                <p className="p-8 text-center text-zinc-500">No products yet</p>
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-800 py-16 text-center">
+                    <div className="mb-4 rounded-full bg-zinc-900 p-4 ring-1 ring-zinc-800">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-8 w-8 text-zinc-500"
+                        >
+                            <path d="m7.5 4.27 9 5.15" />
+                            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                            <path d="m3.3 7 8.7 5 8.7-5" />
+                            <path d="M12 22V12" />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-zinc-200">No products found</h3>
+                    <p className="mt-1 max-w-sm text-sm text-zinc-500">
+                        Get started by syncing your products from Printful or adding a new product manually.
+                    </p>
+                    <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row">
+                        <SyncPrintfulButton />
+                        <span className="text-xs text-zinc-600 sm:hidden">- OR -</span>
+                        <Link
+                            href="/admin/products/new"
+                            className="w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-400 sm:w-auto"
+                        >
+                            + New product
+                        </Link>
+                    </div>
+                </div>
             )}
 
             {/* Pagination Controls */}
