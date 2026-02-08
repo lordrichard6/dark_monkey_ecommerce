@@ -43,6 +43,7 @@ export default async function HomePage({ params, searchParams }: Props) {
       `
       )
       .eq('is_active', true)
+      .is('deleted_at', null)
 
     if (sort === 'price-asc') {
       query = query.order('created_at', { ascending: true })

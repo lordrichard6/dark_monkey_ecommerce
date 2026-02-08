@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { useSearchParams } from 'next/navigation'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
+import { PackageOpen } from 'lucide-react'
 
 type Product = {
   productId?: string
@@ -80,13 +81,15 @@ export function ProductGrid({ products, title, sort = 'newest' }: ProductGridPro
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 py-24 text-center">
-          <p className="text-zinc-500">
-            {t('noProducts')}{' '}
-            <code className="rounded bg-zinc-800 px-2 py-1 text-zinc-400">
-              supabase db push
-            </code>{' '}
-            {t('noProductsHint')}
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-zinc-900/30 py-24 text-center">
+          <div className="mb-6 rounded-full bg-zinc-900 p-6 ring-1 ring-zinc-800">
+            <PackageOpen className="h-10 w-10 text-amber-500" />
+          </div>
+          <h3 className="text-xl font-medium text-zinc-200">
+            {t.has('comingSoonTitle') ? t('comingSoonTitle') : 'We are preparing our products'}
+          </h3>
+          <p className="mt-2 max-w-sm text-zinc-400">
+            {t.has('comingSoonDescription') ? t('comingSoonDescription') : 'We are currently updating our collection. Please check back soon!'}
           </p>
         </div>
       )}

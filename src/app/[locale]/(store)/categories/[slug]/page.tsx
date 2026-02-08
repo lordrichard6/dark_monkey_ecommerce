@@ -58,6 +58,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       )
       .eq('category_id', category.id)
       .eq('is_active', true)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
     getUserSafe(supabase),
     getBestsellerProductIds(),
@@ -65,11 +66,11 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const wishlistProductIds = user?.id
     ? (
-        await supabase
-          .from('user_wishlist')
-          .select('product_id')
-          .eq('user_id', user.id)
-      ).data?.map((w) => w.product_id) ?? []
+      await supabase
+        .from('user_wishlist')
+        .select('product_id')
+        .eq('user_id', user.id)
+    ).data?.map((w) => w.product_id) ?? []
     : []
 
   const { data: products } = productsResult

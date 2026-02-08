@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
   if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
   const [{ count: productsCount }, { count: ordersCount }, { data: recentOrders }] = await Promise.all([
-    supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
     supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['paid', 'processing', 'shipped', 'delivered']),
     supabase
       .from('orders')
