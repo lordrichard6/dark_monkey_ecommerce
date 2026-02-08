@@ -21,7 +21,7 @@ export async function testStripeConnection() {
             ok: true,
             message: 'Connection successful',
             data: `Retrieved ${result.data.length} payment intents.`,
-            keyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7)
+            keyPrefix: process.env.STRIPE_SECRET_KEY?.trim().substring(0, 7)
         }
     } catch (err: any) {
         console.error('[TestStripe] Connection failed:', err)

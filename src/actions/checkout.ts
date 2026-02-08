@@ -29,6 +29,38 @@ export type GuestCheckoutInput = {
   currency?: string
 }
 
+function validateStripePayload(data: {
+  name: string
+  images: string[]
+  unit_amount: number
+  quantity: number
+  description?: string
+}) {
+  // 1. Truncate strings to Stripe limits
+  const name = data.name.substring(0, 500)
+  const description = data.description?.substring(0, 1000)
+
+  // 2. Validate Images (must be http/https and not empty)
+  // Stripe allows max 8 images
+  const validImages = data.images
+    .filter((img) => img && (img.startsWith('http://') || img.startsWith('https://')))
+    .slice(0, 8)
+
+  // 3. Round amount to integer (cents)
+  const unit_amount = Math.round(data.unit_amount)
+
+  // 4. Ensure quantity is positive integer
+  const quantity = Math.max(1, Math.round(data.quantity))
+
+  return {
+    name,
+    description,
+    images: validImages,
+    unit_amount,
+    quantity,
+  }
+}
+
 export type ValidateDiscountResult =
   | { ok: true; discountId: string; discountCents: number; code: string }
   | { ok: false; error: string }
@@ -74,6 +106,38 @@ export async function validateDiscountCode(
     discountId: discount.id,
     discountCents,
     code: discount.code,
+  }
+}
+
+function validateStripePayload(data: {
+  name: string
+  images: string[]
+  unit_amount: number
+  quantity: number
+  description?: string
+}) {
+  // 1. Truncate strings to Stripe limits
+  const name = data.name.substring(0, 500)
+  const description = data.description?.substring(0, 1000)
+
+  // 2. Validate Images (must be http/https and not empty)
+  // Stripe allows max 8 images
+  const validImages = data.images
+    .filter((img) => img && (img.startsWith('http://') || img.startsWith('https://')))
+    .slice(0, 8)
+
+  // 3. Round amount to integer (cents)
+  const unit_amount = Math.round(data.unit_amount)
+
+  // 4. Ensure quantity is positive integer
+  const quantity = Math.max(1, Math.round(data.quantity))
+
+  return {
+    name,
+    description,
+    images: validImages,
+    unit_amount,
+    quantity,
   }
 }
 
@@ -246,7 +310,7 @@ export async function createCheckoutSession(
   }
 
   try {
-    const key = process.env.STRIPE_SECRET_KEY
+    const key = process.env.STRIPE_SECRET_KEY?.trim()
     console.log('[Checkout] Debug: Starting Stripe Session Create')
     console.log('[Checkout] Debug: Runtime:', process.env.NEXT_RUNTIME ?? 'Node (default)')
     console.log('[Checkout] Debug: Key Length:', key ? key.length : 'MISSING')
