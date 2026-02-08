@@ -247,29 +247,30 @@ export async function createCheckoutSession(
     })
 
     const emailForAbandoned = input?.email ?? undefined
-    if (session.id && emailForAbandoned) {
-      // Use fire-and-forget but with a catch to prevent table-missing-500
-      supabase.from('abandoned_checkouts').insert({
-        stripe_session_id: session.id,
-        email: emailForAbandoned,
-        cart_summary: {
-          itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
-          totalCents,
-          items: validatedItems.map(({ item }) => ({
-            variantId: item.variantId,
-            productId: item.productId,
-            quantity: item.quantity,
-            priceCents: item.priceCents,
-            config: item.config ?? {},
-            name: item.productName
-          }))
-        },
-      }).then(({ error }) => {
+    // Use fire-and-forget but with a catch to prevent table-missing-500
+    void (async () => {
+      try {
+        const { error } = await supabase.from('abandoned_checkouts').insert({
+          stripe_session_id: session.id,
+          email: emailForAbandoned,
+          cart_summary: {
+            itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
+            totalCents,
+            items: validatedItems.map(({ item }) => ({
+              variantId: item.variantId,
+              productId: item.productId,
+              quantity: item.quantity,
+              priceCents: item.priceCents,
+              config: item.config ?? {},
+              name: item.productName
+            }))
+          },
+        })
         if (error) console.error('[Checkout] Abandoned checkout insert failed:', error.message)
-      }).catch(err => {
+      } catch (err) {
         console.error('[Checkout] Abandoned checkout insert crashed:', err)
-      })
-    }
+      }
+    })()
 
     if (session.url) {
       // Clear cart on successful redirect
