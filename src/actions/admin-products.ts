@@ -395,7 +395,58 @@ export async function deleteProduct(
   const supabase = getAdminClient()
   if (!supabase) return { ok: false, error: 'Admin not configured' }
 
-  const { error } = await supabase.from('products').delete().eq('id', productId)
+  const { error } = await supabase
+    .from('products')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', productId)
+
+  if (error) {
+    console.error('Delete product error:', error)
+    return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/admin/products')
+  return { ok: true }
+}
+
+export async function bulkDeleteProducts(
+  productIds: string[]
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { error } = await supabase
+    .from('products')
+    .update({ deleted_at: new Date().toISOString() })
+    .in('id', productIds)
+
+  if (error) {
+    console.error('Bulk delete products error:', error)
+    return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/admin/products')
+  return { ok: true }
+}
+
+export async function bulkUpdateProductStatus(
+  productIds: string[],
+  isActive: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { error } = await supabase
+    .from('products')
+    .update({ is_active: isActive })
+    .in('id', productIds)
+
   if (error) return { ok: false, error: error.message }
 
   revalidatePath('/admin/products')

@@ -32,6 +32,9 @@ function getQuantity(v: any): number {
 type Props = {
   variants: Variant[]
   onRefresh?: () => void
+  selectedColor: string
+  onColorChange: (color: string) => void
+  availableColors: string[]
 }
 
 function getSize(v: Variant): string {
@@ -40,13 +43,31 @@ function getSize(v: Variant): string {
   return (fromAttrs || fromName) ?? '-'
 }
 
-export function ProductDetailAdmin({ variants, onRefresh }: Props) {
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']
+
+function sortVariantsBySize(variants: Variant[]): Variant[] {
+  return [...variants].sort((a, b) => {
+    const sizeA = getSize(a)
+    const sizeB = getSize(b)
+    const indexA = SIZE_ORDER.indexOf(sizeA)
+    const indexB = SIZE_ORDER.indexOf(sizeB)
+
+    // If both are found in the predefined order, compare their indices
+    if (indexA !== -1 && indexB !== -1) return indexA - indexB
+
+    // If only one is found, prioritize it
+    if (indexA !== -1) return -1
+    if (indexB !== -1) return 1
+
+    // Fallback to alphabetical for unknown sizes
+    return sizeA.localeCompare(sizeB)
+  })
+}
+
+export function ProductDetailAdmin({ variants = [], onRefresh, selectedColor, onColorChange, availableColors = [] }: Props) {
   const router = useRouter()
-  const colors = Array.from(
-    new Set(variants.map((v) => (v.attributes?.color as string) || 'Default'))
-  ).sort((a, b) => (a === 'Default' ? 1 : a.localeCompare(b)))
-  const defaultColor = colors[0] ?? 'Default'
-  const [selectedColor, setSelectedColor] = useState(defaultColor)
+  // Internal color state removed - controlled by parent
+
   // Determine which variant is selected (store ID only to handle refreshes)
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
 
@@ -56,7 +77,9 @@ export function ProductDetailAdmin({ variants, onRefresh }: Props) {
   const [editQuantity, setEditQuantity] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  const variantsForColor = variants.filter((v) => ((v.attributes?.color as string) || 'Default') === selectedColor)
+  const variantsForColor = sortVariantsBySize(
+    variants.filter((v) => ((v.attributes?.color as string) || 'Default') === selectedColor)
+  )
   const priceRange =
     variants.length === 0
       ? null
@@ -104,7 +127,7 @@ export function ProductDetailAdmin({ variants, onRefresh }: Props) {
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Colors</span>
         <div className="mt-3 flex flex-wrap gap-3">
-          {colors.map((color) => {
+          {availableColors.map((color) => {
             const hex = colorToHex(color)
             const isLight = ['#ffffff', '#fff', '#ffc0cb', '#fffdd0', '#f5f5dc'].includes(hex.toLowerCase())
             const isSelected = selectedColor === color
@@ -112,7 +135,7 @@ export function ProductDetailAdmin({ variants, onRefresh }: Props) {
               <button
                 key={color}
                 type="button"
-                onClick={() => setSelectedColor(color)}
+                onClick={() => onColorChange(color)}
                 title={color}
                 className={`group relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-2 transition-all ${isSelected
                   ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110'
@@ -140,44 +163,32 @@ export function ProductDetailAdmin({ variants, onRefresh }: Props) {
 
       {/* Sizes Section */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Sizes for {selectedColor}</span>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {variantsForColor.map((v) => {
-            const size = getSize(v)
-            const isSelected = selectedVariant?.id === v.id
-            const qty = getQuantity(v)
-            const isOutOfStock = qty === 0
-            return (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => selectVariant(v)}
-                className={`group relative flex min-h-[4.5rem] flex-col items-center justify-center rounded-lg border-2 p-3 text-center transition-all ${isSelected
-                  ? 'border-amber-500 bg-amber-500/10 ring-4 ring-amber-500/20'
-                  : isOutOfStock
-                    ? 'border-red-900/50 bg-red-950/20'
-                    : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800'
-                  }`}
-              >
-                <span className={`text-lg font-bold ${isSelected ? 'text-amber-400' : isOutOfStock ? 'text-red-400' : 'text-zinc-200'}`}>
-                  {size}
-                </span>
-                <span className={`mt-1 text-xs ${isSelected ? 'text-amber-400/70' : isOutOfStock ? 'text-red-400/70' : 'text-zinc-500'}`}>
-                  {formatPrice(v.price_cents)}
-                </span>
-                <span className={`mt-0.5 text-xs font-medium ${isSelected ? 'text-amber-400' : isOutOfStock ? 'text-red-400' : 'text-zinc-400'}`}>
-                  Stock: {qty}
-                </span>
-                {isOutOfStock && (
-                  <div className="absolute right-1 top-1">
-                    <svg className="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </button>
-            )
-          })}
+        <label htmlFor="variant-select" className="block text-xs font-medium uppercase tracking-wider text-zinc-500">
+          Size / Variant for {selectedColor}
+        </label>
+
+        <div className="mt-3">
+          <select
+            id="variant-select"
+            value={selectedVariantId ?? ''}
+            onChange={(e) => {
+              const v = variantsForColor.find((v) => v.id === e.target.value)
+              if (v) selectVariant(v)
+            }}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+          >
+            <option value="" disabled>Select a size...</option>
+            {variantsForColor.map((v) => {
+              const size = getSize(v)
+              const qty = getQuantity(v)
+              const isOutOfStock = qty === 0
+              return (
+                <option key={v.id} value={v.id}>
+                  {size} — {formatPrice(v.price_cents)} {isOutOfStock ? '(Out of Stock)' : `(${qty} in stock)`}
+                </option>
+              )
+            })}
+          </select>
         </div>
 
         {/* Stock Update Form */}

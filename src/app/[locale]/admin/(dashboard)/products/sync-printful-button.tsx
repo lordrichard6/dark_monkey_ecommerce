@@ -30,18 +30,18 @@ export function SyncPrintfulButton() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-3 w-full sm:w-auto">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={handleSync}
           disabled={loading}
-          className="rounded-lg border border-zinc-600 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-700 disabled:opacity-50"
+          className="w-full rounded-lg border border-zinc-600 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-700 disabled:opacity-50 sm:w-auto"
         >
           {loading ? 'Syncing…' : 'Sync from Printful'}
         </button>
         {message && (
-          <span className="text-sm text-zinc-400">{message}</span>
+          <span className="text-center text-sm text-zinc-400 sm:text-left">{message}</span>
         )}
       </div>
       {debugLog && debugLog.length > 0 && (

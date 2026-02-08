@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { SyncPrintfulButton } from './sync-printful-button'
-import { ProductActionsDropdown } from './product-actions-dropdown'
+import { ProductListTable } from '@/components/admin/ProductListTable'
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('de-CH', {
@@ -12,11 +12,21 @@ function formatPrice(cents: number) {
   }).format(cents / 100)
 }
 
-export default async function AdminProductsPage() {
+
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string }
+}) {
   const supabase = getAdminClient()
   if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
-  const { data: products } = await supabase
+  const page = parseInt(searchParams.page || '1', 10) || 1
+  const limit = 20
+  const start = (page - 1) * limit
+  const end = start + limit - 1
+
+  const { data: products, count } = await supabase
     .from('products')
     .select(`
       id,
@@ -26,106 +36,36 @@ export default async function AdminProductsPage() {
       is_customizable,
       categories (name),
       product_images (id, url, sort_order),
-      product_variants (id, price_cents)
-    `)
+      product_variants (id, price_cents),
+      created_at
+    `, { count: 'exact' })
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
+    .range(start, end)
+
+  const totalPages = count ? Math.ceil(count / limit) : 1
 
   return (
     <div className="p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-zinc-50">Products</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <SyncPrintfulButton />
           <Link
             href="/admin/products/new"
-            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-400"
+            className="w-full rounded-lg bg-amber-500 px-4 py-2 text-center text-sm font-medium text-zinc-950 hover:bg-amber-400 sm:w-auto"
           >
             + New product
           </Link>
         </div>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-zinc-800">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-zinc-800 bg-zinc-900/80">
-              <th className="w-14 px-4 py-3 text-left text-sm font-medium text-zinc-400"></th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Product</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Category</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Images</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Price range</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Status</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(products ?? []).map((p) => {
-              const variants = (p.product_variants ?? []) as { price_cents: number }[]
-              const images = ((p.product_images ?? []) as { id: string; url: string; sort_order?: number }[])
-                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-              const thumbnailUrl = images[0]?.url
-              const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
-              const maxPrice = variants.length ? Math.max(...variants.map((v) => v.price_cents)) : 0
-              const priceRange =
-                minPrice === maxPrice ? formatPrice(minPrice) : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
-              const category = (p.categories as { name?: string } | null)?.name ?? '—'
-              return (
-                <tr key={p.id} className="border-b border-zinc-800/50">
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/products/${p.id}`} className="block">
-                      {thumbnailUrl ? (
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded ring-1 ring-zinc-700">
-                          <img
-                            src={thumbnailUrl}
-                            alt=""
-                            className="absolute inset-0 h-full w-full object-cover object-center scale-110"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-zinc-800 text-xs text-zinc-500 ring-1 ring-zinc-700">
-                          —
-                        </div>
-                      )}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/products/${p.id}`} className="font-medium text-zinc-50 hover:text-amber-400">
-                      {p.name}
-                    </Link>
-                    {p.is_customizable && (
-                      <span className="ml-2 rounded bg-amber-900/40 px-2 py-0.5 text-xs text-amber-400">
-                        Customizable
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-zinc-400">{category}</td>
-                  <td className="px-4 py-3 text-sm text-zinc-400">{images.length}</td>
-                  <td className="px-4 py-3 text-sm text-zinc-300">{priceRange}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded px-2 py-0.5 text-xs ${
-                        p.is_active ? 'bg-emerald-900/40 text-emerald-400' : 'bg-zinc-800 text-zinc-500'
-                      }`}
-                    >
-                      {p.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <ProductActionsDropdown
-                      productId={p.id}
-                      productName={p.name}
-                      productSlug={p.slug}
-                      isActive={p.is_active}
-                    />
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {(products ?? []).length === 0 && (
-          <p className="p-8 text-center text-zinc-500">No products yet</p>
-        )}
+      <div className="mt-8">
+        <ProductListTable
+          products={products as any}
+          currentPage={page}
+          totalPages={totalPages}
+        />
       </div>
     </div>
   )

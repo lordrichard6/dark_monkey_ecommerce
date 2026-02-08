@@ -28,7 +28,13 @@ async function resolvePriceCents(
 type SyncProduct = { name: string; thumbnail_url?: string }
 type SyncVariant = {
   product?: { name?: string; image?: string }
-  files?: Array<{ preview_url?: string; thumbnail_url?: string }>
+  files?: Array<{ preview_url?: string; thumbnail_url?: string; type?: string }>
+  color?: string
+  size?: string
+  retail_price?: string
+  variant_id?: number
+  id?: number
+  sku?: string | null
 }
 
 async function ensureProductImages(
@@ -42,41 +48,110 @@ async function ensureProductImages(
     .select('id')
     .eq('product_id', productId)
     .limit(1)
-  if ((existing ?? []).length > 0) return
+  // Removed early return to allow updating existing images with missing colors
+  // if ((existing ?? []).length > 0) return
 
   const seen = new Set<string>()
   let sortOrder = 0
+
+  // 1. Add Thumbnail (colorless / default)
   const thumbUrl = sync_product.thumbnail_url || sync_variants[0]?.product?.image
   if (thumbUrl && !seen.has(thumbUrl)) {
     seen.add(thumbUrl)
-    await supabase.from('product_images').insert({
-      product_id: productId,
-      url: thumbUrl,
-      alt: sync_product.name,
-      sort_order: sortOrder++,
-    })
-  }
-  for (const sv of sync_variants) {
-    const img = sv.product?.image
-    if (img && !seen.has(img)) {
-      seen.add(img)
+    // Check if image exists
+    const { data: existingImg } = await supabase
+      .from('product_images')
+      .select('id, color')
+      .eq('product_id', productId)
+      .eq('url', thumbUrl)
+      .single()
+
+    if (!existingImg) {
       await supabase.from('product_images').insert({
         product_id: productId,
-        url: img,
-        alt: sv.product?.name ?? sync_product.name,
+        url: thumbUrl,
+        alt: sync_product.name,
         sort_order: sortOrder++,
+        color: null,
       })
     }
-    for (const f of sv.files ?? []) {
-      const url = f.preview_url ?? f.thumbnail_url
-      if (url && !seen.has(url)) {
+  }
+
+  // 2. Add Variant Images (with Color)
+  // Group variants by color to find the best image for each color
+  const variantsByColor = new Map<string, typeof sync_variants>()
+
+  for (const sv of sync_variants) {
+    const color = sv.color
+    if (!color) continue // Skip variants with no color for image grouping
+
+    if (!variantsByColor.has(color)) {
+      variantsByColor.set(color, [])
+    }
+    variantsByColor.get(color)!.push(sv)
+  }
+
+  // Process each color
+  for (const [color, variants] of variantsByColor.entries()) {
+    // Strategy: Find the best image for this color.
+    // 1. Look for 'preview' files (Mockups) on ANY variant. 
+    //    Prioritize files that are visible.
+    // 2. Fallback to 'product.image' of the newest variant (highest ID).
+
+    // Collect all candidate files
+    const allFiles = variants.flatMap(v => v.files || [])
+    const previewFile = allFiles.find(f => f.type === 'preview')
+
+    // Find newest variant for fallback
+    const newestVariant = variants.sort((a, b) => (b.id || 0) - (a.id || 0))[0]
+    const allFilesNewest = newestVariant.files || []
+    const mainPreviewFile = allFilesNewest.find(f => f.type === 'preview')
+    const mainImageToUse = mainPreviewFile?.preview_url ?? mainPreviewFile?.thumbnail_url ?? newestVariant.product?.image
+
+    const imagesToSync = new Set<string>()
+    if (mainImageToUse) imagesToSync.add(mainImageToUse)
+
+    // --- Collect Additional Unique Images from ALL variants of this color ---
+    const allVariantsFiles = variants.flatMap(v => v.files || [])
+    for (const f of allVariantsFiles) {
+      if (f.type !== 'preview') continue
+      const u = f.preview_url || f.thumbnail_url
+      if (u) imagesToSync.add(u)
+    }
+    // Also check product.image of all variants
+    for (const v of variants) {
+      if (v.product?.image) imagesToSync.add(v.product.image)
+    }
+
+    // --- Insert Images ---
+    // Convert to array to preserve order: Main Image first, then others
+    const sortedImages = [
+      ...(mainImageToUse ? [mainImageToUse] : []),
+      ...Array.from(imagesToSync).filter(u => u !== mainImageToUse)
+    ]
+
+    for (const url of sortedImages) {
+      const { data: existingImg } = await supabase
+        .from('product_images')
+        .select('id, color')
+        .eq('product_id', productId)
+        .eq('url', url)
+        .single()
+
+      if (!existingImg && !seen.has(url)) {
         seen.add(url)
         await supabase.from('product_images').insert({
           product_id: productId,
-          url,
-          alt: sync_product.name,
+          url: url,
+          alt: `${sync_product.name} (${color})`,
           sort_order: sortOrder++,
+          color,
         })
+      } else if (existingImg && color && !existingImg.color) {
+        await supabase
+          .from('product_images')
+          .update({ color })
+          .eq('id', existingImg.id)
       }
     }
   }
@@ -103,7 +178,10 @@ export async function syncPrintfulProducts(debug = false): Promise<{
   error?: string
   debugLog?: PrintfulDebugEntry[]
 }> {
-  const user = await getAdminUser()
+  // Allow CLI bypass if env var is set
+  const isCli = process.env.IS_CLI_SYNC === 'true'
+  const user = isCli ? { id: 'cli-admin', email: 'cli@example.com' } : await getAdminUser()
+
   if (!user) return { ok: false, error: 'Unauthorized' }
 
   if (!isPrintfulConfigured()) {

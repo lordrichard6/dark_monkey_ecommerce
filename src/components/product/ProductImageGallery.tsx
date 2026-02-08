@@ -7,11 +7,13 @@ type ImageItem = {
   url: string
   alt: string | null
   sort_order: number
+  color?: string | null
 }
 
 type ProductImageGalleryProps = {
   images: ImageItem[]
   productName: string
+  selectedColor?: string | null
 }
 
 function isUnoptimized(url: string): boolean {
@@ -23,10 +25,31 @@ function isUnoptimized(url: string): boolean {
   )
 }
 
-export function ProductImageGallery({ images, productName }: ProductImageGalleryProps) {
-  const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order)
+export function ProductImageGallery({ images, productName, selectedColor }: ProductImageGalleryProps) {
+  // Filter images: show if image has NO color (universal) OR matches selectedColor
+  // Filter images: show if image has NO color (universal) OR matches selectedColor
+  const filtered = selectedColor
+    ? images.filter(img => !img.color || img.color === selectedColor)
+    : images
+
+  // Deduplicate: Keep one image per color. 
+  // If multiple images exist for the same color, keep only the first one.
+  // Always keep images with no color (universal).
+  const unique = filtered.filter((img, index, self) => {
+    if (!img.color) return true
+    // Find the first occurrence of this color
+    const firstIndex = self.findIndex(t => t.color === img.color)
+    return index === firstIndex
+  })
+
+  const sorted = [...unique].sort((a, b) => a.sort_order - b.sort_order)
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const main = sorted[selectedIndex]
+
+  // Reset selection when color changes (optional, but good UX to show first image of new color)
+  // We can use a key on the component in parent to force reset, or useEffect here.
+  // For now simple index reset if out of bounds
+  const safeIndex = selectedIndex >= sorted.length ? 0 : selectedIndex
+  const main = sorted[safeIndex]
 
   if (sorted.length === 0) {
     return (
@@ -46,11 +69,10 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
               key={`${img.url}-${i}`}
               type="button"
               onClick={() => setSelectedIndex(i)}
-              className={`relative aspect-square w-16 overflow-hidden rounded-lg border-2 transition md:w-20 ${
-                selectedIndex === i
-                  ? 'border-amber-500 ring-2 ring-amber-500/30'
-                  : 'border-zinc-700 bg-zinc-800/80 hover:border-zinc-600'
-              }`}
+              className={`relative aspect-square w-16 overflow-hidden rounded-lg border-2 transition md:w-20 ${safeIndex === i
+                ? 'border-amber-500 ring-2 ring-amber-500/30'
+                : 'border-zinc-700 bg-zinc-800/80 hover:border-zinc-600'
+                }`}
             >
               <span className="absolute inset-0 block">
                 <span className="relative block size-full">
@@ -78,7 +100,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
-            priority={selectedIndex === 0}
+            priority={safeIndex === 0}
             unoptimized={isUnoptimized(main.url)}
           />
         </div>

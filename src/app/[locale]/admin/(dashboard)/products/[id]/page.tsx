@@ -4,8 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
-import { ProductDetailAdmin } from './product-detail-admin'
-import { ProductImageManager } from './product-image-manager'
+import { ProductEditor } from './product-editor'
 import { ProductEditableFields } from './product-editable-fields'
 import { ProductDescriptionField } from './product-description-field'
 import { ProductCategoryField } from './product-category-field'
@@ -36,7 +35,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
       is_active,
       is_customizable,
       categories (id, name),
-      product_images (id, url, alt, sort_order),
+      product_images (id, url, alt, sort_order, color),
       product_variants (
         id,
         sku,
@@ -77,7 +76,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
     name: v.name,
     inventory: v.product_inventory
   })), null, 2))
-  const images = ((product.product_images as { id: string; url: string; alt: string | null; sort_order?: number }[]) ?? []).sort(
+  const images = ((product.product_images as { id: string; url: string; alt: string | null; sort_order?: number; color?: string | null }[]) ?? []).sort(
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
   )
 
@@ -149,27 +148,15 @@ export default async function AdminProductDetailPage({ params }: Props) {
       </div>
 
       {/* Main Content - Stacked on mobile, side-by-side on desktop */}
-      <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-        {/* Images Section */}
-        <div className="order-2 lg:order-1">
-          <div className="sticky top-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-            <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">Product Images</h3>
-            <ProductImageManager productId={product.id} images={images} />
-          </div>
-        </div>
+      <ProductEditor
+        productId={product.id}
+        images={images}
+        variants={variants}
+      />
 
-        {/* Variants & Stock Section */}
-        <div className="order-1 space-y-6 lg:order-2">
-          <div>
-            <h2 className="mb-4 text-lg font-semibold text-zinc-50">Variants & Stock</h2>
-            <ProductDetailAdmin variants={variants} />
-          </div>
-
-          {/* Description */}
-          <div className="border-t border-zinc-800 pt-6">
-            <ProductDescriptionField productId={product.id} description={product.description} />
-          </div>
-        </div>
+      {/* Description below */}
+      <div className="mt-6 border-t border-zinc-800 pt-6">
+        <ProductDescriptionField productId={product.id} description={product.description} />
       </div>
     </div>
   )

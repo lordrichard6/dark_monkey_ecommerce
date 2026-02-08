@@ -62,26 +62,36 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const cartItemsJson = fullSession.metadata?.cartItems
-  const totalCentsStr = fullSession.metadata?.totalCents
-  const userId = fullSession.metadata?.user_id ?? null
-  const guestEmail = fullSession.metadata?.guest_email ?? fullSession.customer_email ?? fullSession.customer_details?.email
+  // Fetch cart items from DB (stored in abandoned_checkouts to avoid metadata limits)
+  const { data: checkoutData } = await supabase
+    .from('abandoned_checkouts')
+    .select('cart_summary')
+    .eq('stripe_session_id', session.id)
+    .single()
 
-  if (!cartItemsJson || !totalCentsStr) {
+  if (!checkoutData?.cart_summary || typeof checkoutData.cart_summary !== 'object') {
     return NextResponse.json(
-      { error: 'Missing metadata' },
+      { error: 'Missing checkout data in DB' },
       { status: 400 }
     )
   }
 
-  const cartItems = JSON.parse(cartItemsJson) as Array<{
-    variantId: string
-    productId: string
-    quantity: number
-    priceCents: number
-    config?: Record<string, unknown>
-  }>
-  const totalCents = parseInt(totalCentsStr, 10)
+  const cartSummary = checkoutData.cart_summary as {
+    totalCents: number
+    items: Array<{
+      variantId: string
+      productId: string
+      quantity: string | number
+      priceCents: number
+      config?: Record<string, unknown>
+    }>
+  }
+
+  const cartItems = cartSummary.items.map(item => ({
+    ...item,
+    quantity: Number(item.quantity) // Ensure number
+  }))
+  const totalCents = Number(cartSummary.totalCents)
 
   // Shipping address is in collected_information.shipping_details (newer API structure)
   const collectedShipping = (fullSession as any).collected_information?.shipping_details
@@ -107,6 +117,9 @@ export async function POST(request: NextRequest) {
   const discountCents = fullSession.metadata?.discount_cents
     ? parseInt(fullSession.metadata.discount_cents, 10)
     : 0
+
+  const userId = fullSession.metadata?.user_id ?? null
+  const guestEmail = fullSession.metadata?.guest_email ?? fullSession.customer_email ?? fullSession.customer_details?.email
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -235,7 +248,7 @@ export async function POST(request: NextRequest) {
       variant_id?: number
       sync_variant_id?: number
       quantity: number
-      files: { url: string }[]
+      files?: { url: string }[]
       retail_price: string
     }> = []
 
@@ -253,7 +266,7 @@ export async function POST(request: NextRequest) {
         printfulItems.push({
           sync_variant_id: syncId,
           quantity: item.quantity,
-          files: [{ url: getDefaultPrintFileUrl() }],
+          // Do not send files for synced variants (uses Printful stored design)
           retail_price: (item.priceCents / 100).toFixed(2),
         })
       } else if (catalogId != null) {

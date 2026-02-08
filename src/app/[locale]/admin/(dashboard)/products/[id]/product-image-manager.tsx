@@ -9,14 +9,16 @@ type Image = {
   url: string
   alt: string | null
   sort_order?: number
+  color?: string | null
 }
 
 type Props = {
   productId: string
   images: Image[]
+  selectedColor?: string | null
 }
 
-export function ProductImageManager({ productId, images }: Props) {
+export function ProductImageManager({ productId, images, selectedColor }: Props) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -25,8 +27,16 @@ export function ProductImageManager({ productId, images }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const displayImage = images[selectedIndex] ?? images[0]
-  const primaryImageId = images.length ? images[0]?.id : null
+
+  // Filter images based on selected color (or no color)
+  // Show images with matching color OR null (universal)
+  // If no specific color selected, show all
+  const filteredImages = selectedColor
+    ? images.filter(img => !img.color || img.color === selectedColor)
+    : images
+
+  const displayImage = filteredImages[selectedIndex] ?? filteredImages[0]
+  const primaryImageId = images.length ? images[0]?.id : null // Primary is global, not filtered
 
   useEffect(() => {
     if (!lightboxUrl) return
@@ -144,54 +154,54 @@ export function ProductImageManager({ productId, images }: Props) {
 
       {/* Small thumbnails below */}
       <div className="flex flex-wrap gap-2">
-        {images.map((img, i) => {
+        {filteredImages.map((img, i) => {
           const isPrimary = img.id === primaryImageId
           return (
-          <div
-            key={img.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => setSelectedIndex(i)}
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedIndex(i)}
-            className={`group relative h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-              selectedIndex === i ? 'border-amber-500 ring-1 ring-amber-500/50' : 'border-zinc-700 bg-zinc-800'
-            }`}
-          >
-            <img src={img.url} alt={img.alt ?? ''} className="h-full w-full object-cover" />
-            {isPrimary && (
-              <span className="absolute left-1 top-1 rounded bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950">1</span>
-            )}
-            {!isPrimary && (
+            <div
+              key={img.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedIndex(i)}
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedIndex(i)}
+              className={`group relative h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border focus:outline-none focus:ring-2 focus:ring-amber-500 ${selectedIndex === i ? 'border-amber-500 ring-1 ring-amber-500/50' : 'border-zinc-700 bg-zinc-800'
+                }`}
+            >
+              <img src={img.url} alt={img.alt ?? ''} className="h-full w-full object-cover" />
+              {isPrimary && (
+                <span className="absolute left-1 top-1 rounded bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950">1</span>
+              )}
+              {!isPrimary && (
+                <button
+                  type="button"
+                  onClick={(e) => handleSetPrimary(e, img.id)}
+                  disabled={settingPrimaryId === img.id}
+                  className="absolute left-1 top-1 rounded bg-zinc-800/90 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 opacity-0 transition hover:bg-amber-500/90 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
+                  title="Set as primary"
+                >
+                  {settingPrimaryId === img.id ? '…' : 'Set #1'}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={(e) => handleSetPrimary(e, img.id)}
-                disabled={settingPrimaryId === img.id}
-                className="absolute left-1 top-1 rounded bg-zinc-800/90 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 opacity-0 transition hover:bg-amber-500/90 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
-                title="Set as primary"
+                onClick={(e) => handleDelete(e, img.id)}
+                disabled={deletingId === img.id}
+                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition hover:bg-red-500 group-hover:opacity-100 disabled:opacity-50"
+                title="Delete"
               >
-                {settingPrimaryId === img.id ? '…' : 'Set #1'}
+                {deletingId === img.id ? (
+                  <svg className="h-2.5 w-2.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={(e) => handleDelete(e, img.id)}
-              disabled={deletingId === img.id}
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition hover:bg-red-500 group-hover:opacity-100 disabled:opacity-50"
-              title="Delete"
-            >
-              {deletingId === img.id ? (
-                <svg className="h-2.5 w-2.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              )}
-            </button>
-          </div>
-        )})}
+            </div>
+          )
+        })}
         {images.length === 0 && (
           <p className="py-4 text-xs text-zinc-500">No images. Click + to upload.</p>
         )}

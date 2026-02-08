@@ -2,11 +2,8 @@ import { createClient, getUserSafe } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { notFound } from 'next/navigation'
-import { ProductImageGallery } from '@/components/product/ProductImageGallery'
 import Link from 'next/link'
-import { AddToCartForm } from './add-to-cart-form'
-import { WishlistButton } from '@/components/wishlist/WishlistButton'
-import { ProductReviews } from '@/components/reviews/ProductReviews'
+import { ProductMain } from './product-main'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
@@ -24,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .select('name, description')
     .eq('slug', slug)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .single()
 
   if (!product) return { title: 'Product' }
@@ -49,6 +47,7 @@ export async function generateStaticParams() {
     .from('products')
     .select('slug')
     .eq('is_active', true)
+    .is('deleted_at', null)
 
   return (products ?? []).map((p) => ({
     slug: p.slug,
@@ -84,6 +83,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     )
     .eq('slug', slug)
     .eq('is_active', true)
+    .is('deleted_at', null)
     .single()
 
   if (error || !product) notFound()
@@ -182,60 +182,26 @@ export default async function ProductPage({ params, searchParams }: Props) {
           <span className="text-zinc-400">{product.name}</span>
         </nav>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <ProductImageGallery
-            images={sortedImages}
-            productName={product.name}
-          />
-
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold text-zinc-50 md:text-3xl">
-                {product.name}
-              </h1>
-              {isBestseller && (
-                <span className="rounded-md bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-400 ring-1 ring-amber-500/30">
-                  {tProduct('bestseller')}
-                </span>
-              )}
-            </div>
-            {product.description && (
-              <p className="mt-4 text-zinc-400">{product.description}</p>
-            )}
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <WishlistButton
-                productId={product.id}
-                productSlug={product.slug}
-                isInWishlist={isInWishlist}
-                variant="button"
-              />
-            </div>
-            <AddToCartForm
-              productId={product.id}
-              productSlug={product.slug}
-              productName={product.name}
-              variants={variantsWithStock}
-              primaryImageUrl={primaryImage?.url}
-              customizationRule={
-                customizationRule?.rule_def
-                  ? (customizationRule.rule_def as import('@/types/customization').CustomizationRuleDef)
-                  : null
-              }
-              productCategory={
-                (product.categories as { name?: string } | null)?.name
-              }
-            />
-            <ProductReviews
-              productId={product.id}
-              productSlug={product.slug}
-              reviews={reviews}
-              userReview={userReview}
-              canSubmit={!!user?.id}
-              orderIdFromQuery={orderIdFromQuery}
-            />
-          </div>
-        </div>
+        <ProductMain
+          product={{
+            ...product,
+            categories: Array.isArray(product.categories) ? product.categories[0] : product.categories,
+          }}
+          images={sortedImages}
+          variants={variantsWithStock}
+          reviews={reviews}
+          userReview={userReview}
+          isBestseller={isBestseller}
+          isInWishlist={isInWishlist}
+          canSubmitReview={!!user?.id}
+          orderIdFromQuery={orderIdFromQuery}
+          primaryImageUrl={primaryImage?.url}
+          customizationRule={
+            customizationRule?.rule_def
+              ? (customizationRule.rule_def as import('@/types/customization').CustomizationRuleDef)
+              : null
+          }
+        />
       </div>
     </div>
   )

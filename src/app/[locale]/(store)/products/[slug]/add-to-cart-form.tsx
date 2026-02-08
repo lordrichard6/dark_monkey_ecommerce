@@ -46,6 +46,10 @@ type AddToCartFormProps = {
   primaryImageUrl?: string
   customizationRule?: CustomizationRuleDef | null
   productCategory?: string
+  // Controlled props
+  selectedColor?: string
+  onColorChange?: (color: string) => void
+  availableColors?: string[]
 }
 
 import { useCurrency } from '@/components/currency/CurrencyContext'
@@ -66,10 +70,13 @@ export function AddToCartForm({
   primaryImageUrl,
   customizationRule,
   productCategory,
+  ...props
 }: AddToCartFormProps) {
   const t = useTranslations('product')
   const { format } = useCurrency()
   const router = useRouter()
+
+  // Internal fallback if not controlled (though we aim to control it)
   const colors = useMemo(
     () =>
       Array.from(
@@ -78,14 +85,23 @@ export function AddToCartForm({
     [variants]
   )
   const firstColor = colors[0] ?? 'Default'
+
+  // Use prop if available, else internal state
+  const isControlled = props.selectedColor !== undefined
+  const [internalColor, setInternalColor] = useState(firstColor)
+  const selectedColor = isControlled ? props.selectedColor! : internalColor
+
+  // Update available colors usage
+  const displayColors = props.availableColors ?? colors
+
   const variantsForFirstColor = useMemo(
     () =>
       variants.filter(
-        (v) => ((v.attributes?.color as string) || 'Default') === firstColor
+        (v) => ((v.attributes?.color as string) || 'Default') === selectedColor
       ),
-    [variants, firstColor]
+    [variants, selectedColor]
   )
-  const [selectedColor, setSelectedColor] = useState(firstColor)
+
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     variantsForFirstColor.find((v) => v.stock > 0)?.id ?? variantsForFirstColor[0]?.id ?? variants[0]?.id ?? null
   )
@@ -120,7 +136,13 @@ export function AddToCartForm({
   }, [variants])
 
   function handleColorChange(color: string) {
-    setSelectedColor(color)
+    if (isControlled) {
+      props.onColorChange?.(color)
+    } else {
+      setInternalColor(color)
+    }
+
+    // Also update selected variant to first available in new color
     const forColor = variants.filter(
       (v) => ((v.attributes?.color as string) || 'Default') === color
     )
@@ -192,11 +214,11 @@ export function AddToCartForm({
       )}
 
       {/* Color (square swatches, one default selected) */}
-      {colors.length > 1 && (
+      {displayColors.length > 1 && (
         <div>
           <span className="block text-sm font-medium text-zinc-400">{t('color')}</span>
           <div className="mt-2 flex flex-wrap gap-2">
-            {colors.map((color) => {
+            {displayColors.map((color) => {
               const hex = colorToHex(color)
               const isLight = ['#ffffff', '#fff', '#ffc0cb', '#fffdd0', '#f5f5dc'].includes(hex.toLowerCase())
               const isSelected = selectedColor === color
@@ -228,44 +250,59 @@ export function AddToCartForm({
         </div>
       )}
 
-      {/* Size (all sizes as buttons; unavailable or out-of-stock deactivated) */}
+      {/* Size Dropdown */}
       {allSizes.length >= 1 && (
-        <div>
-          <span className="block text-sm font-medium text-zinc-400">Size</span>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {allSizes.map((size) => {
-              const variant = variantByColorAndSize.get(`${selectedColor}:${size}`)
-              const exists = !!variant
-              const outOfStock = variant ? variant.stock === 0 : true
-              const isSelected = variant && selectedVariantId === variant.id
-              const disabled = !exists || outOfStock
-              const title = !exists
-                ? `${size} — Not available in this color`
-                : outOfStock
-                  ? `${size} — Out of stock`
-                  : `${size} — ${format(variant!.price_cents)}`
-              return (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() => variant && variant.stock > 0 && setSelectedVariantId(variant.id)}
-                  disabled={disabled}
-                  title={title}
-                  className={`flex min-w-[3rem] items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isSelected
-                    ? 'border-amber-500 bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30'
-                    : disabled
-                      ? 'cursor-not-allowed border-zinc-700 bg-zinc-800/50 text-zinc-500 opacity-70'
-                      : 'border-zinc-600 text-zinc-300 hover:border-zinc-400 hover:bg-zinc-800'
-                    }`}
-                >
-                  {size}
-                </button>
-              )
-            })}
+        <div className="space-y-2">
+          <label htmlFor="variant-select" className="block text-sm font-medium text-zinc-400">
+            Size
+          </label>
+          <div className="relative">
+            <select
+              id="variant-select"
+              value={selectedVariantId ?? ''}
+              onChange={(e) => {
+                const v = variantsForColor.find(v => v.id === e.target.value)
+                // Or if user selects a size that doesn't exist for this color (shouldn't happen with filtering), handle it
+                // Actually the dropdown should list available variants for *selected color* OR all sizes if we want to mimic the button behavior which was showing all sizes and disabling some.
+                // The admin dropdown showed specific variants for the color.
+                // Here, `allSizes` was computed from ALL variants.
+                // But `variantByColorAndSize` helps lookup.
+                // Let's list ALL sizes as options, but disable ones not available in this color.
+                // OR better: Just list the variants available for this color like in Admin.
+                // However, the previous UI showed all sizes. 
+                // If I switch to Admin style:
+                if (v) setSelectedVariantId(v.id)
+              }}
+              className="w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 pr-10 text-zinc-100 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
+            >
+              {allSizes.map((size) => {
+                const variant = variantByColorAndSize.get(`${selectedColor}:${size}`)
+                const exists = !!variant
+                const outOfStock = variant ? variant.stock === 0 : true
+                const disabled = !exists || outOfStock
+
+                // If not exists, maybe don't show? Or show as unavailable.
+                // For consistency with Admin, let's show all but mark them.
+                // Actually, Admin only showed variants for that color.
+                // Let's try to mimic Admin: Filter to variants for this color?
+                // But `allSizes` is used to maintain order.
+
+                return (
+                  <option key={size} value={variant?.id ?? ''} disabled={disabled}>
+                    {size} {exists ? `— ${format(variant!.price_cents)}` : ''} {disabled ? (exists ? '(Out of Stock)' : '(Unavailable)') : `(${variant!.stock} in stock)`}
+                  </option>
+                )
+              })}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
+
           {selectedVariant && (
             <p className="mt-1.5 text-sm text-zinc-500">
-              {selectedVariant.name && `${selectedVariant.name} — `}
               {stock > 0 && stock <= 5 ? (
                 <span className="font-medium text-amber-400">{t('onlyXLeft', { count: stock })}</span>
               ) : (

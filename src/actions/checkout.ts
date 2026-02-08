@@ -218,15 +218,7 @@ export async function createCheckoutSession(
 
   // Metadata should probably store original CHF amounts and the currency used
   const metadata: Record<string, string> = {
-    cartItems: JSON.stringify(
-      validatedItems.map(({ item }) => ({
-        variantId: item.variantId,
-        productId: item.productId,
-        quantity: item.quantity,
-        priceCents: item.priceCents,
-        config: item.config ?? {},
-      }))
-    ),
+    // cartItems removed to avoid 500 char limit - stored in abandoned_checkouts
     totalCents: String(totalCents),
     currency: requestedCurrency,
   }
@@ -261,7 +253,15 @@ export async function createCheckoutSession(
       cart_summary: {
         itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
         totalCents,
-        productNames: validatedItems.map(({ item }) => item.productName).slice(0, 5),
+        // Store full items here instead of Stripe metadata
+        items: validatedItems.map(({ item }) => ({
+          variantId: item.variantId,
+          productId: item.productId,
+          quantity: item.quantity,
+          priceCents: item.priceCents,
+          config: item.config ?? {},
+          name: item.productName
+        }))
       },
     }).then(({ error }) => {
       if (error) console.warn('Abandoned checkout insert failed:', error.message)
