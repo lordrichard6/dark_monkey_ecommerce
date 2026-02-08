@@ -143,14 +143,14 @@ export function AddToCartForm({
     }
 
     // Also update selected variant to first available in new color
-    const forColor = variants.filter(
+    const forColor = (variants || []).filter(
       (v) => ((v.attributes?.color as string) || 'Default') === color
     )
-    const next = forColor.find((v) => v.stock > 0) ?? forColor[0]
+    const next = forColor.find((v) => (v.stock ?? 0) > 0) ?? forColor[0]
     setSelectedVariantId(next?.id ?? null)
   }
 
-  const selectedVariant = variants.find((v) => v.id === selectedVariantId)
+  const selectedVariant = (variants || []).find((v) => v.id === selectedVariantId)
   const basePriceCents = selectedVariant?.price_cents ?? 0
   const modifierCents = customizationRule
     ? getPriceModifierFromConfig(customizationRule, config as Record<string, unknown>)

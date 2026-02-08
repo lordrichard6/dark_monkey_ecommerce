@@ -45,7 +45,7 @@ export function ProductMain({
 
     // Derive available colors
     const colors = Array.from(
-        new Set(variants.map((v) => (v.attributes?.color as string) || 'Default'))
+        new Set((variants || []).map((v) => (v.attributes?.color as string) || 'Default'))
     ).sort((a, b) => (a === 'Default' ? 1 : a.localeCompare(b)))
 
     const [selectedColor, setSelectedColor] = useState(colors[0] ?? 'Default')
