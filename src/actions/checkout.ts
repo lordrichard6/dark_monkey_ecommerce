@@ -235,51 +235,58 @@ export async function createCheckoutSession(
     if (input.fullName) metadata.guest_name = input.fullName
   }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    line_items: lineItems,
-    success_url: successUrl,
-    cancel_url: cancelUrl,
-    customer_email: input?.email ?? undefined,
-    shipping_address_collection: { allowed_countries: ['CH', 'PT', 'ES', 'FR', 'DE', 'GB', 'US'] as const },
-    metadata,
-  })
-
-  const emailForAbandoned = input?.email ?? undefined
-  if (session.id && emailForAbandoned) {
-    await supabase.from('abandoned_checkouts').insert({
-      stripe_session_id: session.id,
-      email: emailForAbandoned,
-      cart_summary: {
-        itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
-        totalCents,
-        // Store full items here instead of Stripe metadata
-        items: validatedItems.map(({ item }) => ({
-          variantId: item.variantId,
-          productId: item.productId,
-          quantity: item.quantity,
-          priceCents: item.priceCents,
-          config: item.config ?? {},
-          name: item.productName
-        }))
-      },
-    }).then(({ error }) => {
-      if (error) console.warn('Abandoned checkout insert failed:', error.message)
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: lineItems,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      customer_email: input?.email ?? undefined,
+      shipping_address_collection: { allowed_countries: ['CH', 'PT', 'ES', 'FR', 'DE', 'GB', 'US'] as const },
+      metadata,
     })
-  }
 
-  if (session.url) {
-    // Clear cart on successful redirect
-    const cookieStore = await cookies()
-    const config = getCartCookieConfig()
-    cookieStore.set(config.name, serializeCart({ items: [] }), {
-      maxAge: config.maxAge,
-      path: config.path,
-      sameSite: config.sameSite,
-      secure: config.secure,
-    })
-    return { ok: true, url: session.url }
-  }
+    const emailForAbandoned = input?.email ?? undefined
+    if (session.id && emailForAbandoned) {
+      // Use fire-and-forget but with a catch to prevent table-missing-500
+      supabase.from('abandoned_checkouts').insert({
+        stripe_session_id: session.id,
+        email: emailForAbandoned,
+        cart_summary: {
+          itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
+          totalCents,
+          items: validatedItems.map(({ item }) => ({
+            variantId: item.variantId,
+            productId: item.productId,
+            quantity: item.quantity,
+            priceCents: item.priceCents,
+            config: item.config ?? {},
+            name: item.productName
+          }))
+        },
+      }).then(({ error }) => {
+        if (error) console.error('[Checkout] Abandoned checkout insert failed:', error.message)
+      }).catch(err => {
+        console.error('[Checkout] Abandoned checkout insert crashed:', err)
+      })
+    }
 
-  return { ok: false, error: 'Failed to create checkout session' }
+    if (session.url) {
+      // Clear cart on successful redirect
+      const cookieStore = await cookies()
+      const config = getCartCookieConfig()
+      cookieStore.set(config.name, serializeCart({ items: [] }), {
+        maxAge: config.maxAge,
+        path: config.path,
+        sameSite: config.sameSite,
+        secure: config.secure,
+      })
+      return { ok: true, url: session.url }
+    }
+
+    return { ok: false, error: 'Failed to create checkout session' }
+  } catch (err: any) {
+    console.error('[Checkout] Stripe Session Error:', err)
+    return { ok: false, error: err.message || 'Error occurred during checkout' }
+  }
 }
