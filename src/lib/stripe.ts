@@ -4,8 +4,8 @@ export function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY
   if (!key) return null
   return new Stripe(key, {
-    apiVersion: '2025-01-27.acacia', // Latest stable
     timeout: 30000,
+    maxNetworkRetries: 3,
   })
 }
 
