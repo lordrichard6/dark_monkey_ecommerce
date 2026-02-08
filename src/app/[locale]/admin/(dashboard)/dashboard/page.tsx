@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
+import { StripeTestButton } from '@/components/admin/StripeTestButton'
 import { ArrowRight, Eye } from 'lucide-react'
 
 function formatPrice(cents: number) {
@@ -102,20 +103,25 @@ export default async function AdminDashboardPage() {
           <p className="mt-2 text-2xl font-bold text-zinc-50">{formatPrice(totalRevenue)}</p>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
-          <p className="text-sm text-zinc-400">Quick actions</p>
-          <div className="mt-2 space-y-2">
-            <Link
-              href="/admin/products/new"
-              className="block text-sm text-amber-400 hover:text-amber-300"
-            >
-              + New product
-            </Link>
-            <Link
-              href="/admin/discounts/new"
-              className="block text-sm text-amber-400 hover:text-amber-300"
-            >
-              + New discount
-            </Link>
+          <div className="mb-4">
+            <p className="text-sm text-zinc-400">Quick actions</p>
+            <div className="mt-2 space-y-2">
+              <Link
+                href="/admin/products/new"
+                className="block text-sm text-amber-400 hover:text-amber-300"
+              >
+                + New product
+              </Link>
+              <Link
+                href="/admin/discounts/new"
+                className="block text-sm text-amber-400 hover:text-amber-300"
+              >
+                + New discount
+              </Link>
+            </div>
+          </div>
+          <div className="pt-4 border-t border-zinc-800">
+            <StripeTestButton />
           </div>
         </div>
       </div>

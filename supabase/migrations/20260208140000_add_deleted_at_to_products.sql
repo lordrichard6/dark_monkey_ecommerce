@@ -2,4 +2,4 @@
 ALTER TABLE products ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;;
 
 -- Index for performance
-CREATE INDEX idx_products_deleted_at ON products(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_products_deleted_at ON products(deleted_at);
