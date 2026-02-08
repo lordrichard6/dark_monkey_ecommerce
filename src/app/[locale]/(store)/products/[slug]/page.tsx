@@ -83,7 +83,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     )
     .eq('slug', slug)
     .eq('is_active', true)
-    // .is('deleted_at', null)
+    .is('deleted_at', null)
     .single()
 
   if (error || !product) notFound()

@@ -16,12 +16,13 @@ function formatPrice(cents: number) {
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: { page?: string }
+  searchParams: Promise<{ page?: string }>
 }) {
   const supabase = getAdminClient()
   if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
-  const page = parseInt(searchParams.page || '1', 10) || 1
+  const { page: pageParam } = await searchParams
+  const page = parseInt(pageParam || '1', 10) || 1
   const limit = 20
   const start = (page - 1) * limit
   const end = start + limit - 1
@@ -39,7 +40,7 @@ export default async function AdminProductsPage({
       product_variants (id, price_cents),
       created_at
     `, { count: 'exact' })
-    // .is('deleted_at', null)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .range(start, end)
 
