@@ -14,47 +14,62 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+import { CATEGORIES } from '@/lib/categories'
+
 export default async function CategoriesPage() {
-  const supabase = await createClient()
   const t = await getTranslations('store')
 
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name, slug, description')
-    .order('sort_order', { ascending: true })
+  // Map the hard-coded categories to card format
+  const categoryCards = CATEGORIES.map(cat => ({
+    title: cat.name,
+    description: '', // We can add descriptions if needed, or leave empty
+    href: `/categories/${cat.slug}`,
+    linkText: `Shop ${cat.name}`,
+  }))
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="mb-8 text-2xl font-bold text-zinc-50 md:text-3xl">
-          {t('categoriesTitle')}
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <h1 className="mb-12 text-3xl font-bold tracking-tight text-zinc-50 md:text-4xl">
+          Categories
         </h1>
 
-        {categories && categories.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/categories/${category.slug}`}
-                className="group block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm p-6 transition hover:border-white/20"
-              >
-                <h2 className="text-xl font-semibold text-zinc-50 group-hover:text-white">
-                  {category.name}
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {categoryCards.map((card) => (
+            <Link
+              key={card.title}
+              href={card.href}
+              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-amber-500/30 hover:bg-zinc-900/60 hover:shadow-amber-500/10"
+            >
+              <div>
+                <h2 className="text-2xl font-bold text-zinc-50 transition-colors group-hover:text-amber-400">
+                  {card.title}
                 </h2>
-                {category.description && (
-                  <p className="mt-2 text-zinc-400">{category.description}</p>
+                {card.description && (
+                  <p className="mt-4 text-zinc-400 line-clamp-2">
+                    {card.description}
+                  </p>
                 )}
-                <span className="mt-4 inline-block text-sm font-medium text-zinc-300 group-hover:text-white">
-                  {t('shopCategory', { name: category.name })}
-                </span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 py-24 text-center">
-            <p className="text-zinc-500">{t('noCategories')}</p>
-          </div>
-        )}
+              </div>
+
+              <div className="mt-12 flex items-center gap-2 text-sm font-semibold text-zinc-300 transition-all group-hover:gap-3 group-hover:text-white">
+                {card.linkText}
+                <svg
+                  className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+
+              {/* Gradient background effect on hover */}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

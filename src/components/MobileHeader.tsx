@@ -8,32 +8,43 @@ import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { signOut } from '@/actions/auth'
 
-type Category = { id: string; name: string; slug: string }
+import { CATEGORIES } from '@/lib/categories'
 
 type Props = {
-  categories: Category[]
   user: { email?: string | null } | null
   displayName: string | null
   isAdmin: boolean
 }
 
-export function MobileHeader({ categories, user, displayName, isAdmin }: Props) {
+export function MobileHeader({ user, displayName, isAdmin }: Props) {
   const t = useTranslations('common')
   const tUser = useTranslations('userMenu')
   const [open, setOpen] = useState(false)
-  const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const [showCategories, setShowCategories] = useState(false)
+  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null)
   const pathname = usePathname()
 
   function closeMenu() {
     setOpen(false)
-    setCategoriesOpen(false)
+    setShowCategories(false)
+    setOpenCategoryId(null)
   }
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
+    else {
+      document.body.style.overflow = ''
+      setShowCategories(false)
+    }
     return () => { document.body.style.overflow = '' }
   }, [open])
+
+  const isActive = (path: string) => {
+    if (path === '/') return pathname === '/'
+    // Precise matching for sub-sections to avoid multiple highlights
+    if (path === '/account') return pathname === '/account'
+    return pathname.startsWith(path)
+  }
 
   return (
     <>
@@ -51,16 +62,6 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
             <DarkMonkeyLogo size="sm" noLink />
           </Link>
           <div className="flex items-center gap-1">
-            {isAdmin && (
-              <Link
-                href="/admin/dashboard"
-                onClick={closeMenu}
-                className="rounded-lg border border-amber-500/40 px-2.5 py-2 text-sm font-medium text-amber-400 transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-300"
-                aria-label={t('admin')}
-              >
-                {t('admin')}
-              </Link>
-            )}
             <CartTrigger />
           </div>
         </nav>
@@ -84,95 +85,225 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
         aria-hidden={!open}
       >
         <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
-          <DarkMonkeyLogo size="sm" href="/" onClick={closeMenu} />
           <button
             type="button"
-            onClick={closeMenu}
+            onClick={() => showCategories ? setShowCategories(false) : closeMenu()}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
-            aria-label="Close menu"
           >
-            <CloseIcon className="h-5 w-5" />
+            {showCategories ? <ChevronIcon className="h-5 w-5 rotate-180" /> : <CloseIcon className="h-5 w-5" />}
           </button>
+          <div className="flex-1 flex justify-center">
+            <DarkMonkeyLogo size="sm" href="/" onClick={closeMenu} />
+          </div>
+          <div className="w-10" /> {/* Spacer to center logo */}
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
-          <Link
-            href="/"
-            onClick={closeMenu}
-            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${pathname === '/'
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+        <div className="relative flex-1 overflow-hidden">
+          {/* Main Focused View */}
+          <div
+            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${showCategories ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
               }`}
           >
-            <HomeIcon className="h-5 w-5 shrink-0" />
-            {t('shop')}
-          </Link>
-
-          <Link
-            href="/account/wishlist"
-            onClick={closeMenu}
-            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${pathname === '/account/wishlist'
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-              }`}
-          >
-            <HeartIcon className="h-5 w-5 shrink-0" />
-            {t('wishlist')}
-          </Link>
-
-          {/* Categories accordion */}
-          <div className="rounded-xl border border-white/5 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setCategoriesOpen(!categoriesOpen)}
-              className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium transition ${pathname.startsWith('/categories')
+            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+              <Link
+                href="/"
+                onClick={closeMenu}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/')
                   ? 'bg-amber-500/20 text-amber-400'
                   : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                }`}
-            >
-              <span className="flex items-center gap-3">
-                <GridIcon className="h-5 w-5 shrink-0" />
-                {t('categories')}
-              </span>
-              <ChevronIcon
-                className={`h-5 w-5 shrink-0 transition-transform duration-200 ${categoriesOpen ? 'rotate-90' : ''
                   }`}
-              />
-            </button>
-            <div
-              className={`grid transition-all duration-200 ease-out ${categoriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                }`}
-            >
-              <div className="overflow-hidden">
-                <div className="border-t border-white/5 bg-black/30 py-2">
+              >
+                <HomeIcon className="h-5 w-5 shrink-0" />
+                {t('shop')}
+              </Link>
+
+              <Link
+                href="/art"
+                onClick={closeMenu}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/art')
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                  }`}
+              >
+                <ImageIcon className="h-5 w-5 shrink-0" />
+                Art
+              </Link>
+
+              <Link
+                href="/account/wishlist"
+                onClick={closeMenu}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/account/wishlist')
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                  }`}
+              >
+                <HeartIcon className="h-5 w-5 shrink-0" />
+                {t('wishlist')}
+              </Link>
+
+              {isAdmin && (
+                <div className="mt-4 pt-4 border-t border-white/5 space-y-1">
+                  <p className="px-4 py-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                    Admin Management
+                  </p>
                   <Link
-                    href="/categories"
+                    href="/admin/dashboard"
                     onClick={closeMenu}
-                    className={`block px-6 py-2.5 text-sm transition ${pathname === '/categories'
-                        ? 'text-amber-400'
-                        : 'text-zinc-400 hover:text-zinc-50'
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/dashboard')
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
                       }`}
                   >
-                    {t('allCategories')}
+                    <LayoutDashboardIcon className="h-5 w-5 shrink-0" />
+                    Dashboard
                   </Link>
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat.id}
-                      href={`/categories/${cat.slug}`}
-                      onClick={closeMenu}
-                      className={`block px-6 py-2.5 text-sm transition ${pathname === `/categories/${cat.slug}`
-                          ? 'text-amber-400'
-                          : 'text-zinc-400 hover:text-zinc-50'
-                        }`}
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
+                  <Link
+                    href="/admin/products"
+                    onClick={closeMenu}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/products')
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                      }`}
+                  >
+                    <BoxIcon className="h-5 w-5 shrink-0" />
+                    Products
+                  </Link>
+                  <Link
+                    href="/admin/orders"
+                    onClick={closeMenu}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/orders')
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                      }`}
+                  >
+                    <PackageIcon className="h-5 w-5 shrink-0" />
+                    Orders
+                  </Link>
+                  <Link
+                    href="/admin/discounts"
+                    onClick={closeMenu}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/discounts')
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                      }`}
+                  >
+                    <TagIcon className="h-5 w-5 shrink-0" />
+                    Discounts
+                  </Link>
+                  <Link
+                    href="/admin/gallery"
+                    onClick={closeMenu}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/gallery')
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                      }`}
+                  >
+                    <ImageIcon className="h-5 w-5 shrink-0" />
+                    Gallery
+                  </Link>
+                  <Link
+                    href="/admin/settings"
+                    onClick={closeMenu}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/settings')
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                      }`}
+                  >
+                    <SettingsIcon className="h-5 w-5 shrink-0" />
+                    Settings
+                  </Link>
                 </div>
+              )}
+            </nav>
+
+            <button
+              onClick={() => setShowCategories(true)}
+              className="m-4 flex items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm font-bold text-amber-400 transition hover:bg-amber-500/20"
+            >
+              <div className="flex items-center gap-3">
+                <GridIcon className="h-5 w-5" />
+                Browse Categories
               </div>
-            </div>
+              <ChevronIcon className="h-5 w-5" />
+            </button>
           </div>
-        </nav>
+
+          {/* Categories Expanded View */}
+          <div
+            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${showCategories ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+              }`}
+          >
+            <nav className="flex-1 overflow-y-auto p-4">
+              <div className="mb-4 flex items-center justify-between px-2">
+                <h3 className="text-sm font-bold text-zinc-50 uppercase tracking-widest">{t('categories')}</h3>
+                <button
+                  onClick={() => setShowCategories(false)}
+                  className="text-[10px] font-bold text-amber-400 uppercase"
+                >
+                  Back
+                </button>
+              </div>
+              <Link
+                href="/categories"
+                onClick={closeMenu}
+                className={`block rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/categories')
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                  }`}
+              >
+                {t('allCategories')}
+              </Link>
+              <div className="mt-2 space-y-1">
+                {CATEGORIES.map((cat) => {
+                  const isCatOpen = openCategoryId === cat.id
+                  return (
+                    <div key={cat.id} className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => setOpenCategoryId(isCatOpen ? null : cat.id)}
+                        className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition ${isActive(`/categories/${cat.slug}`)
+                          ? 'text-amber-400 bg-white/5'
+                          : 'text-zinc-400 hover:text-zinc-50 hover:bg-white/5'
+                          }`}
+                      >
+                        <span className="text-sm font-medium">{cat.name}</span>
+                        {cat.subcategories && cat.subcategories.length > 0 && (
+                          <ChevronIcon
+                            className={`h-4 w-4 shrink-0 transition-transform ${isCatOpen ? 'rotate-90' : ''}`}
+                          />
+                        )}
+                      </button>
+                      <div
+                        className={`grid transition-all duration-200 ease-in-out ${isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                          }`}
+                      >
+                        <div className="overflow-hidden">
+                          {cat.subcategories && (
+                            <div className="space-y-1 bg-black/20 px-2 py-1 ml-4 rounded-lg">
+                              {cat.subcategories.map(sub => (
+                                <Link
+                                  key={sub.id}
+                                  href={`/categories/${sub.slug}`}
+                                  onClick={closeMenu}
+                                  className={`block rounded-lg px-6 py-2 text-xs transition ${isActive(`/categories/${sub.slug}`)
+                                    ? 'text-amber-500 font-bold'
+                                    : 'text-zinc-500 hover:text-zinc-300'
+                                    }`}
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </nav>
+          </div>
+        </div>
 
         <LanguageSwitcher variant="mobile" />
 
@@ -180,12 +311,12 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
           {user ? (
             <>
               <div className="mb-2 px-4 py-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-start leading-none">
                   <p className="truncate text-sm font-medium text-zinc-50">
                     {displayName ?? user.email?.split('@')[0] ?? tUser('account')}
                   </p>
                   {isAdmin && (
-                    <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500 ring-1 ring-inset ring-amber-500/20">
+                    <span className="mt-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500 ring-1 ring-inset ring-amber-500/20">
                       Admin
                     </span>
                   )}
@@ -194,37 +325,13 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
                   <p className="truncate text-xs text-zinc-500">{user.email}</p>
                 )}
               </div>
-              {isAdmin && (
-                <Link
-                  href="/admin/dashboard"
-                  onClick={closeMenu}
-                  className="mb-1 flex items-center gap-3 rounded-xl bg-amber-500/10 px-4 py-3.5 text-sm font-medium text-amber-400 transition hover:bg-amber-500/20 hover:text-amber-300"
-                >
-                  <svg
-                    className="h-5 w-5 shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  Admin Dashboard
-                </Link>
-              )}
               <Link
                 href="/account"
                 onClick={closeMenu}
-                className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/account')
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                  }`}
               >
                 <UserIcon className="h-5 w-5 shrink-0" />
                 {tUser('account')}
@@ -232,7 +339,10 @@ export function MobileHeader({ categories, user, displayName, isAdmin }: Props) 
               <Link
                 href="/account/orders"
                 onClick={closeMenu}
-                className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/account/orders')
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                  }`}
               >
                 <OrdersIcon className="h-5 w-5 shrink-0" />
                 {tUser('orders')}
@@ -318,7 +428,7 @@ function HomeIcon({ className }: { className?: string }) {
   )
 }
 
-function HeartIcon({ className }: { className?: string }) {
+function ImageIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -330,7 +440,9 @@ function HeartIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
     >
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
     </svg>
   )
 }
@@ -424,6 +536,73 @@ function LogOutIcon({ className }: { className?: string }) {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" x2="9" y1="12" y2="12" />
+    </svg>
+  )
+}
+
+function LayoutDashboardIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="7" height="9" x="3" y="3" rx="1" />
+      <rect width="7" height="5" x="14" y="3" rx="1" />
+      <rect width="7" height="9" x="14" y="12" rx="1" />
+      <rect width="7" height="5" x="3" y="16" rx="1" />
+    </svg>
+  )
+}
+
+function BoxIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+  )
+}
+
+function PackageIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M12 11v4" />
+      <path d="M10 15h4" />
+    </svg>
+  )
+}
+
+function TagIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+      <path d="M7 7h.01" />
+    </svg>
+  )
+}
+
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function HeartIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   )
 }

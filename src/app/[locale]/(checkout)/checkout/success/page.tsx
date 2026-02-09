@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
@@ -66,7 +66,7 @@ export default async function CheckoutSuccessPage({ searchParams }: Props) {
           )}
         </p>
         <Link
-          href="/"
+          href="/products"
           className="inline-block rounded-lg bg-white px-6 py-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200"
         >
           {t('continueShopping')}

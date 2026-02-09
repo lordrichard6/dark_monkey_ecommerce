@@ -35,9 +35,33 @@ const COLOR_HEX: Record<string, string> = {
   sand: '#c2b280',
   steel: '#71797e',
   wine: '#722f37',
+  // Printful / Apparel Colors
+  'irish green': '#009a44',
+  'royal blue': '#002366',
+  'sport grey': '#a9a9a9',
+  'ash grey': '#d3d3d3',
+  'dark heather': '#4b4b4b',
+  'military green': '#4b5320',
+  'carolina blue': '#99badd',
+  'light blue': '#add8e6',
+  'light pink': '#ffb6c1',
+  'dark chocolate': '#3d2b1f',
+  'electric green': '#00ff00',
+  heliconia: '#da3287',
+  sapphire: '#0f52ba',
+  cardinal: '#c41e3a',
+  azalea: '#f7c8da',
+  'kelly green': '#4cbb17',
+  sky: '#87ceeb',
+  stone: '#877f6c',
+  khaki: '#c3b091',
+  denim: '#1560bd',
+  berry: '#8a2be2',
+  'natural': '#f5f5dc',
 }
 
 export function colorToHex(name: string): string {
+  if (typeof name !== 'string') return '#808080' // Gray fallback
   const key = name.toLowerCase().trim()
   return COLOR_HEX[key] ?? `#${(key.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 0xffffff).toString(16).padStart(6, '0')}`
 }

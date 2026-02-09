@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { uploadProductImage, deleteProductImage, setPrimaryProductImage } from '@/actions/admin-products'
+import { Loader2, X } from 'lucide-react'
+import { uploadProductImage, deleteProductImage, setPrimaryProductImage, updateProductImageColor } from '@/actions/admin-products'
 
 type Image = {
   id: string
@@ -16,17 +17,24 @@ type Props = {
   productId: string
   images: Image[]
   selectedColor?: string | null
+  availableColors?: string[]
 }
 
-export function ProductImageManager({ productId, images, selectedColor }: Props) {
+export function ProductImageManager({ productId, images, selectedColor, availableColors = [] }: Props) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
+  const [updatingColorId, setUpdatingColorId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
+
+  // Reset selected index when color changes
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [selectedColor])
 
   // Filter images based on selected color (or no color)
   // Show images with matching color OR null (universal)
@@ -55,14 +63,26 @@ export function ProductImageManager({ productId, images, selectedColor }: Props)
     const formData = new FormData()
     formData.append('file', file)
 
-    const result = await uploadProductImage(productId, formData)
+    const result = await uploadProductImage(productId, formData, selectedColor)
     setUploading(false)
 
     if (result.ok) {
       router.refresh()
       if (fileInputRef.current) fileInputRef.current.value = ''
     } else {
-      setError(result.error)
+      setError(result.error || 'Upload failed')
+    }
+  }
+
+  async function handleUpdateColor(imageId: string, color: string | null) {
+    setUpdatingColorId(imageId)
+    setError(null)
+    const result = await updateProductImageColor(imageId, color)
+    setUpdatingColorId(null)
+    if (result.ok) {
+      router.refresh()
+    } else {
+      setError(result.error || 'Update failed')
     }
   }
 
@@ -80,7 +100,7 @@ export function ProductImageManager({ productId, images, selectedColor }: Props)
       setLightboxUrl(null)
       router.refresh()
     } else {
-      setError(result.error)
+      setError(result.error || 'Delete failed')
     }
   }
 
@@ -98,7 +118,7 @@ export function ProductImageManager({ productId, images, selectedColor }: Props)
       setSelectedIndex(0)
       router.refresh()
     } else {
-      setError(result.error)
+      setError(result.error || 'Set primary failed')
     }
   }
 
@@ -153,52 +173,67 @@ export function ProductImageManager({ productId, images, selectedColor }: Props)
       )}
 
       {/* Small thumbnails below */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {filteredImages.map((img, i) => {
           const isPrimary = img.id === primaryImageId
           return (
-            <div
-              key={img.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => setSelectedIndex(i)}
-              onKeyDown={(e) => e.key === 'Enter' && setSelectedIndex(i)}
-              className={`group relative h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border focus:outline-none focus:ring-2 focus:ring-amber-500 ${selectedIndex === i ? 'border-amber-500 ring-1 ring-amber-500/50' : 'border-zinc-700 bg-zinc-800'
-                }`}
-            >
-              <img src={img.url} alt={img.alt ?? ''} className="h-full w-full object-cover" />
-              {isPrimary && (
-                <span className="absolute left-1 top-1 rounded bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950">1</span>
-              )}
-              {!isPrimary && (
+            <div key={img.id} className="group relative">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedIndex(i)}
+                onKeyDown={(e) => e.key === 'Enter' && setSelectedIndex(i)}
+                className={`relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${selectedIndex === i ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
+                  }`}
+              >
+                <img src={img.url} alt={img.alt ?? ''} className="h-full w-full object-cover" />
+
+                {/* Primary Marker */}
+                {isPrimary && (
+                  <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">#1</span>
+                )}
+
+                {/* Set Primary Button */}
+                {!isPrimary && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleSetPrimary(e, img.id)}
+                    disabled={settingPrimaryId === img.id}
+                    className="absolute left-1 top-1 rounded bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-200 opacity-0 transition hover:bg-amber-500 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
+                  >
+                    {settingPrimaryId === img.id ? '…' : 'Set #1'}
+                  </button>
+                )}
+
+                {/* Delete Button */}
                 <button
                   type="button"
-                  onClick={(e) => handleSetPrimary(e, img.id)}
-                  disabled={settingPrimaryId === img.id}
-                  className="absolute left-1 top-1 rounded bg-zinc-800/90 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 opacity-0 transition hover:bg-amber-500/90 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
-                  title="Set as primary"
+                  onClick={(e) => handleDelete(e, img.id)}
+                  disabled={deletingId === img.id}
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600/90 text-white opacity-0 transition hover:bg-red-500 group-hover:opacity-100 disabled:opacity-50"
                 >
-                  {settingPrimaryId === img.id ? '…' : 'Set #1'}
+                  {deletingId === img.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <X className="h-3 w-3" />
+                  )}
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={(e) => handleDelete(e, img.id)}
-                disabled={deletingId === img.id}
-                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition hover:bg-red-500 group-hover:opacity-100 disabled:opacity-50"
-                title="Delete"
-              >
-                {deletingId === img.id ? (
-                  <svg className="h-2.5 w-2.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
-                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
-              </button>
+              </div>
+
+              {/* Color Selector */}
+              <div className="mt-1.5">
+                <select
+                  value={img.color || ''}
+                  onChange={(e) => handleUpdateColor(img.id, e.target.value || null)}
+                  disabled={updatingColorId === img.id}
+                  className="w-20 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                >
+                  <option value="">Universal</option>
+                  {availableColors.filter(c => c !== 'Default').map(color => (
+                    <option key={color} value={color}>{color}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )
         })}
@@ -209,7 +244,7 @@ export function ProductImageManager({ productId, images, selectedColor }: Props)
 
       {lightboxUrl && (
         <div
-          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center bg-black/80 p-4"
           onClick={() => setLightboxUrl(null)}
           role="button"
           tabIndex={0}

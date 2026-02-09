@@ -10,6 +10,7 @@ type ProductCardProps = {
   productId: string
   name: string
   priceCents: number
+  compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
   isInWishlist?: boolean
@@ -27,6 +28,7 @@ export function ProductCardWithWishlist({
   productId,
   name,
   priceCents,
+  compareAtPriceCents,
   imageUrl,
   imageAlt,
   isInWishlist = false,
@@ -42,10 +44,34 @@ export function ProductCardWithWishlist({
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
         {isBestseller && (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-500/90 px-2 py-0.5 text-xs font-semibold text-zinc-950">
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-950">
             {t('bestseller')}
           </span>
         )}
+        {compareAtPriceCents && compareAtPriceCents > priceCents && (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+            SALE
+          </span>
+        )}
+        {/* If both exist, we might want to offset one... let's adjust logic */}
+        {isBestseller && compareAtPriceCents && compareAtPriceCents > priceCents ? (
+          <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
+            <span className="rounded-md bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+              SALE
+            </span>
+            <span className="rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-950">
+              {t('bestseller')}
+            </span>
+          </div>
+        ) : isBestseller ? (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-950">
+            {t('bestseller')}
+          </span>
+        ) : compareAtPriceCents && compareAtPriceCents > priceCents ? (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+            SALE
+          </span>
+        ) : null}
         <ProductImageWithFallback
           src={imageUrl}
           alt={imageAlt}
@@ -71,7 +97,16 @@ export function ProductCardWithWishlist({
       </div>
       <div className="p-4">
         <ProductName name={name} />
-        <p className="mt-1 text-sm text-zinc-400">{format(priceCents)}</p>
+        <div className="mt-2 flex items-baseline gap-2">
+          {compareAtPriceCents && compareAtPriceCents > priceCents && (
+            <span className="text-sm text-zinc-500 line-through decoration-zinc-500/50">
+              {format(compareAtPriceCents)}
+            </span>
+          )}
+          <span className={`text-lg font-bold ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}>
+            {format(priceCents || 0)}
+          </span>
+        </div>
       </div>
     </Link>
   )

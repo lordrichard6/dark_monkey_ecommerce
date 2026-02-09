@@ -91,14 +91,14 @@ export function ProductImageGallery({ images, productName, selectedColor }: Prod
         </div>
       )}
 
-      {/* Main image: portrait-friendly aspect so full image fills (no dark letterboxing) */}
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
-        <div className="relative aspect-[3/4] w-full">
+      {/* Main image: Full-bleed aspect ratio container with object-cover */}
+      <div className="relative min-h-0 flex-1 group">
+        <div className="relative aspect-[4/5] w-full flex items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/40 backdrop-blur-sm">
           <ProductImageWithFallback
             src={main.url}
             alt={main.alt ?? productName}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, 50vw"
             priority={safeIndex === 0}
             unoptimized={isUnoptimized(main.url)}

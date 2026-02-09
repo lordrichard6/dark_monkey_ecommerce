@@ -15,6 +15,7 @@ export async function createProduct(input: {
   priceCents: number
   stock: number
   imageUrl?: string
+  tagIds?: string[]
 }): Promise<{ ok: true; productId: string } | { ok: false; error: string }> {
   const user = await getAdminUser()
   if (!user) return { ok: false, error: 'Unauthorized' }
@@ -36,6 +37,16 @@ export async function createProduct(input: {
     .single()
 
   if (productError || !product) return { ok: false, error: productError?.message ?? 'Failed to create product' }
+
+  // Add tags
+  if (input.tagIds && input.tagIds.length > 0) {
+    await supabase.from('product_tags').insert(
+      input.tagIds.map(tagId => ({
+        product_id: product.id,
+        tag_id: tagId
+      }))
+    )
+  }
 
   const sku = `SKU-${product.id.slice(0, 8).toUpperCase()}`
   const { data: variant, error: variantError } = await supabase
@@ -147,7 +158,8 @@ export async function updateStock(variantId: string, quantity: number) {
 
 export async function uploadProductImage(
   productId: string,
-  formData: FormData
+  formData: FormData,
+  color?: string | null
 ): Promise<{ ok: true; imageId: string; url: string } | { ok: false; error: string }> {
   try {
     const user = await getAdminUser()
@@ -221,6 +233,7 @@ export async function uploadProductImage(
         url: publicUrl,
         alt: file.name.replace(/\.[^.]+$/, ''),
         sort_order: maxSort + 1,
+        color: color || null,
       })
       .select('id')
       .single()
@@ -453,4 +466,95 @@ export async function bulkUpdateProductStatus(
   revalidatePath('/admin/dashboard')
   revalidatePath('/')
   return { ok: true }
+}
+
+export async function updateProductTags(
+  productId: string,
+  tagIds: string[]
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const user = await getAdminUser()
+    if (!user) return { ok: false, error: 'Unauthorized' }
+
+    const supabase = getAdminClient()
+    if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+    // First, remove existing tags
+    const { error: deleteError } = await supabase
+      .from('product_tags')
+      .delete()
+      .eq('product_id', productId)
+
+    if (deleteError) throw deleteError
+
+    // Then, insert new tags
+    if (tagIds.length > 0) {
+      const { error: insertError } = await supabase
+        .from('product_tags')
+        .insert(tagIds.map(tagId => ({
+          product_id: productId,
+          tag_id: tagId
+        })))
+
+      if (insertError) throw insertError
+    }
+
+    revalidatePath(`/admin/products/${productId}`)
+    return { ok: true }
+  } catch (err: any) {
+    console.error('Update product tags error:', err)
+    return { ok: false, error: err.message || 'Failed to update tags' }
+  }
+}
+export async function updateProductImageColor(imageId: string, color: string | null) {
+  try {
+    const user = await getAdminUser()
+    if (!user) return { ok: false, error: 'Unauthorized' }
+
+    const supabase = getAdminClient()
+    if (!supabase) return { ok: false, error: 'Database error' }
+
+    const { error } = await supabase
+      .from('product_images')
+      .update({ color })
+      .eq('id', imageId)
+
+    if (error) return { ok: false, error: error.message }
+
+    revalidatePath('/admin/products')
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Update failed' }
+  }
+}
+
+export async function updateProductPrice(
+  productId: string,
+  priceCents: number,
+  compareAtPriceCents?: number | null
+) {
+  try {
+    const user = await getAdminUser()
+    if (!user) return { ok: false, error: 'Unauthorized' }
+
+    const supabase = getAdminClient()
+    if (!supabase) return { ok: false, error: 'Database error' }
+
+    const { error } = await supabase
+      .from('product_variants')
+      .update({
+        price_cents: priceCents,
+        compare_at_price_cents: compareAtPriceCents || null,
+      })
+      .eq('product_id', productId)
+
+    if (error) return { ok: false, error: error.message }
+
+    revalidatePath('/admin/products')
+    revalidatePath(`/admin/products/${productId}`)
+    revalidatePath('/')
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Update failed' }
+  }
 }

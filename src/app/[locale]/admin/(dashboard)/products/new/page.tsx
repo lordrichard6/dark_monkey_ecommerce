@@ -7,10 +7,10 @@ export default async function AdminNewProductPage() {
   const supabase = getAdminClient()
   if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name, slug')
-    .order('sort_order', { ascending: true })
+  const { data: tags } = await supabase
+    .from('tags')
+    .select('id, name')
+    .order('name', { ascending: true })
 
   return (
     <div className="p-8">
@@ -18,7 +18,9 @@ export default async function AdminNewProductPage() {
         ← Back to products
       </Link>
       <h1 className="text-2xl font-bold text-zinc-50">New product</h1>
-      <CreateProductForm categories={categories ?? []} />
+      <CreateProductForm
+        availableTags={tags ?? []}
+      />
     </div>
   )
 }

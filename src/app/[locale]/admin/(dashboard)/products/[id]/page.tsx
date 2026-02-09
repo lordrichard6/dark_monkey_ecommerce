@@ -1,13 +1,13 @@
 import Link from 'next/link'
-
-export const dynamic = 'force-dynamic'
-
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { ProductEditor } from './product-editor'
 import { ProductEditableFields } from './product-editable-fields'
 import { ProductDescriptionField } from './product-description-field'
 import { ProductCategoryField } from './product-category-field'
+import { ProductTagsField } from './product-tags-field'
+
+export const dynamic = 'force-dynamic'
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('de-CH', {
@@ -24,29 +24,35 @@ export default async function AdminProductDetailPage({ params }: Props) {
   const supabase = getAdminClient()
   if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
 
-  const { data: product, error } = await supabase
-    .from('products')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      category_id,
-      is_active,
-      is_customizable,
-      categories (id, name),
-      product_images (id, url, alt, sort_order, color),
-      product_variants (
+  const [productRes, tagsRes, productTagsRes] = await Promise.all([
+    supabase
+      .from('products')
+      .select(`
         id,
-        sku,
         name,
-        price_cents,
-        attributes,
-        product_inventory (quantity)
-      )
-    `)
-    .eq('id', id)
-    .single()
+        slug,
+        description,
+        category_id,
+        is_active,
+        is_customizable,
+        product_images (id, url, alt, sort_order, color),
+        product_variants (
+          id,
+          sku,
+          name,
+          price_cents,
+          compare_at_price_cents,
+          attributes,
+          product_inventory (quantity)
+        )
+      `)
+      .eq('id', id)
+      .single(),
+    supabase.from('tags').select('id, name').order('name', { ascending: true }),
+    supabase.from('product_tags').select('tag_id').eq('product_id', id)
+  ])
+
+  const { data: product, error } = productRes
 
   if (error) {
     return <div className="p-8 text-red-500">Error fetching product: {error.message}</div>
@@ -56,26 +62,19 @@ export default async function AdminProductDetailPage({ params }: Props) {
     return <div className="p-8 text-amber-500">Product with ID {id} not found in database.</div>
   }
 
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name')
-    .order('sort_order', { ascending: true })
+  const availableTags = (tagsRes.data ?? []) as { id: string; name: string }[]
+  const currentTagIds = (productTagsRes.data ?? []).map((pt: any) => pt.tag_id)
 
   const variants = (product.product_variants ?? []) as Array<{
     id: string
     sku: string | null
     name: string | null
     price_cents: number
+    compare_at_price_cents: number | null
     attributes: Record<string, unknown>
     product_inventory: any
   }>
 
-  // Debug: Log what inventory data we're actually getting
-  console.log('[AdminProductPage] Variants with inventory:', JSON.stringify(variants.map(v => ({
-    id: v.id,
-    name: v.name,
-    inventory: v.product_inventory
-  })), null, 2))
   const images = ((product.product_images as { id: string; url: string; alt: string | null; sort_order?: number; color?: string | null }[]) ?? []).sort(
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
   )
@@ -118,12 +117,16 @@ export default async function AdminProductDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Category */}
-        <div>
+        {/* Category & Tags */}
+        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
           <ProductCategoryField
             productId={product.id}
             categoryId={product.category_id ?? null}
-            categories={(categories ?? []) as { id: string; name: string }[]}
+          />
+          <ProductTagsField
+            productId={product.id}
+            initialTagIds={currentTagIds}
+            availableTags={availableTags}
           />
         </div>
 

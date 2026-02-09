@@ -7,6 +7,7 @@ import { WishlistButton } from '@/components/wishlist/WishlistButton'
 import { ProductReviews } from '@/components/reviews/ProductReviews'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { useTranslations } from 'next-intl'
+import { ColorOption } from '@/types/product'
 
 type Props = {
     product: {
@@ -43,21 +44,34 @@ export function ProductMain({
 }: Props) {
     const tProduct = useTranslations('product')
 
-    // Derive available colors
-    const colors = Array.from(
-        new Set((variants || []).map((v) => (v.attributes?.color as string) || 'Default'))
-    ).sort((a, b) => (a === 'Default' ? 1 : a.localeCompare(b)))
+    // Derive available colors with their Printful hex codes
+    const colorMap = new Map<string, ColorOption>()
+        ; (variants || []).forEach((v) => {
+            const name = (v.attributes?.color as string) || 'Default'
+            if (!colorMap.has(name)) {
+                colorMap.set(name, {
+                    name,
+                    hex: v.attributes?.color_code as string,
+                    hex2: v.attributes?.color_code2 as string,
+                })
+            }
+        })
+    const colors = Array.from(colorMap.values()).sort((a, b) =>
+        a.name === 'Default' ? 1 : a.name.localeCompare(b.name)
+    )
 
-    const [selectedColor, setSelectedColor] = useState(colors[0] ?? 'Default')
+    const [selectedColor, setSelectedColor] = useState(colors[0]?.name ?? 'Default')
 
     return (
-        <div className="grid gap-8 md:grid-cols-2">
-            {/* Left Column: Images */}
-            <ProductImageGallery
-                images={images}
-                productName={product.name}
-                selectedColor={selectedColor}
-            />
+        <div className="grid gap-12 md:grid-cols-2 items-start">
+            {/* Left Column: Images (Sticky on desktop) */}
+            <div className="md:sticky md:top-24">
+                <ProductImageGallery
+                    images={images}
+                    productName={product.name}
+                    selectedColor={selectedColor}
+                />
+            </div>
 
             {/* Right Column: Details & Form */}
             <div>
@@ -72,7 +86,33 @@ export function ProductMain({
                     )}
                 </div>
                 {product.description && (
-                    <p className="mt-4 text-zinc-400">{product.description}</p>
+                    <div className="mt-6 space-y-4">
+                        {/* Split by bullet points if they exist, otherwise treat as one block */}
+                        {product.description.includes('•') ? (
+                            <div className="space-y-4">
+                                {product.description.split('•').map((item, i) => {
+                                    const trimmed = item.trim();
+                                    if (!trimmed) return null;
+
+                                    // If it's the first bit (usually the main intro text)
+                                    if (i === 0) return (
+                                        <p key={i} className="text-base text-zinc-300 leading-relaxed">
+                                            {trimmed}
+                                        </p>
+                                    );
+
+                                    return (
+                                        <div key={i} className="flex gap-3 text-sm text-zinc-400">
+                                            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-zinc-600" />
+                                            <p className="leading-tight">{trimmed}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-zinc-400 leading-relaxed">{product.description}</p>
+                        )}
+                    </div>
                 )}
 
                 <div className="mt-4 flex flex-wrap gap-3">
@@ -90,6 +130,7 @@ export function ProductMain({
                     productName={product.name}
                     variants={variants}
                     primaryImageUrl={primaryImageUrl}
+                    images={images}
                     customizationRule={customizationRule}
                     productCategory={product.categories?.name}
                     // Controlled State

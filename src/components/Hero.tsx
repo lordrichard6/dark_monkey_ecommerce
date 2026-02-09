@@ -12,7 +12,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center overflow-hidden border-b border-white/10 px-4">
+    <section className="relative flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center overflow-hidden px-4">
       {/* Background Image - darker opacity to show image clearly but blend slightly */}
       <div className="absolute inset-0 -z-20 opacity-70">
         <Image

@@ -11,6 +11,7 @@ type Product = {
   slug: string
   name: string
   priceCents: number
+  compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
   isInWishlist?: boolean
@@ -72,6 +73,7 @@ export function ProductGrid({ products, title, sort = 'newest' }: ProductGridPro
               slug={product.slug}
               name={product.name}
               priceCents={product.priceCents}
+              compareAtPriceCents={product.compareAtPriceCents}
               imageUrl={product.imageUrl}
               imageAlt={product.imageAlt}
               isInWishlist={product.isInWishlist ?? false}

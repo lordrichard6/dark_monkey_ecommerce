@@ -5,7 +5,6 @@ import { MobileHeader } from '@/components/MobileHeader'
 import { DesktopTopBar } from '@/components/DesktopTopBar'
 
 export async function Header() {
-  let categories: { id: string; name: string; slug: string }[] | null = null
   let user: { email?: string | null; user_metadata?: { avatar_url?: string } } | null = null
   let displayName: string | null = null
   let avatarUrl: string | null = null
@@ -13,11 +12,8 @@ export async function Header() {
 
   try {
     const supabase = await createClient()
-    const [categoriesRes, userData] = await Promise.all([
-      supabase.from('categories').select('id, name, slug').order('sort_order', { ascending: true }),
-      getUserSafe(supabase),
-    ])
-    categories = categoriesRes.data
+    const userData = await getUserSafe(supabase)
+
     if (userData) {
       user = userData
       const admin = getAdminClient()
@@ -31,17 +27,17 @@ export async function Header() {
       avatarUrl = profile?.avatar_url ?? null
       isAdmin = profile?.is_admin ?? false
     }
-  } catch {
-    categories = []
+  } catch (error) {
+    console.error('Error fetching header data:', error)
   }
 
   const userInfo = user ? { user, displayName, avatarUrl, isAdmin } : { user: null, displayName: null, avatarUrl: null, isAdmin: false }
 
   return (
     <>
-      <SideNav categories={categories ?? []} isAdmin={isAdmin} />
+      <SideNav isAdmin={isAdmin} />
       <DesktopTopBar {...userInfo} />
-      <MobileHeader categories={categories ?? []} {...userInfo} />
+      <MobileHeader {...userInfo} />
     </>
   )
 }

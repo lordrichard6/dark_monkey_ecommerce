@@ -152,10 +152,10 @@ export async function fetchCatalogProduct(
   }
 }
 
-/** Catalog variant price (wholesale) - used as fallback when retail_price is 0 */
+/** Catalog variant details (wholesale price, color codes, etc.) */
 export async function fetchCatalogVariant(
   variantId: number
-): Promise<{ ok: boolean; price?: number; error?: string }> {
+): Promise<{ ok: boolean; variant?: any; error?: string }> {
   if (!isPrintfulConfigured()) {
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
@@ -165,12 +165,11 @@ export async function fetchCatalogVariant(
     })
     const data = (await res.json()) as {
       code: number
-      result?: { variant?: { price?: string } }
+      result?: { variant?: any }
       error?: { message?: string }
     }
-    if (res.ok && data.code === 200 && data.result?.variant?.price != null) {
-      const price = parseFloat(data.result.variant.price)
-      return { ok: true, price: isNaN(price) ? undefined : price }
+    if (res.ok && data.code === 200 && data.result?.variant) {
+      return { ok: true, variant: data.result.variant }
     }
     return { ok: false, error: data.error?.message ?? `HTTP ${res.status}` }
   } catch (err) {

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { updateStock } from '@/actions/admin-products'
+import { updateStock, updateProductPrice } from '@/actions/admin-products'
 import { colorToHex } from '@/lib/color-swatch'
+import { ColorOption } from '@/types/product'
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('de-CH', {
@@ -18,6 +19,7 @@ type Variant = {
   sku: string | null
   name: string | null
   price_cents: number
+  compare_at_price_cents: number | null
   attributes: Record<string, unknown>
   product_inventory: any
 }
@@ -30,11 +32,12 @@ function getQuantity(v: any): number {
 }
 
 type Props = {
+  productId: string
   variants: Variant[]
   onRefresh?: () => void
   selectedColor: string
   onColorChange: (color: string) => void
-  availableColors: string[]
+  availableColors: ColorOption[]
 }
 
 function getSize(v: Variant): string {
@@ -64,7 +67,7 @@ function sortVariantsBySize(variants: Variant[]): Variant[] {
   })
 }
 
-export function ProductDetailAdmin({ variants = [], onRefresh, selectedColor, onColorChange, availableColors = [] }: Props) {
+export function ProductDetailAdmin({ productId, variants = [], onRefresh, selectedColor, onColorChange, availableColors = [] }: Props) {
   const router = useRouter()
   // Internal color state removed - controlled by parent
 
@@ -76,15 +79,23 @@ export function ProductDetailAdmin({ variants = [], onRefresh, selectedColor, on
 
   const [editQuantity, setEditQuantity] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [priceLoading, setPriceLoading] = useState(false)
+
+  // Pricing state
+  const minPriceCents = variants.length ? Math.min(...variants.map(v => v.price_cents)) : 0
+  const initialCompareAt = variants[0]?.compare_at_price_cents ?? 0
+
+  const [globalPrice, setGlobalPrice] = useState(minPriceCents / 100)
+  const [promoPrice, setPromoPrice] = useState(initialCompareAt ? initialCompareAt / 100 : 0)
 
   const variantsForColor = sortVariantsBySize(
     variants.filter((v) => ((v.attributes?.color as string) || 'Default') === selectedColor)
   )
-  const priceRange =
+  const adviceRange =
     variants.length === 0
       ? null
       : (() => {
-        const prices = variants.map((v) => v.price_cents)
+        const prices = variants.map((v) => (v.attributes?.rrp_cents as number) || v.price_cents)
         const min = Math.min(...prices)
         const max = Math.max(...prices)
         return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`
@@ -109,34 +120,114 @@ export function ProductDetailAdmin({ variants = [], onRefresh, selectedColor, on
     }
   }
 
+  async function handleUpdatePrice(e: React.FormEvent) {
+    e.preventDefault()
+    setPriceLoading(true)
+    const result = await updateProductPrice(
+      productId,
+      Math.round(globalPrice * 100),
+      promoPrice > 0 ? Math.round(promoPrice * 100) : null
+    )
+    setPriceLoading(false)
+    if (result.ok) {
+      router.refresh()
+      onRefresh?.()
+    }
+  }
+
   function selectVariant(variant: Variant) {
     setSelectedVariantId(variant.id)
   }
 
   return (
     <div className="space-y-6">
-      {/* Price Range */}
-      {priceRange && (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Price Range</span>
-          <p className="mt-1.5 text-xl font-semibold text-zinc-50">{priceRange}</p>
+      {/* Price Management Section */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-6">
+        <form onSubmit={handleUpdatePrice} className="space-y-6">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                Final Price (CHF)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={globalPrice}
+                onChange={(e) => setGlobalPrice(parseFloat(e.target.value) || 0)}
+                className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-lg font-bold text-zinc-50 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                Promotion Price (Strikethrough)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={promoPrice || ''}
+                placeholder="e.g. 45.00"
+                onChange={(e) => setPromoPrice(parseFloat(e.target.value) || 0)}
+                className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-lg font-bold text-zinc-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 border-t border-zinc-800 pt-6">
+            <div className="flex-1">
+              <span className="text-[10px] uppercase font-bold text-zinc-600">Preview</span>
+              <div className="mt-1 flex items-baseline gap-2">
+                {promoPrice > 0 && (
+                  <span className="text-sm font-medium text-zinc-500 line-through">
+                    {formatPrice(Math.round(promoPrice * 100))}
+                  </span>
+                )}
+                <span className="text-2xl font-black text-amber-500">
+                  {formatPrice(Math.round(globalPrice * 100))}
+                </span>
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={priceLoading}
+              className="rounded-lg bg-zinc-50 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
+            >
+              {priceLoading ? 'Updating...' : 'Save All Prices'}
+            </button>
+          </div>
+        </form>
+
+        {/* Info Box: Renamed Price Range */}
+        <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">
+            Manufacturer&apos;s Suggested Retail Price (MSRP)
+          </span>
+          <p className="mt-1 text-base font-semibold text-zinc-400">
+            {adviceRange ?? '—'}
+          </p>
         </div>
-      )}
+      </div>
 
       {/* Colors Section */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Colors</span>
         <div className="mt-3 flex flex-wrap gap-3">
-          {availableColors.map((color) => {
-            const hex = colorToHex(color)
+          {availableColors.map((colorObj) => {
+            const colorName = colorObj.name
+            const hex = colorObj.hex || colorToHex(colorName)
+            const hex2 = colorObj.hex2
             const isLight = ['#ffffff', '#fff', '#ffc0cb', '#fffdd0', '#f5f5dc'].includes(hex.toLowerCase())
-            const isSelected = selectedColor === color
+            const isSelected = selectedColor === colorName
+
+            const background = hex2
+              ? `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)`
+              : hex
+
             return (
               <button
-                key={color}
+                key={colorName}
                 type="button"
-                onClick={() => onColorChange(color)}
-                title={color}
+                onClick={() => onColorChange(colorName)}
+                title={colorName}
                 className={`group relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-2 transition-all ${isSelected
                   ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110'
                   : isLight
@@ -146,7 +237,7 @@ export function ProductDetailAdmin({ variants = [], onRefresh, selectedColor, on
               >
                 <div
                   className="h-full w-full rounded-md"
-                  style={{ backgroundColor: hex }}
+                  style={{ background }}
                 />
                 {isSelected && (
                   <div className="absolute inset-0 flex items-center justify-center">

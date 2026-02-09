@@ -5,24 +5,25 @@ import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/navigation'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 
-type Category = { id: string; name: string; slug: string }
+import { CATEGORIES } from '@/lib/categories'
 
 type Props = {
-  categories: Category[]
   isAdmin?: boolean
 }
 
 const SIDEBAR_COLLAPSED = 64
 const SIDEBAR_EXPANDED = 240
 
-export function SideNav({ categories, isAdmin }: Props) {
+export function SideNav({ isAdmin }: Props) {
   const t = useTranslations('common')
   const pathname = usePathname()
   const [expanded, setExpanded] = useState(false)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null)
 
   const commonItems = [
     { href: '/', label: t('shop'), icon: HomeIcon },
+    { href: '/art', label: 'Art', icon: ImageIcon },
     { href: '/account/wishlist', label: t('wishlist'), icon: HeartIcon },
   ]
 
@@ -30,9 +31,10 @@ export function SideNav({ categories, isAdmin }: Props) {
     ? [
       { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutDashboardIcon },
       { href: '/admin/products', label: t('products'), icon: BoxIcon },
-      { href: '/admin/categories', label: t('categories'), icon: GridIcon },
       { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
       { href: '/admin/discounts', label: t('discounts'), icon: TagIcon },
+      { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon },
+      { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
     ]
     : []
 
@@ -59,8 +61,8 @@ export function SideNav({ categories, isAdmin }: Props) {
               key={href}
               href={href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${isActive
-                  ? 'bg-white/10 text-zinc-50'
-                  : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
+                ? 'bg-white/10 text-zinc-50'
+                : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
                 }`}
             >
               <Icon className="h-5 w-5 shrink-0" />
@@ -75,45 +77,83 @@ export function SideNav({ categories, isAdmin }: Props) {
             type="button"
             onClick={() => setCategoriesOpen(!categoriesOpen)}
             className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${pathname.startsWith('/categories')
-                ? 'bg-white/10 text-zinc-50'
-                : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
+              ? 'bg-white/10 text-zinc-50'
+              : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
               }`}
           >
             <span className="flex items-center gap-3">
               <GridIcon className="h-5 w-5 shrink-0" />
               {expanded && <span className="truncate">{t('categories')}</span>}
             </span>
-            {expanded && categories.length > 0 && (
+            {expanded && CATEGORIES.length > 0 && (
               <ChevronIcon
                 className={`h-4 w-4 shrink-0 transition ${categoriesOpen ? 'rotate-90' : ''}`}
               />
             )}
           </button>
-          {expanded && categoriesOpen && categories.length > 0 && (
-            <div className="ml-4 mt-1 space-y-0.5 border-l border-white/10 pl-3">
-              <Link
-                href="/categories"
-                className={`block rounded px-2 py-1.5 text-xs transition ${pathname === '/categories'
+          <div
+            className={`grid transition-all duration-300 ease-in-out ${categoriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+              }`}
+          >
+            <div className="overflow-hidden">
+              <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-3 pb-2">
+                <Link
+                  href="/categories"
+                  className={`block rounded px-2 py-1.5 text-xs transition ${pathname === '/categories'
                     ? 'text-amber-400'
                     : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-              >
-                {t('allCategories')}
-              </Link>
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/categories/${cat.slug}`}
-                  className={`block rounded px-2 py-1.5 text-xs transition ${pathname === `/categories/${cat.slug}`
-                      ? 'text-amber-400'
-                      : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                 >
-                  {cat.name}
+                  {t('allCategories')}
                 </Link>
-              ))}
+                {CATEGORIES.map((cat) => {
+                  const isCatOpen = openCategoryId === cat.id
+                  return (
+                    <div key={cat.id} className="space-y-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setOpenCategoryId(isCatOpen ? null : cat.id)}
+                        className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-xs transition ${pathname.startsWith(`/categories/${cat.slug}`)
+                          ? 'text-amber-400'
+                          : 'text-zinc-500 hover:text-zinc-300'
+                          }`}
+                      >
+                        <span>{cat.name}</span>
+                        {cat.subcategories && cat.subcategories.length > 0 && (
+                          <ChevronIcon
+                            className={`h-3 w-3 shrink-0 transition-transform ${isCatOpen ? 'rotate-90' : ''}`}
+                          />
+                        )}
+                      </button>
+                      <div
+                        className={`grid transition-all duration-200 ease-in-out ${isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                          }`}
+                      >
+                        <div className="overflow-hidden">
+                          {cat.subcategories && (
+                            <div className="ml-2 mt-0.5 space-y-0.5 border-l border-white/5 pl-2">
+                              {cat.subcategories.map(sub => (
+                                <Link
+                                  key={sub.id}
+                                  href={`/categories/${sub.slug}`}
+                                  className={`block rounded px-2 py-1 transition text-[10px] ${pathname === `/categories/${sub.slug}`
+                                    ? 'text-amber-500'
+                                    : 'text-zinc-600 hover:text-zinc-400'
+                                    }`}
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {adminItems.length > 0 && (
@@ -132,8 +172,8 @@ export function SideNav({ categories, isAdmin }: Props) {
                   key={href}
                   href={href}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${isActive
-                      ? 'bg-white/10 text-zinc-50'
-                      : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
+                    ? 'bg-white/10 text-zinc-50'
+                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
                     }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -162,6 +202,25 @@ function HomeIcon({ className }: { className?: string }) {
     >
       <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  )
+}
+
+function ImageIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
     </svg>
   )
 }
@@ -257,6 +316,15 @@ function TagIcon({ className }: { className?: string }) {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
       <path d="M7 7h.01" />
+    </svg>
+  )
+}
+
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   )
 }

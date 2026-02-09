@@ -7,6 +7,7 @@ type ProductCardProps = {
   slug: string
   name: string
   priceCents: number
+  compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
 }
@@ -19,6 +20,7 @@ export function ProductCard({
   slug,
   name,
   priceCents,
+  compareAtPriceCents,
   imageUrl,
   imageAlt,
 }: ProductCardProps) {
@@ -39,10 +41,19 @@ export function ProductCard({
         />
       </div>
       <div className="p-4">
-        <h3 className="font-medium text-zinc-50 group-hover:text-white">
+        <h3 className="font-medium text-zinc-50 group-hover:text-white truncate">
           {name}
         </h3>
-        <p className="mt-1 text-sm text-zinc-400">{format(priceCents)}</p>
+        <div className="mt-2 flex items-baseline gap-2">
+          {compareAtPriceCents && compareAtPriceCents > priceCents && (
+            <span className="text-sm text-zinc-500 line-through decoration-zinc-500/50">
+              {format(compareAtPriceCents)}
+            </span>
+          )}
+          <span className={`text-lg font-bold ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}>
+            {format(priceCents || 0)}
+          </span>
+        </div>
       </div>
     </Link>
   )

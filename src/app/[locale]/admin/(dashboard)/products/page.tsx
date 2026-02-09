@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { SyncPrintfulButton } from './sync-printful-button'
+import { FetchLatestProductButton } from './fetch-latest-button'
 import { ProductListTable } from '@/components/admin/ProductListTable'
 
 function formatPrice(cents: number) {
@@ -55,6 +56,7 @@ export default async function AdminProductsPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-zinc-50">Products</h1>
         <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          <FetchLatestProductButton />
           <SyncPrintfulButton />
           <Link
             href="/admin/products/new"

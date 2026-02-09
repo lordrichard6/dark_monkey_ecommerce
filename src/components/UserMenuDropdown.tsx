@@ -167,7 +167,14 @@ export function UserMenuDropdown({ user, displayName, avatarUrl, isAdmin }: Prop
           </span>
         )}
         {user && (
-          <span className="max-w-[120px] truncate text-sm text-zinc-300">{label}</span>
+          <div className="flex flex-col items-start leading-none">
+            <span className="max-w-[120px] truncate text-sm text-zinc-300">{label}</span>
+            {isAdmin && (
+              <span className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500/80">
+                admin
+              </span>
+            )}
+          </div>
         )}
         <ChevronDownIcon
           className={`h-4 w-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}

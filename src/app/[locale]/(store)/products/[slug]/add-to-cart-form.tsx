@@ -10,6 +10,8 @@ import { ShippingCountdown } from '@/components/product/ShippingCountdown'
 import { getPriceModifierFromConfig } from '@/types/customization'
 import type { CustomizationRuleDef } from '@/types/customization'
 import { colorToHex } from '@/lib/color-swatch'
+import { ColorOption } from '@/types/product'
+import { useCurrency } from '@/components/currency/CurrencyContext'
 
 type Variant = {
   id: string
@@ -38,6 +40,7 @@ function sortSizes(sizes: string[]): string[] {
   })
 }
 
+
 type AddToCartFormProps = {
   productId: string
   productSlug: string
@@ -49,10 +52,10 @@ type AddToCartFormProps = {
   // Controlled props
   selectedColor?: string
   onColorChange?: (color: string) => void
-  availableColors?: string[]
+  availableColors?: ColorOption[]
+  images?: Array<{ url: string; color?: string | null; sort_order: number }>
 }
 
-import { useCurrency } from '@/components/currency/CurrencyContext'
 
 function inferProductType(category: string | undefined): 'mug' | 'hat' | 'hoodie' {
   if (!category) return 'mug'
@@ -77,14 +80,26 @@ export function AddToCartForm({
   const router = useRouter()
 
   // Internal fallback if not controlled (though we aim to control it)
-  const colors = useMemo(
-    () =>
-      Array.from(
-        new Set(variants.map((v) => (v.attributes?.color as string) || 'Default'))
-      ).sort((a, b) => (a === 'Default' ? 1 : a.localeCompare(b))),
+  const colors = useMemo<ColorOption[]>(
+    () => {
+      const colorMap = new Map<string, ColorOption>()
+      variants.forEach((v) => {
+        const name = (v.attributes?.color as string) || 'Default'
+        if (!colorMap.has(name)) {
+          colorMap.set(name, {
+            name,
+            hex: v.attributes?.color_code as string,
+            hex2: v.attributes?.color_code2 as string,
+          })
+        }
+      })
+      return Array.from(colorMap.values()).sort((a, b) =>
+        a.name === 'Default' ? 1 : a.name.localeCompare(b.name)
+      )
+    },
     [variants]
   )
-  const firstColor = colors[0] ?? 'Default'
+  const firstColor = colors[0]?.name ?? 'Default'
 
   // Use prop if available, else internal state
   const isControlled = props.selectedColor !== undefined
@@ -170,6 +185,9 @@ export function AddToCartForm({
     e.preventDefault()
     if (!canAdd || !selectedVariant) return
     setIsAdding(true)
+    const colorImage = (props.images || []).find(img => img.color === selectedColor)
+    const cartImageUrl = colorImage?.url || primaryImageUrl
+
     try {
       await addToCart({
         variantId: selectedVariant.id,
@@ -179,7 +197,7 @@ export function AddToCartForm({
         variantName: selectedVariant.name,
         priceCents,
         quantity,
-        imageUrl: primaryImageUrl,
+        imageUrl: cartImageUrl,
         config: configForCart,
       })
       router.refresh()
@@ -213,36 +231,42 @@ export function AddToCartForm({
         </>
       )}
 
-      {/* Color (square swatches, one default selected) */}
+      {/* Color (circular swatches, one default selected) */}
       {displayColors.length > 1 && (
-        <div>
-          <span className="block text-sm font-medium text-zinc-400">{t('color')}</span>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {displayColors.map((color) => {
-              const hex = colorToHex(color)
-              const isLight = ['#ffffff', '#fff', '#ffc0cb', '#fffdd0', '#f5f5dc'].includes(hex.toLowerCase())
-              const isSelected = selectedColor === color
+        <div className="space-y-4 py-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              {t('color')}
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+              {selectedColor}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            {displayColors.map((colorObj) => {
+              const isObject = typeof colorObj === 'object' && colorObj !== null
+              const name = isObject ? (colorObj as ColorOption).name : String(colorObj)
+              const hex = (isObject ? (colorObj as ColorOption).hex : null) || colorToHex(name)
+              const hex2 = isObject ? (colorObj as ColorOption).hex2 : undefined
+              const isSelected = selectedColor === name
+
+              const background = hex2
+                ? `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)`
+                : hex
+
               return (
                 <button
-                  key={color}
+                  key={name}
                   type="button"
-                  onClick={() => handleColorChange(color)}
-                  title={color}
-                  className={`h-9 w-9 shrink-0 rounded-md border-2 transition ${isSelected
-                    ? 'border-amber-500 ring-2 ring-amber-500/30'
-                    : isLight
-                      ? 'border-zinc-500 hover:border-zinc-400'
-                      : 'border-zinc-600 hover:border-zinc-500'
+                  onClick={() => handleColorChange(name)}
+                  title={name}
+                  className={`relative h-7 w-7 shrink-0 rounded-full border transition-all duration-500 ${isSelected
+                    ? 'border-white ring-[3px] ring-white/10 ring-offset-2 ring-offset-zinc-950 scale-110 z-10'
+                    : 'border-white/10 hover:border-white/40 hover:scale-110'
                     }`}
-                  style={{ backgroundColor: hex }}
+                  style={{ background }}
                 >
-                  {isSelected && (
-                    <span className={`flex h-full w-full items-center justify-center ${isLight ? 'text-zinc-900' : 'text-white'}`} aria-hidden>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-                        <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                  )}
+                  <span className="sr-only">{name}</span>
                 </button>
               )
             })}

@@ -11,18 +11,32 @@ import {
 } from '@/lib/printful'
 import { revalidatePath } from 'next/cache'
 
-/** Resolve price in cents: use retail_price, or catalog wholesale * 2.5 as fallback */
-async function resolvePriceCents(
+/** Resolve variant details: price, color codes, etc. */
+async function resolveCatalogDetails(
   retailPrice: string | undefined,
   catalogVariantId: number
-): Promise<number> {
+): Promise<{ priceCents: number; rrpCents: number; colorCode?: string; colorCode2?: string }> {
   const retail = parseFloat(retailPrice || '0')
-  if (retail > 0) return Math.round(retail * 100)
-  const cat = await fetchCatalogVariant(catalogVariantId)
-  if (cat.ok && cat.price != null && cat.price > 0) {
-    return Math.round(cat.price * 2.5 * 100) // ~2.5x markup from wholesale
+  const details = await fetchCatalogVariant(catalogVariantId)
+
+  let priceCents = retail > 0 ? Math.round(retail * 100) : 3990
+  let rrpCents = priceCents
+  let colorCode: string | undefined
+  let colorCode2: string | undefined
+
+  if (details.ok && details.variant) {
+    const wholesale = parseFloat(details.variant.price || '0')
+    if (wholesale > 0) {
+      rrpCents = Math.round(wholesale * 2.5 * 100)
+    }
+    if (retail <= 0 && wholesale > 0) {
+      priceCents = rrpCents
+    }
+    colorCode = details.variant.color_code
+    colorCode2 = details.variant.color_code2
   }
-  return 3990 // CHF 39.90 default when no price available
+
+  return { priceCents, rrpCents, colorCode, colorCode2 }
 }
 
 type SyncProduct = { name: string; thumbnail_url?: string }
@@ -43,109 +57,60 @@ async function ensureProductImages(
   sync_product: SyncProduct,
   sync_variants: SyncVariant[]
 ) {
-  /* Optimization: Fetch all existing images once */
-  const { data: existingImages } = await supabase
-    .from('product_images')
-    .select('id, url, color')
-    .eq('product_id', productId)
+  // 1. Identify "Keeper" URLs
+  const keepers = new Map<string, string | null>() // url -> color
 
-  const existingMap = new Map<string, { id: string, color: string | null }>()
-  existingImages?.forEach(img => existingMap.set(img.url, img))
-
-  const seen = new Set<string>()
-  let sortOrder = 0
-  const toInsert: any[] = []
-  const startSortOrder = (existingImages?.length || 0) + 1 // simple increment strategy or reset? 
-  // actually existing sortOrder logic was just incrementing from 0. 
-  // If we delete all and recreate, 0 is fine.
-  // But here we are merging. usage of 'sortOrder' implies we might want to reorder everything?
-  // Use simple counter for new items.
-
-  // 1. Add Thumbnail (colorless / default)
+  // A. Main Thumbnail
   const thumbUrl = sync_product.thumbnail_url || sync_variants[0]?.product?.image
-  if (thumbUrl && !seen.has(thumbUrl)) {
-    seen.add(thumbUrl)
-    const existingImg = existingMap.get(thumbUrl)
+  if (thumbUrl) keepers.set(thumbUrl, null)
 
-    if (!existingImg) {
-      toInsert.push({
-        product_id: productId,
-        url: thumbUrl,
-        alt: sync_product.name,
-        sort_order: sortOrder++,
-        color: null,
-      })
-    } else {
-      // preserve existing sort order? The original code didn't update sort_order of existing.
-      // We just increment our local counter to keep relative order of NEW items meaningful?
-      // Actually original code reused sortOrder=0 for every product sync run, effectively ignoring existing sort orders.
-      // We will stick to the same logic: just increment.
-      sortOrder++
-    }
-  }
-
-  // 2. Add Variant Images (with Color)
+  // B. One beauty shot per unique color
   const variantsByColor = new Map<string, typeof sync_variants>()
   for (const sv of sync_variants) {
-    const color = sv.color
-    if (!color) continue
-    if (!variantsByColor.has(color)) variantsByColor.set(color, [])
-    variantsByColor.get(color)!.push(sv)
+    if (sv.color) {
+      if (!variantsByColor.has(sv.color)) variantsByColor.set(sv.color, [])
+      variantsByColor.get(sv.color)!.push(sv)
+    }
   }
 
   for (const [color, variants] of variantsByColor.entries()) {
-    const allFiles = variants.flatMap(v => v.files || [])
-    const previewFile = allFiles.find(f => f.type === 'preview')
     const newestVariant = variants.sort((a, b) => (b.id || 0) - (a.id || 0))[0]
-    const allFilesNewest = newestVariant.files || []
-    const mainPreviewFile = allFilesNewest.find(f => f.type === 'preview')
+    const mainPreviewFile = (newestVariant.files || []).find(f => f.type === 'preview')
     const mainImageToUse = mainPreviewFile?.preview_url ?? mainPreviewFile?.thumbnail_url ?? newestVariant.product?.image
 
-    const imagesToSync = new Set<string>()
-    if (mainImageToUse) imagesToSync.add(mainImageToUse)
-
-    const allVariantsFiles = variants.flatMap(v => v.files || [])
-    for (const f of allVariantsFiles) {
-      if (f.type !== 'preview') continue
-      const u = f.preview_url || f.thumbnail_url
-      if (u) imagesToSync.add(u)
-    }
-    for (const v of variants) {
-      if (v.product?.image) imagesToSync.add(v.product.image)
-    }
-
-    const sortedImages = [
-      ...(mainImageToUse ? [mainImageToUse] : []),
-      ...Array.from(imagesToSync).filter(u => u !== mainImageToUse)
-    ]
-
-    for (const url of sortedImages) {
-      if (seen.has(url)) continue;
-      seen.add(url)
-
-      const existingImg = existingMap.get(url)
-
-      if (!existingImg) {
-        toInsert.push({
-          product_id: productId,
-          url: url,
-          alt: `${sync_product.name} (${color})`,
-          sort_order: sortOrder++,
-          color,
-        })
-      } else {
-        sortOrder++
-        if (color && !existingImg.color) {
-          // Update existing image with color if it was missing
-          await supabase
-            .from('product_images')
-            .update({ color })
-            .eq('id', existingImg.id)
-          // Update logic remains one-by-one but it is rare
-        }
-      }
+    if (mainImageToUse) {
+      keepers.set(mainImageToUse, color)
     }
   }
+
+  // 2. Fetch existing images to identify what to delete vs keep
+  const { data: existingImages } = await supabase
+    .from('product_images')
+    .select('id, url')
+    .eq('product_id', productId)
+
+  const existingUrls = new Set((existingImages || []).map(img => img.url))
+
+  // 3. Purge redundant Printful images
+  // We delete images that: 1. Belong to this product. 2. Are from Printful. 3. Are NOT in our keeper set.
+  const toDelete = (existingImages || [])
+    .filter(img => img.url.includes('printful.com') && !keepers.has(img.url))
+    .map(img => img.id)
+
+  if (toDelete.length > 0) {
+    await supabase.from('product_images').delete().in('id', toDelete)
+  }
+
+  // 4. Insert missing keepers
+  const toInsert = Array.from(keepers.entries())
+    .filter(([url]) => !existingUrls.has(url))
+    .map(([url, color], index) => ({
+      product_id: productId,
+      url,
+      alt: color ? `${sync_product.name} (${color})` : sync_product.name,
+      sort_order: index,
+      color,
+    }))
 
   if (toInsert.length > 0) {
     await supabase.from('product_images').insert(toInsert)
@@ -166,7 +131,7 @@ export type PrintfulDebugEntry = {
   raw: unknown
 }
 
-export async function syncPrintfulProducts(debug = false): Promise<{
+export async function syncPrintfulProducts(debug = false, onlyLatest = false): Promise<{
   ok: boolean
   synced?: number
   skipped?: number
@@ -191,7 +156,7 @@ export async function syncPrintfulProducts(debug = false): Promise<{
   let totalFromApi = 0
   let firstError: string | null = null
   let offset = 0
-  const limit = 20
+  const limit = onlyLatest ? 1 : 20
   const debugLog: PrintfulDebugEntry[] = []
 
   const { data: defaultCat } = await supabase
@@ -323,19 +288,24 @@ export async function syncPrintfulProducts(debug = false): Promise<{
 
       for (let i = 0; i < sync_variants.length; i++) {
         const sv = sync_variants[i]
-        const priceCents = await resolvePriceCents(sv.retail_price, sv.variant_id)
-        const attrs: Record<string, string> = {}
+        const { priceCents, rrpCents, colorCode, colorCode2 } = await resolveCatalogDetails(sv.retail_price, sv.variant_id)
+        const attrs: Record<string, any> = {}
         if (sv.size) attrs.size = sv.size
         if (sv.color) attrs.color = sv.color
+        if (colorCode) attrs.color_code = colorCode
+        if (colorCode2) attrs.color_code2 = colorCode2
+        if (rrpCents) attrs.rrp_cents = rrpCents
 
         const existingVar = existingByPfId.get(sv.id)
         if (existingVar) {
-          if (existingVar.price_cents === 0) {
-            await supabase
-              .from('product_variants')
-              .update({ price_cents: priceCents, attributes: attrs })
-              .eq('id', existingVar.id)
-          }
+          // Always update attributes to ensure color codes and RRP are synced, even if price is already set
+          await supabase
+            .from('product_variants')
+            .update({
+              price_cents: existingVar.price_cents === 0 ? priceCents : existingVar.price_cents,
+              attributes: attrs
+            })
+            .eq('id', existingVar.id)
           continue
         }
 
@@ -364,7 +334,11 @@ export async function syncPrintfulProducts(debug = false): Promise<{
           firstError = `Variant: ${varErr.message}`
         }
       }
+
+      if (onlyLatest) break
     }
+
+    if (onlyLatest) break
 
     offset += limit
     if (listRes.products.length < limit) break
