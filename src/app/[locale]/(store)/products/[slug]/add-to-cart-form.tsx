@@ -12,6 +12,7 @@ import type { CustomizationRuleDef } from '@/types/customization'
 import { colorToHex } from '@/lib/color-swatch'
 import { ColorOption } from '@/types/product'
 import { useCurrency } from '@/components/currency/CurrencyContext'
+import { trackAddToCart, trackCustomization } from '@/lib/analytics'
 
 type Variant = {
   id: string
@@ -76,7 +77,7 @@ export function AddToCartForm({
   ...props
 }: AddToCartFormProps) {
   const t = useTranslations('product')
-  const { format } = useCurrency()
+  const { format, currency } = useCurrency()
   const router = useRouter()
 
   // Internal fallback if not controlled (though we aim to control it)
@@ -200,6 +201,23 @@ export function AddToCartForm({
         imageUrl: cartImageUrl,
         config: configForCart,
       })
+
+      // Track analytics
+      trackAddToCart({
+        id: productId,
+        name: productName,
+        price: priceCents,
+        currency: currency,
+        quantity,
+        category: productCategory,
+        variant: selectedVariant.name || undefined,
+      })
+
+      // Track customization if applicable
+      if (configForCart && Object.keys(configForCart).length > 0) {
+        trackCustomization(productId, productName, configForCart as Record<string, string>)
+      }
+
       router.refresh()
     } finally {
       setIsAdding(false)

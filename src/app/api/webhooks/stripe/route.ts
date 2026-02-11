@@ -9,6 +9,7 @@ import {
   getDefaultPrintFileUrl,
   isPrintfulConfigured,
 } from '@/lib/printful'
+import { revalidatePath } from 'next/cache'
 
 // Use service role for webhook (bypasses RLS) - orders are created server-side
 function getSupabaseAdmin() {
@@ -174,7 +175,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // TODO: Analytics - trackPurchase event
+  // Note: This is a server-side webhook (no window.gtag available)
+  // Options:
+  // 1. Use GA4 Measurement Protocol API (server-to-server)
+  // 2. Track on client-side success page (session_id based)
+  // For now, client-side tracking on success page is sufficient
+
   // Decrement inventory for each purchased item
+  const productSlugsToRevalidate = new Set<string>()
+
   for (const item of cartItems) {
     const { data: inventory } = await supabase
       .from('product_inventory')
@@ -189,6 +199,41 @@ export async function POST(request: NextRequest) {
         .update({ quantity: newQuantity })
         .eq('variant_id', item.variantId)
     }
+
+    // Get product slug for cache revalidation
+    const { data: product } = await supabase
+      .from('products')
+      .select('slug')
+      .eq('id', item.productId)
+      .single()
+
+    if (product?.slug) {
+      productSlugsToRevalidate.add(product.slug)
+    }
+  }
+
+  // Revalidate product pages (inventory updated, cache should reflect new stock)
+  for (const slug of productSlugsToRevalidate) {
+    try {
+      revalidatePath(`/products/${slug}`)
+      console.log(`[Cache] Revalidated product page: /products/${slug}`)
+    } catch (error) {
+      console.warn(`[Cache] Failed to revalidate /products/${slug}:`, error)
+    }
+  }
+
+  // Track recent purchases for social proof
+  // Extract location from shipping address (city + country for privacy)
+  const location = shippingAddressJson?.address?.city && shippingAddressJson?.address?.country
+    ? `${shippingAddressJson.address.city}, ${shippingAddressJson.address.country}`
+    : shippingAddressJson?.address?.country || null
+
+  for (const item of cartItems) {
+    await supabase.from('recent_purchases').insert({
+      product_id: item.productId,
+      variant_id: item.variantId,
+      location,
+    })
   }
 
   // Award XP for logged-in users

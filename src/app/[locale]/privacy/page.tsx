@@ -10,6 +10,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+// ISR: Revalidate static policy pages every 24 hours
+export const revalidate = 86400
+
 export default async function PrivacyPage() {
   const t = await getTranslations('privacy')
   const tFooter = await getTranslations('footer')

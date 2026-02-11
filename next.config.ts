@@ -6,15 +6,23 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // Performance optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    optimizePackageImports: ['lucide-react', 'recharts'],
   },
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // Image optimization
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
     remotePatterns: [
       {
         protocol: 'http',
@@ -49,6 +57,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Production optimizations
+  poweredByHeader: false,
+  compress: true,
 };
 
-export default withNextIntl(nextConfig);
+// Bundle analyzer (run with: ANALYZE=true npm run build)
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+export default withBundleAnalyzer(withNextIntl(nextConfig));

@@ -10,6 +10,7 @@ import { Header } from '@/components/Header'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Footer } from '@/components/Footer'
 import { CurrencyProvider } from '@/components/currency/CurrencyContext'
+import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { Toaster } from 'sonner'
 
 export function generateStaticParams() {
@@ -41,6 +42,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <Footer />
           <CartDrawer />
           <CookieConsent />
+          <InstallPrompt />
           <Toaster position="top-center" richColors />
         </CartProvider>
       </CurrencyProvider>

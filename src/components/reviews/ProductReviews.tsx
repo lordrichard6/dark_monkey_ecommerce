@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { submitReview } from '@/actions/reviews'
+import { PhotoUpload } from '@/components/product/PhotoUpload'
+import type { PhotoUploadResult } from '@/lib/review-photos'
+import Image from 'next/image'
 
 export type ReviewRow = {
   id: string
@@ -12,6 +15,7 @@ export type ReviewRow = {
   reviewer_display_name: string | null
   order_id: string | null
   created_at: string
+  photos: string[]
 }
 
 type Props = {
@@ -21,6 +25,7 @@ type Props = {
   userReview: ReviewRow | null
   canSubmit: boolean
   orderIdFromQuery?: string | null
+  userId?: string
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -46,10 +51,12 @@ export function ProductReviews({
   userReview,
   canSubmit,
   orderIdFromQuery,
+  userId,
 }: Props) {
   const t = useTranslations('reviews')
   const [rating, setRating] = useState(userReview?.rating ?? 5)
   const [comment, setComment] = useState(userReview?.comment ?? '')
+  const [photos, setPhotos] = useState<PhotoUploadResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -58,16 +65,19 @@ export function ProductReviews({
     e.preventDefault()
     setLoading(true)
     setError(null)
+    const photoUrls = photos.map(p => p.url)
     const result = await submitReview(
       productId,
       rating,
       comment,
       orderIdFromQuery ?? undefined,
-      productSlug
+      productSlug,
+      photoUrls
     )
     setLoading(false)
     if (result.ok) {
       setSuccess(true)
+      setPhotos([])
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       setError(result.error)
@@ -107,6 +117,22 @@ export function ProductReviews({
               )}
               {r.comment && (
                 <p className="mt-2 text-zinc-300">{r.comment}</p>
+              )}
+              {/* Review Photos */}
+              {r.photos && r.photos.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                  {r.photos.map((photo, index) => (
+                    <div key={index} className="relative aspect-square">
+                      <Image
+                        src={photo}
+                        alt={`Review photo ${index + 1}`}
+                        fill
+                        className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition"
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </li>
           ))}
@@ -152,6 +178,21 @@ export function ProductReviews({
                 placeholder="Share your experience with this product..."
               />
             </div>
+            {/* Photo Upload */}
+            {userId && (
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">
+                  {t('photos')} (Optional)
+                </label>
+                <PhotoUpload
+                  userId={userId}
+                  onPhotosChange={setPhotos}
+                />
+                <p className="mt-2 text-xs text-zinc-500">
+                  Add photos to help others see how the product looks
+                </p>
+              </div>
+            )}
             {error && (
               <p className="text-sm text-red-400">{error}</p>
             )}

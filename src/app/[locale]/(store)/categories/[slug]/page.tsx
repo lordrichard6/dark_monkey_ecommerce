@@ -6,6 +6,11 @@ import { notFound } from 'next/navigation'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
+import {
+  getCategoryMetadata,
+  getCategoryBySlug,
+  getUserWishlistProductIds,
+} from '@/lib/queries'
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>
@@ -14,13 +19,8 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
   const t = await getTranslations('store')
-  const { data: category } = await supabase
-    .from('categories')
-    .select('name, description')
-    .eq('slug', slug)
-    .single()
+  const category = await getCategoryMetadata(slug)
 
   if (!category) return { title: 'Category' }
 
@@ -31,49 +31,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+// ISR: Revalidate category pages every 30 minutes
+export const revalidate = 1800
+export const dynamicParams = true
+
+// Note: generateStaticParams not needed here since we're using dynamicParams=true
+// and this is nested under [locale], which would require locale param as well
+
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params
   const { sort = 'newest' } = await searchParams
   const supabase = await createClient()
 
-  const { data: category, error: categoryError } = await supabase
-    .from('categories')
-    .select('id, name, slug, description')
-    .eq('slug', slug)
-    .single()
+  // Use cached query - shared with generateMetadata
+  const { data: categoryData, error: categoryError } = await getCategoryBySlug(slug)
 
-  if (categoryError || !category) notFound()
+  if (categoryError || !categoryData) notFound()
 
-  const [productsResult, user, bestsellerIds] = await Promise.all([
-    supabase
-      .from('products')
-      .select(
-        `
-        id,
-        name,
-        slug,
-        product_images (url, alt, sort_order),
-        product_variants (price_cents)
-      `
-      )
-      .eq('category_id', category.id)
-      .eq('is_active', true)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false }),
+  const { category, products } = categoryData
+
+  // Fetch user data and wishlist in parallel with cached queries
+  const [user, bestsellerIds] = await Promise.all([
     getUserSafe(supabase),
     getBestsellerProductIds(),
   ])
 
-  const wishlistProductIds = user?.id
-    ? (
-      await supabase
-        .from('user_wishlist')
-        .select('product_id')
-        .eq('user_id', user.id)
-    ).data?.map((w) => w.product_id) ?? []
-    : []
-
-  const { data: products } = productsResult
+  const wishlistProductIds = user?.id ? await getUserWishlistProductIds(user.id) : []
   const productsWithPrice = (products ?? []).map((p) => {
     const variants = p.product_variants as { price_cents: number }[] | null
     const images = p.product_images as { url: string; alt: string | null; sort_order: number }[] | null

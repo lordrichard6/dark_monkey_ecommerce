@@ -8,6 +8,7 @@ import { ReferralCard } from '@/components/account/ReferralCard'
 import { ProgressCard } from '@/components/gamification/ProgressCard'
 import { BadgesList } from '@/components/gamification/BadgesList'
 import { MissionsProgress } from '@/components/gamification/MissionsProgress'
+import { NotificationSettings } from '@/components/account/NotificationSettings'
 
 export default async function AccountPage() {
   const t = await getTranslations('account')
@@ -77,6 +78,11 @@ export default async function AccountPage() {
               <ProfileEditForm displayName={profile?.display_name ?? null} />
             </div>
           </div>
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-zinc-50">Notifications</h2>
+          <NotificationSettings />
         </section>
 
         <section>

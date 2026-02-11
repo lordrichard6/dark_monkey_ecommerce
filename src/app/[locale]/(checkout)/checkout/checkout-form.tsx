@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createCheckoutSession, validateDiscountCode } from '@/actions/checkout'
 import type { CartItem } from '@/types/cart'
+import { trackBeginCheckout, trackAddPaymentInfo } from '@/lib/analytics'
+import { useCurrency } from '@/components/currency/CurrencyContext'
 
 function formatPrice(cents: number): string {
   return new Intl.NumberFormat('de-CH', {
@@ -33,12 +35,28 @@ export function CheckoutForm({
   const t = useTranslations('checkout')
   const tAuth = useTranslations('auth')
   const tCart = useTranslations('cart')
+  const { currency } = useCurrency()
   const [email, setEmail] = useState(defaultEmail)
   const [discountCode, setDiscountCode] = useState('')
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; discountCents: number } | null>(null)
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Track begin_checkout on mount
+  useEffect(() => {
+    trackBeginCheckout({
+      total: totalCents,
+      currency,
+      items: items.map(item => ({
+        id: item.productId,
+        name: item.productName,
+        price: item.priceCents,
+        quantity: item.quantity,
+        variant: item.variantName || undefined,
+      }))
+    })
+  }, [items, totalCents, currency])
 
   async function handleApplyDiscount(e: React.FormEvent) {
     e.preventDefault()
@@ -78,6 +96,11 @@ export function CheckoutForm({
     setLoading(false)
 
     if (result.ok) {
+      // Track payment info added
+      trackAddPaymentInfo({
+        total: appliedDiscount ? totalCents - appliedDiscount.discountCents : totalCents,
+        currency,
+      })
       window.location.href = result.url
       return
     }

@@ -9,13 +9,15 @@ export type SubmitReviewResult = { ok: true } | { ok: false; error: string }
  * Submit or update a review for a product. User must be logged in.
  * One review per user per product (upsert by user_id + product_id).
  * Optionally pass orderId to mark as "verified purchase" (order must belong to user and contain the product).
+ * @param photos - Array of Supabase Storage URLs for review photos (max 5)
  */
 export async function submitReview(
   productId: string,
   rating: number,
   comment: string,
   orderId?: string,
-  productSlug?: string
+  productSlug?: string,
+  photos?: string[]
 ): Promise<SubmitReviewResult> {
   const supabase = await createClient()
   const {
@@ -64,6 +66,7 @@ export async function submitReview(
       rating: Math.round(rating),
       comment: comment.trim() || null,
       reviewer_display_name: reviewerDisplayName,
+      photos: photos || [],
     },
     { onConflict: 'user_id,product_id' }
   )

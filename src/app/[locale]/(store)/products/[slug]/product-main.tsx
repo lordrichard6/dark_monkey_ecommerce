@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ProductImageGallery } from '@/components/product/ProductImageGallery'
 import { AddToCartForm } from './add-to-cart-form'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
@@ -8,6 +8,12 @@ import { ProductReviews } from '@/components/reviews/ProductReviews'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { useTranslations } from 'next-intl'
 import { ColorOption } from '@/types/product'
+import { LivePurchaseIndicator } from '@/components/product/LivePurchaseIndicator'
+import { RecentPurchaseToast } from '@/components/product/RecentPurchaseToast'
+import { ProductStory } from '@/components/product/ProductStory'
+import type { StoryContent } from '@/lib/story-content'
+import { trackProductView } from '@/lib/analytics'
+import { useCurrency } from '@/components/currency/CurrencyContext'
 
 type Props = {
     product: {
@@ -27,6 +33,8 @@ type Props = {
     orderIdFromQuery?: string
     primaryImageUrl?: string
     customizationRule?: any
+    userId?: string
+    storyContent?: StoryContent | null
 }
 
 export function ProductMain({
@@ -41,8 +49,25 @@ export function ProductMain({
     orderIdFromQuery,
     primaryImageUrl,
     customizationRule,
+    userId,
+    storyContent,
 }: Props) {
     const tProduct = useTranslations('product')
+    const { currency } = useCurrency()
+
+    // Track product view
+    useEffect(() => {
+        if (variants && variants.length > 0) {
+            const lowestPrice = Math.min(...variants.map((v) => v.price_cents))
+            trackProductView({
+                id: product.id,
+                name: product.name,
+                price: lowestPrice,
+                currency: currency,
+                category: product.categories?.name,
+            })
+        }
+    }, [product.id, product.name, variants, currency, product.categories])
 
     // Derive available colors with their Printful hex codes
     const colorMap = new Map<string, ColorOption>()
@@ -84,6 +109,11 @@ export function ProductMain({
                             {tProduct('bestseller')}
                         </span>
                     )}
+                </div>
+
+                {/* Live Purchase Indicator */}
+                <div className="mt-3">
+                    <LivePurchaseIndicator productId={product.id} />
                 </div>
                 {product.description && (
                     <div className="mt-6 space-y-4">
@@ -146,8 +176,15 @@ export function ProductMain({
                     userReview={userReview}
                     canSubmit={canSubmitReview}
                     orderIdFromQuery={orderIdFromQuery}
+                    userId={userId}
                 />
+
+                {/* Creator Story Content */}
+                <ProductStory story={storyContent || null} />
             </div>
+
+            {/* Recent Purchase Toast (Global) */}
+            <RecentPurchaseToast productId={product.id} />
         </div>
     )
 }

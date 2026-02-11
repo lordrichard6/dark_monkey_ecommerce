@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Link, usePathname } from '@/i18n/navigation'
+import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { CartTrigger } from '@/components/cart/CartTrigger'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { signOut } from '@/actions/auth'
+import { Search } from 'lucide-react'
 
 import { CATEGORIES } from '@/lib/categories'
 
@@ -19,6 +20,7 @@ type Props = {
 export function MobileHeader({ user, displayName, isAdmin }: Props) {
   const t = useTranslations('common')
   const tUser = useTranslations('userMenu')
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null)
@@ -62,6 +64,14 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
             <DarkMonkeyLogo size="sm" noLink />
           </Link>
           <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => router.push('/search')}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/5 transition hover:bg-white/10 hover:border-white/30"
+              aria-label="Search"
+            >
+              <Search className="h-5 w-5 text-zinc-50" />
+            </button>
             <CartTrigger />
           </div>
         </nav>

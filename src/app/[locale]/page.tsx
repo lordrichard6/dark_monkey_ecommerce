@@ -22,6 +22,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+// ISR: Revalidate home page every 10 minutes (shows dynamic content like new arrivals)
+export const revalidate = 600
+
 export default async function HomePage({ params, searchParams }: Props) {
   const { sort = 'newest', tag } = await searchParams
 

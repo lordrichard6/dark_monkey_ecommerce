@@ -19,7 +19,28 @@
     "yourCartEmpty": "Your cart is empty",
     "accept": "Accept",
     "save": "Save",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "browseProducts": "Browse products"
+  },
+  "search": {
+    "placeholder": "Search products...",
+    "title": "Search",
+    "enterQuery": "Enter a search query to find products",
+    "errorTitle": "Search Error",
+    "errorMessage": "Unable to load products. Please try again.",
+    "searchResults": "Search Results",
+    "resultsFor": "Search results for",
+    "noResults": "No products found",
+    "oneResult": "Found 1 product",
+    "resultsCount": "Found {count} products",
+    "results": "Results",
+    "noResultsTitle": "No products found",
+    "noResultsMessage": "We couldn't find any products matching your search.",
+    "suggestions": "Suggestions",
+    "suggestionSpelling": "Check your spelling",
+    "suggestionKeywords": "Try different or more general keywords",
+    "suggestionGeneral": "Browse our categories for inspiration",
+    "browseCategories": "Browse categories"
   },
   "home": {
     "metaDescription": "Premium gamified e-commerce — commerce, customization, and progression. Browse our collection.",

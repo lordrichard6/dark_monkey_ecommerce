@@ -81,9 +81,25 @@ export async function createProduct(input: {
     })
   }
 
+  // Revalidate admin pages
   revalidatePath('/admin')
   revalidatePath('/admin/dashboard')
   revalidatePath('/')
+
+  // Revalidate category page if product is assigned to a category
+  if (input.categoryId) {
+    const { data: category } = await supabase
+      .from('categories')
+      .select('slug')
+      .eq('id', input.categoryId)
+      .single()
+
+    if (category?.slug) {
+      revalidatePath(`/categories/${category.slug}`)
+      console.log(`[Cache] Revalidated category page: /categories/${category.slug}`)
+    }
+  }
+
   return { ok: true, productId: product.id }
 }
 
@@ -147,11 +163,38 @@ export async function updateStock(variantId: string, quantity: number) {
     })
   }
 
+  // Revalidate admin pages
   revalidatePath('/admin')
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/products')
   if (variant?.product_id) {
     revalidatePath(`/admin/products/${variant.product_id}`)
+
+    // Revalidate customer-facing product page (stock updated)
+    const { data: product } = await supabase
+      .from('products')
+      .select('slug, category_id')
+      .eq('id', variant.product_id)
+      .single()
+
+    if (product?.slug) {
+      revalidatePath(`/products/${product.slug}`)
+      console.log(`[Cache] Revalidated product page: /products/${product.slug}`)
+
+      // Also revalidate category page (product availability changed)
+      if (product.category_id) {
+        const { data: category } = await supabase
+          .from('categories')
+          .select('slug')
+          .eq('id', product.category_id)
+          .single()
+
+        if (category?.slug) {
+          revalidatePath(`/categories/${category.slug}`)
+          console.log(`[Cache] Revalidated category page: /categories/${category.slug}`)
+        }
+      }
+    }
   }
   return { ok: true }
 }

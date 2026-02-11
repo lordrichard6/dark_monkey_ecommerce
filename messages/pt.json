@@ -19,7 +19,28 @@
     "yourCartEmpty": "O seu carrinho está vazio",
     "accept": "Aceitar",
     "save": "Guardar",
-    "loading": "A carregar..."
+    "loading": "A carregar...",
+    "browseProducts": "Explorar produtos"
+  },
+  "search": {
+    "placeholder": "Pesquisar produtos...",
+    "title": "Pesquisar",
+    "enterQuery": "Digite uma consulta para encontrar produtos",
+    "errorTitle": "Erro de pesquisa",
+    "errorMessage": "Não foi possível carregar os produtos. Por favor, tente novamente.",
+    "searchResults": "Resultados da pesquisa",
+    "resultsFor": "Resultados da pesquisa para",
+    "noResults": "Nenhum produto encontrado",
+    "oneResult": "Encontrado 1 produto",
+    "resultsCount": "Encontrados {count} produtos",
+    "results": "Resultados",
+    "noResultsTitle": "Nenhum produto encontrado",
+    "noResultsMessage": "Não encontrámos produtos que correspondam à sua pesquisa.",
+    "suggestions": "Sugestões",
+    "suggestionSpelling": "Verifique a ortografia",
+    "suggestionKeywords": "Experimente palavras-chave diferentes ou mais gerais",
+    "suggestionGeneral": "Explore as nossas categorias para inspiração",
+    "browseCategories": "Explorar categorias"
   },
   "home": {
     "metaDescription": "E-commerce gamificado premium — comércio, personalização e progressão. Navegue na nossa coleção.",

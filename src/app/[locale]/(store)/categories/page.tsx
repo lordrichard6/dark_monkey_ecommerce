@@ -14,6 +14,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+// ISR: Revalidate categories page every 1 hour (static content, rarely changes)
+export const revalidate = 3600
+
 import { CATEGORIES } from '@/lib/categories'
 
 export default async function CategoriesPage() {

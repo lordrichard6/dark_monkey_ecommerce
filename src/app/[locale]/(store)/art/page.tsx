@@ -7,6 +7,9 @@ export const metadata = {
     description: 'Browse our exclusive art collection and vote for your favorites.',
 }
 
+// ISR: Revalidate art gallery every 5 minutes (frequently updated with votes)
+export const revalidate = 300
+
 export default async function ArtGalleryPage({
     searchParams
 }: {

@@ -19,7 +19,28 @@
     "yourCartEmpty": "Ihr Warenkorb ist leer",
     "accept": "Akzeptieren",
     "save": "Speichern",
-    "loading": "Wird geladen..."
+    "loading": "Wird geladen...",
+    "browseProducts": "Produkte durchsuchen"
+  },
+  "search": {
+    "placeholder": "Produkte suchen...",
+    "title": "Suchen",
+    "enterQuery": "Geben Sie eine Suchanfrage ein, um Produkte zu finden",
+    "errorTitle": "Suchfehler",
+    "errorMessage": "Produkte konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "searchResults": "Suchergebnisse",
+    "resultsFor": "Suchergebnisse für",
+    "noResults": "Keine Produkte gefunden",
+    "oneResult": "1 Produkt gefunden",
+    "resultsCount": "{count} Produkte gefunden",
+    "results": "Ergebnisse",
+    "noResultsTitle": "Keine Produkte gefunden",
+    "noResultsMessage": "Wir konnten keine Produkte finden, die Ihrer Suche entsprechen.",
+    "suggestions": "Vorschläge",
+    "suggestionSpelling": "Überprüfen Sie Ihre Rechtschreibung",
+    "suggestionKeywords": "Versuchen Sie andere oder allgemeinere Schlüsselwörter",
+    "suggestionGeneral": "Durchsuchen Sie unsere Kategorien für Inspiration",
+    "browseCategories": "Kategorien durchsuchen"
   },
   "home": {
     "metaDescription": "Premium-gamifizierter E-Commerce — Handel, Anpassung und Fortschritt. Stöbern Sie in unserer Kollektion.",

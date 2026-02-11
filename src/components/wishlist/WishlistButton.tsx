@@ -4,10 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toggleWishlist } from '@/actions/wishlist'
+import { trackWishlistAdd, trackWishlistRemove } from '@/lib/analytics'
 
 type Props = {
   productId: string
   productSlug?: string
+  productName?: string
+  productPrice?: number
+  productCurrency?: string
   isInWishlist: boolean
   variant?: 'icon' | 'button'
   className?: string
@@ -16,6 +20,9 @@ type Props = {
 export function WishlistButton({
   productId,
   productSlug,
+  productName,
+  productPrice,
+  productCurrency = 'CHF',
   isInWishlist,
   variant = 'icon',
   className = '',
@@ -32,6 +39,19 @@ export function WishlistButton({
     setLoading(false)
     if (result.ok) {
       setInWishlist(result.inWishlist)
+
+      // Track analytics
+      if (result.inWishlist && productName && productPrice) {
+        trackWishlistAdd({
+          id: productId,
+          name: productName,
+          price: productPrice,
+          currency: productCurrency,
+        })
+      } else if (!result.inWishlist) {
+        trackWishlistRemove(productId)
+      }
+
       router.refresh()
     } else if (result.error === 'Sign in to save items') {
       router.push(`/login?redirectTo=${productSlug ? `/products/${productSlug}` : '/'}`)
@@ -44,11 +64,10 @@ export function WishlistButton({
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className={`inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium transition hover:border-zinc-600 disabled:opacity-50 ${
-          inWishlist
+        className={`inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium transition hover:border-zinc-600 disabled:opacity-50 ${inWishlist
             ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
             : 'text-zinc-400 hover:text-zinc-300'
-        } ${className}`}
+          } ${className}`}
       >
         <HeartIcon filled={inWishlist} />
         {inWishlist ? 'Saved' : 'Save for later'}
@@ -62,9 +81,8 @@ export function WishlistButton({
       onClick={handleClick}
       disabled={loading}
       aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-      className={`absolute right-3 top-3 z-10 rounded-full bg-black/50 p-2 backdrop-blur-sm transition hover:bg-black/70 disabled:opacity-50 ${
-        inWishlist ? 'text-amber-400' : 'text-zinc-400 hover:text-zinc-100'
-      } ${className}`}
+      className={`absolute right-3 top-3 z-10 rounded-full bg-black/50 p-2 backdrop-blur-sm transition hover:bg-black/70 disabled:opacity-50 ${inWishlist ? 'text-amber-400' : 'text-zinc-400 hover:text-zinc-100'
+        } ${className}`}
     >
       <HeartIcon filled={inWishlist} />
     </button>

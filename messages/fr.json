@@ -18,7 +18,28 @@
     "yourCartEmpty": "Votre panier est vide",
     "accept": "Accepter",
     "save": "Enregistrer",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "browseProducts": "Parcourir les produits"
+  },
+  "search": {
+    "placeholder": "Rechercher des produits...",
+    "title": "Rechercher",
+    "enterQuery": "Entrez une requête de recherche pour trouver des produits",
+    "errorTitle": "Erreur de recherche",
+    "errorMessage": "Impossible de charger les produits. Veuillez réessayer.",
+    "searchResults": "Résultats de recherche",
+    "resultsFor": "Résultats de recherche pour",
+    "noResults": "Aucun produit trouvé",
+    "oneResult": "1 produit trouvé",
+    "resultsCount": "{count} produits trouvés",
+    "results": "Résultats",
+    "noResultsTitle": "Aucun produit trouvé",
+    "noResultsMessage": "Nous n'avons trouvé aucun produit correspondant à votre recherche.",
+    "suggestions": "Suggestions",
+    "suggestionSpelling": "Vérifiez l'orthographe",
+    "suggestionKeywords": "Essayez des mots-clés différents ou plus généraux",
+    "suggestionGeneral": "Parcourez nos catégories pour l'inspiration",
+    "browseCategories": "Parcourir les catégories"
   },
   "home": {
     "metaDescription": "E-commerce premium gamifié — commerce, personnalisation et progression. Parcourez notre collection.",

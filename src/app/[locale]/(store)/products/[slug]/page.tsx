@@ -7,6 +7,14 @@ import { ProductMain } from './product-main'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
+import {
+  getProductMetadata,
+  getProductBySlug,
+  getProductReviews,
+  getUserProductReview,
+  getProductCustomizationRule,
+  isProductInWishlist,
+} from '@/lib/queries'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -15,14 +23,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
-  const { data: product } = await supabase
-    .from('products')
-    .select('name, description')
-    .eq('slug', slug)
-    .eq('is_active', true)
-    // .is('deleted_at', null)
-    .single()
+  const product = await getProductMetadata(slug)
 
   if (!product) return { title: 'Product' }
 
@@ -59,77 +60,23 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const { order_id: orderIdFromQuery } = (await searchParams) ?? {}
   const supabase = await createClient()
 
-  const { data: product, error } = await supabase
-    .from('products')
-    .select(
-      `
-      id,
-      name,
-      slug,
-      description,
-      is_customizable,
-      category_id,
-      categories (name, slug),
-      product_images (url, alt, sort_order, color),
-      product_variants (
-        id,
-        name,
-        price_cents,
-        attributes,
-        sort_order,
-        product_inventory (quantity)
-      )
-    `
-    )
-    .eq('slug', slug)
-    .eq('is_active', true)
-    .is('deleted_at', null)
-    .single()
+  // Use cached query - shared with generateMetadata
+  const { data: product, error } = await getProductBySlug(slug)
 
   if (error || !product) notFound()
 
-  let customizationRule: { rule_def: unknown } | null = null
-  if (product.is_customizable) {
-    const { data: rule } = await supabase
-      .from('customization_rules')
-      .select('rule_def')
-      .eq('product_id', product.id)
-      .single()
-    customizationRule = rule
-  }
-
+  // Fetch related data in parallel with cached queries
   const user = await getUserSafe(supabase)
-  const { data: wishlistRow } = user?.id
-    ? await supabase
-      .from('user_wishlist')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('product_id', product.id)
-      .maybeSingle()
-    : { data: null }
-  const isInWishlist = !!wishlistRow
 
-  const [reviewsResult, bestsellerIds] = await Promise.all([
-    supabase
-      .from('product_reviews')
-      .select('id, rating, comment, reviewer_display_name, order_id, created_at')
-      .eq('product_id', product.id)
-      .order('created_at', { ascending: false }),
+  const [customizationRule, userIsInWishlist, reviews, userReview, bestsellerIds] = await Promise.all([
+    product.is_customizable ? getProductCustomizationRule(product.id) : Promise.resolve(null),
+    user?.id ? isProductInWishlist(product.id, user.id) : Promise.resolve(false),
+    getProductReviews(product.id),
+    user?.id ? getUserProductReview(product.id, user.id) : Promise.resolve(null),
     getBestsellerProductIds(),
   ])
-  const { data: reviewsData } = reviewsResult
-  const reviews = (reviewsData ?? []) as ReviewRow[]
-  const isBestseller = bestsellerIds.has(product.id)
 
-  const { data: userReviewRow } = user?.id
-    ? await supabase
-      .from('product_reviews')
-      .select('id, rating, comment, reviewer_display_name, order_id, created_at')
-      .eq('product_id', product.id)
-      .eq('user_id', user.id)
-      .maybeSingle()
-    : { data: null }
-  const userReview = userReviewRow as ReviewRow | null
+  const isBestseller = bestsellerIds.has(product.id)
 
   const images = (product?.product_images as { url: string; alt: string | null; sort_order: number; color?: string | null }[]) ?? []
   const variants = (product?.product_variants as Array<{
@@ -192,10 +139,12 @@ export default async function ProductPage({ params, searchParams }: Props) {
           reviews={reviews}
           userReview={userReview}
           isBestseller={isBestseller}
-          isInWishlist={isInWishlist}
+          isInWishlist={userIsInWishlist}
           canSubmitReview={!!user?.id}
           orderIdFromQuery={orderIdFromQuery}
           primaryImageUrl={primaryImage?.url}
+          userId={user?.id}
+          storyContent={product.story_content}
           customizationRule={
             customizationRule?.rule_def
               ? (customizationRule.rule_def as import('@/types/customization').CustomizationRuleDef)
