@@ -94,19 +94,7 @@ export const getProductReviews = cache(async (productId: string) => {
     .order('created_at', { ascending: false })
 
   // Transform the data to flatten user_profiles
-  type ReviewWithProfile = {
-    id: string
-    rating: number
-    comment: string | null
-    reviewer_display_name: string | null
-    order_id: string | null
-    created_at: string
-    photos: string[]
-    user_id: string
-    user_profiles: { avatar_url: string | null } | null
-  }
-
-  const transformedData = ((reviewsData ?? []) as ReviewWithProfile[]).map((review) => ({
+  const transformedData = (reviewsData ?? []).map((review) => ({
     id: review.id,
     rating: review.rating,
     comment: review.comment,
@@ -115,7 +103,7 @@ export const getProductReviews = cache(async (productId: string) => {
     created_at: review.created_at,
     photos: review.photos,
     user_id: review.user_id,
-    avatar_url: review.user_profiles?.avatar_url || null,
+    avatar_url: (review as any).user_profiles?.avatar_url || null,
   }))
 
   return transformedData as ReviewRow[]
@@ -148,30 +136,16 @@ export const getUserProductReview = cache(async (productId: string, userId: stri
   if (!userReviewRow) return null
 
   // Transform the data to flatten user_profiles
-  type ReviewWithProfile = {
-    id: string
-    rating: number
-    comment: string | null
-    reviewer_display_name: string | null
-    order_id: string | null
-    created_at: string
-    photos: string[]
-    user_id: string
-    user_profiles: { avatar_url: string | null } | null
-  }
-
-  const reviewWithProfile = userReviewRow as ReviewWithProfile
-
   const transformedReview = {
-    id: reviewWithProfile.id,
-    rating: reviewWithProfile.rating,
-    comment: reviewWithProfile.comment,
-    reviewer_display_name: reviewWithProfile.reviewer_display_name,
-    order_id: reviewWithProfile.order_id,
-    created_at: reviewWithProfile.created_at,
-    photos: reviewWithProfile.photos,
-    user_id: reviewWithProfile.user_id,
-    avatar_url: reviewWithProfile.user_profiles?.avatar_url || null,
+    id: userReviewRow.id,
+    rating: userReviewRow.rating,
+    comment: userReviewRow.comment,
+    reviewer_display_name: userReviewRow.reviewer_display_name,
+    order_id: userReviewRow.order_id,
+    created_at: userReviewRow.created_at,
+    photos: userReviewRow.photos,
+    user_id: userReviewRow.user_id,
+    avatar_url: (userReviewRow as any).user_profiles?.avatar_url || null,
   }
 
   return transformedReview as ReviewRow
