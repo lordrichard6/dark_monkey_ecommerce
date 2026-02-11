@@ -159,10 +159,10 @@ export function calculatePurchasePoints(priceCents: number): number {
   return Math.floor(priceCents / 100) // 1 point per CHF 1
 }
 
-// Points redemption values
+// Points redemption values (more conservative rates for sustainability)
 export const POINTS_REDEMPTION = {
-  100: 500, // 100 points = CHF 5 discount
-  250: 1500, // 250 points = CHF 15 discount
-  500: 3500, // 500 points = CHF 35 discount
-  1000: 7500, // 1000 points = CHF 75 discount
+  500: 500, // 500 points = CHF 5 discount (1% return rate)
+  1000: 1200, // 1000 points = CHF 12 discount (1.2% return rate)
+  2500: 3000, // 2500 points = CHF 30 discount (1.2% return rate)
+  5000: 6500, // 5000 points = CHF 65 discount (1.3% return rate)
 } as const
