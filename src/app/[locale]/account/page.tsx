@@ -29,8 +29,8 @@ export default async function AccountPage() {
     { data: profile },
     { data: achievements },
     { data: userAchievements },
-    { data: wishlistItems },
-    { data: orders },
+    { data: wishlistItems, count: wishlistCount },
+    { data: orders, count: ordersCount },
   ] = await Promise.all([
     supabase
       .from('user_profiles')
@@ -86,10 +86,10 @@ export default async function AccountPage() {
   const avatarUrl = profile?.avatar_url || (user.email ? getGravatarUrl(user.email) : null)
 
   const stats = {
-    totalOrders: orders?.count ?? 0,
+    totalOrders: ordersCount ?? 0,
     totalSpentCents: profile?.total_spent_cents || 0,
     reviewCount: profile?.review_count || 0,
-    wishlistSize: wishlistItems?.count ?? 0,
+    wishlistSize: wishlistCount ?? 0,
     memberSince: new Date(profile?.created_at || user.created_at),
     currentTier: profile?.current_tier || 'bronze',
     totalPoints: profile?.total_points || 0,
