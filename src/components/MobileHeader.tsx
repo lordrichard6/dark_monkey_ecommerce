@@ -158,6 +158,19 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                 {t('wishlist')}
               </Link>
 
+              <button
+                type="button"
+                onClick={() => setShowCategories(true)}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${showCategories
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                  }`}
+              >
+                <GridIcon className="h-5 w-5 shrink-0" />
+                <span className="flex-1 text-left">Browse Categories</span>
+                <ChevronIcon className="h-4 w-4 shrink-0" />
+              </button>
+
               {isAdmin && (
                 <div className="mt-4 pt-4 border-t border-white/5 space-y-1">
                   <p className="px-4 py-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
@@ -231,17 +244,6 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   </Link>
                 </div>
               )}
-
-              <button
-                onClick={() => setShowCategories(true)}
-                className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm font-bold text-amber-400 transition hover:bg-amber-500/20"
-              >
-                <div className="flex items-center gap-3">
-                  <GridIcon className="h-5 w-5" />
-                  Browse Categories
-                </div>
-                <ChevronIcon className="h-5 w-5" />
-              </button>
             </nav>
           </div>
 
