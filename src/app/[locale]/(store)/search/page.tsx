@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { searchProducts, type SearchableProduct } from '@/lib/search'
-import { ProductGrid } from '@/components/product/ProductGrid'
+import { SearchResults } from '@/components/search/SearchResults'
+import { type FilterableProduct } from '@/lib/product-filtering'
 import { getTranslations } from 'next-intl/server'
 import { Metadata } from 'next'
 import Link from 'next/link'
@@ -63,9 +64,17 @@ export default async function SearchPage({ searchParams }: Props) {
       name,
       slug,
       description,
-      categories (name, slug),
+      category_id,
+      created_at,
+      categories (id, name, slug),
       product_images (url, alt, sort_order),
-      product_variants (price_cents, product_inventory (quantity))
+      product_variants (
+        price_cents,
+        product_inventory (quantity),
+        product_attributes (
+          attribute_values (value, attributes (name))
+        )
+      )
     `
     )
     .eq('is_active', true)
@@ -84,11 +93,21 @@ export default async function SearchPage({ searchParams }: Props) {
     )
   }
 
-  // Transform products to searchable format
-  const searchableProducts: SearchableProduct[] = products.map((p) => {
+  // Transform products to searchable and filterable format
+  const searchableProducts: SearchableProduct[] = []
+  const filterableProducts: FilterableProduct[] = []
+  const categoryMap = new Map<string, { id: string; name: string; count: number }>()
+
+  for (const p of products) {
     const variants = p.product_variants as Array<{
       price_cents: number
       product_inventory: Array<{ quantity: number }> | { quantity: number }
+      product_attributes?: Array<{
+        attribute_values: Array<{
+          value: string
+          attributes: Array<{ name: string }>
+        }>
+      }>
     }> | null
 
     const images = p.product_images as Array<{
@@ -97,9 +116,9 @@ export default async function SearchPage({ searchParams }: Props) {
       sort_order: number
     }> | null
 
-    const categories = Array.isArray(p.categories)
+    const category = Array.isArray(p.categories)
       ? p.categories[0]
-      : p.categories as { name: string; slug: string } | null
+      : p.categories as { id: string; name: string; slug: string } | null
 
     const minPrice = variants?.length
       ? Math.min(...variants.map((v) => v.price_cents))
@@ -108,28 +127,100 @@ export default async function SearchPage({ searchParams }: Props) {
     const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) || []
     const primaryImage = sortedImages[0]
 
-    return {
+    // Extract colors and sizes from attributes
+    const colors = new Set<string>()
+    const sizes = new Set<string>()
+    let totalStock = 0
+
+    if (variants) {
+      for (const variant of variants) {
+        // Calculate stock
+        const inventory = variant.product_inventory
+        if (inventory) {
+          const qty = Array.isArray(inventory)
+            ? inventory.reduce((sum, inv) => sum + inv.quantity, 0)
+            : inventory.quantity
+          totalStock += qty
+        }
+
+        // Extract attributes
+        if (variant.product_attributes) {
+          for (const prodAttr of variant.product_attributes) {
+            if (prodAttr.attribute_values && prodAttr.attribute_values.length > 0) {
+              const attrVal = prodAttr.attribute_values[0]
+              if (attrVal.attributes && attrVal.attributes.length > 0) {
+                const attrName = attrVal.attributes[0].name.toLowerCase()
+                const attrValue = attrVal.value
+
+                if (attrName === 'color' || attrName === 'colour') {
+                  colors.add(attrValue)
+                } else if (attrName === 'size') {
+                  sizes.add(attrValue)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Searchable product
+    searchableProducts.push({
       id: p.id,
       name: p.name,
       slug: p.slug,
       description: p.description,
-      category: categories?.name || '',
+      category: category?.name || '',
       tags: [], // TODO: Add tags when tag system is implemented
       priceCents: minPrice,
       imageUrl: primaryImage?.url || '/placeholder.png',
       imageAlt: primaryImage?.alt || p.name,
+    })
+
+    // Filterable product
+    filterableProducts.push({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      priceCents: minPrice,
+      categoryId: p.category_id,
+      categoryName: category?.name || null,
+      colors: Array.from(colors),
+      sizes: Array.from(sizes),
+      inStock: totalStock > 0,
+      createdAt: p.created_at,
+      isBestseller: false, // TODO: Implement bestseller logic
+      averageRating: undefined, // TODO: Implement ratings
+    })
+
+    // Track categories
+    if (category) {
+      const existing = categoryMap.get(category.id)
+      if (existing) {
+        existing.count++
+      } else {
+        categoryMap.set(category.id, {
+          id: category.id,
+          name: category.name,
+          count: 1,
+        })
+      }
     }
-  })
+  }
 
-  // Perform search
-  const results = searchProducts(searchableProducts, query)
+  // Perform search to filter products by query
+  const searchResults = searchProducts(searchableProducts, query)
+  const searchResultIds = new Set(searchResults.map((r) => r.id))
 
-  // Track search query (optional - for analytics)
-  // TODO: Implement search analytics in Phase 10 later
-  // await supabase.from('search_queries').insert({
-  //   query: query.trim(),
-  //   results_count: results.length,
-  // })
+  // Filter filterable products to match search results
+  const filteredProducts = filterableProducts.filter((p) =>
+    searchResultIds.has(p.id)
+  )
+
+  // Build categories list
+  const categories = Array.from(categoryMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
@@ -143,63 +234,12 @@ export default async function SearchPage({ searchParams }: Props) {
           <span className="text-zinc-400">{t('searchResults')}</span>
         </nav>
 
-        {/* Search header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-2xl font-bold text-zinc-50 md:text-3xl">
-            {t('resultsFor')}: "{query}"
-          </h1>
-          <p className="text-zinc-400">
-            {results.length === 0
-              ? t('noResults')
-              : results.length === 1
-                ? t('oneResult')
-                : t('resultsCount', { count: results.length })}
-          </p>
-        </div>
-
-        {/* Results */}
-        {results.length > 0 ? (
-          <ProductGrid
-            products={results.map((r) => ({
-              productId: r.id,
-              slug: r.slug,
-              name: r.name,
-              priceCents: r.priceCents,
-              imageUrl: r.imageUrl,
-              imageAlt: r.imageAlt,
-              isInWishlist: false, // TODO: Check wishlist status
-              isBestseller: false, // TODO: Check bestseller status
-            }))}
-            title={t('results')}
-          />
-        ) : (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-12 text-center">
-            <h2 className="mb-4 text-xl font-semibold text-zinc-50">
-              {t('noResultsTitle')}
-            </h2>
-            <p className="mb-6 text-zinc-400">{t('noResultsMessage')}</p>
-
-            {/* Suggestions */}
-            <div className="mb-8 text-left">
-              <p className="mb-3 text-sm font-medium text-zinc-300">
-                {t('suggestions')}:
-              </p>
-              <ul className="space-y-2 text-sm text-zinc-400">
-                <li>• {t('suggestionSpelling')}</li>
-                <li>• {t('suggestionKeywords')}</li>
-                <li>• {t('suggestionGeneral')}</li>
-              </ul>
-            </div>
-
-            {/* Browse categories */}
-            <Link
-              href="/categories"
-              className="inline-block rounded-lg bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-700"
-            >
-              {t('browseCategories')}
-            </Link>
-          </div>
-        )}
+        {/* Search Results with Filters */}
+        <SearchResults
+          products={filteredProducts}
+          categories={categories}
+          query={query}
+        />
       </div>
     </div>
   )

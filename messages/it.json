@@ -41,6 +41,22 @@
     "suggestionGeneral": "Sfoglia le nostre categorie per ispirazione",
     "browseCategories": "Sfoglia categorie"
   },
+  "filters": {
+    "filters": "Filtri",
+    "reset": "Ripristina",
+    "priceRange": "Fascia di Prezzo",
+    "categories": "Categorie",
+    "colors": "Colori",
+    "sizes": "Taglie",
+    "inStockOnly": "Solo disponibili",
+    "activeFilters": "{count, plural, =1 {1 filtro attivo} other {# filtri attivi}}",
+    "sortBy": "Ordina per",
+    "newest": "Più recenti",
+    "priceAsc": "Prezzo: Dal più basso",
+    "priceDesc": "Prezzo: Dal più alto",
+    "bestseller": "Bestseller",
+    "rating": "Meglio valutati"
+  },
   "home": {
     "metaDescription": "E-commerce premium gamificato — commercio, personalizzazione e progressione. Sfoglia la nostra collezione.",
     "featuredProducts": "Prodotti in evidenza",

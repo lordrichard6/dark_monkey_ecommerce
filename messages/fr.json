@@ -41,6 +41,22 @@
     "suggestionGeneral": "Parcourez nos catégories pour l'inspiration",
     "browseCategories": "Parcourir les catégories"
   },
+  "filters": {
+    "filters": "Filtres",
+    "reset": "Réinitialiser",
+    "priceRange": "Gamme de Prix",
+    "categories": "Catégories",
+    "colors": "Couleurs",
+    "sizes": "Tailles",
+    "inStockOnly": "En stock uniquement",
+    "activeFilters": "{count, plural, =1 {1 filtre actif} other {# filtres actifs}}",
+    "sortBy": "Trier par",
+    "newest": "Plus récents",
+    "priceAsc": "Prix: Croissant",
+    "priceDesc": "Prix: Décroissant",
+    "bestseller": "Meilleures ventes",
+    "rating": "Les mieux notés"
+  },
   "home": {
     "metaDescription": "E-commerce premium gamifié — commerce, personnalisation et progression. Parcourez notre collection.",
     "featuredProducts": "Produits en vedette",

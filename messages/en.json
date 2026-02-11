@@ -42,6 +42,22 @@
     "suggestionGeneral": "Browse our categories for inspiration",
     "browseCategories": "Browse categories"
   },
+  "filters": {
+    "filters": "Filters",
+    "reset": "Reset",
+    "priceRange": "Price Range",
+    "categories": "Categories",
+    "colors": "Colors",
+    "sizes": "Sizes",
+    "inStockOnly": "In stock only",
+    "activeFilters": "{count, plural, =1 {1 active filter} other {# active filters}}",
+    "sortBy": "Sort by",
+    "newest": "Newest",
+    "priceAsc": "Price: Low to High",
+    "priceDesc": "Price: High to Low",
+    "bestseller": "Bestseller",
+    "rating": "Highest Rated"
+  },
   "home": {
     "metaDescription": "Premium gamified e-commerce — commerce, customization, and progression. Browse our collection.",
     "featuredProducts": "Featured products",
