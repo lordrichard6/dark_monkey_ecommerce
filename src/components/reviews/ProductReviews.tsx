@@ -16,6 +16,8 @@ export type ReviewRow = {
   order_id: string | null
   created_at: string
   photos: string[]
+  user_id: string
+  avatar_url: string | null
 }
 
 type Props = {
@@ -40,6 +42,46 @@ function StarRating({ rating }: { rating: number }) {
           ★
         </span>
       ))}
+    </div>
+  )
+}
+
+function ReviewerAvatar({
+  displayName,
+  avatarUrl
+}: {
+  displayName: string | null
+  avatarUrl: string | null
+}) {
+  const getInitials = () => {
+    if (displayName) {
+      return displayName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
+    return 'C'
+  }
+
+  if (avatarUrl) {
+    return (
+      <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-zinc-800 bg-zinc-900 flex-shrink-0">
+        <Image
+          src={avatarUrl}
+          alt={displayName || 'Reviewer'}
+          fill
+          className="object-cover"
+          unoptimized
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-zinc-800 bg-gradient-to-br from-amber-500 to-amber-600 text-sm font-bold text-white">
+      {getInitials()}
     </div>
   )
 }
@@ -99,41 +141,53 @@ export function ProductReviews({
               key={r.id}
               className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <StarRating rating={r.rating} />
-                <span className="text-sm text-zinc-400">
-                  {r.reviewer_display_name ?? 'Customer'} ·{' '}
-                  {new Date(r.created_at).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              </div>
-              {r.order_id && (
-                <span className="mt-1 inline-block text-xs text-amber-400/90">
-                  {t('verifiedPurchase')}
-                </span>
-              )}
-              {r.comment && (
-                <p className="mt-2 text-zinc-300">{r.comment}</p>
-              )}
-              {/* Review Photos */}
-              {r.photos && r.photos.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                  {r.photos.map((photo, index) => (
-                    <div key={index} className="relative aspect-square">
-                      <Image
-                        src={photo}
-                        alt={`Review photo ${index + 1}`}
-                        fill
-                        className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition"
-                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-                      />
+              <div className="flex items-start gap-4">
+                <ReviewerAvatar
+                  displayName={r.reviewer_display_name}
+                  avatarUrl={r.avatar_url}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-zinc-200">
+                        {r.reviewer_display_name ?? 'Customer'}
+                      </span>
+                      <StarRating rating={r.rating} />
                     </div>
-                  ))}
+                    <span className="text-sm text-zinc-400">
+                      {new Date(r.created_at).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  {r.order_id && (
+                    <span className="mt-1 inline-block text-xs text-amber-400/90">
+                      {t('verifiedPurchase')}
+                    </span>
+                  )}
+                  {r.comment && (
+                    <p className="mt-2 text-zinc-300">{r.comment}</p>
+                  )}
+                  {/* Review Photos */}
+                  {r.photos && r.photos.length > 0 && (
+                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                      {r.photos.map((photo, index) => (
+                        <div key={index} className="relative aspect-square">
+                          <Image
+                            src={photo}
+                            alt={`Review photo ${index + 1}`}
+                            fill
+                            className="object-cover rounded-lg cursor-pointer hover:opacity-90 transition"
+                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </li>
           ))}
         </ul>

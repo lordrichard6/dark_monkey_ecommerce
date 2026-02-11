@@ -79,11 +79,46 @@ export const getProductReviews = cache(async (productId: string) => {
 
   const { data: reviewsData } = await supabase
     .from('product_reviews')
-    .select('id, rating, comment, reviewer_display_name, order_id, created_at, photos')
+    .select(`
+      id,
+      rating,
+      comment,
+      reviewer_display_name,
+      order_id,
+      created_at,
+      photos,
+      user_id,
+      user_profiles!inner(avatar_url)
+    `)
     .eq('product_id', productId)
     .order('created_at', { ascending: false })
 
-  return (reviewsData ?? []) as ReviewRow[]
+  // Transform the data to flatten user_profiles
+  type ReviewWithProfile = {
+    id: string
+    rating: number
+    comment: string | null
+    reviewer_display_name: string | null
+    order_id: string | null
+    created_at: string
+    photos: string[]
+    user_id: string
+    user_profiles: { avatar_url: string | null } | null
+  }
+
+  const transformedData = ((reviewsData ?? []) as ReviewWithProfile[]).map((review) => ({
+    id: review.id,
+    rating: review.rating,
+    comment: review.comment,
+    reviewer_display_name: review.reviewer_display_name,
+    order_id: review.order_id,
+    created_at: review.created_at,
+    photos: review.photos,
+    user_id: review.user_id,
+    avatar_url: review.user_profiles?.avatar_url || null,
+  }))
+
+  return transformedData as ReviewRow[]
 })
 
 /**
@@ -95,12 +130,51 @@ export const getUserProductReview = cache(async (productId: string, userId: stri
 
   const { data: userReviewRow } = await supabase
     .from('product_reviews')
-    .select('id, rating, comment, reviewer_display_name, order_id, created_at, photos')
+    .select(`
+      id,
+      rating,
+      comment,
+      reviewer_display_name,
+      order_id,
+      created_at,
+      photos,
+      user_id,
+      user_profiles!inner(avatar_url)
+    `)
     .eq('product_id', productId)
     .eq('user_id', userId)
     .maybeSingle()
 
-  return userReviewRow as ReviewRow | null
+  if (!userReviewRow) return null
+
+  // Transform the data to flatten user_profiles
+  type ReviewWithProfile = {
+    id: string
+    rating: number
+    comment: string | null
+    reviewer_display_name: string | null
+    order_id: string | null
+    created_at: string
+    photos: string[]
+    user_id: string
+    user_profiles: { avatar_url: string | null } | null
+  }
+
+  const reviewWithProfile = userReviewRow as ReviewWithProfile
+
+  const transformedReview = {
+    id: reviewWithProfile.id,
+    rating: reviewWithProfile.rating,
+    comment: reviewWithProfile.comment,
+    reviewer_display_name: reviewWithProfile.reviewer_display_name,
+    order_id: reviewWithProfile.order_id,
+    created_at: reviewWithProfile.created_at,
+    photos: reviewWithProfile.photos,
+    user_id: reviewWithProfile.user_id,
+    avatar_url: reviewWithProfile.user_profiles?.avatar_url || null,
+  }
+
+  return transformedReview as ReviewRow
 })
 
 /**

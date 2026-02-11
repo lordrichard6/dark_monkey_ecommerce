@@ -1,18 +1,19 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { ProfileEditForm } from '@/components/account/ProfileEditForm'
-import { AddressList } from '@/components/account/AddressList'
-import { ReferralCard } from '@/components/account/ReferralCard'
-import { ProgressCard } from '@/components/gamification/ProgressCard'
-import { BadgesList } from '@/components/gamification/BadgesList'
-import { MissionsProgress } from '@/components/gamification/MissionsProgress'
-import { NotificationSettings } from '@/components/account/NotificationSettings'
+import { ProfileStats } from '@/components/profile/ProfileStats'
+import { PointsDisplay } from '@/components/profile/PointsDisplay'
+import { ReferralCard } from '@/components/profile/ReferralCard'
+import { AchievementGrid } from '@/components/profile/AchievementBadge'
+import { Edit, ShoppingBag, Heart } from 'lucide-react'
+import md5 from 'md5'
 
 export default async function AccountPage() {
   const t = await getTranslations('account')
   const supabase = await createClient()
+
   let user = null
   try {
     const { data } = await supabase.auth.getUser()
@@ -23,106 +24,179 @@ export default async function AccountPage() {
 
   if (!user) redirect('/login?redirectTo=/account')
 
+  // Fetch comprehensive profile data
   const [
     { data: profile },
-    { data: addresses },
-    { data: badges },
-    { data: userBadges },
-    { count: orderCount },
+    { data: achievements },
+    { data: userAchievements },
+    { data: wishlistItems },
+    { data: orders },
   ] = await Promise.all([
-    supabase.from('user_profiles').select('display_name, tier, total_xp').eq('id', user.id).single(),
     supabase
-      .from('addresses')
-      .select('id, type, full_name, line1, line2, city, postal_code, country, phone, is_default')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true }),
-    supabase.from('badges').select('id, code, name, description, icon').order('sort_order', { ascending: true }),
-    supabase.from('user_badges').select('badge_id').eq('user_id', user.id),
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('achievements')
+      .select('*')
+      .eq('is_active', true)
+      .order('tier', { ascending: true }),
+    supabase
+      .from('user_achievements')
+      .select('achievement_id, unlocked_at')
+      .eq('user_id', user.id),
+    supabase
+      .from('user_wishlist')
+      .select('product_id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
     supabase
       .from('orders')
-      .select('*', { count: 'exact', head: true })
+      .select('*', { count: 'exact' })
       .eq('user_id', user.id)
       .in('status', ['paid', 'processing', 'shipped', 'delivered']),
   ])
 
-  const earnedBadgeIds = (userBadges ?? []).map((ub) => ub.badge_id)
+  const unlockedAchievementIds = new Set(
+    userAchievements?.map((ua) => ua.achievement_id) || []
+  )
+
+  // Get Gravatar URL
+  const getGravatarUrl = (email: string) => {
+    const hash = md5(email.toLowerCase().trim())
+    return `https://www.gravatar.com/avatar/${hash}?d=404&s=200`
+  }
+
+  // Get initials for generated avatar
+  const getInitials = () => {
+    if (profile?.display_name) {
+      return profile.display_name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
+    if (user.email) {
+      return user.email[0].toUpperCase()
+    }
+    return 'U'
+  }
+
+  const avatarUrl = profile?.avatar_url || (user.email ? getGravatarUrl(user.email) : null)
+
+  const stats = {
+    totalOrders: orders?.count ?? 0,
+    totalSpentCents: profile?.total_spent_cents || 0,
+    reviewCount: profile?.review_count || 0,
+    wishlistSize: wishlistItems?.count ?? 0,
+    memberSince: new Date(profile?.created_at || user.created_at),
+    currentTier: profile?.current_tier || 'bronze',
+    totalPoints: profile?.total_points || 0,
+  }
 
   return (
-    <div className="min-h-screen px-4 py-12">
-      <div className="mx-auto max-w-2xl space-y-12">
-        <h1 className="text-2xl font-bold text-zinc-50">{t('title')}</h1>
+    <div className="min-h-screen bg-black py-12">
+      <div className="mx-auto max-w-6xl px-4">
+        {/* Header with Avatar */}
+        <div className="mb-8 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            {avatarUrl ? (
+              <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-zinc-800 bg-zinc-900">
+                <Image
+                  src={avatarUrl}
+                  alt="Avatar"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-zinc-800 bg-gradient-to-br from-amber-500 to-amber-600 text-2xl font-bold text-white">
+                {getInitials()}
+              </div>
+            )}
 
-        {/* Gamification: tier, XP, progress */}
-        {profile && (
-          <section>
-            <ProgressCard tier={profile.tier as 'bronze' | 'silver' | 'gold' | 'vip'} totalXp={profile.total_xp} />
-          </section>
-        )}
-
-        <section className="grid gap-6 sm:grid-cols-2">
-          <BadgesList badges={badges ?? []} earned={earnedBadgeIds} />
-          <MissionsProgress
-            orderCount={orderCount ?? 0}
-            hasDisplayName={!!profile?.display_name?.trim()}
-            earnedBadges={earnedBadgeIds}
-          />
-        </section>
-
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('profile')}</h2>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
-            <p className="text-zinc-400">
-              <span className="font-medium text-zinc-300">{t('emailLabel')}:</span> {user.email}
-            </p>
-            <div className="mt-6 border-t border-zinc-800 pt-6">
-              <ProfileEditForm displayName={profile?.display_name ?? null} />
+            <div>
+              <h1 className="text-3xl font-bold text-zinc-50">
+                {profile?.display_name || user.email?.split('@')[0] || t('title')}
+              </h1>
+              <p className="text-sm text-zinc-500">{user.email}</p>
             </div>
           </div>
-        </section>
 
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-50">Notifications</h2>
-          <NotificationSettings />
-        </section>
-
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('addresses')}</h2>
-          <AddressList addresses={addresses ?? []} />
-        </section>
-
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('wishlist')}</h2>
           <Link
-            href="/account/wishlist"
-            className="inline-flex items-center rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 transition hover:bg-zinc-700"
+            href="/account/edit-profile"
+            className="flex items-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:bg-zinc-700"
           >
-            {t('viewWishlist')}
+            <Edit className="h-4 w-4" />
+            {t('editProfile')}
           </Link>
-        </section>
+        </div>
 
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('orders')}</h2>
-          <Link
-            href="/account/orders"
-            className="inline-flex items-center rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 transition hover:bg-zinc-700"
-          >
-            {t('viewOrderHistory')}
-          </Link>
-        </section>
+        <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
+          {/* Main Content */}
+          <div className="space-y-8">
+            {/* Stats Dashboard */}
+            <section>
+              <h2 className="mb-4 text-xl font-semibold text-zinc-50">{t('statistics')}</h2>
+              <ProfileStats stats={stats} />
+            </section>
 
-        <section>
-          <ReferralCard />
-        </section>
+            {/* Achievements */}
+            {achievements && achievements.length > 0 && (
+              <section>
+                <h2 className="mb-4 text-xl font-semibold text-zinc-50">{t('achievements')}</h2>
+                <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+                  <AchievementGrid
+                    achievements={achievements}
+                    unlockedIds={unlockedAchievementIds}
+                  />
+                </div>
+              </section>
+            )}
 
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('security')}</h2>
-          <Link
-            href="/forgot-password"
-            className="text-sm text-zinc-400 hover:text-zinc-300"
-          >
-            {t('changePassword')}
-          </Link>
-        </section>
+            {/* Quick Links */}
+            <section className="grid gap-4 sm:grid-cols-2">
+              <Link
+                href="/account/orders"
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+              >
+                <ShoppingBag className="h-5 w-5 text-zinc-400" />
+                <div>
+                  <p className="font-medium text-zinc-50">{t('orders')}</p>
+                  <p className="text-sm text-zinc-500">{t('viewOrderHistory')}</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/account/wishlist"
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+              >
+                <Heart className="h-5 w-5 text-zinc-400" />
+                <div>
+                  <p className="font-medium text-zinc-50">{t('wishlist')}</p>
+                  <p className="text-sm text-zinc-500">{t('viewWishlist')}</p>
+                </div>
+              </Link>
+            </section>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Points */}
+            <section>
+              <h2 className="mb-4 text-xl font-semibold text-zinc-50">{t('points')}</h2>
+              <PointsDisplay totalPoints={stats.totalPoints} userId={user.id} />
+            </section>
+
+            {/* Referral */}
+            <section>
+              <ReferralCard userId={user.id} referralCount={profile?.referral_count || 0} />
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   )
