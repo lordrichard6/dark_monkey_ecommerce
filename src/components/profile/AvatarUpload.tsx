@@ -11,7 +11,7 @@ type Props = {
   currentAvatarUrl?: string | null
   userEmail?: string | null
   displayName?: string | null
-  onUploadComplete?: (url: string) => void
+  onUploadComplete?: (url: string | null) => void
 }
 
 export function AvatarUpload({
