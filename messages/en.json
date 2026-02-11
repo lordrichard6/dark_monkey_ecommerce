@@ -71,7 +71,9 @@
     "sortPriceAsc": "Price: low to high",
     "sortPriceDesc": "Price: high to low",
     "noProducts": "No products yet. Run",
-    "noProductsHint": "to load sample products."
+    "noProductsHint": "to load sample products.",
+    "seeAllNewArrivals": "See all new arrivals",
+    "seeAllProducts": "See all featured products"
   },
   "cookie": {
     "message": "We use cookies to provide cart persistence, authentication, and a better shopping experience.",

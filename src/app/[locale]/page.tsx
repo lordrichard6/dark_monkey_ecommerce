@@ -9,6 +9,7 @@ import { NewArrivals } from '@/components/product/NewArrivals'
 import type { Metadata } from 'next'
 import { GalleryPreviewSection } from '@/components/gallery/GalleryPreviewSection'
 import { AuthCTASection } from '@/components/auth/AuthCTASection'
+import { Link } from '@/i18n/navigation'
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -162,6 +163,10 @@ export default async function HomePage({ params, searchParams }: Props) {
         ? [...productsWithPrice].sort((a, b) => b.priceCents - a.priceCents)
         : productsWithPrice
 
+  // Limit featured products to 8 items on homepage
+  const displayedProducts = sortedProducts.slice(0, 8)
+  const hasMoreProducts = sortedProducts.length > 8
+
   const t = await getTranslations('home')
 
   return (
@@ -174,11 +179,21 @@ export default async function HomePage({ params, searchParams }: Props) {
         <TagFilter tags={availableTags} selectedTag={tag} />
         <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-zinc-900" />}>
           <ProductGrid
-            products={sortedProducts}
+            products={displayedProducts}
             title={tag ? `Discovery: ${availableTags.find(t => t.slug === tag)?.name || tag}` : t('featuredProducts')}
             sort={sort}
           />
         </Suspense>
+        {hasMoreProducts && !tag && (
+          <div className="mt-8 text-center">
+            <Link
+              href="/categories"
+              className="inline-flex items-center gap-2 rounded-lg bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-700"
+            >
+              {t('seeAllProducts')}
+            </Link>
+          </div>
+        )}
       </div>
 
 

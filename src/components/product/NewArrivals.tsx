@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from '@/i18n/navigation'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
 import { CATEGORIES } from '@/lib/categories'
@@ -35,6 +35,10 @@ export function NewArrivals({ products }: Props) {
     const filteredProducts = activeCategory === 'all'
         ? products
         : products.filter(p => p.categoryId === activeCategory || (CATEGORIES.find(c => c.id === activeCategory)?.subcategories?.some(s => s.id === p.categoryId)))
+
+    // Limit to 8 items for homepage display
+    const displayedProducts = filteredProducts.slice(0, 8)
+    const hasMore = filteredProducts.length > 8
 
     const handleMouseDown = (e: React.MouseEvent) => {
         setIsDragging(true)
@@ -123,8 +127,8 @@ export function NewArrivals({ products }: Props) {
                     onMouseMove={handleMouseMove}
                     className={`grid grid-cols-2 gap-4 md:flex md:gap-6 overflow-x-auto pb-8 md:pb-12 md:[&::-webkit-scrollbar]:hidden md:[ms-overflow-style:none] md:[scrollbar-width:none] md:cursor-grab md:active:cursor-grabbing md:select-none md:scroll-smooth ${isDragging ? 'md:scroll-auto' : ''}`}
                 >
-                    {filteredProducts.length > 0 ? (
-                        filteredProducts.map((product) => (
+                    {displayedProducts.length > 0 ? (
+                        displayedProducts.map((product) => (
                             <div key={product.slug} className="md:min-w-[320px] flex-shrink-0 transition-transform hover:-translate-y-1">
                                 <ProductCardWithWishlist
                                     productId={product.productId}
@@ -145,6 +149,18 @@ export function NewArrivals({ products }: Props) {
                         </div>
                     )}
                 </div>
+
+                {hasMore && (
+                    <div className="mt-8 text-center">
+                        <Link
+                            href="/categories"
+                            className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-8 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/10 hover:text-zinc-50"
+                        >
+                            {t('seeAllNewArrivals')}
+                            <ChevronRight className="h-4 w-4" />
+                        </Link>
+                    </div>
+                )}
             </div>
         </section>
     )

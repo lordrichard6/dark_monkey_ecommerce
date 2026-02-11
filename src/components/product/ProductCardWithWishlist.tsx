@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
 import { ProductImageWithFallback } from './ProductImageWithFallback'
 import { ProductName } from './ProductName'
+import { ProductBadge } from './ProductBadge'
 
 type ProductCardProps = {
   slug: string
@@ -15,13 +16,13 @@ type ProductCardProps = {
   imageAlt: string
   isInWishlist?: boolean
   isBestseller?: boolean
+  isFeatured?: boolean
+  isOnSale?: boolean
+  createdAt?: string
   showWishlist?: boolean
 }
 
-import { useTranslations } from 'next-intl'
 import { useCurrency } from '@/components/currency/CurrencyContext'
-
-// ...
 
 export function ProductCardWithWishlist({
   slug,
@@ -32,52 +33,44 @@ export function ProductCardWithWishlist({
   imageUrl,
   imageAlt,
   isInWishlist = false,
-  isBestseller = false,
+  isFeatured = false,
+  isOnSale = false,
+  createdAt,
   showWishlist = true,
 }: ProductCardProps) {
-  const t = useTranslations('product')
   const { format } = useCurrency()
+
+  // Check if product is new (created within last 3 days)
+  const isNew = createdAt
+    ? new Date().getTime() - new Date(createdAt).getTime() < 3 * 24 * 60 * 60 * 1000
+    : false
+
+  // Determine which badges to show (priority: Sale > New > Featured)
+  const badges = []
+  if (isOnSale) badges.push('sale')
+  if (isNew) badges.push('new')
+  if (isFeatured) badges.push('featured')
+
   return (
     <Link
       href={`/products/${slug}`}
       className="group relative block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
-        {isBestseller && (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-950">
-            {t('bestseller')}
-          </span>
-        )}
-        {compareAtPriceCents && compareAtPriceCents > priceCents && (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
-            SALE
-          </span>
-        )}
-        {/* If both exist, we might want to offset one... let's adjust logic */}
-        {isBestseller && compareAtPriceCents && compareAtPriceCents > priceCents ? (
+        {/* Display badges */}
+        {badges.length > 0 && (
           <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
-            <span className="rounded-md bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
-              SALE
-            </span>
-            <span className="rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-950">
-              {t('bestseller')}
-            </span>
+            {badges.map((badge) => (
+              <ProductBadge key={badge} type={badge as 'new' | 'featured' | 'sale'} />
+            ))}
           </div>
-        ) : isBestseller ? (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-950">
-            {t('bestseller')}
-          </span>
-        ) : compareAtPriceCents && compareAtPriceCents > priceCents ? (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
-            SALE
-          </span>
-        ) : null}
+        )}
         <ProductImageWithFallback
           src={imageUrl}
           alt={imageAlt}
           fill
-          className="object-cover transition group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          className="object-cover object-center transition group-hover:scale-105"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           unoptimized={
             imageUrl.endsWith('.svg') ||
             imageUrl.includes('picsum.photos') ||

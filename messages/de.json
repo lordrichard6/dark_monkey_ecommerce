@@ -71,7 +71,9 @@
     "sortPriceAsc": "Preis: aufsteigend",
     "sortPriceDesc": "Preis: absteigend",
     "noProducts": "Noch keine Produkte. Führen Sie",
-    "noProductsHint": "aus, um Beispielprodukte zu laden."
+    "noProductsHint": "aus, um Beispielprodukte zu laden.",
+    "seeAllNewArrivals": "Alle Neuheiten ansehen",
+    "seeAllProducts": "Alle vorgestellten Produkte ansehen"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",

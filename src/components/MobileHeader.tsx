@@ -33,12 +33,19 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
   }
 
   useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden'
-    else {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
       document.body.style.overflow = ''
-      setShowCategories(false)
     }
     return () => { document.body.style.overflow = '' }
+  }, [open])
+
+  // Reset categories view when menu closes
+  useEffect(() => {
+    if (!open) {
+      setShowCategories(false)
+    }
   }, [open])
 
   const isActive = (path: string) => {
@@ -114,7 +121,7 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
             className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${showCategories ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
               }`}
           >
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            <nav className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
               <Link
                 href="/"
                 onClick={closeMenu}
@@ -224,18 +231,18 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   </Link>
                 </div>
               )}
-            </nav>
 
-            <button
-              onClick={() => setShowCategories(true)}
-              className="m-4 flex items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm font-bold text-amber-400 transition hover:bg-amber-500/20"
-            >
-              <div className="flex items-center gap-3">
-                <GridIcon className="h-5 w-5" />
-                Browse Categories
-              </div>
-              <ChevronIcon className="h-5 w-5" />
-            </button>
+              <button
+                onClick={() => setShowCategories(true)}
+                className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm font-bold text-amber-400 transition hover:bg-amber-500/20"
+              >
+                <div className="flex items-center gap-3">
+                  <GridIcon className="h-5 w-5" />
+                  Browse Categories
+                </div>
+                <ChevronIcon className="h-5 w-5" />
+              </button>
+            </nav>
           </div>
 
           {/* Categories Expanded View */}

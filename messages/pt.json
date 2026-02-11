@@ -71,7 +71,9 @@
     "sortPriceAsc": "Preço: menor a maior",
     "sortPriceDesc": "Preço: maior a menor",
     "noProducts": "Ainda não há produtos. Execute",
-    "noProductsHint": "para carregar produtos de exemplo."
+    "noProductsHint": "para carregar produtos de exemplo.",
+    "seeAllNewArrivals": "Ver todas as novidades",
+    "seeAllProducts": "Ver todos os produtos em destaque"
   },
   "cookie": {
     "message": "Usamos cookies para persistência do carrinho, autenticação e uma melhor experiência de compra.",

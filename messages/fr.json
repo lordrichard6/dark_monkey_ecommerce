@@ -70,7 +70,9 @@
     "sortPriceAsc": "Prix : croissant",
     "sortPriceDesc": "Prix : décroissant",
     "noProducts": "Pas encore de produits. Exécutez",
-    "noProductsHint": "pour charger des produits d'exemple."
+    "noProductsHint": "pour charger des produits d'exemple.",
+    "seeAllNewArrivals": "Voir toutes les nouveautés",
+    "seeAllProducts": "Voir tous les produits en vedette"
   },
   "cookie": {
     "message": "Nous utilisons des cookies pour la persistance du panier, l'authentification et une meilleure expérience d'achat.",
