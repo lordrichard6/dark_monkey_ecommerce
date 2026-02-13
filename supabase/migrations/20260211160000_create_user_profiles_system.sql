@@ -36,6 +36,65 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Add missing columns if table already exists
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='is_public') THEN
+    ALTER TABLE user_profiles ADD COLUMN is_public BOOLEAN DEFAULT false;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='bio') THEN
+    ALTER TABLE user_profiles ADD COLUMN bio TEXT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='birthday') THEN
+    ALTER TABLE user_profiles ADD COLUMN birthday DATE;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='preferred_size') THEN
+    ALTER TABLE user_profiles ADD COLUMN preferred_size TEXT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='style_preferences') THEN
+    ALTER TABLE user_profiles ADD COLUMN style_preferences JSONB DEFAULT '[]'::jsonb;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='current_tier') THEN
+    ALTER TABLE user_profiles ADD COLUMN current_tier TEXT DEFAULT 'bronze' CHECK (current_tier IN ('bronze', 'silver', 'gold', 'platinum'));
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='tier_progress') THEN
+    ALTER TABLE user_profiles ADD COLUMN tier_progress DECIMAL(5,2) DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='total_orders') THEN
+    ALTER TABLE user_profiles ADD COLUMN total_orders INTEGER DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='total_spent_cents') THEN
+    ALTER TABLE user_profiles ADD COLUMN total_spent_cents BIGINT DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='review_count') THEN
+    ALTER TABLE user_profiles ADD COLUMN review_count INTEGER DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_name='user_profiles' AND column_name='referral_count') THEN
+    ALTER TABLE user_profiles ADD COLUMN referral_count INTEGER DEFAULT 0;
+  END IF;
+END $$;
+
 -- Create profile automatically when user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -59,6 +118,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS user_profiles_updated_at ON user_profiles;
 CREATE TRIGGER user_profiles_updated_at
   BEFORE UPDATE ON user_profiles
   FOR EACH ROW
@@ -109,8 +169,8 @@ CREATE TABLE IF NOT EXISTS user_achievements (
   UNIQUE(user_id, achievement_id)
 );
 
-CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
-CREATE INDEX idx_user_achievements_unlocked_at ON user_achievements(unlocked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_unlocked_at ON user_achievements(unlocked_at DESC);
 
 -- =====================================================
 -- REFERRALS TABLE
@@ -126,9 +186,9 @@ CREATE TABLE IF NOT EXISTS user_referrals (
   completed_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_user_referrals_referrer_id ON user_referrals(referrer_id);
-CREATE INDEX idx_user_referrals_code ON user_referrals(referral_code);
-CREATE INDEX idx_user_referrals_status ON user_referrals(status);
+CREATE INDEX IF NOT EXISTS idx_user_referrals_referrer_id ON user_referrals(referrer_id);
+CREATE INDEX IF NOT EXISTS idx_user_referrals_code ON user_referrals(referral_code);
+CREATE INDEX IF NOT EXISTS idx_user_referrals_status ON user_referrals(status);
 
 -- Generate unique referral code for each user
 CREATE OR REPLACE FUNCTION generate_referral_code(user_id UUID)
@@ -163,8 +223,8 @@ CREATE TABLE IF NOT EXISTS points_transactions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_points_transactions_user_id ON points_transactions(user_id);
-CREATE INDEX idx_points_transactions_created_at ON points_transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_points_transactions_user_id ON points_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_points_transactions_created_at ON points_transactions(created_at DESC);
 
 -- =====================================================
 -- TIER THRESHOLDS (Configuration)
@@ -221,66 +281,112 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 -- User Profiles
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view their own profile"
-  ON user_profiles FOR SELECT
-  USING (auth.uid() = id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'user_profiles' AND policyname = 'Users can view their own profile'
+  ) THEN
+    CREATE POLICY "Users can view their own profile"
+      ON user_profiles FOR SELECT
+      USING (auth.uid() = id);
+  END IF;
 
-CREATE POLICY "Users can view public profiles"
-  ON user_profiles FOR SELECT
-  USING (is_public = true);
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'user_profiles' AND policyname = 'Users can view public profiles'
+  ) THEN
+    CREATE POLICY "Users can view public profiles"
+      ON user_profiles FOR SELECT
+      USING (is_public = true);
+  END IF;
 
-CREATE POLICY "Users can update their own profile"
-  ON user_profiles FOR UPDATE
-  USING (auth.uid() = id);
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'user_profiles' AND policyname = 'Users can update their own profile'
+  ) THEN
+    CREATE POLICY "Users can update their own profile"
+      ON user_profiles FOR UPDATE
+      USING (auth.uid() = id);
+  END IF;
+END $$;
 
 -- User Achievements
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view their own achievements"
-  ON user_achievements FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'user_achievements' AND policyname = 'Users can view their own achievements'
+  ) THEN
+    CREATE POLICY "Users can view their own achievements"
+      ON user_achievements FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
 
-CREATE POLICY "Users can view achievements of public profiles"
-  ON user_achievements FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE user_profiles.id = user_achievements.user_id
-      AND user_profiles.is_public = true
-    )
-  );
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'user_achievements' AND policyname = 'Users can view achievements of public profiles'
+  ) THEN
+    CREATE POLICY "Users can view achievements of public profiles"
+      ON user_achievements FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM user_profiles
+          WHERE user_profiles.id = user_achievements.user_id
+          AND user_profiles.is_public = true
+        )
+      );
+  END IF;
+END $$;
 
 -- Achievements (public read)
 ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can view achievements"
-  ON achievements FOR SELECT
-  USING (is_active = true);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'achievements' AND policyname = 'Anyone can view achievements'
+  ) THEN
+    CREATE POLICY "Anyone can view achievements"
+      ON achievements FOR SELECT
+      USING (is_active = true);
+  END IF;
+END $$;
 
 -- Referrals
 ALTER TABLE user_referrals ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view their own referrals"
-  ON user_referrals FOR SELECT
-  USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'user_referrals' AND policyname = 'Users can view their own referrals'
+  ) THEN
+    CREATE POLICY "Users can view their own referrals"
+      ON user_referrals FOR SELECT
+      USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
+  END IF;
 
-CREATE POLICY "Users can create referrals"
-  ON user_referrals FOR INSERT
-  WITH CHECK (auth.uid() = referrer_id);
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'user_referrals' AND policyname = 'Users can create referrals'
+  ) THEN
+    CREATE POLICY "Users can create referrals"
+      ON user_referrals FOR INSERT
+      WITH CHECK (auth.uid() = referrer_id);
+  END IF;
+END $$;
 
 -- Points Transactions
 ALTER TABLE points_transactions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view their own transactions"
-  ON points_transactions FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_policies WHERE tablename = 'points_transactions' AND policyname = 'Users can view their own transactions'
+  ) THEN
+    CREATE POLICY "Users can view their own transactions"
+      ON points_transactions FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- =====================================================
 -- INDEXES
 -- =====================================================
-CREATE INDEX idx_user_profiles_tier ON user_profiles(current_tier);
-CREATE INDEX idx_user_profiles_public ON user_profiles(is_public) WHERE is_public = true;
-CREATE INDEX idx_user_profiles_total_spent ON user_profiles(total_spent_cents DESC);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_tier ON user_profiles(current_tier);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_public ON user_profiles(is_public) WHERE is_public = true;
+CREATE INDEX IF NOT EXISTS idx_user_profiles_total_spent ON user_profiles(total_spent_cents DESC);
 
 -- =====================================================
 -- COMMENTS

@@ -6,10 +6,11 @@ import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 
 function MailIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
       <rect width="20" height="16" x="2" y="4" rx="2" />
       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
     </svg>
@@ -18,7 +19,7 @@ function MailIcon({ className }: { className?: string }) {
 
 function LockIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
       <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
@@ -27,7 +28,7 @@ function LockIcon({ className }: { className?: string }) {
 
 function EyeIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
       <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -36,7 +37,7 @@ function EyeIcon({ className }: { className?: string }) {
 
 function EyeOffIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
       <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
       <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
       <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
@@ -55,6 +56,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [signupSuccess, setSignupSuccess] = useState(false)
@@ -126,7 +128,7 @@ export function LoginForm() {
 
   if (signupSuccess) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 shadow-2xl shadow-black/40 backdrop-blur-xl">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 shadow-2xl shadow-black/40 backdrop-blur-xl" role="status" aria-live="polite">
         <div className="h-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600" />
         <div className="flex flex-col items-center p-10 text-center">
           <div className="animate-success-pop mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/20 ring-4 ring-emerald-500/10">
@@ -139,13 +141,14 @@ export function LoginForm() {
               strokeLinecap="round"
               strokeLinejoin="round"
               className="h-10 w-10 text-emerald-400 animate-success-fade-in"
+              aria-hidden="true"
             >
               <path d="M20 6 9 17l-5-5" />
             </svg>
           </div>
-          <h2 className="animate-success-fade-in text-xl font-semibold text-zinc-50">Account created</h2>
+          <h2 className="animate-success-fade-in text-xl font-semibold text-zinc-50">{t('accountCreated')}</h2>
           <p className="animate-success-fade-in mt-3 text-zinc-400">
-            Check your email for the confirmation link.
+            {t('checkEmail')}
           </p>
           <p className="animate-success-fade-in mt-4 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-lg font-medium text-transparent">
             Now you will dress like a VIP.
@@ -154,7 +157,7 @@ export function LoginForm() {
             href="/categories"
             className="animate-success-fade-in mt-8 inline-block rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-semibold text-zinc-950 shadow-lg shadow-amber-500/20 transition hover:from-amber-400 hover:to-amber-500"
           >
-            Start shopping
+            {t('startShopping')}
           </Link>
         </div>
       </div>
@@ -168,9 +171,11 @@ export function LoginForm() {
 
       <div className="p-8 space-y-8">
         {/* Mode toggle */}
-        <div className="flex rounded-xl bg-zinc-800/60 p-1">
+        <div className="flex rounded-xl bg-zinc-800/60 p-1" role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={!isSignUp}
             onClick={() => {
               setIsSignUp(false)
               setMessage(null)
@@ -181,10 +186,12 @@ export function LoginForm() {
               : 'text-zinc-500 hover:text-zinc-300'
               }`}
           >
-            Sign in
+            {t('signIn')}
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={isSignUp}
             onClick={() => {
               setIsSignUp(true)
               setMessage(null)
@@ -194,7 +201,7 @@ export function LoginForm() {
               : 'text-zinc-500 hover:text-zinc-300'
               }`}
           >
-            Sign up
+            {t('signUp')}
           </button>
         </div>
 
@@ -202,7 +209,7 @@ export function LoginForm() {
           {/* Email */}
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
-              Email
+              {t('email')}
             </label>
             <div className="relative">
               <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
@@ -215,8 +222,9 @@ export function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="you@example.com"
+                placeholder={t('emailPlaceholder')}
                 className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 pl-11 pr-4 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                aria-required="true"
               />
             </div>
           </div>
@@ -225,7 +233,7 @@ export function LoginForm() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label htmlFor="password" className="text-sm font-medium text-zinc-300">
-                Password
+                {t('password')}
               </label>
               <div className={`transition-all duration-300 ${isSignUp ? 'opacity-0 invisible h-0' : 'opacity-100 visible h-auto'}`}>
                 {!isSignUp && (
@@ -233,7 +241,7 @@ export function LoginForm() {
                     href="/forgot-password"
                     className="text-xs text-zinc-500 transition hover:text-amber-400"
                   >
-                    Forgot password?
+                    {t('forgotPassword')}
                   </Link>
                 )}
               </div>
@@ -248,20 +256,22 @@ export function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                placeholder="••••••••"
+                placeholder={t('passwordPlaceholder')}
                 className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 pl-11 pr-11 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                aria-required="true"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-500 transition hover:text-zinc-300"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('hidePassword') : t('showPassword')}
               >
                 {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
               </button>
             </div>
+            {isSignUp && <PasswordStrengthMeter password={password} />}
           </div>
 
           {/* Confirm password (sign up only) */}
@@ -274,7 +284,7 @@ export function LoginForm() {
             <div className="overflow-hidden">
               <div className="pt-4 space-y-2">
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-300">
-                  Confirm password
+                  {t('confirmPassword')}
                 </label>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
@@ -286,16 +296,17 @@ export function LoginForm() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required={isSignUp}
-                    minLength={6}
+                    minLength={8}
                     autoComplete="new-password"
-                    placeholder="••••••••"
+                    placeholder={t('confirmPasswordPlaceholder')}
                     className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 pl-11 pr-11 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    aria-required={isSignUp}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-500 transition hover:text-zinc-300"
-                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showConfirmPassword ? t('hidePassword') : t('showPassword')}
                   >
                     {showConfirmPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                   </button>
@@ -304,11 +315,40 @@ export function LoginForm() {
             </div>
           </div>
 
+          {!isSignUp && (
+            <div className="flex items-center space-x-2">
+              <input
+                id="remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
+              />
+              <label htmlFor="remember" className="text-sm text-zinc-400">
+                {t('rememberMe')}
+              </label>
+            </div>
+          )}
+
+          {isSignUp && (
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              {t('termsAgreement')} {' '}
+              <Link href="/terms" className="text-zinc-400 underline decoration-zinc-700 hover:text-amber-400 transition-colors">
+                {t('termsOfService')}
+              </Link>{' '}
+              {t('and')}{' '}
+              <Link href="/privacy" className="text-zinc-400 underline decoration-zinc-700 hover:text-amber-400 transition-colors">
+                {t('privacyPolicy')}
+              </Link>.
+            </p>
+          )}
+
           {message && (
             <div
-              className={`rounded-xl px-4 py-3 text-sm transition-all duration-300 ${message.type === 'success'
+              role="alert"
+              className={`rounded-xl px-4 py-3 text-sm transition-all duration-300 animate-in fade-in zoom-in-95 ${message.type === 'success'
                 ? 'bg-emerald-500/10 text-emerald-400'
-                : 'bg-red-500/10 text-red-400'
+                : 'bg-red-500/10 text-red-400 border border-red-500/20'
                 }`}
             >
               {message.text}
@@ -319,9 +359,9 @@ export function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-amber-500/20 transition-all hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 active:scale-[0.98]"
+              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-amber-500/20 transition-all hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 active:scale-[0.98] outline-none focus:ring-2 focus:ring-amber-500/40 focus:ring-offset-2 focus:ring-offset-zinc-900"
             >
-              {loading ? 'Please wait...' : isSignUp ? 'Create account' : 'Sign in'}
+              {loading ? t(isSignUp ? 'creatingAccount' : 'signingIn') : isSignUp ? t('createAccount') : t('signIn')}
             </button>
 
             <div className="space-y-6">
@@ -330,7 +370,7 @@ export function LoginForm() {
                   <span className="w-full border-t border-zinc-700/50" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-zinc-900 px-3 text-zinc-500">Or</span>
+                  <span className="bg-zinc-900 px-3 text-zinc-500">{t('or')}</span>
                 </div>
               </div>
 
@@ -339,7 +379,7 @@ export function LoginForm() {
                 onClick={handleGoogleLogin}
                 className="flex w-full items-center justify-center gap-3 rounded-xl bg-white py-3.5 text-sm font-bold text-zinc-950 shadow-lg shadow-black/10 transition-all duration-300 hover:bg-zinc-100 hover:scale-[1.01] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/20"
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                     fill="#4285F4"
