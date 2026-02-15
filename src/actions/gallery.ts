@@ -168,11 +168,32 @@ export async function getGalleryItems(
         // Get count
         const votesCount = item.gallery_votes?.[0]?.count || 0
 
+        // URL Regeneration Logic:
+        // If the URL is from Supabase Storage, we regenerate it using the CURRENT environment's URL.
+        // This fixes issues where images uploaded on localhost (127.0.0.1) break on production, or vice versa.
+        let imageUrl = item.image_url
+        try {
+            if (imageUrl && imageUrl.includes('/storage/v1/object/public/')) {
+                // Extract the path after the bucket name (product-images)
+                // Format: .../product-images/gallery/filename.png
+                // We want: gallery/filename.png
+                const parts = imageUrl.split('/product-images/')
+                if (parts.length > 1) {
+                    const filePath = parts[1]
+                    // Generate fresh URL using current client config
+                    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filePath)
+                    imageUrl = urlData.publicUrl
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to regenerate gallery URL:', e)
+        }
+
         items.push({
             id: item.id,
             title: item.title,
             description: item.description,
-            image_url: item.image_url,
+            image_url: imageUrl,
             created_at: item.created_at,
             tags,
             votes_count: votesCount,

@@ -16,33 +16,41 @@ export function AuthCTASection() {
 
                     <div className="relative z-10 max-w-2xl mx-auto space-y-6">
                         <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
-                            Unlock <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">Exclusive</span> Benefits
+                            {t.rich('authTitle', {
+                                secondary: (chunks: any) => (
+                                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
+                                        {chunks}
+                                    </span>
+                                )
+                            })}
                         </h2>
 
                         <p className="text-zinc-400 text-lg md:text-xl leading-relaxed">
-                            Join our community to access special offers, track your orders easily, and be the first to know about new drops.
+                            {t('authSubtitle')}
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                             <Link
                                 href="/login?mode=signup"
+                                aria-label={t('createAccount')}
                                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-zinc-950 font-bold hover:from-amber-300 hover:to-orange-400 shadow-lg shadow-orange-500/20 transition-all hover:scale-105 active:scale-95"
                             >
                                 <UserPlus className="w-4 h-4" />
-                                Create Account
+                                {t('createAccount')}
                             </Link>
 
                             <Link
                                 href="/login"
+                                aria-label={t('logIn')}
                                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-white text-zinc-950 font-bold hover:bg-zinc-100 transition-all hover:scale-105 active:scale-95"
                             >
                                 <LogIn className="w-4 h-4" />
-                                Log In
+                                {t('logIn')}
                             </Link>
                         </div>
 
                         <p className="text-xs text-zinc-500 pt-4">
-                            Already have an account? Log in to view your points.
+                            {t('alreadyHaveAccount')}
                         </p>
                     </div>
                 </div>

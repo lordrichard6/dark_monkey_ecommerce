@@ -17,6 +17,28 @@ export default async function AdminSettingsPage() {
             </div>
 
             <div className="mt-8 space-y-12">
+                {/* General Settings */}
+                <section id="general">
+                    <div className="mb-6 flex items-center gap-2">
+                        <Settings className="h-5 w-5 text-amber-500" />
+                        <h2 className="text-lg font-semibold text-zinc-50">General</h2>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <a href="/admin/messages" className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900">
+                            <h3 className="font-medium text-white">Top Bar Messages</h3>
+                            <p className="mt-1 text-sm text-zinc-400">Manage announcement bar content.</p>
+                        </a>
+                        <a href="/admin/categories" className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900">
+                            <h3 className="font-medium text-white">Categories</h3>
+                            <p className="mt-1 text-sm text-zinc-400">Manage categories and subcategories.</p>
+                        </a>
+                        <a href="/admin/discounts" className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900">
+                            <h3 className="font-medium text-white">Discounts</h3>
+                            <p className="mt-1 text-sm text-zinc-400">Manage discount codes.</p>
+                        </a>
+                    </div>
+                </section>
+
                 {/* Tag Management */}
                 <section id="tags">
                     <div className="flex items-center gap-2 mb-6">

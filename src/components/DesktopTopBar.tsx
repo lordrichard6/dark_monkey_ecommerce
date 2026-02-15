@@ -7,6 +7,7 @@ import { UserMenuDropdown } from '@/components/UserMenuDropdown'
 import { CurrencySelector } from '@/components/currency/CurrencySelector'
 import { SearchBar } from '@/components/search/SearchBar'
 
+
 type UserInfo = {
   user: { email?: string | null; user_metadata?: { avatar_url?: string } } | null
   displayName: string | null
@@ -15,12 +16,16 @@ type UserInfo = {
 }
 
 export function DesktopTopBar({ user, displayName, avatarUrl, isAdmin }: UserInfo) {
+
+
   return (
     <header className="fixed top-0 left-0 right-0 z-30 hidden h-14 border-b border-white/10 bg-black/40 backdrop-blur-xl md:flex md:pl-16">
       <div className="flex flex-1 items-center justify-between px-4">
-        {/* Left side - Logo */}
-        <div className="flex items-center">
-          <DarkMonkeyLogo size="sm" textOnly />
+        {/* Left side - Logo & Menu */}
+        <div className="flex h-full items-center gap-4">
+          <DarkMonkeyLogo size="sm" href="/" textOnly />
+
+
         </div>
 
         {/* Right side - Search and utilities */}
@@ -29,8 +34,7 @@ export function DesktopTopBar({ user, displayName, avatarUrl, isAdmin }: UserInf
             <SearchBar />
           </div>
           <div className="flex items-center gap-2">
-            <CurrencySelector />
-            <LanguageSwitcher variant="desktop" />
+            <LanguageSwitcher variant="desktop" showName={false} />
             <CartTrigger />
             <UserMenuDropdown
               user={user}

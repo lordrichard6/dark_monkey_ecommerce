@@ -33,14 +33,16 @@ export const getProductBySlug = cache(async (slug: string) => {
       is_customizable,
       category_id,
       story_content,
+      printful_sync_product_id,
       categories (name, slug),
-      product_images (url, alt, sort_order, color),
+      product_images (url, alt, sort_order, color, variant_id),
       product_variants (
         id,
         name,
         price_cents,
         attributes,
         sort_order,
+        printful_sync_variant_id,
         product_inventory (quantity)
       )
     `

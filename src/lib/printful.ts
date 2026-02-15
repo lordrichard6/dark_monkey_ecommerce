@@ -1,50 +1,62 @@
-const API_BASE = 'https://api.printful.com'
+import { rateLimiter } from './printful/rate-limiter'
+import { fetchWithRetry } from './printful/retry'
+import { printfulCache } from './printful/cache'
+import { PRINTFUL_CONFIG } from './printful/config'
+import { logger } from './printful/logger'
+import { printfulAnalytics } from './printful/analytics'
+import { PrintfulError, PrintfulAuthError, PrintfulApiError } from './printful/errors'
+import type {
+  PrintfulResponse,
+  PrintfulRecipient,
+  PrintfulCreateOrderPayload,
+  PrintfulSyncProduct,
+  PrintfulSyncProductDetail,
+  PrintfulCatalogProduct,
+  PrintfulCatalogVariant,
+  PrintfulOrderItem
+} from './printful/types'
+
+export * from './printful/types'
+export * from './printful/errors'
+
+const API_BASE = PRINTFUL_CONFIG.API_BASE
 
 export function isPrintfulConfigured(): boolean {
-  return Boolean(process.env.PRINTFUL_API_TOKEN?.trim())
+  return Boolean(PRINTFUL_CONFIG?.PRINTFUL_API_TOKEN)
 }
 
 function getHeaders(): Record<string, string> {
-  const token = process.env.PRINTFUL_API_TOKEN
-  if (!token) throw new Error('PRINTFUL_NOT_CONFIGURED')
+  const token = PRINTFUL_CONFIG?.PRINTFUL_API_TOKEN
+  if (!token) throw new PrintfulAuthError('PRINTFUL_NOT_CONFIGURED')
   return {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
   }
 }
 
-export type PrintfulRecipient = {
-  name: string
-  address1: string
-  city: string
-  state_code?: string
-  country_code: string
-  zip: string
-  phone?: string
-  email?: string
-}
+async function fetchPrintful<T>(url: string, options?: RequestInit): Promise<PrintfulResponse<T>> {
+  const operation = `fetch:${url.split('printful.com')[1]?.split('?')[0] ?? 'unknown'}`
 
-export type PrintfulOrderItem = {
-  /** Catalog variant ID (when using Catalog API products) */
-  variant_id?: number
-  /** Sync variant ID (when using products synced from Printful store) */
-  sync_variant_id?: number
-  quantity: number
-  files?: { type?: string; url: string }[]
-  retail_price?: string
-}
+  return printfulAnalytics.trackDuration(operation, async () => {
+    // Execute via rate limiter -> retry logic -> fetch
+    const response = await rateLimiter.execute(() => fetchWithRetry(url, options))
 
-export type PrintfulCreateOrderPayload = {
-  recipient: PrintfulRecipient
-  items: PrintfulOrderItem[]
-  confirm?: 0 | 1
-  external_id?: string
-}
+    // Parse JSON
+    let data: any
+    try {
+      data = await response.json()
+    } catch (e) {
+      throw new PrintfulApiError('Invalid JSON response', response.status)
+    }
 
-export type PrintfulOrderResponse = {
-  code: number
-  result?: { id: number }
-  error?: { reason?: string; message?: string }
+    // Handle API-level errors even if status was 200 (Printful sometimes returns 200 with error code)
+    if (!response.ok || data.code !== 200) {
+      const msg = data.error?.message ?? data.error?.reason ?? `HTTP ${response.status}`
+      throw new PrintfulApiError(msg, response.status, data.error?.reason)
+    }
+
+    return data as PrintfulResponse<T>
+  })
 }
 
 export async function createOrder(
@@ -56,6 +68,8 @@ export async function createOrder(
   }
 
   const items = payload.items.map((item) => {
+    // Basic mapping, assuming payload structure matches Printful requirements or is adapted here
+    // The previous code had specific logic for sync_variant_id vs variant_id
     const base = {
       quantity: item.quantity,
       files: item.files,
@@ -67,6 +81,8 @@ export async function createOrder(
     return { ...base, variant_id: item.variant_id! }
   })
 
+  // @ts-ignore - Ignoring strict type check for now to match legacy payload structure if needed, 
+  // or ideally we update PrintfulCreateOrderPayload to match exactly what we send.
   const body = {
     recipient: payload.recipient,
     items,
@@ -75,54 +91,22 @@ export async function createOrder(
   }
 
   try {
-    const res = await fetch(`${API_BASE}/orders`, {
+    const data = await fetchPrintful<{ id: number }>(`${API_BASE}/orders`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(body),
     })
 
-    const data = (await res.json()) as PrintfulOrderResponse
-
-    if (res.ok && data.code === 200 && data.result?.id) {
+    if (data.result?.id) {
       return { ok: true, printfulOrderId: data.result.id }
     }
 
-    const msg =
-      data.error?.message ?? data.error?.reason ?? `HTTP ${res.status}`
-    return { ok: false, error: msg }
+    return { ok: false, error: 'No order ID returned' }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error('Printful createOrder error:', err)
+    logger.error('createOrder failed', { operation: 'createOrder', error: message, items: payload.items.length })
     return { ok: false, error: message }
   }
-}
-
-export type PrintfulSyncProduct = {
-  id: number
-  external_id: string | null
-  name: string
-  variants: number
-  thumbnail_url: string
-}
-
-export type PrintfulSyncProductDetail = {
-  sync_product: {
-    id: number
-    external_id: string | null
-    name: string
-    thumbnail_url: string
-  }
-  sync_variants: Array<{
-    id: number
-    external_id: string | null
-    variant_id: number
-    retail_price: string
-    product: { variant_id: number; product_id?: number; name: string; image: string }
-    sku: string | null
-    size?: string
-    color?: string
-    files?: Array<{ type?: string; preview_url?: string; thumbnail_url?: string }>
-  }>
 }
 
 /** Catalog product description - used when syncing from Store API */
@@ -133,19 +117,15 @@ export async function fetchCatalogProduct(
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
   try {
-    const res = await fetch(`${API_BASE}/products/${productId}`, {
+    const data = await fetchPrintful<{ product?: { description?: string } }>(`${API_BASE}/products/${productId}`, {
       headers: getHeaders(),
     })
-    const data = (await res.json()) as {
-      code: number
-      result?: { product?: { description?: string } }
-      error?: { message?: string }
-    }
-    if (res.ok && data.code === 200 && data.result?.product) {
+
+    if (data.result?.product) {
       const desc = data.result.product.description
       return { ok: true, description: typeof desc === 'string' ? desc : undefined }
     }
-    return { ok: false, error: data.error?.message ?? `HTTP ${res.status}` }
+    return { ok: false, error: 'No product description found' }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: msg }
@@ -155,30 +135,36 @@ export async function fetchCatalogProduct(
 /** Catalog variant details (wholesale price, color codes, etc.) */
 export async function fetchCatalogVariant(
   variantId: number
-): Promise<{ ok: boolean; variant?: any; error?: string }> {
+): Promise<{ ok: boolean; variant?: PrintfulCatalogVariant; error?: string }> {
   if (!isPrintfulConfigured()) {
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
+
+  // Check cache first
+  const cacheKey = `catalog:variant:${variantId}`
+  const cached = printfulCache.get<PrintfulCatalogVariant>(cacheKey)
+  if (cached) {
+    return { ok: true, variant: cached }
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/products/variant/${variantId}`, {
+    const data = await fetchPrintful<{ variant?: PrintfulCatalogVariant }>(`${API_BASE}/products/variant/${variantId}`, {
       headers: getHeaders(),
     })
-    const data = (await res.json()) as {
-      code: number
-      result?: { variant?: any }
-      error?: { message?: string }
-    }
-    if (res.ok && data.code === 200 && data.result?.variant) {
+
+    if (data.result?.variant) {
+      // Cache the result
+      printfulCache.set(cacheKey, data.result.variant)
       return { ok: true, variant: data.result.variant }
     }
-    return { ok: false, error: data.error?.message ?? `HTTP ${res.status}` }
+    return { ok: false, error: 'No variant data found' }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: msg }
   }
 }
 
-export async function fetchStoreProducts(offset = 0, limit = 20): Promise<{
+export async function fetchStoreProducts(offset = 0, limit = PRINTFUL_CONFIG.CONSTANTS.SYNC_LIMIT, status?: string): Promise<{
   ok: boolean
   products?: PrintfulSyncProduct[]
   total?: number
@@ -188,27 +174,53 @@ export async function fetchStoreProducts(offset = 0, limit = 20): Promise<{
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
   try {
-    const res = await fetch(
-      `${API_BASE}/store/products?offset=${offset}&limit=${limit}`,
+    let url = `${API_BASE}/store/products?offset=${offset}&limit=${limit}`
+    if (status) {
+      url += `&status=${status}`
+    }
+
+    const data = await fetchPrintful<PrintfulSyncProduct[]>(
+      url,
       { headers: getHeaders() }
     )
-    const data = (await res.json()) as {
-      code: number
-      result?: PrintfulSyncProduct[]
-      paging?: { total: number }
-      error?: { message?: string }
-    }
-    if (res.ok && data.code === 200 && Array.isArray(data.result)) {
+
+    if (Array.isArray(data.result)) {
       return {
         ok: true,
         products: data.result,
         total: data.paging?.total ?? data.result.length,
       }
     }
-    return {
-      ok: false,
-      error: data.error?.message ?? `HTTP ${res.status}`,
+    return { ok: false, error: 'Invalid response format' }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    return { ok: false, error: msg }
+  }
+}
+
+/**
+ * Search the Global Printful Catalog
+ */
+export async function searchCatalogProducts(query: string): Promise<{
+  ok: boolean
+  products?: PrintfulCatalogProduct[]
+  error?: string
+}> {
+  if (!isPrintfulConfigured()) {
+    return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
+  }
+  try {
+    // GET https://api.printful.com/products?search=...
+    const data = await fetchPrintful<PrintfulCatalogProduct[]>(
+      `${API_BASE}/products?search=${encodeURIComponent(query)}`,
+      { headers: getHeaders() }
+    )
+
+    if (Array.isArray(data.result)) {
+      return { ok: true, products: data.result }
     }
+    return { ok: false, error: 'Invalid response format' }
+
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: msg }
@@ -222,21 +234,38 @@ export async function fetchSyncProduct(
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
   try {
-    const res = await fetch(`${API_BASE}/store/products/${id}`, {
+    const data = await fetchPrintful<PrintfulSyncProductDetail>(`${API_BASE}/store/products/${id}`, {
       headers: getHeaders(),
     })
-    const data = (await res.json()) as {
-      code: number
-      result?: PrintfulSyncProductDetail
-      error?: { message?: string }
-    }
-    if (res.ok && data.code === 200 && data.result) {
+
+    if (data.result) {
       return { ok: true, product: data.result }
     }
-    return {
-      ok: false,
-      error: data.error?.message ?? `HTTP ${res.status}`,
+    return { ok: false, error: 'No product data found' }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    return { ok: false, error: msg }
+  }
+}
+
+export async function fetchStoreOrder(
+  orderId: number
+): Promise<{ ok: boolean; order?: any; error?: string }> {
+  if (!isPrintfulConfigured()) {
+    return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
+  }
+
+  try {
+    // GET https://api.printful.com/orders/{id}
+    // Note: The /orders endpoint returns order details including shipments
+    const data = await fetchPrintful<any>(`${API_BASE}/orders/${orderId}`, {
+      headers: getHeaders(),
+    })
+
+    if (data.result) {
+      return { ok: true, order: data.result }
     }
+    return { ok: false, error: 'Order not found' }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: msg }
@@ -246,7 +275,7 @@ export async function fetchSyncProduct(
 /** Default print file URL for products without customization. Use your logo hosted publicly. */
 export function getDefaultPrintFileUrl(): string {
   const base =
-    process.env.NEXT_PUBLIC_SITE_URL ??
+    PRINTFUL_CONFIG?.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : 'https://www.dark-monkey.ch')

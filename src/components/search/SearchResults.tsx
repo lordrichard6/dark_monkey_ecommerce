@@ -25,13 +25,14 @@ type Category = {
 type Props = {
   products: FilterableProduct[]
   categories: Category[]
-  query: string
+  query?: string
+  title?: string
 }
 
-export function SearchResults({ products, categories, query }: Props) {
+export function SearchResults({ products, categories, query, title }: Props) {
   const t = useTranslations('search')
   const tFilters = useTranslations('filters')
-
+  // ... state ...
   // State
   const [showFilters, setShowFilters] = useState(false)
   const initialFilters = useMemo(() => createInitialFilterState(products), [products])
@@ -58,6 +59,8 @@ export function SearchResults({ products, categories, query }: Props) {
     isInWishlist: false,
     isBestseller: p.isBestseller || false,
   }))
+
+  const displayTitle = title || (query ? `${t('resultsFor')}: "${query}"` : t('allProducts'))
 
   return (
     <div>
@@ -96,7 +99,7 @@ export function SearchResults({ products, categories, query }: Props) {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="mb-1 text-2xl font-bold text-zinc-50">
-                {t('resultsFor')}: &quot;{query}&quot;
+                {displayTitle}
               </h1>
               <p className="text-sm text-zinc-400">
                 {filteredProducts.length === 0

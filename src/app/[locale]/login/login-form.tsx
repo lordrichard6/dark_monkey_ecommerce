@@ -2,11 +2,15 @@
 
 import { useLocale } from 'next-intl'
 import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
+import { validateEmail } from '@/utils/email-validation'
+import { Turnstile } from '@marsidev/react-turnstile'
+import confetti from 'canvas-confetti'
+import { trackEvent } from '@/lib/analytics'
 
 function MailIcon({ className }: { className?: string }) {
   return (
@@ -46,9 +50,32 @@ function EyeOffIcon({ className }: { className?: string }) {
   )
 }
 
+function GithubIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.042-1.416-4.042-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+    </svg>
+  )
+}
+
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 21.8-88.5 21.8-11.4 0-51.1-19-86.4-18.1-47.3 1.2-91.2 29.5-115.4 70.5-48.2 81.8-12.3 203.7 35.7 272.7 23.5 33.7 51.2 71.4 87.5 70.1 34.1-1.3 47.1-22 88.5-22s53.2 22 88.5 20.7c36.4-1.3 60.1-33.8 83.5-67.5 26.9-38.9 37.9-76.7 38.4-78.6-.8-.4-73.8-28.3-74-110.1zM249.1 89.2c19-22.9 31.8-54.7 28.3-86.3-26.6 1.1-58.8 17.8-77.8 40-16.9 19.6-31.7 51.8-27.8 82.5 29.7 2.3 60.3-15.3 77.3-36.2z" />
+    </svg>
+  )
+}
+
+type AuthMessage = {
+  type: 'success' | 'error'
+  text: string
+  action?: { label: string; onClick: () => void }
+}
+
 export function LoginForm() {
   const locale = useLocale()
   const t = useTranslations('auth')
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -58,29 +85,192 @@ export function LoginForm() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [message, setMessage] = useState<AuthMessage | null>(null)
   const [signupSuccess, setSignupSuccess] = useState(false)
+  const [isMagicLink, setIsMagicLink] = useState(false)
+
+  // Phase 2 states
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null)
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<any>(null)
+
+  // Polishes & Advanced features
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | 'apple' | null>(null)
+  const [resendCountdown, setResendCountdown] = useState(60)
+  const [canResend, setCanResend] = useState(false)
 
   useEffect(() => {
-    if (searchParams.get('mode') === 'signup') setIsSignUp(true)
+    if (searchParams.get('mode') === 'signup') {
+      setIsSignUp(true)
+      trackEvent('view_item', { item_name: 'Auth Page - Signup' }) // Using generic track for funnel
+    } else {
+      trackEvent('view_item', { item_name: 'Auth Page - Signin' })
+    }
+
+    // Recovery of failed attempts count from session storage
+    const saved = sessionStorage.getItem('auth_failed_attempts')
+    if (saved) setFailedAttempts(parseInt(saved, 10))
   }, [searchParams])
 
-  const handleGoogleLogin = async () => {
+  // Confetti on success
+  useEffect(() => {
+    if (signupSuccess) {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#f59e0b', '#fbbf24', '#f97316', '#ff2d55'],
+        scalar: 1.2
+      })
+      trackEvent('unlock_achievement', { achievement_id: 'signup_success', achievement_name: 'Sign Up' })
+    }
+  }, [signupSuccess])
+
+  // Email resend countdown
+  useEffect(() => {
+    if (!signupSuccess || resendCountdown <= 0) {
+      if (resendCountdown <= 0) setCanResend(true)
+      return
+    }
+
+    const timer = setInterval(() => {
+      setResendCountdown((prev) => prev - 1)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [signupSuccess, resendCountdown])
+
+  // Email validation effect
+  useEffect(() => {
+    if (!email || !email.includes('@')) {
+      setEmailSuggestion(null)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      const { suggestion } = validateEmail(email)
+      setEmailSuggestion(suggestion || null)
+    }, 600)
+
+    return () => clearTimeout(timer)
+  }, [email])
+
+  const handleOAuthLogin = async (provider: 'google' | 'github' | 'apple') => {
+    setOauthLoading(provider)
+    trackEvent('login', { method: `oauth_${provider}` })
+
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: {
         redirectTo: `${window.location.origin}/${locale}/auth/callback`,
       },
     })
 
     if (error) {
+      setOauthLoading(null)
       setMessage({ type: 'error', text: error.message })
+      trackEvent('purchase', { item_name: 'Auth Error - OAuth', transaction_id: error.message }) // Hacky use of purchase for error tracking if no custom trackError
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleResendEmail = async () => {
+    if (!canResend) return
+    setCanResend(false)
+    setResendCountdown(60)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+    })
+
+    if (error) {
+      setMessage({ type: 'error', text: error.message })
+    } else {
+      // Success feedback could be toast or internal state
+    }
+  }
+
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!email) {
+      setMessage({ type: 'error', text: t('emailRequired') })
+      return
+    }
+
+    setLoading(true)
+    setMessage(null)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/${locale}/auth/callback`,
+      },
+    })
+
+    setLoading(false)
+    if (error) {
+      setMessage({ type: 'error', text: error.message })
+    } else {
+      setMessage({ type: 'success', text: t('magicLinkSent') })
+    }
+  }
+
+  const parseAuthError = (err: any): AuthMessage => {
+    const errorMsg = err.message || t('somethingWrong')
+    const lowerMsg = errorMsg.toLowerCase()
+
+    if (lowerMsg.includes('already registered')) {
+      return {
+        type: 'error',
+        text: t('errorEmailExists'),
+        action: {
+          label: t('signInInstead'),
+          onClick: () => {
+            setIsSignUp(false)
+            setMessage(null)
+          }
+        }
+      }
+    }
+
+    if (lowerMsg.includes('invalid') && (lowerMsg.includes('credentials') || lowerMsg.includes('password'))) {
+      return {
+        type: 'error',
+        text: t('errorInvalidCredentials'),
+        action: {
+          label: t('resetPassword'),
+          onClick: () => router.push('/forgot-password')
+        }
+      }
+    }
+
+    if (lowerMsg.includes('network') || lowerMsg.includes('fetch')) {
+      return {
+        type: 'error',
+        text: t('errorNetwork'),
+        action: {
+          label: t('retry'),
+          onClick: () => handleSubmit(new Event('submit') as any)
+        }
+      }
+    }
+
+    if (lowerMsg.includes('too many') || lowerMsg.includes('rate limit')) {
+      return {
+        type: 'error',
+        text: t('errorRateLimit')
+      }
+    }
+
+    return { type: 'error', text: errorMsg }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    if (e) e.preventDefault()
     setLoading(true)
     setMessage(null)
 
@@ -88,6 +278,33 @@ export function LoginForm() {
       setMessage({ type: 'error', text: t('passwordsDoNotMatch') })
       setLoading(false)
       return
+    }
+
+    // CAPTCHA check
+    if (failedAttempts >= 3 && !captchaToken) {
+      setMessage({ type: 'error', text: t('verifyCaptcha') })
+      setLoading(false)
+      return
+    }
+
+    if (captchaToken) {
+      try {
+        const verify = await fetch('/api/auth/verify-turnstile', {
+          method: 'POST',
+          body: JSON.stringify({ token: captchaToken }),
+          headers: { 'Content-Type': 'application/json' },
+        })
+        const result = await verify.json()
+        if (!result.success) {
+          setMessage({ type: 'error', text: t('verifyCaptcha') })
+          setLoading(false)
+          if (turnstileRef.current) turnstileRef.current.reset()
+          return
+        }
+      } catch (err) {
+        // Silently proceed in dev if API fails, but log it
+        console.error('CAPTCHA verification failed', err)
+      }
     }
 
     let supabase
@@ -104,6 +321,7 @@ export function LoginForm() {
 
     try {
       if (isSignUp) {
+        trackEvent('view_item', { item_name: 'Auth Attempt - Signup' })
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -111,16 +329,29 @@ export function LoginForm() {
         })
         if (error) throw error
         setSignupSuccess(true)
+        sessionStorage.removeItem('auth_failed_attempts')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        trackEvent('login', { method: 'email' })
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
         if (error) throw error
+        sessionStorage.removeItem('auth_failed_attempts')
         window.location.replace(`/${locale}/account`)
       }
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : t('somethingWrong'),
-      })
+    } catch (err: any) {
+      const parsed = parseAuthError(err)
+      setMessage(parsed)
+      trackEvent('purchase', { item_name: 'Auth Error', transaction_id: err.message })
+
+      const newAttempts = failedAttempts + 1
+      setFailedAttempts(newAttempts)
+      sessionStorage.setItem('auth_failed_attempts', newAttempts.toString())
+
+      if (turnstileRef.current && failedAttempts >= 3) {
+        turnstileRef.current.reset()
+      }
     } finally {
       setLoading(false)
     }
@@ -151,7 +382,7 @@ export function LoginForm() {
             {t('checkEmail')}
           </p>
           <p className="animate-success-fade-in mt-4 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-lg font-medium text-transparent">
-            Now you will dress like a VIP.
+            {t('dressLikeVIP')}
           </p>
           <Link
             href="/categories"
@@ -159,6 +390,36 @@ export function LoginForm() {
           >
             {t('startShopping')}
           </Link>
+
+          <div className="animate-success-fade-in mt-8 flex flex-col gap-4">
+            <button
+              onClick={handleResendEmail}
+              disabled={!canResend}
+              className="text-sm font-medium text-zinc-400 transition hover:text-amber-400 disabled:opacity-40"
+            >
+              {canResend ? t('resendEmail') : `${t('resendIn')} ${resendCountdown}s`}
+            </button>
+
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <a
+                href="https://mail.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+              >
+                Gmail
+              </a>
+              <span className="h-1 w-1 rounded-full bg-zinc-800" />
+              <a
+                href="https://outlook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+              >
+                Outlook
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -205,7 +466,7 @@ export function LoginForm() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={isMagicLink ? handleMagicLink : handleSubmit} className="space-y-6">
           {/* Email */}
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
@@ -223,60 +484,85 @@ export function LoginForm() {
                 required
                 autoComplete="email"
                 placeholder={t('emailPlaceholder')}
+                aria-label={t('email')}
+                aria-describedby={message ? "auth-message" : undefined}
+                aria-invalid={message?.type === 'error'}
                 className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 pl-11 pr-4 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                 aria-required="true"
               />
             </div>
+            {emailSuggestion && (
+              <p className="text-[11px] text-amber-400/80 mt-1 animate-in fade-in slide-in-from-left-1 duration-300">
+                {t('didYouMean')}{' '}
+                <button
+                  type="button"
+                  onClick={() => setEmail(emailSuggestion)}
+                  className="font-bold underline decoration-amber-500/30 hover:text-amber-300 transition-colors"
+                >
+                  {emailSuggestion}
+                </button>?
+              </p>
+            )}
           </div>
 
-          {/* Password */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="text-sm font-medium text-zinc-300">
-                {t('password')}
-              </label>
-              <div className={`transition-all duration-300 ${isSignUp ? 'opacity-0 invisible h-0' : 'opacity-100 visible h-auto'}`}>
-                {!isSignUp && (
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs text-zinc-500 transition hover:text-amber-400"
+          {/* Password (only if not magic link) */}
+          <div
+            className={`grid transition-all duration-300 ease-in-out ${isMagicLink
+              ? 'grid-rows-[0fr] opacity-0 invisible h-0'
+              : 'grid-rows-[1fr] opacity-100'
+              }`}
+          >
+            <div className="overflow-hidden space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="text-sm font-medium text-zinc-300">
+                    {t('password')}
+                  </label>
+                  {!isSignUp && (
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-zinc-500 transition hover:text-amber-400"
+                    >
+                      {t('forgotPassword')}
+                    </Link>
+                  )}
+                </div>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
+                    <LockIcon className="h-5 w-5" />
+                  </span>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required={!isMagicLink}
+                    minLength={8}
+                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                    placeholder={t('passwordPlaceholder')}
+                    aria-label={t('password')}
+                    aria-describedby={message ? "auth-message" : undefined}
+                    aria-invalid={message?.type === 'error'}
+                    className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 pl-11 pr-11 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    aria-required="true"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-500 transition hover:text-zinc-300"
+                    aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                   >
-                    {t('forgotPassword')}
-                  </Link>
-                )}
+                    {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                  </button>
+                </div>
+                {isSignUp && <PasswordStrengthMeter password={password} />}
               </div>
             </div>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
-                <LockIcon className="h-5 w-5" />
-              </span>
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                placeholder={t('passwordPlaceholder')}
-                className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 pl-11 pr-11 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                aria-required="true"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-500 transition hover:text-zinc-300"
-                aria-label={showPassword ? t('hidePassword') : t('showPassword')}
-              >
-                {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-              </button>
-            </div>
-            {isSignUp && <PasswordStrengthMeter password={password} />}
           </div>
 
           {/* Confirm password (sign up only) */}
           <div
-            className={`grid transition-all duration-300 ease-in-out ${isSignUp
+            className={`grid transition-all duration-300 ease-in-out ${isSignUp && !isMagicLink
               ? 'grid-rows-[1fr] opacity-100'
               : 'grid-rows-[0fr] opacity-0 invisible'
               }`}
@@ -299,6 +585,9 @@ export function LoginForm() {
                     minLength={8}
                     autoComplete="new-password"
                     placeholder={t('confirmPasswordPlaceholder')}
+                    aria-label={t('confirmPassword')}
+                    aria-describedby={message ? "auth-message" : undefined}
+                    aria-invalid={message?.type === 'error'}
                     className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 pl-11 pr-11 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                     aria-required={isSignUp}
                   />
@@ -322,9 +611,9 @@ export function LoginForm() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20 cursor-pointer"
               />
-              <label htmlFor="remember" className="text-sm text-zinc-400">
+              <label htmlFor="remember" className="text-sm text-zinc-400 cursor-pointer select-none">
                 {t('rememberMe')}
               </label>
             </div>
@@ -343,15 +632,54 @@ export function LoginForm() {
             </p>
           )}
 
+          {/* CAPTCHA after 3 failures */}
+          {failedAttempts >= 3 && !isSignUp && !isMagicLink && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'} // Placeholder for testing
+                onSuccess={(token) => setCaptchaToken(token)}
+                options={{ theme: 'dark' }}
+                className="w-full flex justify-center"
+              />
+            </div>
+          )}
+
           {message && (
             <div
+              id="auth-message"
               role="alert"
-              className={`rounded-xl px-4 py-3 text-sm transition-all duration-300 animate-in fade-in zoom-in-95 ${message.type === 'success'
+              aria-live="polite"
+              className={`rounded-xl px-4 py-3 space-y-2 transition-all duration-300 animate-in fade-in zoom-in-95 ${message.type === 'error' ? 'animate-shake' : ''} ${message.type === 'success'
                 ? 'bg-emerald-500/10 text-emerald-400'
                 : 'bg-red-500/10 text-red-400 border border-red-500/20'
                 }`}
             >
-              {message.text}
+              <p className="text-sm">{message.text}</p>
+              {message.action && (
+                <button
+                  type="button"
+                  onClick={message.action.onClick}
+                  className="block text-xs font-bold uppercase tracking-wider text-amber-500/80 hover:text-amber-400 transition-colors"
+                >
+                  {message.action.label} →
+                </button>
+              )}
+            </div>
+          )}
+
+          {!isSignUp && (
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMagicLink(!isMagicLink)
+                  setMessage(null)
+                }}
+                className="text-xs font-medium text-amber-500/70 hover:text-amber-400 transition-colors"
+              >
+                {isMagicLink ? t('signInWithPassword') : t('useMagicLink')}
+              </button>
             </div>
           )}
 
@@ -361,7 +689,13 @@ export function LoginForm() {
               disabled={loading}
               className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-amber-500/20 transition-all hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 active:scale-[0.98] outline-none focus:ring-2 focus:ring-amber-500/40 focus:ring-offset-2 focus:ring-offset-zinc-900"
             >
-              {loading ? t(isSignUp ? 'creatingAccount' : 'signingIn') : isSignUp ? t('createAccount') : t('signIn')}
+              {loading
+                ? t(isSignUp ? 'creatingAccount' : isMagicLink ? 'pleaseWait' : 'signingIn')
+                : isSignUp
+                  ? t('createAccount')
+                  : isMagicLink
+                    ? t('sendMagicLink')
+                    : t('signIn')}
             </button>
 
             <div className="space-y-6">
@@ -374,31 +708,69 @@ export function LoginForm() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="flex w-full items-center justify-center gap-3 rounded-xl bg-white py-3.5 text-sm font-bold text-zinc-950 shadow-lg shadow-black/10 transition-all duration-300 hover:bg-zinc-100 hover:scale-[1.01] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/20"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M12 4.6c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                Continue with Google
-              </button>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
+                  disabled={!!oauthLoading}
+                  className={`flex items-center justify-center gap-2 rounded-xl border border-zinc-700/50 bg-white py-2.5 text-sm font-bold text-zinc-950 transition-all hover:bg-zinc-100 active:scale-[0.98] ${oauthLoading === 'google' ? 'animate-pulse opacity-70' : ''}`}
+                  title={t('continueWithGoogle')}
+                >
+                  {oauthLoading === 'google' ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-400 border-t-zinc-950" />
+                  ) : (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 4.6c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                  )}
+                  <span className="sm:hidden">{t('continueWithGoogle')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('github')}
+                  disabled={!!oauthLoading}
+                  className={`flex items-center justify-center gap-2 rounded-xl border border-zinc-700/50 bg-zinc-800 py-2.5 text-sm font-bold text-zinc-100 transition-all hover:bg-zinc-700 active:scale-[0.98] ${oauthLoading === 'github' ? 'animate-pulse opacity-70' : ''}`}
+                  title={t('continueWithGithub')}
+                >
+                  {oauthLoading === 'github' ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-100" />
+                  ) : (
+                    <GithubIcon className="h-5 w-5" />
+                  )}
+                  <span className="sm:hidden">{t('continueWithGithub')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('apple')}
+                  disabled={!!oauthLoading}
+                  className={`flex items-center justify-center gap-2 rounded-xl border border-zinc-700/50 bg-black py-2.5 text-sm font-bold text-white transition-all hover:bg-zinc-900 active:scale-[0.98] ${oauthLoading === 'apple' ? 'animate-pulse opacity-70' : ''}`}
+                  title={t('continueWithApple')}
+                >
+                  {oauthLoading === 'apple' ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-800 border-t-zinc-100" />
+                  ) : (
+                    <AppleIcon className="h-5 w-5" />
+                  )}
+                  <span className="sm:hidden">{t('continueWithApple')}</span>
+                </button>
+              </div>
             </div>
           </div>
         </form>

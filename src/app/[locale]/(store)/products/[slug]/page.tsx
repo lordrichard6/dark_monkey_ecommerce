@@ -15,6 +15,10 @@ import {
   getProductCustomizationRule,
   isProductInWishlist,
 } from '@/lib/queries'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { RelatedProducts } from '@/components/product/RelatedProducts'
+import { FrequentlyBought } from '@/components/product/FrequentlyBought'
+import { RecentlyViewed } from '@/components/product/RecentlyViewed'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -78,7 +82,15 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   const isBestseller = bestsellerIds.has(product.id)
 
-  const images = (product?.product_images as { url: string; alt: string | null; sort_order: number; color?: string | null }[]) ?? []
+  // Images are now properly synced from Printful with variant_id mapping
+  const images = (product?.product_images as Array<{
+    url: string
+    alt: string | null
+    sort_order: number
+    color?: string | null
+    variant_id?: string | null
+  }>) ?? []
+
   const variants = (product?.product_variants as Array<{
     id: string
     name: string | null
@@ -86,10 +98,23 @@ export default async function ProductPage({ params, searchParams }: Props) {
     attributes: Record<string, string>
     sort_order: number
     product_inventory: any
+    printful_sync_variant_id?: number
   }>) ?? []
+
   const minPrice = (variants || []).length ? Math.min(...(variants || []).map((v) => v.price_cents || 0)) : 0
   const sortedImages = images.length ? [...images].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)) : []
   const primaryImage = sortedImages[0]
+
+  // DEBUG: Log image data for troubleshooting
+  if (process.env.NODE_ENV === 'development' && images.length === 0) {
+    console.log('[ProductPage] No images found for product:', product.slug)
+    console.log('[ProductPage] Product data:', {
+      productId: product.id,
+      hasImages: !!product?.product_images,
+      rawImages: product?.product_images
+    })
+  }
+
   const variantsWithStock = (variants || [])
     .map((v) => ({
       ...v,
@@ -121,13 +146,12 @@ export default async function ProductPage({ params, searchParams }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <nav className="mb-8 text-sm text-zinc-500">
-          <Link href="/" className="hover:text-zinc-300">
-            {tCommon('shop')}
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-zinc-400">{product.name}</span>
-        </nav>
+        <Breadcrumbs
+          items={[
+            { label: tCommon('shop'), href: '/' },
+            { label: product.name, href: `/products/${product.slug}`, active: true }
+          ]}
+        />
 
         <ProductMain
           product={{
@@ -151,6 +175,12 @@ export default async function ProductPage({ params, searchParams }: Props) {
               : null
           }
         />
+
+        <FrequentlyBought productId={product.id} locale={slug} />
+
+        <RelatedProducts productId={product.id} locale={slug} />
+
+        <RecentlyViewed userId={user?.id} />
       </div>
     </div>
   )

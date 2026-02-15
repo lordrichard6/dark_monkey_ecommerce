@@ -84,6 +84,32 @@ export interface Database {
         }
         Update: Partial<Database['public']['Tables']['orders']['Insert']>
       }
+      announcements: {
+        Row: {
+          id: string
+          text: string
+          url: string | null
+          active: boolean
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          text: string
+          url?: string | null
+          active?: boolean
+          position?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          text?: string
+          url?: string | null
+          active?: boolean
+          position?: number
+          created_at?: string
+        }
+      }
     }
   }
 }

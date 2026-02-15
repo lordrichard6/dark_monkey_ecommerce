@@ -1,6 +1,6 @@
 'use client'
 
-import { upsertCategory, type Category, type ActionState } from '@/actions/admin-categories'
+import { upsertCategory, type Category, type ActionState, getCategories } from '@/actions/admin-categories'
 import { useRouter } from '@/i18n/navigation';
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -8,9 +8,10 @@ import clsx from 'clsx'
 
 interface CategoryFormProps {
     category?: Category | null
+    categories: Category[]
 }
 
-export function CategoryForm({ category }: CategoryFormProps) {
+export function CategoryForm({ category, categories }: CategoryFormProps) {
     const router = useRouter()
     const [state, action, isPending] = useActionState(upsertCategory, { ok: true } as ActionState)
 
@@ -67,6 +68,27 @@ export function CategoryForm({ category }: CategoryFormProps) {
                     </div>
 
                     <div className="space-y-2">
+                        <label htmlFor="parent_id" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Parent Category
+                        </label>
+                        <select
+                            id="parent_id"
+                            name="parent_id"
+                            defaultValue={category?.parent_id ?? ''}
+                            className="flex h-10 w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="">None (Top Level)</option>
+                            {categories
+                                .filter((c) => c.id !== category?.id) // Prevent selecting self as parent
+                                .map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
+                                    </option>
+                                ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-2">
                         <label htmlFor="sort_order" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                             Sort Order
                         </label>
@@ -105,7 +127,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-indigo-600 text-white hover:bg-indigo-700 h-10 px-4 py-2"
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-amber-500 text-black hover:bg-amber-600 h-10 px-4 py-2"
                         >
                             {isPending ? 'Saving...' : 'Save Category'}
                         </button>

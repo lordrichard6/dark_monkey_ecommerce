@@ -65,20 +65,6 @@
             "purpose": "any maskable"
         }
     ],
-    "screenshots": [
-        {
-            "src": "/screenshots/home-mobile.png",
-            "sizes": "540x720",
-            "type": "image/png",
-            "form_factor": "narrow"
-        },
-        {
-            "src": "/screenshots/home-desktop.png",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "form_factor": "wide"
-        }
-    ],
     "shortcuts": [
         {
             "name": "Browse Products",

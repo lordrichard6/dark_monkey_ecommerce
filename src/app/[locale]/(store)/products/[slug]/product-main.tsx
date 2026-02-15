@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { ProductImageGallery } from '@/components/product/ProductImageGallery'
 import { AddToCartForm } from './add-to-cart-form'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
+import { ShareButton } from '@/components/product/ShareButton'
+import { StickyAddToCart } from '@/components/product/StickyAddToCart'
 import { ProductReviews } from '@/components/reviews/ProductReviews'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { useTranslations } from 'next-intl'
@@ -23,7 +25,7 @@ type Props = {
         description: string | null
         categories: { name?: string } | null
     }
-    images: Array<{ url: string; alt: string | null; sort_order: number; color?: string | null }>
+    images: Array<{ url: string; alt: string | null; sort_order: number; color?: string | null; variant_id?: number }>
     variants: Array<any>
     reviews: ReviewRow[]
     userReview: ReviewRow | null
@@ -55,10 +57,14 @@ export function ProductMain({
     const tProduct = useTranslations('product')
     const { currency } = useCurrency()
 
+    const lowestPrice = variants && variants.length > 0
+        ? Math.min(...variants.map((v) => v.price_cents))
+        : 0
+    const totalStock = (variants || []).reduce((acc, v) => acc + (v.stock || 0), 0)
+
     // Track product view
     useEffect(() => {
         if (variants && variants.length > 0) {
-            const lowestPrice = Math.min(...variants.map((v) => v.price_cents))
             trackProductView({
                 id: product.id,
                 name: product.name,
@@ -85,7 +91,14 @@ export function ProductMain({
         a.name === 'Default' ? 1 : a.name.localeCompare(b.name)
     )
 
-    const [selectedColor, setSelectedColor] = useState(colors[0]?.name ?? 'Default')
+    // Default to the color of the primary image if available, else first color
+    const primaryImageColor = images.find(img => img.sort_order === 0 || img.url === primaryImageUrl)?.color
+    const initialColor = (primaryImageColor && colorMap.has(primaryImageColor))
+        ? primaryImageColor
+        : (colors[0]?.name ?? 'Default')
+
+    const [selectedColor, setSelectedColor] = useState(initialColor)
+    const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
 
     return (
         <div className="grid gap-12 md:grid-cols-2 items-start">
@@ -95,6 +108,7 @@ export function ProductMain({
                     images={images}
                     productName={product.name}
                     selectedColor={selectedColor}
+                    selectedVariantId={selectedVariantId}
                 />
             </div>
 
@@ -152,6 +166,11 @@ export function ProductMain({
                         isInWishlist={isInWishlist}
                         variant="button"
                     />
+                    <ShareButton
+                        productName={product.name}
+                        productUrl={`/products/${product.slug}`}
+                        productImage={primaryImageUrl}
+                    />
                 </div>
 
                 <AddToCartForm
@@ -166,6 +185,7 @@ export function ProductMain({
                     // Controlled State
                     selectedColor={selectedColor}
                     onColorChange={setSelectedColor}
+                    onVariantChange={(v) => setSelectedVariantId(v?.id ?? null)}
                     availableColors={colors}
                 />
 
@@ -185,6 +205,13 @@ export function ProductMain({
 
             {/* Recent Purchase Toast (Global) */}
             <RecentPurchaseToast productId={product.id} />
+
+            <StickyAddToCart
+                productName={product.name}
+                priceCents={lowestPrice}
+                imageUrl={primaryImageUrl || ''}
+                stock={totalStock}
+            />
         </div>
     )
 }

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient, getUserSafe } from '@/lib/supabase/server'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { notFound } from 'next/navigation'
-import { ProductGrid } from '@/components/product/ProductGrid'
+import { VirtualProductGrid } from '@/components/product/VirtualProductGrid'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import {
@@ -11,6 +11,7 @@ import {
   getCategoryBySlug,
   getUserWishlistProductIds,
 } from '@/lib/queries'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>
@@ -90,17 +91,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <nav className="mb-8 text-sm text-zinc-500">
-          <Link href="/" className="hover:text-zinc-300">
-            {tCommon('shop')}
-          </Link>
-          <span className="mx-2">/</span>
-          <Link href="/categories" className="hover:text-zinc-300">
-            {tCommon('categories')}
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-zinc-400">{category.name}</span>
-        </nav>
+        <Breadcrumbs
+          items={[
+            { label: tCommon('shop'), href: '/' },
+            { label: tCommon('categories'), href: '/categories' },
+            { label: category.name, href: `/categories/${category.slug}`, active: true }
+          ]}
+        />
 
         <h1 className="mb-8 text-2xl font-bold text-zinc-50 md:text-3xl">
           {category.name}
@@ -110,7 +107,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         )}
 
         <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-zinc-900" />}>
-          <ProductGrid
+          <VirtualProductGrid
             products={sortedProducts}
             title={title}
             sort={sort}

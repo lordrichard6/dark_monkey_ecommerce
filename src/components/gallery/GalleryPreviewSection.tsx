@@ -29,13 +29,12 @@ export function GalleryPreviewSection() {
 
     if (loading || items.length === 0) return null
 
-    // Duplicate items for seamless loop
-    const loopItems = [...items, ...items, ...items]
+    // If we only have 1 item, don't loop, just center it.
+    const isSingleItem = items.length === 1
+    const loopItems = isSingleItem ? items : [...items, ...items, ...items, ...items] // More duplication for smoother loop if needed
 
     return (
         <section className="relative overflow-hidden py-24 bg-zinc-950">
-            {/* Background elements */}
-            {/* Background elements */}
             {/* Background elements */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
@@ -45,44 +44,56 @@ export function GalleryPreviewSection() {
 
             <div className="relative z-10 container mx-auto px-4 mb-12 text-center">
                 <h2 className="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4 tracking-tight">
-                    Art Gallery
+                    {t('galleryTitle')}
                 </h2>
                 <p className="text-zinc-400 max-w-2xl mx-auto text-lg mb-8">
-                    Discover exclusive art pieces and customer creations.
+                    {t('gallerySubtitle')}
                 </p>
 
                 <Link
                     href="/art"
+                    aria-label={t('viewFullGallery')}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95"
                 >
-                    View Full Gallery
+                    {t('viewFullGallery')}
                     <ArrowRight className="w-4 h-4" />
                 </Link>
             </div>
 
-            {/* Marquee Container */}
-            <div className="relative w-full overflow-hidden group">
-                {/* Gradient Masks */}
-                <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-zinc-950 to-transparent z-20 pointer-events-none" />
-                <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-zinc-950 to-transparent z-20 pointer-events-none" />
+            {/* Gallery Display - Centered if Single, Marquee if Multiple */}
+            <div className={`relative w-full ${isSingleItem ? 'flex justify-center' : 'overflow-hidden group'}`}>
 
-                {/* Marquee Track */}
+                {/* Gradient Masks (Only for marquee) */}
+                {!isSingleItem && (
+                    <>
+                        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-zinc-950 to-transparent z-20 pointer-events-none" />
+                        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-zinc-950 to-transparent z-20 pointer-events-none" />
+                    </>
+                )}
+
+                {/* Track */}
                 <div
-                    className="flex gap-6 animate-marquee hover:[animation-play-state:paused]"
-                    style={{ width: 'max-content' }}
+                    className={`flex gap-6 ${!isSingleItem ? 'animate-marquee hover:[animation-play-state:paused]' : ''}`}
+                    style={!isSingleItem ? { width: 'max-content' } : {}}
                 >
                     {loopItems.map((item, idx) => (
                         <div
                             key={`${item.id}-${idx}`}
-                            className="relative w-[280px] h-[350px] md:w-[350px] md:h-[450px] flex-shrink-0 rounded-2xl overflow-hidden border border-white/5 bg-zinc-900 shadow-2xl transition-transform hover:scale-[1.02] hover:border-white/10"
+                            className="relative w-[200px] h-[280px] md:w-[260px] md:h-[360px] flex-shrink-0 rounded-2xl overflow-hidden border border-white/5 bg-zinc-900 shadow-2xl transition-transform hover:scale-[1.02] hover:border-white/10"
                         >
                             <Image
                                 src={item.image_url}
                                 alt={item.title}
                                 fill
                                 className="object-cover"
-                                sizes="(max-width: 768px) 280px, 350px"
-                                unoptimized // Fix for local dev SSRF issue
+                                sizes="(max-width: 768px) 200px, 260px"
+                                loading="lazy"
+                                unoptimized // Bypass Next.js optimization to fix 400 Bad Request on localhost
+                                onError={(e) => {
+                                    // Fallback to placeholder if image fails
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = 'https://placehold.co/400x600/18181b/52525b?text=Image+Error';
+                                }}
                             />
                             {/* Vote Count Badge */}
                             <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 z-10">
@@ -101,10 +112,10 @@ export function GalleryPreviewSection() {
             <style jsx>{`
                 @keyframes marquee {
                     0% { transform: translateX(0); }
-                    100% { transform: translateX(calc(-100% / 3)); }
+                    100% { transform: translateX(calc(-100% / ${isSingleItem ? 1 : 4})); } 
                 }
                 .animate-marquee {
-                    animation: marquee 40s linear infinite;
+                    animation: marquee 50s linear infinite;
                 }
             `}</style>
         </section>

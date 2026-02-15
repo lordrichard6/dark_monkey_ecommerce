@@ -1,0 +1,29 @@
+
+> ecommerce_premium_app@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · optimizePackageImports
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 41s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/236) ...
+⨯ useSearchParams() should be wrapped in a suspense boundary at page "/[locale]/account/orders". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at Q (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/.next/server/chunks/ssr/node_modules_next_920e7746._.js:2:2111)
+    at o (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/.next/server/chunks/ssr/node_modules_next_920e7746._.js:4:5284)
+    at f (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/.next/server/chunks/ssr/_b24604af._.js:1:5606)
+    at an (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:84360)
+    at ai (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:86179)
+    at ai (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:104708)
+    at al (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:107953)
+    at as (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:105368)
+    at am (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:112882)
+    at au (/Users/paulolopes/Desktop/lopes2tech/projects/ecommerce_premium/ecommerce_premium_app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:109985)
+Error occurred prerendering page "/en/account/orders". Read more: https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on /[locale]/account/orders/page: /en/account/orders, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null

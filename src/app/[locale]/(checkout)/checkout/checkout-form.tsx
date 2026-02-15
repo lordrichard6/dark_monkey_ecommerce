@@ -9,6 +9,8 @@ import { createCheckoutSession, validateDiscountCode } from '@/actions/checkout'
 import type { CartItem } from '@/types/cart'
 import { trackBeginCheckout, trackAddPaymentInfo } from '@/lib/analytics'
 import { useCurrency } from '@/components/currency/CurrencyContext'
+import { UpsellSection } from '@/components/checkout/UpsellSection'
+import { Sparkles } from 'lucide-react'
 
 function formatPrice(cents: number): string {
   return new Intl.NumberFormat('de-CH', {
@@ -42,6 +44,17 @@ export function CheckoutForm({
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Sample upsell items (in production these would come from the database/API)
+  const [upsellItems, setUpsellItems] = useState([
+    {
+      id: 'upsell-hoodie-protection',
+      name: 'Premium Fabric Protector',
+      priceCents: 1500,
+      imageUrl: '/images/protector.png', // Placeholder
+      discountPercentage: 20
+    }
+  ])
 
   // Track begin_checkout on mount
   useEffect(() => {
@@ -226,6 +239,15 @@ export function CheckoutForm({
             </li>
           ))}
         </ul>
+        {/* Upsell Section */}
+        <UpsellSection
+          upsellItems={upsellItems}
+          onAdd={(id) => {
+            console.log('Adding upsell item:', id)
+            // Implementation for adding to cart goes here
+          }}
+        />
+
         <div className="mt-4 flex justify-between text-lg font-semibold text-zinc-50">
           <span>{t('total')}</span>
           <span>

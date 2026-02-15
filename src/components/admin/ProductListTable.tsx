@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { AlertTriangle } from 'lucide-react'
 import { ProductActionsDropdown } from '@/app/[locale]/admin/(dashboard)/products/product-actions-dropdown'
 import { SyncPrintfulButton } from '@/app/[locale]/admin/(dashboard)/products/sync-printful-button'
 import { bulkDeleteProducts, bulkUpdateProductStatus } from '@/actions/admin-products'
@@ -153,7 +154,7 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden overflow-hidden rounded-lg border border-zinc-800 md:block">
+            <div className="hidden rounded-lg border border-zinc-800 md:block">
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-zinc-800 bg-zinc-900/80">
@@ -238,7 +239,16 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
                                             </span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-zinc-400">{category}</td>
+                                    <td className="px-4 py-3 text-sm text-zinc-400">
+                                        {p.categories ? (
+                                            p.categories.name
+                                        ) : (
+                                            <div className="flex items-center gap-1.5 text-amber-500">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                <span className="text-xs font-medium">Missing</span>
+                                            </div>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3 text-sm text-zinc-400">{images.length}</td>
                                     <td className="px-4 py-3 text-sm text-zinc-300">{priceRange}</td>
                                     <td className="px-4 py-3 text-sm text-zinc-400">
@@ -317,7 +327,14 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
                                             {p.name}
                                         </Link>
                                         <div className="mt-1 flex flex-wrap gap-2 text-xs">
-                                            <span className="text-zinc-400">{category}</span>
+                                            {p.categories ? (
+                                                <span className="text-zinc-400">{p.categories.name}</span>
+                                            ) : (
+                                                <span className="flex items-center gap-1 text-amber-500">
+                                                    <AlertTriangle className="h-3 w-3" />
+                                                    Missing Category
+                                                </span>
+                                            )}
                                             {p.is_customizable && (
                                                 <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
                                                     Customizable

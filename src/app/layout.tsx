@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Pacifico } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
@@ -60,9 +61,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
         suppressHydrationWarning
       >
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
-        )}
+        <Suspense fallback={null}>
+          {process.env.NEXT_PUBLIC_GA_ID && (
+            <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          )}
+        </Suspense>
         <ServiceWorkerRegister />
         {children}
         <Analytics />

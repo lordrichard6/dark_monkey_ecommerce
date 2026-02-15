@@ -5,12 +5,12 @@ import { useLocale } from 'next-intl'
 import { usePathname } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 
-const LOCALE_NAMES: Record<string, string> = {
-  en: 'English',
-  pt: 'Português',
-  de: 'Deutsch',
-  it: 'Italiano',
-  fr: 'Français',
+const LOCALE_DATA: Record<string, { name: string; flag: string }> = {
+  en: { name: 'English', flag: '🇺🇸' },
+  pt: { name: 'Português', flag: '🇵🇹' },
+  de: { name: 'Deutsch', flag: '🇩🇪' },
+  it: { name: 'Italiano', flag: '🇮🇹' },
+  fr: { name: 'Français', flag: '🇫🇷' },
 }
 
 function GlobeIcon({ className }: { className?: string }) {
@@ -51,9 +51,10 @@ function ChevronIcon({ className }: { className?: string }) {
 
 type Props = {
   variant?: 'desktop' | 'mobile'
+  showName?: boolean
 }
 
-export function LanguageSwitcher({ variant = 'desktop' }: Props) {
+export function LanguageSwitcher({ variant = 'desktop', showName = true }: Props) {
   const locale = useLocale()
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -89,12 +90,13 @@ export function LanguageSwitcher({ variant = 'desktop' }: Props) {
               key={loc}
               type="button"
               onClick={() => switchLocale(loc)}
-              className={`min-w-[3rem] rounded-lg border px-3 py-1.5 text-center text-sm font-medium transition ${loc === locale
-                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
-                  : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+              className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-center text-sm font-medium transition ${loc === locale
+                ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
                 }`}
             >
-              {loc.toUpperCase()}
+              <span className="text-base">{LOCALE_DATA[loc]?.flag}</span>
+              <span>{loc.toUpperCase()}</span>
             </button>
           ))}
         </div>
@@ -112,8 +114,11 @@ export function LanguageSwitcher({ variant = 'desktop' }: Props) {
         aria-haspopup="true"
         aria-label="Choose language"
       >
-        <GlobeIcon className="h-4 w-4" />
-        <span className="max-w-[80px] truncate">{LOCALE_NAMES[locale] ?? locale}</span>
+
+        <span className="text-base">{LOCALE_DATA[locale]?.flag}</span>
+        {showName && (
+          <span className="max-w-[80px] truncate">{LOCALE_DATA[locale]?.name ?? locale}</span>
+        )}
         <ChevronIcon
           className={`h-4 w-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
         />
@@ -129,12 +134,13 @@ export function LanguageSwitcher({ variant = 'desktop' }: Props) {
               type="button"
               onClick={() => switchLocale(loc)}
               className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition ${loc === locale
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
+                ? 'bg-amber-500/20 text-amber-400'
+                : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
                 }`}
               role="menuitem"
             >
-              {LOCALE_NAMES[loc] ?? loc}
+              <span className="mr-3 text-base">{LOCALE_DATA[loc]?.flag}</span>
+              {LOCALE_DATA[loc]?.name ?? loc}
             </button>
           ))}
         </div>

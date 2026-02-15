@@ -11,6 +11,8 @@ import { getPriceModifierFromConfig } from '@/types/customization'
 import type { CustomizationRuleDef } from '@/types/customization'
 import { colorToHex } from '@/lib/color-swatch'
 import { ColorOption } from '@/types/product'
+import { SizeGuideModal } from '@/components/product/SizeGuideModal'
+import { StockNotificationButton } from '@/components/product/StockNotificationButton'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { trackAddToCart, trackCustomization } from '@/lib/analytics'
 
@@ -53,8 +55,9 @@ type AddToCartFormProps = {
   // Controlled props
   selectedColor?: string
   onColorChange?: (color: string) => void
+  onVariantChange?: (variant: Variant | null) => void
   availableColors?: ColorOption[]
-  images?: Array<{ url: string; color?: string | null; sort_order: number }>
+  images?: Array<{ url: string; color?: string | null; sort_order: number; variant_id?: string }>
 }
 
 
@@ -84,6 +87,8 @@ export function AddToCartForm({
   const colors = useMemo<ColorOption[]>(
     () => {
       const colorMap = new Map<string, ColorOption>()
+      if (!Array.isArray(variants)) return []
+
       variants.forEach((v) => {
         const name = (v.attributes?.color as string) || 'Default'
         if (!colorMap.has(name)) {
@@ -119,11 +124,20 @@ export function AddToCartForm({
   )
 
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
-    variantsForFirstColor.find((v) => v.stock > 0)?.id ?? variantsForFirstColor[0]?.id ?? variants[0]?.id ?? null
+    variantsForFirstColor.find((v) => (v.stock ?? 0) > 0)?.id ??
+    variantsForFirstColor[0]?.id ??
+    (Array.isArray(variants) ? variants[0]?.id : null) ??
+    null
   )
   const [quantity, setQuantity] = useState(1)
   const [isAdding, setIsAdding] = useState(false)
   const [config, setConfig] = useState<Record<string, string>>({})
+
+  // Report initially selected variant
+  useMemo(() => {
+    const v = (variants || []).find((v) => v.id === selectedVariantId)
+    props.onVariantChange?.(v ?? null)
+  }, [selectedVariantId, variants, props.onVariantChange])
 
   const variantsForColor = useMemo(
     () =>
@@ -134,15 +148,18 @@ export function AddToCartForm({
   )
 
   const allSizes = useMemo(
-    () =>
-      sortSizes(
+    () => {
+      if (!Array.isArray(variants)) return []
+      return sortSizes(
         Array.from(new Set(variants.map((v) => getSize(v)).filter((s) => s && s !== '-')))
-      ),
+      )
+    },
     [variants]
   )
 
   const variantByColorAndSize = useMemo(() => {
     const map = new Map<string, Variant>()
+    if (!Array.isArray(variants)) return map
     for (const v of variants) {
       const color = (v.attributes?.color as string) || 'Default'
       const size = getSize(v)
@@ -164,6 +181,7 @@ export function AddToCartForm({
     )
     const next = forColor.find((v) => (v.stock ?? 0) > 0) ?? forColor[0]
     setSelectedVariantId(next?.id ?? null)
+    props.onVariantChange?.(next ?? null)
   }
 
   const selectedVariant = (variants || []).find((v) => v.id === selectedVariantId)
@@ -224,7 +242,7 @@ export function AddToCartForm({
     }
   }
 
-  if (variants.length === 0) return null
+  if (!Array.isArray(variants) || variants.length === 0) return null
 
   const productType = inferProductType(productCategory)
 
@@ -295,9 +313,12 @@ export function AddToCartForm({
       {/* Size Dropdown */}
       {allSizes.length >= 1 && (
         <div className="space-y-2">
-          <label htmlFor="variant-select" className="block text-sm font-medium text-zinc-400">
-            Size
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="variant-select" className="block text-sm font-medium text-zinc-400">
+              {t('size')}
+            </label>
+            <SizeGuideModal productCategory={productCategory} />
+          </div>
           <div className="relative">
             <select
               id="variant-select"
@@ -313,7 +334,10 @@ export function AddToCartForm({
                 // OR better: Just list the variants available for this color like in Admin.
                 // However, the previous UI showed all sizes. 
                 // If I switch to Admin style:
-                if (v) setSelectedVariantId(v.id)
+                if (v) {
+                  setSelectedVariantId(v.id)
+                  props.onVariantChange?.(v)
+                }
               }}
               className="w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 pr-10 text-zinc-100 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50"
             >
@@ -391,27 +415,40 @@ export function AddToCartForm({
       </div>
 
       <div className="flex items-center gap-4">
-        <div>
-          <label htmlFor="quantity" className="sr-only">
-            {t('quantity')}
-          </label>
-          <input
-            id="quantity"
-            type="number"
-            min={1}
-            max={stock}
-            value={quantity}
-            onChange={(e) => setQuantity(Math.max(1, Math.min(stock, parseInt(e.target.value, 10) || 1)))}
-            className="w-20 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={!canAdd || isAdding}
-          className="rounded-lg bg-white px-6 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isAdding ? t('adding') : t('addToCart')}
-        </button>
+        {stock === 0 ? (
+          <div className="w-full">
+            <StockNotificationButton
+              productId={productId}
+              variantId={selectedVariant?.id || ''}
+              productName={productName}
+              variantName={selectedVariant?.name || null}
+            />
+          </div>
+        ) : (
+          <>
+            <div>
+              <label htmlFor="quantity" className="sr-only">
+                {t('quantity')}
+              </label>
+              <input
+                id="quantity"
+                type="number"
+                min={1}
+                max={stock}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Math.min(stock, parseInt(e.target.value, 10) || 1)))}
+                className="w-20 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!canAdd || isAdding}
+              className="rounded-lg bg-white px-6 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isAdding ? t('adding') : t('addToCart')}
+            </button>
+          </>
+        )}
       </div>
     </form>
   )

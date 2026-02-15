@@ -69,70 +69,49 @@ export function ProductCategoryField({
         <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
           Category
         </label>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => handleParentChange('')}
-            disabled={loading}
-            className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${parentId === ''
-                ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700'
-              } disabled:opacity-50`}
-          >
-            None
-          </button>
+        <select
+          value={parentId}
+          onChange={(e) => handleParentChange(e.target.value)}
+          disabled={loading}
+          className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
+        >
+          <option value="">Select a category</option>
           {CATEGORIES.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => handleParentChange(c.id)}
-              disabled={loading}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${parentId === c.id
-                  ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
-                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700'
-                } disabled:opacity-50`}
-            >
+            <option key={c.id} value={c.id}>
               {c.name}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {/* Subcategories */}
-      {activeParent && activeParent.subcategories && activeParent.subcategories.length > 0 && (
-        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Subcategory
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => handleUpdate('')}
+      {/* Subcategories - Smooth Expand/Collapse */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${activeParent && activeParent.subcategories && activeParent.subcategories.length > 0
+          ? 'grid-rows-[1fr] opacity-100'
+          : 'grid-rows-[0fr] opacity-0'
+          }`}
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-2 pt-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Subcategory
+            </label>
+            <select
+              value={subId}
+              onChange={(e) => handleUpdate(e.target.value)}
               disabled={loading}
-              className={`rounded-full px-3 py-1 text-[11px] font-medium transition-all ${subId === ''
-                  ? 'bg-zinc-100 text-zinc-950 shadow-md'
-                  : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 border border-zinc-800'
-                } disabled:opacity-50`}
+              className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
             >
-              All {activeParent.name}
-            </button>
-            {activeParent.subcategories.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => handleUpdate(s.id)}
-                disabled={loading}
-                className={`rounded-full px-3 py-1 text-[11px] font-medium transition-all ${subId === s.id
-                    ? 'bg-zinc-100 text-zinc-950 shadow-md'
-                    : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 border border-zinc-800'
-                  } disabled:opacity-50`}
-              >
-                {s.name}
-              </button>
-            ))}
+              <option value="">All {activeParent?.name}</option>
+              {activeParent?.subcategories?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-      )}
+      </div>
 
       {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
     </div>

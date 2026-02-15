@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { Link } from '@/i18n/navigation'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
-import { CATEGORIES } from '@/lib/categories'
+import { Category } from '@/lib/categories'
 import { useTranslations } from 'next-intl'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
 
@@ -22,9 +22,10 @@ type Product = {
 
 type Props = {
     products: Product[]
+    categories: Category[]
 }
 
-export function NewArrivals({ products }: Props) {
+export function NewArrivals({ products, categories }: Props) {
     const t = useTranslations('home')
     const [activeCategory, setActiveCategory] = useState<string | 'all'>('all')
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -34,7 +35,7 @@ export function NewArrivals({ products }: Props) {
 
     const filteredProducts = activeCategory === 'all'
         ? products
-        : products.filter(p => p.categoryId === activeCategory || (CATEGORIES.find(c => c.id === activeCategory)?.subcategories?.some(s => s.id === p.categoryId)))
+        : products.filter(p => p.categoryId === activeCategory || (categories.find(c => c.id === activeCategory)?.subcategories?.some(s => s.id === p.categoryId)))
 
     // Limit to 8 items for homepage display
     const displayedProducts = filteredProducts.slice(0, 8)
@@ -73,7 +74,7 @@ export function NewArrivals({ products }: Props) {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
                     <div className="w-full overflow-hidden">
                         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 font-serif lowercase italic">
-                            New arrivals
+                            {t('newArrivals')}
                         </h2>
                         {/* Scrollable Tabs for Mobile */}
                         <div className="mt-4 md:mt-6 flex gap-6 md:gap-8 items-center border-b border-white/5 pb-2 md:pb-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [ms-overflow-style:none] [scrollbar-width:none]">
@@ -82,24 +83,33 @@ export function NewArrivals({ products }: Props) {
                                 className={`text-xs md:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 white-nowrap flex-shrink-0 ${activeCategory === 'all' ? 'text-zinc-50' : 'text-zinc-500 hover:text-zinc-300'
                                     }`}
                             >
-                                All
+                                {t('all')}
                                 {activeCategory === 'all' && (
                                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-50" />
                                 )}
                             </button>
-                            {CATEGORIES.slice(0, 4).map(cat => (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => setActiveCategory(cat.id)}
-                                    className={`text-xs md:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 whitespace-nowrap flex-shrink-0 ${activeCategory === cat.id ? 'text-zinc-50' : 'text-zinc-500 hover:text-zinc-300'
-                                        }`}
-                                >
-                                    {cat.name.replace("'s clothing", "s")}
-                                    {activeCategory === cat.id && (
-                                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-50" />
-                                    )}
-                                </button>
-                            ))}
+                            {categories.slice(0, 6).map(cat => {
+                                const categoryKey = cat.slug === 'mens-clothing' ? 'categoryMens' :
+                                    cat.slug === 'womens-clothing' ? 'categoryWomens' :
+                                        cat.slug === 'kids-youth-clothing' ? 'categoryKids' :
+                                            cat.slug === 'hats' ? 'categoryHats' :
+                                                cat.slug === 'accessories' ? 'categoryAccessories' :
+                                                    cat.slug === 'home-living' ? 'categoryHome' : null;
+
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setActiveCategory(cat.id)}
+                                        className={`text-xs md:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 whitespace-nowrap flex-shrink-0 ${activeCategory === cat.id ? 'text-zinc-50' : 'text-zinc-500 hover:text-zinc-300'
+                                            }`}
+                                    >
+                                        {categoryKey ? t(categoryKey) : cat.name}
+                                        {activeCategory === cat.id && (
+                                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-50" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -145,7 +155,7 @@ export function NewArrivals({ products }: Props) {
                         ))
                     ) : (
                         <div className="col-span-2 w-full py-12 text-center text-zinc-500 border border-dashed border-white/5 rounded-2xl">
-                            No new arrivals in this category yet.
+                            {t('noNewArrivals')}
                         </div>
                     )}
                 </div>

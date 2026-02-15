@@ -12,16 +12,16 @@ function getPathWithoutLocale(pathname: string): { path: string; locale: string 
   return { path: pathname || '/', locale: 'en' }
 }
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(request: NextRequest, response?: NextResponse) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.next({ request })
+      return response || NextResponse.next({ request })
     }
 
-    let supabaseResponse = NextResponse.next({
+    let supabaseResponse = response || NextResponse.next({
       request,
     })
 
@@ -37,7 +37,7 @@ export async function updateSession(request: NextRequest) {
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             )
-            supabaseResponse = NextResponse.next({ request })
+            // Do not reset the response, just update cookies on the existing one
             cookiesToSet.forEach(({ name, value, options }) =>
               supabaseResponse.cookies.set(name, value, options)
             )
@@ -112,6 +112,6 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse
   } catch {
-    return NextResponse.next({ request })
+    return response || NextResponse.next({ request })
   }
 }

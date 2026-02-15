@@ -139,7 +139,7 @@ export async function generateMockupsForProduct(storeProductId: number) {
         return { success: false, message: 'Failed to create generation tasks' }
     }
 
-    console.log(`Created ${taskIds.length} tasks. Waiting for completion...`)
+    console.log(`Created ${taskIds.length} tasks. Polling for completion with backoff...`)
 
     // 4. Poll for ALL tasks
     const results = await Promise.all(taskIds.map((id: number) => waitForTask(id, token)))
@@ -191,19 +191,49 @@ export async function generateMockupsForProduct(storeProductId: number) {
 }
 
 async function waitForTask(taskId: number, token: string) {
-    let attempts = 0
-    while (attempts < 30) { // 60s timeout
-        await new Promise(r => setTimeout(r, 2000))
-        attempts++
+    let attempt = 0
+    const maxAttempts = 10
+    let delay = 1000 // Start with 1s
 
-        const res = await fetch(`${API_BASE}/v2/mockup-tasks?id=${taskId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        const data = await res.json()
-        const item = data.data?.[0]
+    while (attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, delay))
 
-        if (item?.status === 'completed') return item
-        if (item?.status === 'failed') return null
+        try {
+            const res = await fetch(`${API_BASE}/v2/mockup-tasks?id=${taskId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+
+            if (!res.ok) {
+                console.warn(`[waitForTask] API error for task ${taskId}: ${res.statusText}`)
+                // Don't abort immediately on 5xx, retry
+                if (res.status >= 500) {
+                    attempt++
+                    delay = Math.min(delay * 1.5, 10000) // Backoff cap at 10s
+                    continue
+                }
+                return null
+            }
+
+            const data = await res.json()
+            const item = data.data?.[0]
+
+            if (item?.status === 'completed') {
+                return item
+            }
+            if (item?.status === 'failed') {
+                console.error(`[waitForTask] Task ${taskId} failed:`, item.error)
+                return null
+            }
+
+            // If just 'pending' or 'draft', continue waiting
+        } catch (error) {
+            console.error(`[waitForTask] Network error polling task ${taskId}:`, error)
+        }
+
+        attempt++
+        delay = Math.min(delay * 1.5, 10000) // Exponential backoff capped at 10s
     }
+
+    console.error(`[waitForTask] Timeout waiting for task ${taskId}`)
     return null
 }

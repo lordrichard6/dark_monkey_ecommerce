@@ -7,6 +7,24 @@ import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { SUPPORTED_CURRENCIES, SupportedCurrency } from '@/lib/currency'
+import { Instagram, Twitter, Facebook, Github, Send, Loader2, Phone, Mail, Clock } from 'lucide-react'
+import { subscribeToNewsletter } from '@/actions/newsletter'
+import { VisaIcon, MastercardIcon, PayPalIcon, KlarnaIcon, AmexIcon } from '@/components/icons/PaymentIcons'
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  CH: '🇨🇭',
+  DE: '🇩🇪',
+  AT: '🇦🇹',
+  FR: '🇫🇷',
+  IT: '🇮🇹',
+  ES: '🇪🇸',
+  GB: '🇬🇧',
+  NL: '🇳🇱',
+  BE: '🇧🇪',
+  PT: '🇵🇹',
+  US: '🇺🇸',
+  CA: '🇨🇦',
+}
 
 const COUNTRY_REGION_OPTIONS = [
   { value: 'CH', label: 'Switzerland', currency: 'CHF' },
@@ -155,85 +173,199 @@ export function Footer() {
   }
 
   const currentCountry = COUNTRY_REGION_OPTIONS.find((o) => o.value === countryValue)
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleNewsletterSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSubmitting(true)
+    const formData = new FormData(e.currentTarget)
+    const result = await subscribeToNewsletter(formData)
+    setSubmitting(false)
+    if (result.success) {
+      setIsSubscribed(true)
+    }
+  }
 
   return (
     <footer className="relative mt-auto border-t border-white/10 bg-zinc-950/95 backdrop-blur-sm">
-      {/* Top: logo + selectors + payment icons */}
-      <div className="mx-auto max-w-6xl px-4 py-10 md:py-12">
-        <div className="flex flex-col items-center gap-8 md:flex-row md:items-start md:justify-between">
-          {/* Logo (center on mobile, left on desktop) */}
-          <Link href="/" className="shrink-0">
-            <DarkMonkeyLogo size="lg" className="text-zinc-50" noLink />
-          </Link>
-
-          {/* Country/region + Language (left block on desktop) */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
-            <div className="flex flex-col gap-2" ref={countryRef}>
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                Country / region
-              </span>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setCountryOpen(!countryOpen)}
-                  className="flex min-w-[200px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition hover:border-white/20"
-                  aria-expanded={countryOpen}
-                  aria-haspopup="listbox"
-                >
-                  <span className="truncate">{currentCountry?.label ?? 'Switzerland'}</span>
-                  <ChevronIcon
-                    className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${countryOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {countryOpen && (
-                  <ul
-                    className="absolute bottom-full left-0 z-10 mb-1 max-h-60 min-w-[200px] overflow-auto rounded-lg border border-white/10 bg-zinc-900 py-1 shadow-xl"
-                    role="listbox"
-                  >
-                    {COUNTRY_REGION_OPTIONS.map((opt) => (
-                      <li key={opt.value} role="option" aria-selected={countryValue === opt.value}>
-                        <button
-                          type="button"
-                          onClick={() => selectCountry(opt.value)}
-                          className={`block w-full px-4 py-2.5 text-left text-sm transition ${countryValue === opt.value
-                            ? 'bg-amber-500/20 text-amber-400'
-                            : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
-                            }`}
-                        >
-                          {opt.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+      {/* Newsletter Section */}
+      <div className="border-b border-white/10">
+        <div className="mx-auto max-w-6xl px-4 py-16 md:py-20">
+          <div className="flex flex-col items-center justify-between gap-12 lg:flex-row">
+            <div className="max-w-md text-center lg:text-left">
+              <h2 className="text-2xl font-bold text-white md:text-3xl lg:text-4xl">
+                {t('newsletterTitle')}
+              </h2>
+              <p className="mt-4 text-zinc-400">
+                {t('newsletterDescription')}
+              </p>
             </div>
 
-            <CurrencySelector />
-            <div className="flex flex-col gap-2">
+            <div className="w-full max-w-md">
+              {isSubscribed ? (
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-emerald-400">
+                  <div className="rounded-full bg-emerald-500/20 p-2 text-emerald-500">
+                    <Send className="h-4 w-4" />
+                  </div>
+                  <span className="font-medium">{t('newsletterSuccess')}</span>
+                </div>
+              ) : (
+                <form onSubmit={handleNewsletterSubmit} className="relative group">
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder={t('newsletterPlaceholder')}
+                    className="w-full rounded-full border border-white/10 bg-zinc-900 px-6 py-4 text-sm text-white placeholder-zinc-500 transition-all focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 group-hover:border-white/20"
+                  />
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="absolute right-2 top-2 bottom-2 rounded-full bg-white px-6 text-sm font-bold text-zinc-950 transition-all hover:bg-zinc-200 active:scale-95 disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      t('newsletterButton')
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top: logo + selectors + payment icons */}
+      <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
+          {/* Logo & Info */}
+          <div className="flex flex-col gap-6">
+            <Link href="/" className="shrink-0">
+              <DarkMonkeyLogo size="lg" className="text-zinc-50" noLink />
+            </Link>
+
+            {/* Customer Service Info */}
+            <div className="flex flex-col gap-4 pt-4 border-t border-white/5">
               <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                Language
+                {t('customerService')}
               </span>
-              <div className="min-w-[200px]">
-                <LanguageSwitcher variant="desktop" />
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 text-sm text-zinc-400">
+                  <Clock className="h-4 w-4 text-zinc-500" />
+                  <span>{t('operatingHours')}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-zinc-400">
+                  <Mail className="h-4 w-4 text-zinc-500" />
+                  <a href="mailto:support@darkmonkey.com" className="hover:text-amber-400 transition-colors">
+                    support@darkmonkey.ch
+                  </a>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Payment icons (right on desktop) */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-              We accept
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              {['Visa', 'Mastercard', 'PayPal', 'Klarna', 'Amex'].map((name) => (
-                <div
-                  key={name}
-                  className="flex h-9 min-w-[52px] items-center justify-center rounded border border-white/10 bg-white/5 px-2 text-[10px] font-medium uppercase text-zinc-400"
-                >
-                  {name}
+          {/* Configuration block */}
+          <div className="flex flex-col gap-8 lg:col-span-2">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-12">
+              <div className="flex flex-col gap-2" ref={countryRef}>
+                <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  Country / region
+                </span>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setCountryOpen(!countryOpen)}
+                    className="flex min-w-[200px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition hover:border-white/20"
+                    aria-expanded={countryOpen}
+                  >
+                    <span className="flex items-center gap-2 truncate">
+                      <span>{COUNTRY_FLAGS[countryValue] || '🌐'}</span>
+                      <span>{currentCountry?.label ?? 'Switzerland'}</span>
+                    </span>
+                    <ChevronIcon
+                      className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${countryOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {countryOpen && (
+                    <ul
+                      className="absolute bottom-full left-0 z-10 mb-1 max-h-60 min-w-[200px] overflow-auto rounded-lg border border-white/10 bg-zinc-900 py-1 shadow-xl"
+                      role="listbox"
+                    >
+                      {COUNTRY_REGION_OPTIONS.map((opt) => (
+                        <li key={opt.value} role="option" aria-selected={countryValue === opt.value}>
+                          <button
+                            type="button"
+                            onClick={() => selectCountry(opt.value)}
+                            className={`block w-full px-4 py-2.5 text-left text-sm transition ${countryValue === opt.value
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
+                              }`}
+                          >
+                            <span className="flex items-center gap-3">
+                              <span className="text-lg">{COUNTRY_FLAGS[opt.value] || '🌐'}</span>
+                              <span>{opt.label}</span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              ))}
+              </div>
+
+              <CurrencySelector />
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  Language
+                </span>
+                <div className="min-w-[200px]">
+                  <LanguageSwitcher variant="desktop" />
+                </div>
+              </div>
+            </div>
+
+            {/* Payment icons (right on desktop) */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                We accept
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { name: 'Visa', Icon: VisaIcon },
+                  { name: 'Mastercard', Icon: MastercardIcon },
+                  { name: 'PayPal', Icon: PayPalIcon },
+                  { name: 'Klarna', Icon: KlarnaIcon },
+                  { name: 'Amex', Icon: AmexIcon },
+                ].map(({ name, Icon }) => (
+                  <div
+                    key={name}
+                    className="flex h-8 min-w-[50px] items-center justify-center rounded bg-white px-2 py-1 transition-opacity hover:opacity-80"
+                    aria-label={name}
+                  >
+                    <Icon className="h-full w-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Social Links */}
+            <div className="flex flex-col gap-4">
+              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                Follow Us
+              </span>
+              <div className="flex gap-4">
+                <a href="#" className="text-zinc-400 transition hover:text-white" aria-label="Instagram">
+                  <Instagram className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-zinc-400 transition hover:text-white" aria-label="Facebook">
+                  <Facebook className="h-5 w-5" />
+                </a>
+                <a href="#" className="text-zinc-400 transition hover:text-white" aria-label="Twitter">
+                  <Twitter className="h-5 w-5" />
+                </a>
+              </div>
             </div>
           </div>
         </div>
