@@ -25,7 +25,7 @@ type Props = {
         description: string | null
         categories: { name?: string } | null
     }
-    images: Array<{ url: string; alt: string | null; sort_order: number; color?: string | null; variant_id?: number }>
+    images: Array<{ url: string; alt: string | null; sort_order: number; color?: string | null; variant_id?: string | null }>
     variants: Array<any>
     reviews: ReviewRow[]
     userReview: ReviewRow | null

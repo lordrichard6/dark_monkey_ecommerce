@@ -57,7 +57,7 @@ type AddToCartFormProps = {
   onColorChange?: (color: string) => void
   onVariantChange?: (variant: Variant | null) => void
   availableColors?: ColorOption[]
-  images?: Array<{ url: string; color?: string | null; sort_order: number; variant_id?: string }>
+  images?: Array<{ url: string; color?: string | null; sort_order: number; variant_id?: string | null }>
 }
 
 

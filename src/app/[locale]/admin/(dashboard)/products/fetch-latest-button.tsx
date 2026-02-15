@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { syncPrintfulProducts, type PrintfulDebugEntry } from '@/actions/sync-printful'
+import { syncPrintfulProducts } from '@/actions/sync-printful'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { PackagePlus, Loader2 } from 'lucide-react'
