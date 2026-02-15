@@ -274,6 +274,10 @@ export function LoginForm() {
     setLoading(true)
     setMessage(null)
 
+    // Trim whitespace from email
+    const trimmedEmail = email.trim()
+    setEmail(trimmedEmail) // Update state too
+
     if (isSignUp && password !== confirmPassword) {
       setMessage({ type: 'error', text: t('passwordsDoNotMatch') })
       setLoading(false)
@@ -298,12 +302,17 @@ export function LoginForm() {
         if (!result.success) {
           setMessage({ type: 'error', text: t('verifyCaptcha') })
           setLoading(false)
+          // Always reset token on failure
           if (turnstileRef.current) turnstileRef.current.reset()
+          setCaptchaToken(null)
           return
         }
       } catch (err) {
-        // Silently proceed in dev if API fails, but log it
         console.error('CAPTCHA verification failed', err)
+        // If our own API fails, still try to proceed? Prudent to block.
+        setMessage({ type: 'error', text: t('errorNetwork') })
+        setLoading(false)
+        return
       }
     }
 
@@ -323,9 +332,13 @@ export function LoginForm() {
       if (isSignUp) {
         trackEvent('view_item', { item_name: 'Auth Attempt - Signup' })
         const { error } = await supabase.auth.signUp({
-          email,
+          email: trimmedEmail,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/${locale}/auth/callback` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/${locale}/auth/callback`,
+            // Pass the token to Supabase if available (optional support for Project Settings)
+            captchaToken: captchaToken || undefined
+          },
         })
         if (error) throw error
         setSignupSuccess(true)
@@ -333,15 +346,26 @@ export function LoginForm() {
       } else {
         trackEvent('login', { method: 'email' })
         const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password
+          email: trimmedEmail,
+          password,
+          options: {
+            captchaToken: captchaToken || undefined
+          }
         })
         if (error) throw error
         sessionStorage.removeItem('auth_failed_attempts')
         window.location.replace(`/${locale}/account`)
       }
     } catch (err: any) {
+      console.error('Auth Error Full:', err) // Force log full error object
       const parsed = parseAuthError(err)
+
+      // If error is generic or contains "blocked" or "security", explicitly show it
+      // This helps with VPN blocks returning non-standard messages
+      if (err.message && (err.message.toLowerCase().includes('security') || err.message.toLowerCase().includes('blocked'))) {
+        parsed.text = err.message
+      }
+
       setMessage(parsed)
       trackEvent('purchase', { item_name: 'Auth Error', transaction_id: err.message })
 
@@ -349,9 +373,11 @@ export function LoginForm() {
       setFailedAttempts(newAttempts)
       sessionStorage.setItem('auth_failed_attempts', newAttempts.toString())
 
-      if (turnstileRef.current && failedAttempts >= 3) {
+      // Always reset the executed token so we don't reuse it
+      if (turnstileRef.current) {
         turnstileRef.current.reset()
       }
+      setCaptchaToken(null)
     } finally {
       setLoading(false)
     }

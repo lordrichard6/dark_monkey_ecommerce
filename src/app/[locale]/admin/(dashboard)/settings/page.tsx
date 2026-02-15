@@ -1,7 +1,8 @@
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { TagManager } from '@/components/admin/settings/TagManager'
-import { Settings, Tag } from 'lucide-react'
+import { EmailTester } from '@/components/admin/settings/EmailTester'
+import { Settings, Tag, Mail } from 'lucide-react'
 
 export default async function AdminSettingsPage() {
     const supabase = getAdminClient()
@@ -37,6 +38,15 @@ export default async function AdminSettingsPage() {
                             <p className="mt-1 text-sm text-zinc-400">Manage discount codes.</p>
                         </a>
                     </div>
+                </section>
+
+                {/* Email Testing */}
+                <section id="email-testing">
+                    <div className="mb-6 flex items-center gap-2">
+                        <Mail className="h-5 w-5 text-indigo-500" />
+                        <h2 className="text-lg font-semibold text-zinc-50">Email Notifications</h2>
+                    </div>
+                    <EmailTester />
                 </section>
 
                 {/* Tag Management */}
