@@ -25,7 +25,7 @@ export function SuccessContent({ sessionId, initialOrder }: Props) {
         if (!isPolling) return
 
         // const supabase = createClient()
-        const maxAttempts = 8 // ~16 seconds
+        const maxAttempts = 20 // ~40 seconds
 
         const interval = setInterval(async () => {
             setAttempts(prev => {

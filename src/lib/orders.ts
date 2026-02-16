@@ -114,7 +114,8 @@ export async function processSuccessfulCheckout(sessionId: string) {
     const userId = fullSession.metadata?.user_id ?? null
     const guestEmail = fullSession.metadata?.guest_email || fullSession.customer_email || fullSession.customer_details?.email
 
-    // 5. Create Order
+    // 5. Create Order & Order Items (CRITICAL PATH)
+    // We do this BEFORE slow external calls so the client finds the order instantly.
     console.log('[OrderProcess] Creating order in database...')
     const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -129,7 +130,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
             discount_id: discountId || null,
             discount_cents: Number.isFinite(discountCents) ? discountCents : 0,
         })
-        .select('id, user_email, guest_email')
+        .select('id, guest_email')
         .single()
 
     if (orderError) {
@@ -139,20 +140,9 @@ export async function processSuccessfulCheckout(sessionId: string) {
 
     console.log(`[OrderProcess] Order created: ${order.id}`)
 
-    // Cleanup
+    // Cleanup & Item Insertion
     await supabase.from('abandoned_checkouts').delete().eq('stripe_session_id', sessionId)
 
-    // Increment discount uses
-    if (discountId) {
-        const { data: disc } = await supabase.from('discounts').select('use_count').eq('id', discountId).single()
-        if (disc) {
-            await supabase.from('discounts').update({ use_count: (disc.use_count ?? 0) + 1 }).eq('id', discountId)
-        }
-    }
-
-    // Create Order Items
-    console.log('[OrderProcess] Creating order items...')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const orderItems = cartItems.map((item: any) => ({
         order_id: order.id,
         variant_id: item.variantId,
@@ -161,112 +151,62 @@ export async function processSuccessfulCheckout(sessionId: string) {
         config: item.config ?? {},
     }))
 
-    const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems)
-
+    const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
     if (itemsError) {
         console.error('[OrderProcess] Order items creation failed:', itemsError)
-        throw itemsError
     }
 
-    // Inventory Management & Social Proof
-    const productSlugsToRevalidate = new Set<string>()
-    const location = shippingAddressJson?.address?.city && shippingAddressJson?.address?.country
-        ? `${shippingAddressJson.address.city}, ${shippingAddressJson.address.country}`
-        : shippingAddressJson?.address?.country || null
+    // 6. Non-Blocking Fulfillment Block (Parallel)
+    // We use Promise.allSettled to ensure one slow API (e.g. Resend) doesn't stop others (e.g. Printful)
+    // and they all run concurrently.
+    console.log('[OrderProcess] Starting parallel fulfillment block (Email, Printful, Gamification)...')
 
-    for (const item of cartItems) {
-        // Inventory decrement
-        const { data: inv } = await supabase.from('product_inventory').select('quantity').eq('variant_id', item.variantId).single()
-        if (inv) {
-            await supabase.from('product_inventory').update({ quantity: Math.max(0, inv.quantity - item.quantity) }).eq('variant_id', item.variantId)
-        }
+    const fulfillmentPromises: Promise<any>[] = []
 
-        // Social proof
-        await supabase.from('recent_purchases').insert({
-            product_id: item.productId,
-            variant_id: item.variantId,
-            location,
-        })
-
-        // Metadata for revalidation
-        const { data: p } = await supabase.from('products').select('slug').eq('id', item.productId).single()
-        if (p?.slug) productSlugsToRevalidate.add(p.slug)
-    }
-
-    // Cache invalidation
-    for (const slug of productSlugsToRevalidate) {
-        try { revalidatePath(`/products/${slug}`) } catch (_) { }
-    }
-
-    // Gamification
-    if (userId) {
-        console.log('[OrderProcess] Processing gamification for user:', userId)
-        await processXpForPurchase(supabase, userId, order.id, totalCents)
-        const { data: referral } = await supabase
-            .from('referrals')
-            .select('id, referrer_id')
-            .eq('referred_user_id', userId)
-            .is('first_order_id', null)
-            .maybeSingle()
-        if (referral?.referrer_id) {
-            await supabase.from('referrals').update({ first_order_id: order.id }).eq('id', referral.id)
-            await processXpForReferral(supabase, referral.referrer_id)
-            await supabase.from('referrals').update({ referrer_xp_awarded_at: new Date().toISOString() }).eq('id', referral.id)
-        }
-    }
-
-    // Notification
-    const email = guestEmail ?? order.user_email ?? undefined
+    // A. Confirmation Email
+    const email = guestEmail ?? order.guest_email ?? undefined
     if (email) {
-        console.log('[OrderProcess] Sending confirmation email...')
-        // Construct registration link for guests to claim their order
         const registerUrl = !userId && email
             ? `${process.env.NEXT_PUBLIC_APP_URL}/login?mode=signup&email=${encodeURIComponent(email)}`
             : undefined
 
-        await sendOrderConfirmation({
+        fulfillmentPromises.push(sendOrderConfirmation({
             to: email,
             orderId: order.id,
             totalCents,
             currency: 'CHF',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             itemCount: cartItems.reduce((s: number, i: any) => s + i.quantity, 0),
             registerUrl,
-        })
+        }).catch(err => console.error('[OrderProcess] Email failed:', err)))
     }
 
-    // Printful Fulfillment
-    console.log(`[OrderProcess] Step 8: Starting Printful fulfillment for order: ${order.id}`)
+    // B. Printful Fulfillment
     const isPfConfigured = isPrintfulConfigured()
     console.log(`[OrderProcess] Printful configured: ${isPfConfigured}`)
 
     if (isPfConfigured && shippingAddressJson?.address) {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pfJob = (async () => {
             const variantIds = cartItems.map((c: any) => c.variantId)
-            console.log(`[OrderProcess] Fetching Printful IDs for ${variantIds.length} items from Supabase...`)
+            console.log(`[OrderProcess] Fetching Printful IDs for ${variantIds.length} items...`)
+
             const { data: variants, error: vError } = await supabase
                 .from('product_variants')
                 .select('id, printful_variant_id, printful_sync_variant_id')
                 .in('id', variantIds)
 
             if (vError) {
-                console.error('[OrderProcess] ERROR fetching variants for Printful:', vError)
+                console.error('[OrderProcess] DB Error fetching variants:', vError)
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const printfulItems: any[] = []
             for (const item of cartItems) {
                 const v = (variants ?? []).find((x) => x.id === item.variantId)
                 if (!v) {
-                    console.warn(`[OrderProcess] ! Could not find variant ${item.variantId} in DB, skipping from Printful order`)
+                    console.log(`[OrderProcess] ! Variant not found in DB for item: ${item.variantId}`)
                     continue
                 }
 
                 if (v.printful_sync_variant_id != null) {
-                    console.log(`[OrderProcess] Adding SYNC item: ${item.name} (${v.printful_sync_variant_id})`)
                     printfulItems.push({
                         sync_variant_id: v.printful_sync_variant_id,
                         quantity: item.quantity,
@@ -274,7 +214,6 @@ export async function processSuccessfulCheckout(sessionId: string) {
                     })
                 } else if (v.printful_variant_id != null) {
                     const logoUrl = getDefaultPrintFileUrl()
-                    console.log(`[OrderProcess] Adding CATALOG item: ${item.name} (${v.printful_variant_id}) with logo: ${logoUrl}`)
                     printfulItems.push({
                         variant_id: v.printful_variant_id,
                         quantity: item.quantity,
@@ -282,48 +221,93 @@ export async function processSuccessfulCheckout(sessionId: string) {
                         retail_price: (item.priceCents / 100).toFixed(2),
                     })
                 } else {
-                    console.warn(`[OrderProcess] ! Variant ${item.variantId} has no Printful IDs, skipping.`)
+                    console.log(`[OrderProcess] ! Variant ${item.variantId} has no Printful IDs (Sync or Catalog)`)
                 }
             }
 
-            if (printfulItems.length > 0) {
-                console.log(`[OrderProcess] Calling createPrintfulOrder with ${printfulItems.length} items...`)
-                const addr = shippingAddressJson.address
+            console.log(`[OrderProcess] Mapping complete. Items to send: ${printfulItems.length}`)
 
-                // Always create as DRAFT (confirm: false) so merchant can review/approve in Printful Dashboard
+            if (printfulItems.length > 0) {
+                console.log('[OrderProcess] Calling Printful API...')
                 const pfResult = await createPrintfulOrder({
                     recipient: {
                         name: shippingAddressJson.name || 'Customer',
-                        address1: addr.line1,
-                        city: addr.city,
-                        state_code: addr.state || undefined,
-                        country_code: addr.country,
-                        zip: addr.postalCode,
+                        address1: shippingAddressJson.address.line1,
+                        city: shippingAddressJson.address.city,
+                        state_code: shippingAddressJson.address.state || undefined,
+                        country_code: shippingAddressJson.address.country,
+                        zip: shippingAddressJson.address.postalCode,
                         email: email ?? undefined,
                     },
                     items: printfulItems,
                     external_id: order.id.replace(/-/g, ''),
-                }, false) // False = Draft / Pending Approval
+                }, false)
+
+                console.log('[OrderProcess] Printful API Result:', JSON.stringify(pfResult, null, 2))
 
                 if (pfResult.ok && pfResult.printfulOrderId) {
-                    console.log(`[OrderProcess] SUCCESS: Printful Draft Order Created: ${pfResult.printfulOrderId}`)
-                    const { error: updError } = await supabase.from('orders').update({ printful_order_id: pfResult.printfulOrderId }).eq('id', order.id)
-                    if (updError) console.error('[OrderProcess] ERROR updating order with PF ID:', updError)
-                } else {
-                    console.error('[OrderProcess] FAILED to create Printful draft order:', pfResult.error)
+                    const { error: updErr } = await supabase.from('orders').update({ printful_order_id: pfResult.printfulOrderId }).eq('id', order.id)
+                    if (updErr) console.error('[OrderProcess] DB Error updating order with PF ID:', updErr)
+                    else console.log(`[OrderProcess] SUCCESS: Order updated with Printful ID: ${pfResult.printfulOrderId}`)
                 }
             } else {
-                console.warn('[OrderProcess] ! No items were valid for Printful fulfillment.')
+                console.log('[OrderProcess] ! Skipping Printful API: No valid items found.')
             }
-        } catch (pfErr) {
-            console.error('[OrderProcess] CRASH in Printful block:', pfErr)
-        }
+        })()
+        fulfillmentPromises.push(pfJob.catch(err => console.error('[OrderProcess] Printful failed:', err)))
     } else {
-        console.warn('[OrderProcess] SKIPPING Printful: Config missing or no shipping address', {
-            isPfConfigured,
-            hasAddress: !!shippingAddressJson?.address
-        })
+        console.log(`[OrderProcess] Skipping Printful block. Configured: ${isPfConfigured}, Address: ${!!shippingAddressJson?.address}`)
     }
+
+    // C. Gamification & XP
+    if (userId) {
+        const gamifyJob = (async () => {
+            await processXpForPurchase(supabase, userId, order.id, totalCents)
+            const { data: referral } = await supabase
+                .from('referrals')
+                .select('id, referrer_id')
+                .eq('referred_user_id', userId)
+                .is('first_order_id', null)
+                .maybeSingle()
+            if (referral?.referrer_id) {
+                await supabase.from('referrals').update({ first_order_id: order.id }).eq('id', referral.id)
+                await processXpForReferral(supabase, referral.referrer_id)
+                await supabase.from('referrals').update({ referrer_xp_awarded_at: new Date().toISOString() }).eq('id', referral.id)
+            }
+        })()
+        fulfillmentPromises.push(gamifyJob.catch(err => console.error('[OrderProcess] Gamification failed:', err)))
+    }
+
+    // D. Inventory & Social Proof (Essential but can be parallel)
+    const postProcessJob = (async () => {
+        const productSlugsToRevalidate = new Set<string>()
+        const location = shippingAddressJson?.address?.city && shippingAddressJson?.address?.country
+            ? `${shippingAddressJson.address.city}, ${shippingAddressJson.address.country}`
+            : shippingAddressJson?.address?.country || null
+
+        for (const item of cartItems) {
+            const { data: inv } = await supabase.from('product_inventory').select('quantity').eq('variant_id', item.variantId).single()
+            if (inv) {
+                await supabase.from('product_inventory').update({ quantity: Math.max(0, inv.quantity - item.quantity) }).eq('variant_id', item.variantId)
+            }
+            await supabase.from('recent_purchases').insert({
+                product_id: item.productId,
+                variant_id: item.variantId,
+                location,
+            })
+            const { data: p } = await supabase.from('products').select('slug').eq('id', item.productId).single()
+            if (p?.slug) productSlugsToRevalidate.add(p.slug)
+        }
+        for (const slug of productSlugsToRevalidate) {
+            try { revalidatePath(`/products/${slug}`) } catch (_) { }
+        }
+    })()
+    fulfillmentPromises.push(postProcessJob.catch(err => console.error('[OrderProcess] Post-processing failed:', err)))
+
+    // Final Sync Point
+    // We wait for all SETTLED promises before returning, ensuring background tasks started correctly
+    // but without blocking sequentially.
+    await Promise.allSettled(fulfillmentPromises)
 
     console.log('[OrderProcess] Synchronization complete successfully')
     return { ok: true, orderId: order.id }
