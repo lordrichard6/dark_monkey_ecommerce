@@ -27,11 +27,19 @@ export function isPrintfulConfigured(): boolean {
 
 function getHeaders(): Record<string, string> {
   const token = PRINTFUL_CONFIG?.PRINTFUL_API_TOKEN
+  const storeId = PRINTFUL_CONFIG?.PRINTFUL_STORE_ID
   if (!token) throw new PrintfulAuthError('PRINTFUL_NOT_CONFIGURED')
-  return {
+
+  const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
   }
+
+  if (storeId) {
+    headers['X-PF-Store-Id'] = storeId
+  }
+
+  return headers
 }
 
 async function fetchPrintful<T>(url: string, options?: RequestInit): Promise<PrintfulResponse<T>> {
@@ -52,6 +60,12 @@ async function fetchPrintful<T>(url: string, options?: RequestInit): Promise<Pri
     // Handle API-level errors even if status was 200 (Printful sometimes returns 200 with error code)
     if (!response.ok || data.code !== 200) {
       const msg = data.error?.message ?? data.error?.reason ?? `HTTP ${response.status}`
+      console.error(`[Printful API Error] ${operation} failed:`, {
+        status: response.status,
+        code: data.code,
+        message: msg,
+        error: data.error
+      })
       throw new PrintfulApiError(msg, response.status, data.error?.reason)
     }
 
@@ -68,27 +82,32 @@ export async function createOrder(
   }
 
   const items = payload.items.map((item) => {
-    // Basic mapping, assuming payload structure matches Printful requirements or is adapted here
-    // The previous code had specific logic for sync_variant_id vs variant_id
+    // Ensure retail_price is string
+    const retailPrice = item.retail_price ? String(item.retail_price) : undefined
+
     const base = {
       quantity: item.quantity,
-      files: item.files,
-      retail_price: item.retail_price,
+      files: item.files?.map(f => ({
+        ...f,
+        type: f.type || 'default' // Ensure type is present
+      })),
+      retail_price: retailPrice,
     }
+
     if (item.sync_variant_id != null) {
       return { ...base, sync_variant_id: item.sync_variant_id }
     }
     return { ...base, variant_id: item.variant_id! }
   })
 
-  // @ts-ignore - Ignoring strict type check for now to match legacy payload structure if needed, 
-  // or ideally we update PrintfulCreateOrderPayload to match exactly what we send.
   const body = {
     recipient: payload.recipient,
     items,
     confirm: confirm ? 1 : 0,
     external_id: payload.external_id,
   }
+
+  console.log('[Printful] Sending order payload:', JSON.stringify(body, null, 2))
 
   try {
     const data = await fetchPrintful<{ id: number }>(`${API_BASE}/orders`, {
@@ -98,6 +117,7 @@ export async function createOrder(
     })
 
     if (data.result?.id) {
+      console.log(`[Printful] Order created successfully: ${data.result.id}`)
       return { ok: true, printfulOrderId: data.result.id }
     }
 
@@ -105,6 +125,7 @@ export async function createOrder(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     logger.error('createOrder failed', { operation: 'createOrder', error: message, items: payload.items.length })
+    console.error('[Printful] createOrder exception:', err)
     return { ok: false, error: message }
   }
 }
@@ -279,5 +300,7 @@ export function getDefaultPrintFileUrl(): string {
     (process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : 'https://www.dark-monkey.ch')
-  return `${base.replace(/\/$/, '')}/logo.png`
+
+  const finalBase = base.includes('localhost') ? 'https://www.dark-monkey.ch' : base
+  return `${finalBase.replace(/\/$/, '')}/logo.png`
 }
