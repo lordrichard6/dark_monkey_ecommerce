@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { getCart, getCartCookieConfig, serializeCart } from '@/lib/cart'
 import { getStripe, isStripeConfigured } from '@/lib/stripe'
 import type { CartItem } from '@/types/cart'
@@ -320,28 +321,33 @@ export async function createCheckoutSession(
 
     const emailForAbandoned = input?.email ?? undefined
     // DO NOT use fire-and-forget here - the webhook RELIES on this record.
-    // If this fails, we want to know, but let's at least ensure it finishes before redirecting.
+    // Use admin client to ensure insertion succeeds regardless of user session state.
     try {
-      const { error } = await supabase.from('abandoned_checkouts').insert({
-        stripe_session_id: session.id,
-        email: emailForAbandoned || 'guest@lopes2tech.ch', // Default if missing but table requires it
-        cart_summary: {
-          itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
-          totalCents,
-          items: validatedItems.map(({ item }) => ({
-            variantId: item.variantId,
-            productId: item.productId,
-            quantity: item.quantity,
-            priceCents: item.priceCents,
-            config: item.config ?? {},
-            name: item.productName
-          }))
-        },
-      })
-      if (error) {
-        console.error('[Checkout] Abandoned checkout insert failed:', error.message)
-        // If it's a critical error (like RLS or table missing), we might want to fail the checkout
-        // but for now, let's keep going if it's just a minor issue, although Stripe webhook WILL fail.
+      const adminSupabase = getAdminClient()
+      if (adminSupabase) {
+        const { error } = await adminSupabase.from('abandoned_checkouts').insert({
+          stripe_session_id: session.id,
+          email: emailForAbandoned || 'guest@lopes2tech.ch', // Default if missing but table requires it
+          cart_summary: {
+            itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
+            totalCents,
+            items: validatedItems.map(({ item }) => ({
+              variantId: item.variantId,
+              productId: item.productId,
+              quantity: item.quantity,
+              priceCents: item.priceCents,
+              config: item.config ?? {},
+              name: item.productName
+            }))
+          },
+        })
+        if (error) {
+          console.error('[Checkout] Abandoned checkout insert failed:', error.message)
+        } else {
+          console.log('[Checkout] Abandoned checkout recorded for session:', session.id)
+        }
+      } else {
+        console.error('[Checkout] Admin client missing, skipping abandoned checkout recording')
       }
     } catch (err) {
       console.error('[Checkout] Abandoned checkout insert crashed:', err)

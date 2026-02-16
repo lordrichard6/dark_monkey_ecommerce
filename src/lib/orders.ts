@@ -10,23 +10,23 @@ import {
 } from './printful'
 import { revalidatePath } from 'next/cache'
 
-function getSupabaseAdmin() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!url || !key) return null
-    return createClient(url, key)
-}
+import { getAdminClient } from './supabase/admin'
 
 /**
  * Processes a successful Stripe checkout session.
  * Created to be shared between the Stripe Webhook and a manual "Sync" action on the success page.
  */
 export async function processSuccessfulCheckout(sessionId: string) {
+    console.log(`[OrderProcess] Starting checkout processing for session: ${sessionId}`)
+
     const stripe = getStripe()
     if (!stripe) throw new Error('Stripe not configured')
 
-    const supabase = getSupabaseAdmin()
-    if (!supabase) throw new Error('Database not configured')
+    const supabase = getAdminClient()
+    if (!supabase) {
+        console.error('[OrderProcess] CRITICAL: Admin Supabase client not configured (Missing service role key?)')
+        throw new Error('Database admin access not configured')
+    }
 
     // 1. Check if order already exists
     const { data: existingOrder } = await supabase
@@ -36,28 +36,38 @@ export async function processSuccessfulCheckout(sessionId: string) {
         .maybeSingle()
 
     if (existingOrder) {
+        console.log(`[OrderProcess] Order already processed for session: ${sessionId} (Order ID: ${existingOrder.id})`)
         return { ok: true, orderId: existingOrder.id, alreadyProcessed: true }
     }
 
     // 2. Retrieve full session details
+    console.log('[OrderProcess] Retrieving session from Stripe...')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fullSession: any = await stripe.checkout.sessions.retrieve(sessionId)
 
     if (fullSession.status !== 'complete' && fullSession.status !== 'open') {
+        console.warn(`[OrderProcess] Session status is ${fullSession.status}, aborting.`)
         throw new Error(`Session status is ${fullSession.status}, not ready for processing.`)
     }
 
     // 3. Fetch cart items from abandoned_checkouts
-    const { data: checkoutData } = await supabase
+    console.log('[OrderProcess] Recovering cart from abandoned_checkouts...')
+    const { data: checkoutData, error: abandonedError } = await supabase
         .from('abandoned_checkouts')
         .select('cart_summary')
         .eq('stripe_session_id', sessionId)
-        .single()
+        .maybeSingle()
+
+    if (abandonedError) {
+        console.error('[OrderProcess] Failed to fetch abandoned_checkout:', abandonedError)
+    }
 
     if (!checkoutData?.cart_summary) {
+        console.error(`[OrderProcess] CRITICAL: Missing abandoned_checkout record for session: ${sessionId}. Cart recovery impossible.`)
         throw new Error('Missing abandoned_checkout record (required for cart recovery)')
     }
 
+    console.log('[OrderProcess] Checkout data recovered successfully')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cartSummary = checkoutData.cart_summary as any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,6 +103,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
     const guestEmail = fullSession.metadata?.guest_email || fullSession.customer_email || fullSession.customer_details?.email
 
     // 5. Create Order
+    console.log('[OrderProcess] Creating order in database...')
     const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -109,7 +120,12 @@ export async function processSuccessfulCheckout(sessionId: string) {
         .select('id')
         .single()
 
-    if (orderError) throw orderError
+    if (orderError) {
+        console.error('[OrderProcess] Order creation failed:', orderError)
+        throw orderError
+    }
+
+    console.log(`[OrderProcess] Order created: ${order.id}`)
 
     // Cleanup
     await supabase.from('abandoned_checkouts').delete().eq('stripe_session_id', sessionId)
@@ -123,6 +139,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
     }
 
     // Create Order Items
+    console.log('[OrderProcess] Creating order items...')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const orderItems = cartItems.map((item: any) => ({
         order_id: order.id,
@@ -136,7 +153,10 @@ export async function processSuccessfulCheckout(sessionId: string) {
         .from('order_items')
         .insert(orderItems)
 
-    if (itemsError) throw itemsError
+    if (itemsError) {
+        console.error('[OrderProcess] Order items creation failed:', itemsError)
+        throw itemsError
+    }
 
     // Inventory Management & Social Proof
     const productSlugsToRevalidate = new Set<string>()
@@ -170,6 +190,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
 
     // Gamification
     if (userId) {
+        console.log('[OrderProcess] Processing gamification for user:', userId)
         await processXpForPurchase(supabase, userId, order.id, totalCents)
         const { data: referral } = await supabase
             .from('referrals')
@@ -187,6 +208,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
     // Notification
     const email = guestEmail ?? undefined
     if (email) {
+        console.log('[OrderProcess] Sending confirmation email...')
         await sendOrderConfirmation({
             to: email,
             orderId: order.id,
@@ -198,6 +220,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
     }
 
     // Printful Fulfillment
+    console.log('[OrderProcess] Starting Printful fulfillment...')
     if (isPrintfulConfigured() && shippingAddressJson?.address) {
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -230,6 +253,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
             }
 
             if (printfulItems.length > 0) {
+                console.log(`[OrderProcess] Sending ${printfulItems.length} items to Printful...`)
                 const addr = shippingAddressJson.address
                 const pfResult = await createPrintfulOrder({
                     recipient: {
@@ -246,20 +270,26 @@ export async function processSuccessfulCheckout(sessionId: string) {
                 }, false)
 
                 if (pfResult.ok && pfResult.printfulOrderId) {
+                    console.log(`[OrderProcess] Printful Order Created: ${pfResult.printfulOrderId}`)
                     await supabase.from('orders').update({ printful_order_id: pfResult.printfulOrderId }).eq('id', order.id)
+                } else {
+                    console.error('[OrderProcess] Printful fulfillment failed:', pfResult.error)
                 }
             }
         } catch (pfErr) {
-            console.warn('[Printful] Background fulfillment error:', pfErr)
+            console.error('[OrderProcess] Printful fulfillment crash:', pfErr)
         }
+    } else {
+        console.warn('[OrderProcess] Printful fulfillment skipped: Config missing or no shipping address')
     }
 
+    console.log('[OrderProcess] Synchronization complete successfully')
     return { ok: true, orderId: order.id }
 }
 
 // Helper for simple existence check without heavy processing (used by polling)
 export async function checkOrderExists(sessionId: string) {
-    const supabase = getSupabaseAdmin()
+    const supabase = getAdminClient()
     if (!supabase) return null
 
     const { data } = await supabase
@@ -270,3 +300,4 @@ export async function checkOrderExists(sessionId: string) {
 
     return data
 }
+
