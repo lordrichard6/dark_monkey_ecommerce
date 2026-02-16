@@ -221,6 +221,11 @@ export async function processSuccessfulCheckout(sessionId: string) {
     const email = guestEmail ?? order.user_email ?? undefined
     if (email) {
         console.log('[OrderProcess] Sending confirmation email...')
+        // Construct registration link for guests to claim their order
+        const registerUrl = !userId && email
+            ? `${process.env.NEXT_PUBLIC_APP_URL}/login?mode=signup&email=${encodeURIComponent(email)}`
+            : undefined
+
         await sendOrderConfirmation({
             to: email,
             orderId: order.id,
@@ -228,6 +233,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
             currency: 'CHF',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             itemCount: cartItems.reduce((s: number, i: any) => s + i.quantity, 0),
+            registerUrl,
         })
     }
 

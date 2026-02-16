@@ -24,6 +24,12 @@ export default async function AccountPage() {
 
   if (!user) redirect('/login?redirectTo=/account')
 
+  // Auto-claim guest orders matching email
+  if (user.email) {
+    const { claimGuestOrdersForUser } = await import('@/lib/orders-claim')
+    await claimGuestOrdersForUser(user.id, user.email)
+  }
+
   // Fetch comprehensive profile data
   const [
     { data: profile },

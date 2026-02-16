@@ -1,3 +1,4 @@
+
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
@@ -17,8 +18,11 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error && data.user) {
+
+    if (!error && data?.user) {
       const response = NextResponse.redirect(`${origin}${redirectTo}`)
+
+      // 1. Referral Logic
       const referralCode = request.cookies.get('dm_ref')?.value
       if (referralCode && referralCode.trim()) {
         const admin = getSupabaseAdmin()
@@ -28,6 +32,7 @@ export async function GET(request: NextRequest) {
             .select('user_id')
             .eq('code', referralCode.trim())
             .single()
+
           const referrerId = refRow?.user_id
           if (referrerId && referrerId !== data.user.id) {
             await admin.from('referrals').insert({
@@ -39,6 +44,17 @@ export async function GET(request: NextRequest) {
         }
         response.cookies.set('dm_ref', '', { maxAge: 0, path: '/' })
       }
+
+      // 2. Claim Guest Orders Logic
+      if (data.user.email) {
+        try {
+          const { claimGuestOrdersForUser } = await import('@/lib/orders-claim')
+          await claimGuestOrdersForUser(data.user.id, data.user.email)
+        } catch (e) {
+          console.error('Failed to claim guest orders in callback:', e)
+        }
+      }
+
       return response
     }
   }

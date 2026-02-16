@@ -25,6 +25,7 @@ export type OrderConfirmationPayload = {
   itemCount: number
   customerName?: string
   locale?: string
+  registerUrl?: string
 }
 
 export async function sendOrderConfirmation(
@@ -55,7 +56,8 @@ export async function sendOrderConfirmation(
     ],
     total: totalFormatted,
     ctaText: strings.viewOrder,
-    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/orders/${payload.orderId}`
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/orders/${payload.orderId}`,
+    registerUrl: payload.registerUrl
   })
 
   try {

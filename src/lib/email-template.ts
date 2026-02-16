@@ -31,6 +31,7 @@ export function generateEmailHtml(
     details?: { label: string; value: string }[]
     items?: { name: string; quantity?: number; price?: string }[]
     total?: string
+    registerUrl?: string
   }
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,6 +119,15 @@ export function generateEmailHtml(
           <div class="total-row">
             <span>${strings.total}</span>
             <span>${content.total}</span>
+          </div>
+        ` : ''}
+
+        ${content.registerUrl ? `
+          <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid ${border};">
+            <p style="margin-bottom: 16px;">${strings.createAccount || 'Not registered yet?'}</p>
+            <a href="${content.registerUrl}" style="color: ${accent}; text-decoration: underline; font-weight: 600;">
+              ${strings.createAccountAction || 'Create account to track order'}
+            </a>
           </div>
         ` : ''}
 
