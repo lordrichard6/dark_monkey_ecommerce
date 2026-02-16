@@ -14,6 +14,7 @@ import { Footer } from '@/components/Footer'
 import { CurrencyProvider } from '@/components/currency/CurrencyContext'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { Toaster } from 'sonner'
+import NextTopLoader from 'nextjs-toploader'
 
 import { BackToTop } from '@/components/BackToTop'
 import { SupportWidget } from '@/components/SupportWidget'
@@ -67,6 +68,18 @@ export default async function LocaleLayout({ children, params }: Props) {
       />
       <CurrencyProvider>
         <CartProvider initialCart={cart}>
+          <NextTopLoader
+            color="#f59e0b"
+            initialPosition={0.08}
+            crawlSpeed={200}
+            height={3}
+            crawl={true}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+            shadow="0 0 10px #f59e0b,0 0 5px #f59e0b"
+            zIndex={99999}
+          />
           <GradientBackground />
           <AnnouncementBar announcements={announcements} />
           <Header />

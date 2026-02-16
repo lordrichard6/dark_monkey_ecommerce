@@ -1,203 +1,188 @@
-import Link from 'next/link'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
+import { Package, Truck, ArrowLeft, MapPin } from 'lucide-react'
+import { useCurrency } from '@/components/currency/CurrencyContext'
+import { formatPrice, SupportedCurrency } from '@/lib/currency'
 
-function formatPrice(cents: number) {
-  return new Intl.NumberFormat('de-CH', {
-    style: 'currency',
-    currency: 'CHF',
-    minimumFractionDigits: 2,
-  }).format(cents / 100)
+type Props = {
+    params: Promise<{ id: string }>
 }
 
-type Props = { params: Promise<{ id: string }> }
+export default async function OrderDetailsPage({ params }: Props) {
+    const { id } = await params
+    const t = await getTranslations('account')
+    const supabase = await createClient()
 
-export default async function OrderDetailPage({ params }: Props) {
-  const { id } = await params
-  const supabase = await createClient()
-  let user = null
-  try {
-    const { data } = await supabase.auth.getUser()
-    user = data.user
-  } catch {
-    //
-  }
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) notFound()
+    if (!user) {
+        redirect('/login')
+    }
 
-  const { data: order } = await supabase
-    .from('orders')
-    .select(
-      `
-      id,
-      status,
-      total_cents,
-      currency,
-      created_at,
-      shipping_address_json,
+    // Fetch order with items and shipping address
+    const { data: order } = await supabase
+        .from('orders')
+        .select(`
+      *,
       order_items (
-        id,
-        quantity,
-        price_cents,
-        config,
-        product_variants (
-          name,
-          products (
+        *,
+        variant:product_variants (
+          *,
+          product:products (
             name,
             slug,
-            product_images (url, alt)
+            product_images (url)
           )
         )
-      )
-    `
-    )
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
+      ),
+      shipping_address:addresses!shipping_address_id (*)
+    `)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single()
 
-  if (!order) notFound()
+    if (!order) {
+        notFound()
+    }
 
-  const t = await getTranslations('account')
-  const tCart = await getTranslations('cart')
-  const tReviews = await getTranslations('reviews')
-
-  const items = (order.order_items ?? []) as Array<{
-    id: string
-    quantity: number
-    price_cents: number
-    config?: Record<string, unknown>
-    product_variants?: {
-      name?: string
-      products?: {
-        name?: string
-        slug?: string
-        product_images?: Array<{ url: string; alt?: string | null }>
-      } | null
-    } | null
-  }>
-
-  const shipping = order.shipping_address_json as {
-    name?: string
-    address?: { line1?: string; line2?: string; city?: string; postalCode?: string; country?: string }
-  } | null
-
-  return (
-    <div className="min-h-screen px-4 py-12">
-      <div className="mx-auto max-w-2xl">
-        <Link
-          href="/account/orders"
-          className="mb-6 inline-block text-sm text-zinc-400 hover:text-zinc-300"
-        >
-          {t('backToOrders')}
-        </Link>
-        <h1 className="text-2xl font-bold text-zinc-50">
-          Order #{order.id.slice(0, 8)}
-        </h1>
-        <p className="mt-2 text-zinc-400">
-          {new Date(order.created_at).toLocaleDateString('en-GB', {
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-GB', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
-          })}
-        </p>
-        <span
-          className={`mt-4 inline-block rounded px-2 py-1 text-sm font-medium capitalize ${
-            order.status === 'paid' || order.status === 'processing'
-              ? 'bg-emerald-900/50 text-emerald-400'
-              : order.status === 'shipped' || order.status === 'delivered'
-                ? 'bg-blue-900/50 text-blue-400'
-                : 'bg-zinc-800 text-zinc-400'
-          }`}
-        >
-          {order.status}
-        </span>
+        })
+    }
 
-        <div className="mt-8 space-y-6">
-          <section>
-            <h2 className="text-lg font-semibold text-zinc-50">{t('items')}</h2>
-            <div className="mt-4 space-y-4">
-              {items.map((item) => {
-                const variant = item.product_variants ?? null
-                const product = variant?.products ?? null
-                const imgs = product?.product_images ?? []
-                const img = imgs[0]
-                return (
-                  <div
-                    key={item.id}
-                    className="flex gap-4 rounded-lg border border-zinc-800 bg-zinc-900/80 p-4"
-                  >
-                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded bg-zinc-800">
-                      {img?.url ? (
-                        <Image
-                          src={img.url}
-                          alt={img.alt ?? product?.name ?? 'Product'}
-                          fill
-                          className="object-cover"
-                          unoptimized={img.url.includes('picsum.photos')}
-                        />
-                      ) : null}
-                    </div>
-                    <div className="flex-1">
-                      <Link
-                        href={`/products/${product?.slug}`}
-                        className="font-medium text-zinc-50 hover:text-white"
-                      >
-                        {product?.name}
-                      </Link>
-                      {variant?.name && (
-                        <p className="text-sm text-zinc-400">{variant.name}</p>
-                      )}
-                      {item.config && Object.keys(item.config).length > 0 && (
-                        <p className="text-xs text-amber-400/90">
-                          {tCart('customLabel')}: {Object.entries(item.config).map(([k, v]) => `${k}: ${v}`).join(', ')}
+    // Helper to get product image
+    const getProductImage = (item: any) => {
+        const images = item.variant?.product?.product_images
+        if (images && images.length > 0) {
+            return images[0].url
+        }
+        return null
+    }
+
+    return (
+        <div className="min-h-screen bg-black py-12">
+            <div className="mx-auto max-w-4xl px-4">
+                <Link
+                    href="/account/orders"
+                    className="mb-8 inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-300"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('backToOrders')}
+                </Link>
+
+                <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold text-zinc-50">Order #{order.id.slice(0, 8)}</h1>
+                        <p className="mt-1 text-zinc-400">
+                            Placed on {formatDate(order.created_at)}
                         </p>
-                      )}
-                      <p className="mt-1 text-sm text-zinc-500">
-                        Qty: {item.quantity} × {formatPrice(item.price_cents)} ={' '}
-                        {formatPrice(item.quantity * item.price_cents)}
-                      </p>
-                      {product?.slug && (
-                        <Link
-                          href={`/products/${product.slug}?order_id=${order.id}`}
-                          className="mt-2 inline-block text-sm text-amber-400 hover:text-amber-300"
-                        >
-                          {tReviews('orderPageCta')}
-                        </Link>
-                      )}
                     </div>
-                  </div>
-                )
-              })}
+                    <div className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium border ${order.status === 'paid' || order.status === 'processing'
+                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                        : 'border-zinc-700 bg-zinc-800 text-zinc-300'
+                        }`}>
+                        {order.status === 'paid' || order.status === 'processing' ? (
+                            <Package className="h-4 w-4" />
+                        ) : (
+                            <Truck className="h-4 w-4" />
+                        )}
+                        <span className="capitalize">{order.status}</span>
+                    </div>
+                </div>
+
+                <div className="grid gap-8 lg:grid-cols-3">
+                    {/* Order Items */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+                            <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('items')}</h2>
+                            <div className="space-y-6">
+                                {order.order_items.map((item: any) => (
+                                    <div key={item.id} className="flex gap-4">
+                                        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-zinc-800 bg-zinc-900">
+                                            {getProductImage(item) ? (
+                                                <Image
+                                                    src={getProductImage(item)}
+                                                    alt={item.variant?.product?.name || 'Product'}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center text-zinc-700">
+                                                    <Package className="h-8 w-8" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-1 flex-col justify-between">
+                                            <div>
+                                                <Link
+                                                    href={`/products/${item.variant?.product?.slug}`}
+                                                    className="font-medium text-zinc-200 hover:text-amber-500 hover:underline"
+                                                >
+                                                    {item.variant?.product?.name}
+                                                </Link>
+                                                <p className="text-sm text-zinc-500">
+                                                    {item.variant?.name} • Qty {item.quantity}
+                                                </p>
+                                            </div>
+                                            <p className="font-medium text-zinc-100">
+                                                {formatPrice(item.price_cents, order.currency as SupportedCurrency)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Order Summary */}
+                        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+                            <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('total')}</h2>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between text-zinc-400">
+                                    <span>Subtotal</span>
+                                    <span>{formatPrice(order.total_cents, order.currency as SupportedCurrency)}</span>
+                                </div>
+                                <div className="flex justify-between text-zinc-400">
+                                    <span>Shipping</span>
+                                    <span>Free</span>
+                                </div>
+                                <div className="mt-4 flex justify-between border-t border-zinc-800 pt-4 text-lg font-bold text-zinc-50">
+                                    <span>Total</span>
+                                    <span>{formatPrice(order.total_cents, order.currency as SupportedCurrency)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sidebar Info */}
+                    <div className="space-y-6">
+                        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+                            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-50">
+                                <MapPin className="h-5 w-5 text-zinc-400" />
+                                {t('shippingAddress')}
+                            </h2>
+                            {order.shipping_address ? (
+                                <div className="text-sm text-zinc-400 space-y-1">
+                                    <p className="font-medium text-zinc-200">{order.shipping_address.full_name}</p>
+                                    <p>{order.shipping_address.line1}</p>
+                                    {order.shipping_address.line2 && <p>{order.shipping_address.line2}</p>}
+                                    <p>{order.shipping_address.postal_code} {order.shipping_address.city}</p>
+                                    <p>{order.shipping_address.country}</p>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-zinc-500">No shipping address recorded.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
-          </section>
-
-          {shipping && (
-            <section>
-              <h2 className="text-lg font-semibold text-zinc-50">
-                {t('shippingAddress')}
-              </h2>
-              <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900/80 p-4 text-zinc-400">
-                {shipping.name && <p className="font-medium text-zinc-300">{shipping.name}</p>}
-                {shipping.address && (
-                  <p className="mt-1">
-                    {[shipping.address.line1, shipping.address.line2, shipping.address.city, shipping.address.postalCode, shipping.address.country]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </p>
-                )}
-              </div>
-            </section>
-          )}
-
-          <section>
-            <p className="text-right text-lg font-semibold text-zinc-50">
-              {t('total')}: {formatPrice(order.total_cents)}
-            </p>
-          </section>
         </div>
-      </div>
-    </div>
-  )
+    )
 }

@@ -22,9 +22,10 @@ type ProductGridProps = {
   products: Product[]
   title: string
   sort?: string
+  hideHeader?: boolean
 }
 
-export function ProductGrid({ products, title, sort = 'newest' }: ProductGridProps) {
+export function ProductGrid({ products, title, sort = 'newest', hideHeader = false }: ProductGridProps) {
   const t = useTranslations('home')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -47,22 +48,24 @@ export function ProductGrid({ products, title, sort = 'newest' }: ProductGridPro
 
   return (
     <section>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>
-        {products.length > 0 && (
-          <select
-            value={sort}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="w-fit rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+      {!hideHeader && (
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>
+          {products.length > 0 && (
+            <select
+              value={sort}
+              onChange={(e) => handleSortChange(e.target.value)}
+              className="w-fit rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {products.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">

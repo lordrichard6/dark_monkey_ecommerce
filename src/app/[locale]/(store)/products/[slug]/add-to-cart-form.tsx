@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { addToCart } from '@/actions/cart'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -134,7 +134,7 @@ export function AddToCartForm({
   const [config, setConfig] = useState<Record<string, string>>({})
 
   // Report initially selected variant
-  useMemo(() => {
+  useEffect(() => {
     const v = (variants || []).find((v) => v.id === selectedVariantId)
     props.onVariantChange?.(v ?? null)
   }, [selectedVariantId, variants, props.onVariantChange])

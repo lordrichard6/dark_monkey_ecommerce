@@ -10,7 +10,7 @@ import {
 
 export type EmailTestType = 'order' | 'abandoned-cart' | 'restock' | 'wishlist'
 
-export async function sendTestEmail(type: EmailTestType, toEmail: string) {
+export async function sendTestEmail(type: EmailTestType, toEmail: string, locale: string = 'en') {
     // 1. Verify Admin
     const admin = await getAdminUser()
     if (!admin) {
@@ -27,7 +27,8 @@ export async function sendTestEmail(type: EmailTestType, toEmail: string) {
                     totalCents: 12900, // CHF 129.00
                     currency: 'CHF',
                     itemCount: 2,
-                    customerName: 'Test Admin'
+                    customerName: 'Test Admin',
+                    locale
                 })
 
             case 'abandoned-cart':
@@ -36,21 +37,24 @@ export async function sendTestEmail(type: EmailTestType, toEmail: string) {
                     itemCount: 3,
                     totalCents: 45000, // CHF 450.00
                     productNames: ['Premium Hoodie (Black)', 'Signature Cap', 'Urban Tote Bag'],
-                    cartUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dark-monkey.ch'}/checkout`
+                    cartUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dark-monkey.ch'}/checkout`,
+                    locale
                 })
 
             case 'restock':
                 return await sendRestockAlert({
                     to: toEmail,
                     productName: 'Limited Edition Bomber Jacket',
-                    productUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dark-monkey.ch'}/products/bomber-jacket`
+                    productUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dark-monkey.ch'}/products/bomber-jacket`,
+                    locale
                 })
 
             case 'wishlist':
                 return await sendWishlistReminderEmail({
                     to: toEmail,
                     itemCount: 5,
-                    wishlistUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dark-monkey.ch'}/account/wishlist`
+                    wishlistUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dark-monkey.ch'}/account/wishlist`,
+                    locale
                 })
 
             default:

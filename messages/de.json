@@ -535,5 +535,41 @@
     "productsTitle": "Produkte",
     "productsQ1": "Kann ich jedes Produkt personalisieren?",
     "productsA1": "Personalisierung ist für ausgewählte Premium-Artikel verfügbar. Achten Sie auf die Option 'Personalisierbar' auf der Produktseite."
+  },
+  "email": {
+    "orderConfirmation": {
+      "subject": "Bestellung bestätigt — #{orderId}",
+      "title": "Bestellung bestätigt",
+      "thankYou": "Vielen Dank für Ihre Bestellung. Wir bereiten sie mit Sorgfalt vor.",
+      "orderNumber": "Bestellung #{orderId}",
+      "viewOrder": "Bestellung ansehen",
+      "shippingAddress": "Lieferadresse",
+      "orderSummary": "Bestellübersicht",
+      "total": "Summe",
+      "items": "Artikel"
+    },
+    "abandonedCart": {
+      "subject": "Ihr Warenkorb wartet",
+      "title": "Sie haben etwas vergessen",
+      "body": "Ihre Premium-Auswahl ist reserviert. Schließen Sie Ihre Bestellung jetzt ab, um Ihre Artikel zu sichern.",
+      "cta": "Bestellung abschließen"
+    },
+    "restock": {
+      "subject": "Wieder auf Lager: {productName}",
+      "title": "Es ist zurück",
+      "body": "Der Artikel, den Sie gesucht haben, ist wieder verfügbar. Verpassen Sie es diesmal nicht.",
+      "cta": "Jetzt kaufen"
+    },
+    "wishlist": {
+      "subject": "Ihre Wunschliste wartet",
+      "title": "Für Sie gespeichert",
+      "body": "Sie haben {count} Artikel auf Ihrer Wunschliste. Werfen Sie einen Blick darauf, bevor sie weg sind.",
+      "cta": "Wunschliste ansehen"
+    },
+    "footer": {
+      "rights": "Alle Rechte vorbehalten.",
+      "address": "Dark Monkey, Schweiz",
+      "questions": "Fragen? Antworten Sie auf diese E-Mail."
+    }
   }
 }

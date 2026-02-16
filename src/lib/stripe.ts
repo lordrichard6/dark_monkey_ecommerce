@@ -9,6 +9,17 @@ export function getStripe(): Stripe | null {
   })
 }
 
+export async function retrieveSession(id: string) {
+  const stripe = getStripe()
+  if (!stripe) return null
+  try {
+    return await stripe.checkout.sessions.retrieve(id)
+  } catch (error) {
+    console.error('[Stripe] Failed to retrieve session:', error)
+    return null
+  }
+}
+
 export function isStripeConfigured(): boolean {
   return !!process.env.STRIPE_SECRET_KEY && !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 }

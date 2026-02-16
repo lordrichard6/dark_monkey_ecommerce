@@ -27,6 +27,7 @@ export default async function AccountPage() {
   // Fetch comprehensive profile data
   const [
     { data: profile },
+    { data: pointsTransactions },
     { data: achievements },
     { data: userAchievements },
     { data: wishlistItems, count: wishlistCount },
@@ -37,6 +38,12 @@ export default async function AccountPage() {
       .select('*')
       .eq('id', user.id)
       .single(),
+    supabase
+      .from('points_transactions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5),
     supabase
       .from('achievements')
       .select('*')
@@ -64,7 +71,7 @@ export default async function AccountPage() {
   // Get Gravatar URL
   const getGravatarUrl = (email: string) => {
     const hash = md5(email.toLowerCase().trim())
-    return `https://www.gravatar.com/avatar/${hash}?d=404&s=200`
+    return `https://www.gravatar.com/avatar/${hash}?d=mp&s=200`
   }
 
   // Get initials for generated avatar
@@ -92,7 +99,7 @@ export default async function AccountPage() {
     wishlistSize: wishlistCount ?? 0,
     memberSince: new Date(profile?.created_at || user.created_at),
     currentTier: profile?.current_tier || 'bronze',
-    totalPoints: profile?.total_points || 0,
+    totalPoints: profile?.total_xp || 0,
   }
 
   return (
@@ -180,6 +187,19 @@ export default async function AccountPage() {
                   <p className="text-sm text-zinc-500">{t('viewWishlist')}</p>
                 </div>
               </Link>
+
+              <Link
+                href="/account/addresses"
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+              >
+                <div className="flex h-5 w-5 items-center justify-center">
+                  <span className="text-lg">📍</span>
+                </div>
+                <div>
+                  <p className="font-medium text-zinc-50">{t('addresses')}</p>
+                  <p className="text-sm text-zinc-500">{t('viewAddresses')}</p>
+                </div>
+              </Link>
             </section>
           </div>
 
@@ -188,7 +208,7 @@ export default async function AccountPage() {
             {/* Points */}
             <section>
               <h2 className="mb-4 text-xl font-semibold text-zinc-50">{t('points')}</h2>
-              <PointsDisplay totalPoints={stats.totalPoints} userId={user.id} />
+              <PointsDisplay totalPoints={stats.totalPoints} userId={user.id} transactions={pointsTransactions || []} />
             </section>
 
             {/* Referral */}

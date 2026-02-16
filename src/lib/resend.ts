@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { generateEmailHtml, getEmailStrings } from './email-template'
 
 const apiKey = process.env.RESEND_API_KEY
 
@@ -23,6 +24,7 @@ export type OrderConfirmationPayload = {
   currency: string
   itemCount: number
   customerName?: string
+  locale?: string
 }
 
 export async function sendOrderConfirmation(
@@ -33,42 +35,34 @@ export async function sendOrderConfirmation(
     return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
   }
 
-  const totalFormatted = new Intl.NumberFormat('de-CH', {
+  const locale = payload.locale || 'en'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strings = getEmailStrings(locale, 'orderConfirmation') as any
+
+  const totalFormatted = new Intl.NumberFormat(locale === 'de' ? 'de-CH' : locale, {
     style: 'currency',
     currency: payload.currency,
     minimumFractionDigits: 2,
   }).format(payload.totalCents / 100)
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #171717;">
-  <h1 style="font-size: 24px; margin-bottom: 16px;">Order confirmed</h1>
-  <p style="color: #525252; line-height: 1.6;">
-    Thank you for your order. We're processing it and will ship soon.
-  </p>
-  <div style="background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 24px 0;">
-    <p style="margin: 0; font-weight: 600;">Order #${payload.orderId.slice(0, 8)}</p>
-    <p style="margin: 8px 0 0; color: #525252;">
-      ${payload.itemCount} item${payload.itemCount !== 1 ? 's' : ''} · ${totalFormatted}
-    </p>
-  </div>
-  <p style="color: #737373; font-size: 14px;">
-    Questions? Reply to this email or visit our store.
-  </p>
-</body>
-</html>
-`.trim()
+  const html = generateEmailHtml(locale, 'orderConfirmation', {
+    previewText: strings.thankYou,
+    title: strings.title,
+    body: strings.thankYou,
+    details: [
+      { label: strings.orderNumber.replace('#{orderId}', payload.orderId), value: totalFormatted },
+      { label: strings.items, value: String(payload.itemCount) }
+    ],
+    total: totalFormatted,
+    ctaText: strings.viewOrder,
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/orders/${payload.orderId}`
+  })
 
   try {
     const { error } = await resend.emails.send({
       from: getDefaultFrom(),
       to: payload.to,
-      subject: `Order confirmed — #${payload.orderId.slice(0, 8)}`,
+      subject: strings.subject.replace('#{orderId}', payload.orderId),
       html,
     })
 
@@ -91,6 +85,7 @@ export type AbandonedCartPayload = {
   totalCents: number
   productNames: string[]
   cartUrl: string
+  locale?: string
 }
 
 export async function sendAbandonedCartEmail(
@@ -101,45 +96,24 @@ export async function sendAbandonedCartEmail(
     return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
   }
 
-  const totalFormatted = new Intl.NumberFormat('de-CH', {
-    style: 'currency',
-    currency: 'CHF',
-    minimumFractionDigits: 2,
-  }).format(payload.totalCents / 100)
+  const locale = payload.locale || 'en'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strings = getEmailStrings(locale, 'abandonedCart') as any
 
-  const productList =
-    payload.productNames.length > 0
-      ? `<ul style="margin: 8px 0 0; padding-left: 20px;">${payload.productNames.map((n) => `<li>${n}</li>`).join('')}</ul>`
-      : ''
-
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #171717;">
-  <h1 style="font-size: 24px; margin-bottom: 16px;">You left something behind</h1>
-  <p style="color: #525252; line-height: 1.6;">
-    Your cart is still waiting — ${payload.itemCount} item${payload.itemCount !== 1 ? 's' : ''} · ${totalFormatted}
-  </p>
-  ${productList ? `<div style="background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 24px 0;">${productList}</div>` : ''}
-  <p style="margin: 24px 0;">
-    <a href="${payload.cartUrl}" style="display: inline-block; background: #171717; color: #fafafa; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Complete your order</a>
-  </p>
-  <p style="color: #737373; font-size: 14px;">
-    Questions? Reply to this email or visit our store.
-  </p>
-</body>
-</html>
-`.trim()
+  const html = generateEmailHtml(locale, 'abandonedCart', {
+    previewText: strings.title,
+    title: strings.title,
+    body: strings.body,
+    items: payload.productNames.map(name => ({ name })),
+    ctaText: strings.cta,
+    ctaUrl: payload.cartUrl
+  })
 
   try {
     const { error } = await resend.emails.send({
       from: getDefaultFrom(),
       to: payload.to,
-      subject: 'Your cart is waiting — complete your order',
+      subject: strings.subject,
       html,
     })
 
@@ -156,18 +130,11 @@ export async function sendAbandonedCartEmail(
   }
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
 export type RestockAlertPayload = {
   to: string
   productName: string
   productUrl: string
+  locale?: string
 }
 
 export async function sendRestockAlert(
@@ -176,39 +143,27 @@ export async function sendRestockAlert(
   const resend = getResendClient()
   if (!resend) return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #171717;">
-  <h1 style="font-size: 24px; margin-bottom: 16px;">Back in stock</h1>
-  <p style="color: #525252; line-height: 1.6;">
-    <strong>${escapeHtml(payload.productName)}</strong> is back in stock.
-  </p>
-  <p style="margin: 24px 0;">
-    <a href="${escapeHtml(payload.productUrl)}" style="display: inline-block; background: #171717; color: #fafafa; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">View product</a>
-  </p>
-  <p style="color: #737373; font-size: 14px;">
-    You received this because you saved this item to your wishlist.
-  </p>
-</body>
-</html>
-`.trim()
+  const locale = payload.locale || 'en'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strings = getEmailStrings(locale, 'restock') as any
+
+  const html = generateEmailHtml(locale, 'restock', {
+    previewText: strings.title,
+    title: strings.title,
+    body: strings.body,
+    items: [{ name: payload.productName }],
+    ctaText: strings.cta,
+    ctaUrl: payload.productUrl
+  })
 
   try {
     const { error } = await resend.emails.send({
       from: getDefaultFrom(),
       to: payload.to,
-      subject: `Back in stock: ${payload.productName}`,
+      subject: strings.subject.replace('{productName}', payload.productName),
       html,
     })
-    if (error) {
-      console.error('Resend restock error:', error)
-      return { ok: false, error: error.message }
-    }
+    if (error) return { ok: false, error: error.message }
     return { ok: true }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
@@ -221,6 +176,7 @@ export type WishlistReminderPayload = {
   to: string
   wishlistUrl: string
   itemCount: number
+  locale?: string
 }
 
 export async function sendWishlistReminderEmail(
@@ -229,39 +185,26 @@ export async function sendWishlistReminderEmail(
   const resend = getResendClient()
   if (!resend) return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #171717;">
-  <h1 style="font-size: 24px; margin-bottom: 16px;">Your saved items are waiting</h1>
-  <p style="color: #525252; line-height: 1.6;">
-    You have ${payload.itemCount} item${payload.itemCount !== 1 ? 's' : ''} in your wishlist. Don't miss out — they might not be there forever.
-  </p>
-  <p style="margin: 24px 0;">
-    <a href="${escapeHtml(payload.wishlistUrl)}" style="display: inline-block; background: #171717; color: #fafafa; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">View wishlist</a>
-  </p>
-  <p style="color: #737373; font-size: 14px;">
-    You received this because you have items saved for later.
-  </p>
-</body>
-</html>
-`.trim()
+  const locale = payload.locale || 'en'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strings = getEmailStrings(locale, 'wishlist') as any
+
+  const html = generateEmailHtml(locale, 'wishlist', {
+    previewText: strings.title,
+    title: strings.title,
+    body: strings.body.replace('{count}', String(payload.itemCount)),
+    ctaText: strings.cta,
+    ctaUrl: payload.wishlistUrl
+  })
 
   try {
     const { error } = await resend.emails.send({
       from: getDefaultFrom(),
       to: payload.to,
-      subject: `You have ${payload.itemCount} saved item${payload.itemCount !== 1 ? 's' : ''} — view your wishlist`,
+      subject: strings.subject,
       html,
     })
-    if (error) {
-      console.error('Resend wishlist reminder error:', error)
-      return { ok: false, error: error.message }
-    }
+    if (error) return { ok: false, error: error.message }
     return { ok: true }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

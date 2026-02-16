@@ -27,20 +27,40 @@ type Props = {
   categories: Category[]
   query?: string
   title?: string
+  initialCategoryId?: string
 }
 
-export function SearchResults({ products, categories, query, title }: Props) {
+export function SearchResults({ products, categories, query, title, initialCategoryId }: Props) {
   const t = useTranslations('search')
   const tFilters = useTranslations('filters')
-  // ... state ...
+
   // State
   const [showFilters, setShowFilters] = useState(false)
-  const initialFilters = useMemo(() => createInitialFilterState(products), [products])
+
+  const initialFilters = useMemo(() => {
+    const base = createInitialFilterState(products)
+    if (initialCategoryId) {
+      return { ...base, categories: [initialCategoryId] }
+    }
+    return base
+  }, [products, initialCategoryId])
+
   const [filters, setFilters] = useState<FilterState>(initialFilters)
   const [sortBy, setSortBy] = useState<SortOption>('newest')
 
-  // Get available filter options
-  const availableFilters = useMemo(() => getAvailableFilters(products), [products])
+  // Get available filter options based on the currently selected categories
+  // This prevents seeing "iPhone Cases" sizes when "Apparel" is selected
+  const availableFilters = useMemo(() => {
+    // If no specific category is selected, show all (or we could show none until category is picked)
+    // But since we have a Category First flow, usually one category will be selected.
+
+    let relevantProducts = products
+    if (filters.categories.length > 0) {
+      relevantProducts = products.filter(p => p.categoryId && filters.categories.includes(p.categoryId))
+    }
+
+    return getAvailableFilters(relevantProducts)
+  }, [products, filters.categories])
 
   // Apply filters and sorting
   const filteredProducts = useMemo(() => {
@@ -54,7 +74,7 @@ export function SearchResults({ products, categories, query, title }: Props) {
     slug: p.slug,
     name: p.name,
     priceCents: p.priceCents,
-    imageUrl: p.colors[0] || '/placeholder.png',
+    imageUrl: p.imageUrl || '/placeholder.png',
     imageAlt: p.name,
     isInWishlist: false,
     isBestseller: p.isBestseller || false,
@@ -119,6 +139,7 @@ export function SearchResults({ products, categories, query, title }: Props) {
             <ProductGrid
               products={gridProducts}
               title={t('results')}
+              hideHeader={true}
             />
           ) : (
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-12 text-center">

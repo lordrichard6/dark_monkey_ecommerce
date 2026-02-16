@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Upload, X, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import md5 from 'md5'
+import imageCompression from 'browser-image-compression'
 
 type Props = {
   userId: string
@@ -29,7 +30,7 @@ export function AvatarUpload({
   // Get Gravatar URL
   const getGravatarUrl = (email: string) => {
     const hash = md5(email.toLowerCase().trim())
-    return `https://www.gravatar.com/avatar/${hash}?d=404&s=200`
+    return `https://www.gravatar.com/avatar/${hash}?d=mp&s=200`
   }
 
   // Get initials for generated avatar
@@ -62,11 +63,8 @@ export function AvatarUpload({
       return
     }
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be less than 5MB')
-      return
-    }
+    // Validate file size (compress if needed)
+    // We no longer reject > 5MB, we try to compress it
 
     setError(null)
 
@@ -77,8 +75,24 @@ export function AvatarUpload({
     }
     reader.readAsDataURL(file)
 
-    // Upload to Supabase Storage
-    await uploadAvatar(file)
+    try {
+      setUploading(true) // Show loading state during compression
+
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      }
+
+      const compressedFile = await imageCompression(file, options)
+
+      // Upload to Supabase Storage
+      await uploadAvatar(compressedFile)
+    } catch (error) {
+      console.error('Compression error:', error)
+      setError('Failed to process image. Please try a different file.')
+      setUploading(false)
+    }
   }
 
   const uploadAvatar = async (file: File) => {
@@ -221,7 +235,7 @@ export function AvatarUpload({
           )}
         </button>
 
-        <p className="text-xs text-zinc-500">JPG, PNG, GIF or WebP. Max 5MB.</p>
+        <p className="text-xs text-zinc-500">JPG, PNG, GIF or WebP. Large images will be automatically optimized.</p>
       </div>
 
       {/* Error Message */}

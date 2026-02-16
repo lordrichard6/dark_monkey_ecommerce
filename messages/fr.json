@@ -494,5 +494,41 @@
     "productsTitle": "Produits",
     "productsQ1": "Puis-je personnaliser n'importe quel produit ?",
     "productsA1": "La personnalisation est disponible sur une sélection d'articles premium. Cherchez l'option 'Personnalisable' sur la page produit."
+  },
+  "email": {
+    "orderConfirmation": {
+      "subject": "Commande Confirmée — #{orderId}",
+      "title": "Commande Confirmée",
+      "thankYou": "Merci pour votre commande. Nous la préparons avec soin.",
+      "orderNumber": "Commande #{orderId}",
+      "viewOrder": "Voir la Commande",
+      "shippingAddress": "Adresse de Livraison",
+      "orderSummary": "Récapitulatif de Commande",
+      "total": "Total",
+      "items": "Articles"
+    },
+    "abandonedCart": {
+      "subject": "Votre panier vous attend",
+      "title": "Vous avez laissé quelque chose",
+      "body": "Votre sélection premium est réservée. Finalisez votre commande maintenant pour sécuriser vos articles.",
+      "cta": "Finaliser la Commande"
+    },
+    "restock": {
+      "subject": "De retour en stock : {productName}",
+      "title": "C'est de retour",
+      "body": "L'article que vous cherchiez est de nouveau disponible. Ne manquez pas cette occasion.",
+      "cta": "Acheter Maintenant"
+    },
+    "wishlist": {
+      "subject": "Votre wishlist vous attend",
+      "title": "Sauvegardé pour vous",
+      "body": "Vous avez {count} articles dans votre wishlist. Jetez un œil avant qu'ils ne disparaissent.",
+      "cta": "Voir la Wishlist"
+    },
+    "footer": {
+      "rights": "Tous droits réservés.",
+      "address": "Dark Monkey, Suisse",
+      "questions": "Des questions ? Répondez à cet e-mail."
+    }
   }
 }

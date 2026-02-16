@@ -69,11 +69,10 @@ export default async function SearchPage({ searchParams }: Props) {
       categories (id, name, slug),
       product_images (url, alt, sort_order),
       product_variants (
+        id,
         price_cents,
-        product_inventory (quantity),
-        product_attributes (
-          attribute_values (value, attributes (name))
-        )
+        attributes,
+        product_inventory (quantity)
       )
     `
     )
@@ -99,26 +98,11 @@ export default async function SearchPage({ searchParams }: Props) {
   const categoryMap = new Map<string, { id: string; name: string; count: number }>()
 
   for (const p of products) {
-    const variants = p.product_variants as Array<{
-      price_cents: number
-      product_inventory: Array<{ quantity: number }> | { quantity: number }
-      product_attributes?: Array<{
-        attribute_values: Array<{
-          value: string
-          attributes: Array<{ name: string }>
-        }>
-      }>
-    }> | null
-
-    const images = p.product_images as Array<{
-      url: string
-      alt: string | null
-      sort_order: number
-    }> | null
-
+    const variants = p.product_variants as any[]
+    const images = p.product_images as any[]
     const category = Array.isArray(p.categories)
       ? p.categories[0]
-      : p.categories as { id: string; name: string; slug: string } | null
+      : p.categories as any
 
     const minPrice = variants?.length
       ? Math.min(...variants.map((v) => v.price_cents))
@@ -138,29 +122,18 @@ export default async function SearchPage({ searchParams }: Props) {
         const inventory = variant.product_inventory
         if (inventory) {
           const qty = Array.isArray(inventory)
-            ? inventory.reduce((sum, inv) => sum + inv.quantity, 0)
+            ? inventory.reduce((sum: number, inv: any) => sum + inv.quantity, 0)
             : inventory.quantity
           totalStock += qty
         }
 
-        // Extract attributes
-        if (variant.product_attributes) {
-          for (const prodAttr of variant.product_attributes) {
-            if (prodAttr.attribute_values && prodAttr.attribute_values.length > 0) {
-              const attrVal = prodAttr.attribute_values[0]
-              if (attrVal.attributes && attrVal.attributes.length > 0) {
-                const attrName = attrVal.attributes[0].name.toLowerCase()
-                const attrValue = attrVal.value
+        // Attributes are in JSONB column
+        const attrs = variant.attributes || {}
+        const color = attrs.color || attrs.colour
+        const size = attrs.size
 
-                if (attrName === 'color' || attrName === 'colour') {
-                  colors.add(attrValue)
-                } else if (attrName === 'size') {
-                  sizes.add(attrValue)
-                }
-              }
-            }
-          }
-        }
+        if (color) colors.add(color)
+        if (size) sizes.add(size)
       }
     }
 
@@ -188,6 +161,7 @@ export default async function SearchPage({ searchParams }: Props) {
       colors: Array.from(colors),
       sizes: Array.from(sizes),
       inStock: totalStock > 0,
+      imageUrl: primaryImage?.url || null,
       createdAt: p.created_at,
       isBestseller: false, // TODO: Implement bestseller logic
       averageRating: undefined, // TODO: Implement ratings

@@ -107,7 +107,7 @@ export async function awardBirthdayPoints(userId: string): Promise<boolean> {
     await supabase.rpc('increment', {
       table_name: 'user_profiles',
       row_id: userId,
-      column_name: 'total_points',
+      column_name: 'total_xp',
       amount: 500,
     })
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { createAddress, updateAddress, type AddressInput } from '@/actions/addresses'
+import { addAddress, updateAddress, type AddressFormData } from '@/actions/addresses'
 
 type AddressRow = {
   id: string
@@ -23,33 +23,33 @@ type Props = {
   onSuccess?: () => void
 }
 
-const defaultValues: AddressInput = {
+const defaultValues: AddressFormData = {
   type: 'shipping',
-  fullName: '',
+  full_name: '',
   line1: '',
   line2: '',
   city: '',
-  postalCode: '',
+  postal_code: '',
   country: 'CH',
   phone: '',
-  isDefault: false,
+  is_default: false,
 }
 
 export function AddressForm({ address, onCancel, onSuccess }: Props) {
   const t = useTranslations('account')
-  const [form, setForm] = useState<AddressInput>(
+  const [form, setForm] = useState<AddressFormData>(
     address
       ? {
-          type: (address.type as 'shipping' | 'billing') ?? 'shipping',
-          fullName: address.full_name,
-          line1: address.line1,
-          line2: address.line2 ?? '',
-          city: address.city,
-          postalCode: address.postal_code,
-          country: address.country || 'CH',
-          phone: address.phone ?? '',
-          isDefault: address.is_default,
-        }
+        type: (address.type as 'shipping' | 'billing') ?? 'shipping',
+        full_name: address.full_name,
+        line1: address.line1,
+        line2: address.line2 ?? '',
+        city: address.city,
+        postal_code: address.postal_code,
+        country: address.country || 'CH',
+        phone: address.phone ?? '',
+        is_default: address.is_default,
+      }
       : defaultValues
   )
   const [loading, setLoading] = useState(false)
@@ -61,7 +61,7 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
     setError(null)
     const result = address
       ? await updateAddress(address.id, form)
-      : await createAddress(form)
+      : await addAddress(form)
     setLoading(false)
     if (result.ok) {
       onSuccess?.()
@@ -87,8 +87,8 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
         <label className="block text-sm font-medium text-zinc-300">{t('fullName')}</label>
         <input
           type="text"
-          value={form.fullName}
-          onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+          value={form.full_name}
+          onChange={(e) => setForm({ ...form, full_name: e.target.value })}
           required
           className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100"
         />
@@ -127,8 +127,8 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
           <label className="block text-sm font-medium text-zinc-300">{t('postalCode')}</label>
           <input
             type="text"
-            value={form.postalCode}
-            onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
+            value={form.postal_code}
+            onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
             required
             className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100"
           />
@@ -155,8 +155,8 @@ export function AddressForm({ address, onCancel, onSuccess }: Props) {
       <label className="flex items-center gap-2">
         <input
           type="checkbox"
-          checked={form.isDefault}
-          onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
+          checked={form.is_default}
+          onChange={(e) => setForm({ ...form, is_default: e.target.checked })}
           className="rounded border-zinc-600 bg-zinc-800"
         />
         <span className="text-sm text-zinc-300">{t('defaultAddress')}</span>

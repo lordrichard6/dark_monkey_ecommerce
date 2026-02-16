@@ -2,72 +2,106 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 
-export type AddressInput = {
-  type: 'shipping' | 'billing'
-  fullName: string
-  line1: string
-  line2?: string
-  city: string
-  postalCode: string
-  country: string
-  phone?: string
-  isDefault?: boolean
-}
+const addressSchema = z.object({
+  type: z.enum(['shipping', 'billing']),
+  full_name: z.string().min(1, 'Full name is required'),
+  line1: z.string().min(1, 'Address line 1 is required'),
+  line2: z.string().optional(),
+  city: z.string().min(1, 'City is required'),
+  postal_code: z.string().min(1, 'Postal code is required'),
+  country: z.string().min(1, 'Country is required'),
+  phone: z.string().optional(),
+  is_default: z.boolean().default(false),
+})
 
-export async function createAddress(input: AddressInput) {
+export type AddressFormData = z.infer<typeof addressSchema>
+
+export async function addAddress(data: AddressFormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated' }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { ok: false, error: 'Unauthorized' }
+  }
+
+  const result = addressSchema.safeParse(data)
+  if (!result.success) {
+    return { ok: false, error: result.error.message }
+  }
+
+  // If setting as default, unset other defaults of same type
+  if (data.is_default) {
+    await supabase
+      .from('addresses')
+      .update({ is_default: false })
+      .eq('user_id', user.id)
+      .eq('type', data.type)
+  }
 
   const { error } = await supabase.from('addresses').insert({
     user_id: user.id,
-    type: input.type,
-    full_name: input.fullName.trim(),
-    line1: input.line1.trim(),
-    line2: input.line2?.trim() || null,
-    city: input.city.trim(),
-    postal_code: input.postalCode.trim(),
-    country: input.country.trim() || 'CH',
-    phone: input.phone?.trim() || null,
-    is_default: input.isDefault ?? false,
+    ...data,
   })
 
-  if (error) return { ok: false, error: error.message }
-  revalidatePath('/account')
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/account/addresses')
   return { ok: true }
 }
 
-export async function updateAddress(id: string, input: AddressInput) {
+export async function updateAddress(id: string, data: AddressFormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated' }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { ok: false, error: 'Unauthorized' }
+  }
+
+  const result = addressSchema.safeParse(data)
+  if (!result.success) {
+    return { ok: false, error: result.error.message }
+  }
+
+  // If setting as default, unset other defaults of same type
+  if (data.is_default) {
+    await supabase
+      .from('addresses')
+      .update({ is_default: false })
+      .eq('user_id', user.id)
+      .eq('type', data.type)
+  }
 
   const { error } = await supabase
     .from('addresses')
-    .update({
-      type: input.type,
-      full_name: input.fullName.trim(),
-      line1: input.line1.trim(),
-      line2: input.line2?.trim() || null,
-      city: input.city.trim(),
-      postal_code: input.postalCode.trim(),
-      country: input.country.trim() || 'CH',
-      phone: input.phone?.trim() || null,
-      is_default: input.isDefault ?? false,
-    })
+    .update(data)
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id) // Security check
 
-  if (error) return { ok: false, error: error.message }
-  revalidatePath('/account')
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/account/addresses')
   return { ok: true }
 }
 
 export async function deleteAddress(id: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated' }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { ok: false, error: 'Unauthorized' }
+  }
 
   const { error } = await supabase
     .from('addresses')
@@ -75,7 +109,42 @@ export async function deleteAddress(id: string) {
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return { ok: false, error: error.message }
-  revalidatePath('/account')
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/account/addresses')
+  return { ok: true }
+}
+
+export async function setDefaultAddress(id: string, type: 'shipping' | 'billing') {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { ok: false, error: 'Unauthorized' }
+  }
+
+  // Unset all defaults for this type
+  await supabase
+    .from('addresses')
+    .update({ is_default: false })
+    .eq('user_id', user.id)
+    .eq('type', type)
+
+  // Set new default
+  const { error } = await supabase
+    .from('addresses')
+    .update({ is_default: true })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/account/addresses')
   return { ok: true }
 }

@@ -87,6 +87,7 @@ export function ProfileEditor({ userId, userEmail, initialData }: Props) {
 
       // Redirect back to account page after a moment
       setTimeout(() => {
+        router.refresh()
         router.push('/account')
       }, 1500)
     } catch (err) {
@@ -107,7 +108,10 @@ export function ProfileEditor({ userId, userEmail, initialData }: Props) {
           currentAvatarUrl={formData.avatar_url}
           userEmail={userEmail}
           displayName={formData.display_name}
-          onUploadComplete={(url) => setFormData({ ...formData, avatar_url: url })}
+          onUploadComplete={(url) => {
+            setFormData({ ...formData, avatar_url: url })
+            router.refresh()
+          }}
         />
       </div>
 
@@ -179,11 +183,10 @@ export function ProfileEditor({ userId, userEmail, initialData }: Props) {
                   key={size}
                   type="button"
                   onClick={() => setFormData({ ...formData, preferred_size: size })}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                    formData.preferred_size === size
-                      ? 'bg-amber-500 text-black'
-                      : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600'
-                  }`}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${formData.preferred_size === size
+                    ? 'bg-amber-500 text-black'
+                    : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600'
+                    }`}
                 >
                   {size}
                 </button>
@@ -203,11 +206,10 @@ export function ProfileEditor({ userId, userEmail, initialData }: Props) {
                   key={style}
                   type="button"
                   onClick={() => handleStyleToggle(style)}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                    formData.style_preferences?.includes(style)
-                      ? 'bg-amber-500 text-black'
-                      : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600'
-                  }`}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${formData.style_preferences?.includes(style)
+                    ? 'bg-amber-500 text-black'
+                    : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600'
+                    }`}
                 >
                   {style}
                 </button>

@@ -7,7 +7,7 @@ import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { SUPPORTED_CURRENCIES, SupportedCurrency } from '@/lib/currency'
-import { Instagram, Twitter, Facebook, Github, Send, Loader2, Phone, Mail, Clock } from 'lucide-react'
+import { Instagram, Twitter, Facebook, Send, Loader2, Phone, Mail, Clock } from 'lucide-react'
 import { subscribeToNewsletter } from '@/actions/newsletter'
 import { VisaIcon, MastercardIcon, PayPalIcon, KlarnaIcon, AmexIcon } from '@/components/icons/PaymentIcons'
 

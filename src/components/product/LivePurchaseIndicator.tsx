@@ -18,17 +18,24 @@ export function LivePurchaseIndicator({ productId, className = '' }: LiveIndicat
 
         // Fetch initial count (last 24 hours)
         const fetchCount = async () => {
-            const twentyFourHoursAgo = new Date()
-            twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
+            try {
+                const twentyFourHoursAgo = new Date()
+                twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
 
-            const { count: initialCount } = await supabase
-                .from('recent_purchases')
-                .select('*', { count: 'exact', head: true })
-                .eq('product_id', productId)
-                .gte('purchased_at', twentyFourHoursAgo.toISOString())
+                const { count: initialCount, error } = await supabase
+                    .from('recent_purchases')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('product_id', productId)
+                    .gte('purchased_at', twentyFourHoursAgo.toISOString())
 
-            setCount(initialCount || 0)
-            setIsLoading(false)
+                if (error) throw error
+                setCount(initialCount || 0)
+            } catch (err) {
+                // Fail silently
+                setCount(0)
+            } finally {
+                setIsLoading(false)
+            }
         }
 
         fetchCount()

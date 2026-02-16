@@ -81,23 +81,36 @@ export function ProductImageGallery({
           if (a.variant_id === selectedVariantId) return -1
           if (b.variant_id === selectedVariantId) return 1
         }
+
+        // Prioritize selected color match
+        if (selectedColor) {
+          const aMatch = a.color === selectedColor
+          const bMatch = b.color === selectedColor
+          if (aMatch && !bMatch) return -1
+          if (!aMatch && bMatch) return 1
+        }
+
         return a.sort_order - b.sort_order
       }),
-    [filtered, selectedVariantId]
+    [filtered, selectedVariantId, selectedColor]
   )
 
-  // Update selected image when the unique list changes (e.g. user changes color)
+  // Always switch to the first image (the preferred one) when selection criteria change
   useEffect(() => {
     if (unique.length > 0) {
-      // Try to find if currently selected image is still in the filtered list
+      setSelectedImage(unique[0])
+    }
+  }, [selectedColor, selectedVariantId, unique.length > 0 ? unique[0].url : null])
+
+  // Fallback check to ensure we always have a selection if the current one somehow disappears
+  useEffect(() => {
+    if (unique.length > 0) {
       const stillInList = unique.find(img => img.url === selectedImage?.url)
       if (!stillInList) {
         setSelectedImage(unique[0])
       }
-    } else {
-      setSelectedImage(images[0])
     }
-  }, [unique, images, selectedImage?.url])
+  }, [unique, selectedImage?.url])
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index)

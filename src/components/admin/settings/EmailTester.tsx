@@ -3,10 +3,19 @@
 import { useState } from 'react'
 import { sendTestEmail, type EmailTestType } from '@/actions/test-emails'
 import { toast } from 'sonner'
-import { Mail, Loader2, ShoppingBag, ShoppingCart, RefreshCcw, Heart } from 'lucide-react'
+import { Mail, Loader2, ShoppingBag, ShoppingCart, RefreshCcw, Heart, Globe } from 'lucide-react'
+
+const LOCALE_OPTIONS = [
+    { value: 'en', label: 'English' },
+    { value: 'de', label: 'German' },
+    { value: 'fr', label: 'French' },
+    { value: 'it', label: 'Italian' },
+    { value: 'pt', label: 'Portuguese' },
+]
 
 export function EmailTester() {
     const [email, setEmail] = useState('')
+    const [locale, setLocale] = useState('en')
     const [loading, setLoading] = useState<EmailTestType | null>(null)
 
     async function handleSend(type: EmailTestType) {
@@ -17,9 +26,9 @@ export function EmailTester() {
 
         setLoading(type)
         try {
-            const res = await sendTestEmail(type, email)
+            const res = await sendTestEmail(type, email, locale)
             if (res.ok) {
-                toast.success(`Sent ${type} email to ${email}`)
+                toast.success(`Sent ${type} email to ${email} (${locale})`)
             } else {
                 toast.error(res.error || 'Failed to send email')
             }
@@ -35,25 +44,48 @@ export function EmailTester() {
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-6">
             <div className="mb-6 space-y-1">
                 <h3 className="text-lg font-medium text-white">Email Testing</h3>
-                <p className="text-sm text-zinc-400">Send mock transactional emails to verify Resend configuration.</p>
+                <p className="text-sm text-zinc-400">Send mock transactional emails to verify Resend configuration and templates.</p>
             </div>
 
             <div className="space-y-4">
-                <div>
-                    <label htmlFor="test-email" className="block text-sm font-medium text-zinc-300 mb-1.5">
-                        Recipient Email
-                    </label>
-                    <input
-                        id="test-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                        <label htmlFor="test-email" className="block text-sm font-medium text-zinc-300 mb-1.5">
+                            Recipient Email
+                        </label>
+                        <input
+                            id="test-email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        />
+                    </div>
+
+                    <div className="w-full sm:w-40">
+                        <label htmlFor="test-locale" className="block text-sm font-medium text-zinc-300 mb-1.5">
+                            Language
+                        </label>
+                        <div className="relative">
+                            <Globe className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+                            <select
+                                id="test-locale"
+                                value={locale}
+                                onChange={(e) => setLocale(e.target.value)}
+                                className="w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800 pl-9 pr-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            >
+                                {LOCALE_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 pt-2">
                     <button
                         onClick={() => handleSend('order')}
                         disabled={!!loading}

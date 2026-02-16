@@ -20,7 +20,9 @@
     "accept": "Aceitar",
     "save": "Guardar",
     "loading": "A carregar...",
+    "error": "Erro",
     "browseProducts": "Explorar produtos",
+    "allProducts": "Todos os produtos",
     "announcementFreeShipping": "Portes grátis em encomendas superiores a CHF 100",
     "announcementNewDrops": "Novidades Todas as Semanas — Descobre a Coleção",
     "announcementNewsletter": "Junta-te ao Club e ganha 10% de desconto na primeira compra",
@@ -175,11 +177,7 @@
     "resendIn": "Reenviar em",
     "useMagicLink": "Usar Magic Link",
     "signInWithPassword": "Entrar com Palavra-passe",
-    "enterEmailForMagicLink": "Introduz o teu e-mail para receber um link de acesso.",
-    "exclusiveOffers": "Ofertas por Tempo Limitado",
-    "upsellPitch": "Adicione à sua encomenda com um preço especial",
-    "off": "DE DESCONTO",
-    "addToOrder": "Adicionar à Encomenda"
+    "enterEmailForMagicLink": "Introduz o teu e-mail para receber um link de acesso."
   },
   "userMenu": {
     "account": "Conta",
@@ -342,7 +340,19 @@
     "featured": "Destaque",
     "seasonDrops": "Drops de Estação",
     "creative": "Criativo",
-    "artGallery": "Galeria de Arte"
+    "artGallery": "Galeria de Arte",
+    "viewAddresses": "Ver e gerir as suas moradas de envio",
+    "manageAddresses": "Gerir moradas",
+    "defaultSet": "Morada predefinida atualizada",
+    "addressDeleted": "Morada eliminada",
+    "addressUpdated": "Morada atualizada com sucesso",
+    "addressAdded": "Morada adicionada com sucesso",
+    "noAddresses": "Nenhuma morada encontrada. Adicione uma para agilizar o checkout.",
+    "backToAddresses": "Voltar para Moradas",
+    "editAddress": "Editar Morada",
+    "addNewAddress": "Adicionar Nova Morada",
+    "saveAddress": "Guardar Morada",
+    "setDefault": "Definir como predefinida"
   },
   "checkout": {
     "contact": "Contacto",
@@ -362,10 +372,18 @@
     "thankYou": "Obrigado pela sua encomenda.",
     "paymentReceived": "Pagamento recebido.",
     "orderProcessed": "A sua encomenda está a ser processada.",
+    "orderFinalizing": "A finalizar a sua encomenda...",
+    "orderWait": "Por favor, aguarde um momento enquanto processamos o seu pagamento.",
+    "paymentError": "Falha na verificação do pagamento",
+    "paymentErrorMessage": "Houve um problema ao verificar o seu pagamento. Se o valor foi debitado, contacte o apoio.",
     "orderConfirmedTitle": "Encomenda confirmada",
     "thankYouDescription": "Obrigado pela sua encomenda",
     "total": "Total",
-    "discountAppliedLabel": "Desconto aplicado"
+    "discountAppliedLabel": "Desconto aplicado",
+    "exclusiveOffers": "Ofertas Exclusivas",
+    "upsellPitch": "Oferta especial apenas para si!",
+    "off": "DESC.",
+    "addToOrder": "Adicionar à Encomenda"
   },
   "forgotPassword": {
     "title": "Palavra-passe esquecida",
@@ -505,7 +523,16 @@
     "nextTier": "Próximo nível",
     "unlockedOn": "Desbloqueado em",
     "locked": "Bloqueado",
-    "earnPoints": "Ganhar Pontos"
+    "earnPoints": "Ganhar Pontos",
+    "copyLink": "Copiar link",
+    "displayNamePlaceholder": "O seu nome",
+    "bioPlaceholder": "Conte-nos sobre si",
+    "birthdayHint": "Receba ofertas especiais no seu aniversário",
+    "preferredSizeHint": "Ajuda-nos a recomendar o tamanho certo",
+    "stylePreferencesHint": "Ajuda-nos a selecionar produtos para si",
+    "makeProfilePublicHint": "Permite que outros vejam a sua lista de desejos e conquistas",
+    "cancel": "Cancelar",
+    "saveChanges": "Guardar Alterações"
   },
   "wishlist": {
     "share": "Partilhar",
@@ -537,5 +564,41 @@
     "productsTitle": "Produtos",
     "productsQ1": "Posso personalizar qualquer produto?",
     "productsA1": "A personalização está disponível em artigos premium selecionados. Procure a opção 'Personalizável' na página do produto."
+  },
+  "email": {
+    "orderConfirmation": {
+      "subject": "Encomenda Confirmada — #{orderId}",
+      "title": "Encomenda Confirmada",
+      "thankYou": "Obrigado pela sua encomenda. Estamos a prepará-la com todo o cuidado.",
+      "orderNumber": "Encomenda #{orderId}",
+      "viewOrder": "Ver Encomenda",
+      "shippingAddress": "Morada de Envio",
+      "orderSummary": "Resumo da Encomenda",
+      "total": "Total",
+      "items": "Artigos"
+    },
+    "abandonedCart": {
+      "subject": "O seu carrinho está à espera",
+      "title": "Deixou algo para trás",
+      "body": "A sua seleção premium está reservada. Finalize a encomenda agora para garantir os seus artigos.",
+      "cta": "Finalizar Encomenda"
+    },
+    "restock": {
+      "subject": "De volta ao stock: {productName}",
+      "title": "Está de volta",
+      "body": "O artigo que procurava está disponível novamente. Não perca desta vez.",
+      "cta": "Comprar Agora"
+    },
+    "wishlist": {
+      "subject": "A sua lista de desejos espera por si",
+      "title": "Guardado para si",
+      "body": "Tem {count} artigos na sua lista de desejos. Dê uma vista de olhos antes que desapareçam.",
+      "cta": "Ver Lista de Desejos"
+    },
+    "footer": {
+      "rights": "Todos os direitos reservados.",
+      "address": "Dark Monkey, Suíça",
+      "questions": "Questões? Responda a este e-mail."
+    }
   }
 }

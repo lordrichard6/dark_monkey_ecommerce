@@ -14,9 +14,15 @@ export async function generateMetadata(): Promise<Metadata> {
     }
 }
 
-export default async function ProductsPage() {
+type Props = {
+    searchParams: Promise<{ category?: string }>
+}
+
+export default async function ProductsPage({ searchParams }: Props) {
+    const { category: selectedCategorySlug } = await searchParams
     const t = await getTranslations('search')
     const tCommon = await getTranslations('common')
+    const tStore = await getTranslations('store')
     const supabase = await createClient()
 
     // Fetch all active products
@@ -33,11 +39,10 @@ export default async function ProductsPage() {
       categories (id, name, slug),
       product_images (url, alt, sort_order),
       product_variants (
+        id,
         price_cents,
-        product_inventory (quantity),
-        product_attributes (
-          attribute_values (value, attributes (name))
-        )
+        attributes,
+        product_inventory (quantity)
       )
     `
         )
@@ -58,12 +63,10 @@ export default async function ProductsPage() {
     }
 
     // Transform products
-    const searchableProducts: SearchableProduct[] = []
     const filterableProducts: FilterableProduct[] = []
-    const categoryMap = new Map<string, { id: string; name: string; count: number }>()
+    const categoryMap = new Map<string, { id: string; name: string; count: number; slug: string }>()
 
     for (const p of products) {
-        // ... transformation logic identical to search page ...
         const variants = p.product_variants as any[]
         const images = p.product_images as any[]
         const category = Array.isArray(p.categories) ? p.categories[0] : p.categories
@@ -89,19 +92,12 @@ export default async function ProductsPage() {
                     totalStock += qty
                 }
 
-                if (variant.product_attributes) {
-                    for (const prodAttr of variant.product_attributes) {
-                        if (prodAttr.attribute_values && prodAttr.attribute_values.length > 0) {
-                            const attrVal = prodAttr.attribute_values[0]
-                            if (attrVal.attributes && attrVal.attributes.length > 0) {
-                                const attrName = attrVal.attributes[0].name.toLowerCase()
-                                const attrValue = attrVal.value
-                                if (attrName === 'color' || attrName === 'colour') colors.add(attrValue)
-                                else if (attrName === 'size') sizes.add(attrValue)
-                            }
-                        }
-                    }
-                }
+                const attrs = variant.attributes || {}
+                const color = attrs.color || attrs.colour
+                const size = attrs.size
+
+                if (color) colors.add(color)
+                if (size) sizes.add(size)
             }
         }
 
@@ -112,9 +108,10 @@ export default async function ProductsPage() {
             priceCents: minPrice,
             categoryId: p.category_id,
             categoryName: category?.name || null,
-            colors: Array.from(colors),
-            sizes: Array.from(sizes),
+            colors: Array.from(colors).filter(Boolean) as string[],
+            sizes: Array.from(sizes).filter(Boolean) as string[],
             inStock: totalStock > 0,
+            imageUrl: primaryImage?.url || null,
             createdAt: p.created_at,
             isBestseller: false,
             averageRating: undefined,
@@ -128,6 +125,7 @@ export default async function ProductsPage() {
                 categoryMap.set(category.id, {
                     id: category.id,
                     name: category.name,
+                    slug: category.slug,
                     count: 1,
                 })
             }
@@ -138,6 +136,57 @@ export default async function ProductsPage() {
         a.name.localeCompare(b.name)
     )
 
+    // If no category is selected, show the category discovery view
+    if (!selectedCategorySlug) {
+        return (
+            <div className="min-h-[calc(100vh-3.5rem)]">
+                <div className="mx-auto max-w-6xl px-4 py-16">
+                    <div className="mb-12 text-center">
+                        <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-white md:text-5xl">
+                            {tStore('categoriesTitle')}
+                        </h1>
+                        <p className="mx-auto max-w-2xl text-lg text-zinc-400">
+                            Selecione uma categoria para começar a explorar a nossa coleção exclusiva.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {categories.map((cat) => (
+                            <Link
+                                key={cat.id}
+                                href={`/products?category=${cat.slug}`}
+                                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-8 transition-all duration-300 hover:border-amber-500/30 hover:bg-zinc-900/60 "
+                            >
+                                <div>
+                                    <h2 className="text-2xl font-bold text-zinc-50 transition-colors group-hover:text-amber-400">
+                                        {cat.name}
+                                    </h2>
+                                    <p className="mt-2 text-sm text-zinc-500">
+                                        {cat.count} {cat.count === 1 ? 'produto' : 'produtos'}
+                                    </p>
+                                </div>
+
+                                <div className="mt-12 flex items-center gap-2 text-sm font-semibold text-zinc-300 transition-all group-hover:gap-3 group-hover:text-white">
+                                    Explorar {cat.name}
+                                    <svg
+                                        className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2.5}
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
+                                </div>
+                                <div className="absolute inset-0 -z-10 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-[calc(100vh-3.5rem)]">
             <div className="mx-auto max-w-6xl px-4 py-8">
@@ -146,13 +195,16 @@ export default async function ProductsPage() {
                         {tCommon('shop')}
                     </Link>
                     <span className="mx-2">/</span>
-                    <span className="text-zinc-400">{tCommon('products')}</span>
+                    <Link href="/products" className="hover:text-zinc-300">
+                        {tCommon('products')}
+                    </Link>
                 </nav>
 
                 <SearchResults
                     products={filterableProducts}
                     categories={categories}
-                    title={tCommon('allProducts')}
+                    initialCategoryId={categories.find(c => c.slug === selectedCategorySlug)?.id}
+                    title={selectedCategorySlug ? categories.find(c => c.slug === selectedCategorySlug)?.name : tCommon('allProducts')}
                 />
             </div>
         </div>

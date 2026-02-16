@@ -20,8 +20,9 @@
     "accept": "Accept",
     "save": "Save",
     "loading": "Loading...",
-    "browseProducts": "Browse Products",
     "error": "Error",
+    "browseProducts": "Browse Products",
+    "allProducts": "All Products",
     "success": "Success",
     "back": "Back",
     "cancel": "Cancel",
@@ -150,11 +151,7 @@
     "resendIn": "Resend in",
     "useMagicLink": "Use Magic Link",
     "signInWithPassword": "Sign in with Password",
-    "enterEmailForMagicLink": "Enter your email to receive a sign-in link.",
-    "exclusiveOffers": "Limited Time Offers",
-    "upsellPitch": "Add to your order for special pricing",
-    "off": "OFF",
-    "addToOrder": "Add to Order"
+    "enterEmailForMagicLink": "Enter your email to receive a sign-in link."
   },
   "home": {
     "metaDescription": "Premium gamified e-commerce — commerce, customization, and progression. Browse our collection.",
@@ -334,7 +331,23 @@
     "billing": "Billing",
     "fullName": "Full name",
     "line1": "Address line 1",
-    "line2": "Address line 2 (optional)"
+    "line2": "Address line 2 (optional)",
+    "city": "City",
+    "postalCode": "Postal Code",
+    "country": "Country",
+    "phone": "Phone (optional)",
+    "setDefault": "Set as default",
+    "saveAddress": "Save Address",
+    "addNewAddress": "Add New Address",
+    "editAddress": "Edit Address",
+    "backToAddresses": "Back to Addresses",
+    "noAddresses": "No addresses found. Add one to speed up checkout.",
+    "addressAdded": "Address added successfully",
+    "addressUpdated": "Address updated successfully",
+    "addressDeleted": "Address deleted",
+    "defaultSet": "Default address updated",
+    "manageAddresses": "Manage addresses",
+    "viewAddresses": "View & manage your shipping addresses"
   },
   "checkout": {
     "contact": "Contact",
@@ -354,10 +367,18 @@
     "thankYou": "Thank you for your order.",
     "paymentReceived": "Payment received.",
     "orderProcessed": "Your order is being processed.",
+    "orderFinalizing": "Finalizing your order...",
+    "orderWait": "Please wait a moment while we process your payment.",
+    "paymentError": "Payment verification failed",
+    "paymentErrorMessage": "There was an issue verifying your payment. If you were charged, please contact support.",
     "orderConfirmedTitle": "Order confirmed",
     "thankYouDescription": "Thank you for your order",
     "total": "Total",
-    "discountAppliedLabel": "Discount applied"
+    "discountAppliedLabel": "Discount applied",
+    "exclusiveOffers": "Exclusive Offers",
+    "upsellPitch": "Special offer just for you!",
+    "off": "OFF",
+    "addToOrder": "Add to Order"
   },
   "forgotPassword": {
     "title": "Forgot password",
@@ -497,7 +518,16 @@
     "nextTier": "Next tier",
     "unlockedOn": "Unlocked on",
     "locked": "Locked",
-    "earnPoints": "Earn Points"
+    "earnPoints": "Earn Points",
+    "copyLink": "Copy Link",
+    "displayNamePlaceholder": "Your name",
+    "bioPlaceholder": "Tell us about yourself",
+    "birthdayHint": "Receive special offers on your birthday",
+    "preferredSizeHint": "Helps us recommend the right fit",
+    "stylePreferencesHint": "Helps us curate products for you",
+    "makeProfilePublicHint": "Allow others to see your wishlist and achievements",
+    "cancel": "Cancel",
+    "saveChanges": "Save Changes"
   },
   "wishlist": {
     "share": "Share",
@@ -529,5 +559,41 @@
     "productsTitle": "Products",
     "productsQ1": "Can I customize any product?",
     "productsA1": "Customization is available on select premium items. Look for the 'Customizable' option on the product page."
+  },
+  "email": {
+    "orderConfirmation": {
+      "subject": "Order Confirmed — #{orderId}",
+      "title": "Order Confirmed",
+      "thankYou": "Thank you for your order. We are preparing it with care.",
+      "orderNumber": "Order #{orderId}",
+      "viewOrder": "View Order",
+      "shippingAddress": "Shipping Address",
+      "orderSummary": "Order Summary",
+      "total": "Total",
+      "items": "Items"
+    },
+    "abandonedCart": {
+      "subject": "Your cart is waiting",
+      "title": "You left something behind",
+      "body": "Your premium selection is reserved. Complete your order now to secure your items.",
+      "cta": "Complete Order"
+    },
+    "restock": {
+      "subject": "Back in Stock: {productName}",
+      "title": "It's Back",
+      "body": "The item you were looking for is available again. Don't miss out this time.",
+      "cta": "Shop Now"
+    },
+    "wishlist": {
+      "subject": "Your wishlist is waiting",
+      "title": "Saved for You",
+      "body": "You have {count} items in your wishlist. Take a look before they're gone.",
+      "cta": "View Wishlist"
+    },
+    "footer": {
+      "rights": "All rights reserved.",
+      "address": "Dark Monkey, Switzerland",
+      "questions": "Questions? Reply to this email."
+    }
   }
 }

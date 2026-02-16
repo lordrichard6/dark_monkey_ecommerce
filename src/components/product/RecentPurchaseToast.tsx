@@ -21,20 +21,26 @@ export function RecentPurchaseToast({ productId }: RecentPurchaseToastProps) {
 
         // Fetch most recent purchase
         const fetchRecent = async () => {
-            const { data } = await supabase
-                .from('recent_purchases')
-                .select('location, purchased_at')
-                .eq('product_id', productId)
-                .order('purchased_at', { ascending: false })
-                .limit(1)
-                .single()
+            try {
+                const { data, error } = await supabase
+                    .from('recent_purchases')
+                    .select('location, purchased_at')
+                    .eq('product_id', productId)
+                    .order('purchased_at', { ascending: false })
+                    .limit(1)
+                    .single()
 
-            if (data) {
-                setRecentPurchase(data)
-                setShow(true)
+                if (error && error.code !== 'PGRST116') throw error // Ignore "no rows found"
 
-                // Hide after 5 seconds
-                setTimeout(() => setShow(false), 5000)
+                if (data) {
+                    setRecentPurchase(data)
+                    setShow(true)
+
+                    // Hide after 5 seconds
+                    setTimeout(() => setShow(false), 5000)
+                }
+            } catch (err) {
+                // Fail silently
             }
         }
 

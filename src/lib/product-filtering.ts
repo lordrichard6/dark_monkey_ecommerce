@@ -36,6 +36,7 @@ export type FilterableProduct = {
   colors: string[]
   sizes: string[]
   inStock: boolean
+  imageUrl: string | null
   createdAt: string
   isBestseller?: boolean
   averageRating?: number

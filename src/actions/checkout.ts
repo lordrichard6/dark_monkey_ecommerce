@@ -319,30 +319,33 @@ export async function createCheckoutSession(
     console.log('[Checkout] Debug: Session created successfully', session.id)
 
     const emailForAbandoned = input?.email ?? undefined
-    // Use fire-and-forget but with a catch to prevent table-missing-500
-    void (async () => {
-      try {
-        const { error } = await supabase.from('abandoned_checkouts').insert({
-          stripe_session_id: session.id,
-          email: emailForAbandoned,
-          cart_summary: {
-            itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
-            totalCents,
-            items: validatedItems.map(({ item }) => ({
-              variantId: item.variantId,
-              productId: item.productId,
-              quantity: item.quantity,
-              priceCents: item.priceCents,
-              config: item.config ?? {},
-              name: item.productName
-            }))
-          },
-        })
-        if (error) console.error('[Checkout] Abandoned checkout insert failed:', error.message)
-      } catch (err) {
-        console.error('[Checkout] Abandoned checkout insert crashed:', err)
+    // DO NOT use fire-and-forget here - the webhook RELIES on this record.
+    // If this fails, we want to know, but let's at least ensure it finishes before redirecting.
+    try {
+      const { error } = await supabase.from('abandoned_checkouts').insert({
+        stripe_session_id: session.id,
+        email: emailForAbandoned || 'guest@lopes2tech.ch', // Default if missing but table requires it
+        cart_summary: {
+          itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
+          totalCents,
+          items: validatedItems.map(({ item }) => ({
+            variantId: item.variantId,
+            productId: item.productId,
+            quantity: item.quantity,
+            priceCents: item.priceCents,
+            config: item.config ?? {},
+            name: item.productName
+          }))
+        },
+      })
+      if (error) {
+        console.error('[Checkout] Abandoned checkout insert failed:', error.message)
+        // If it's a critical error (like RLS or table missing), we might want to fail the checkout
+        // but for now, let's keep going if it's just a minor issue, although Stripe webhook WILL fail.
       }
-    })()
+    } catch (err) {
+      console.error('[Checkout] Abandoned checkout insert crashed:', err)
+    }
 
     if (session.url) {
       // Clear cart on successful redirect
