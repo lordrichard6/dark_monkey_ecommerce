@@ -18,9 +18,7 @@ export default async function AdminNewProductPage() {
         ← Back to products
       </Link>
       <h1 className="text-2xl font-bold text-zinc-50">New product</h1>
-      <CreateProductForm
-        availableTags={tags ?? []}
-      />
+      <CreateProductForm />
     </div>
   )
 }

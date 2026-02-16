@@ -16,6 +16,7 @@ import { ProductStory } from '@/components/product/ProductStory'
 import type { StoryContent } from '@/lib/story-content'
 import { trackProductView } from '@/lib/analytics'
 import { useCurrency } from '@/components/currency/CurrencyContext'
+import type { CustomizationRuleDef } from '@/types/customization'
 
 interface ProductVariant {
     id: string
@@ -42,7 +43,7 @@ type Props = {
     canSubmitReview: boolean
     orderIdFromQuery?: string
     primaryImageUrl?: string
-    customizationRule?: unknown
+    customizationRule?: CustomizationRuleDef | null
     userId?: string
     storyContent?: StoryContent | null
 }

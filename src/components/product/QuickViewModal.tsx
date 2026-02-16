@@ -7,6 +7,7 @@ import { getProductQuickView } from '@/actions/products'
 import { AddToCartForm } from '@/app/[locale]/(store)/products/[slug]/add-to-cart-form'
 import { ProductImageGallery } from './ProductImageGallery'
 import { useTranslations } from 'next-intl'
+import type { CustomizationRuleDef } from '@/types/customization'
 
 type QuickViewModalProps = {
     slug: string
@@ -14,10 +15,27 @@ type QuickViewModalProps = {
     onClose: () => void
 }
 
+interface ProductData {
+    id: string
+    name: string
+    slug: string
+    description: string | null
+    product_images: Array<{ url: string; alt: string | null; sort_order: number; color?: string | null; variant_id?: string | null }>
+    product_variants: Array<{
+        id: string
+        name: string | null
+        price_cents: number
+        attributes: Record<string, string>
+        sort_order: number
+        product_inventory: any
+    }>
+    categories: { name?: string } | null
+}
+
 export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
     const t = useTranslations('product')
-    const [product, setProduct] = useState<any>(null)
-    const [customizationRule, setCustomizationRule] = useState<any>(null)
+    const [product, setProduct] = useState<ProductData | null>(null)
+    const [customizationRule, setCustomizationRule] = useState<CustomizationRuleDef | null>(null)
     const [loading, setLoading] = useState(false)
     const [mounted, setMounted] = useState(false)
 
@@ -30,8 +48,8 @@ export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
             setLoading(true)
             getProductQuickView(slug).then((res) => {
                 if (res.data) {
-                    setProduct(res.data)
-                    setCustomizationRule(res.customizationRule)
+                    setProduct(res.data as ProductData)
+                    setCustomizationRule(res.customizationRule ? (res.customizationRule as any).rule_def : null)
                 }
                 setLoading(false)
             })
