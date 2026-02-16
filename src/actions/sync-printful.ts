@@ -23,7 +23,7 @@ import { printfulAnalytics } from '@/lib/printful/analytics'
 async function resolveCatalogDetails(
   retailPrice: string | undefined,
   catalogVariantId: number
-): Promise<{ priceCents: number; rrpCents: number; colorCode?: string; colorCode2?: string }> {
+): Promise<{ priceCents: number; rrpCents: number; colorCode?: string; colorCode2?: string; inStock: boolean }> {
   const retail = parseFloat(retailPrice || '0')
   const details = await fetchCatalogVariant(catalogVariantId)
 
@@ -31,6 +31,7 @@ async function resolveCatalogDetails(
   let rrpCents = priceCents
   let colorCode: string | undefined
   let colorCode2: string | undefined
+  let inStock = true // Default to true if fetch fails to avoid hiding products unnecessarily, or false? true is safer for POD.
 
   if (details.ok && details.variant) {
     const wholesale = parseFloat(details.variant.price || '0')
@@ -42,9 +43,10 @@ async function resolveCatalogDetails(
     }
     colorCode = details.variant.color_code
     colorCode2 = details.variant.color_code2 || undefined
+    inStock = details.variant.in_stock
   }
 
-  return { priceCents, rrpCents, colorCode, colorCode2 }
+  return { priceCents, rrpCents, colorCode, colorCode2, inStock }
 }
 
 
@@ -114,7 +116,7 @@ async function ensureProductImages(
   }
 
   // 2. DELETE ALL existing Printful images for this product
-  const { data: deletedImages } = await supabase
+  const { data: _deletedImages } = await supabase
     .from('product_images')
     .delete()
     .eq('product_id', productId)
@@ -163,6 +165,7 @@ function slugify(name: string): string {
  * Helper to Create or Update Product
  */
 async function upsertProduct(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   sync_product: PrintfulSyncProduct,
   sync_variants: PrintfulSyncVariant[],
@@ -233,6 +236,7 @@ async function upsertProduct(
  * Helper to Sync Variants
  */
 async function syncVariants(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   productId: string,
   sync_product: PrintfulSyncProduct,
@@ -246,7 +250,9 @@ async function syncVariants(
 
   const existingByPfId = new Map(
     (existingVariants ?? [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((v: any) => v.printful_sync_variant_id != null)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((v: any) => [v.printful_sync_variant_id, v])
   )
 
@@ -258,7 +264,7 @@ async function syncVariants(
 
   for (let i = 0; i < sync_variants.length; i++) {
     const sv = sync_variants[i]
-    const { priceCents, rrpCents, colorCode, colorCode2 } = variantDetails[i]
+    const { priceCents, rrpCents, colorCode, colorCode2, inStock } = variantDetails[i]
 
     const attrs: Record<string, any> = {}
     if (sv.size) attrs.size = sv.size
@@ -267,6 +273,7 @@ async function syncVariants(
     if (colorCode2) attrs.color_code2 = colorCode2
     if (rrpCents) attrs.rrp_cents = rrpCents
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existingVar = existingByPfId.get(sv.id) as any
     if (existingVar) {
       await supabase
@@ -276,6 +283,15 @@ async function syncVariants(
           attributes: attrs
         })
         .eq('id', existingVar.id)
+
+      // Update inventory even for existing variants
+      await supabase.from('product_inventory').upsert(
+        {
+          variant_id: existingVar.id,
+          quantity: inStock ? PRINTFUL_CONFIG.CONSTANTS.DEFAULT_INVENTORY_QTY : 0
+        },
+        { onConflict: 'variant_id' }
+      )
       continue
     }
 
@@ -296,7 +312,10 @@ async function syncVariants(
 
     if (newVar?.id) {
       await supabase.from('product_inventory').upsert(
-        { variant_id: newVar.id, quantity: PRINTFUL_CONFIG.CONSTANTS.DEFAULT_INVENTORY_QTY },
+        {
+          variant_id: newVar.id,
+          quantity: inStock ? PRINTFUL_CONFIG.CONSTANTS.DEFAULT_INVENTORY_QTY : 0
+        },
         { onConflict: 'variant_id' }
       )
     } else if (varErr) {
@@ -431,7 +450,7 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
     revalidatePath('/admin/products')
     revalidatePath('/admin/dashboard')
     revalidatePath('/')
-  } catch (err) {
+  } catch (_err) {
     // Ignored: revalidatePath fails in standalone scripts
     if (debug) console.warn('revalidatePath skipped (script context)')
   }
