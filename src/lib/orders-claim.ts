@@ -16,10 +16,11 @@ export async function claimGuestOrdersForUser(userId: string, email: string) {
 
     try {
         // Find and update orphan orders
+        // We check both guest_email and user_email to be thorough
         const { data, error } = await supabase
             .from('orders')
             .update({ user_id: userId })
-            .eq('user_email', email)
+            .or(`guest_email.eq.${email},user_email.eq.${email}`)
             .is('user_id', null)
             .select('id')
 
