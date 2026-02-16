@@ -17,6 +17,14 @@ import type { StoryContent } from '@/lib/story-content'
 import { trackProductView } from '@/lib/analytics'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 
+interface ProductVariant {
+    id: string
+    name: string | null
+    price_cents: number
+    attributes: Record<string, string>
+    stock: number
+}
+
 type Props = {
     product: {
         id: string
@@ -26,7 +34,7 @@ type Props = {
         categories: { name?: string } | null
     }
     images: Array<{ url: string; alt: string | null; sort_order: number; color?: string | null; variant_id?: string | null }>
-    variants: Array<any>
+    variants: ProductVariant[]
     reviews: ReviewRow[]
     userReview: ReviewRow | null
     isBestseller: boolean
@@ -34,7 +42,7 @@ type Props = {
     canSubmitReview: boolean
     orderIdFromQuery?: string
     primaryImageUrl?: string
-    customizationRule?: any
+    customizationRule?: unknown
     userId?: string
     storyContent?: StoryContent | null
 }
@@ -73,7 +81,7 @@ export function ProductMain({
                 category: product.categories?.name,
             })
         }
-    }, [product.id, product.name, variants, currency, product.categories])
+    }, [product.id, product.name, lowestPrice, variants, currency, product.categories])
 
     // Derive available colors with their Printful hex codes
     const colorMap = new Map<string, ColorOption>()
@@ -130,31 +138,29 @@ export function ProductMain({
                     <LivePurchaseIndicator productId={product.id} />
                 </div>
                 {product.description && (
-                    <div className="mt-6 space-y-4">
-                        {/* Split by bullet points if they exist, otherwise treat as one block */}
-                        {product.description.includes('•') ? (
+                    <div className="mt-6">
+                        {product.description.includes('<') && product.description.includes('>') ? (
+                            <div
+                                dangerouslySetInnerHTML={{ __html: product.description }}
+                                className="styled-description prose prose-sm prose-invert max-w-none text-zinc-300 [&>p]:leading-relaxed [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4"
+                            />
+                        ) : product.description.includes('•') ? (
                             <div className="space-y-4">
                                 {product.description.split('•').map((item, i) => {
-                                    const trimmed = item.trim();
-                                    if (!trimmed) return null;
-
-                                    // If it's the first bit (usually the main intro text)
-                                    if (i === 0) return (
-                                        <p key={i} className="text-base text-zinc-300 leading-relaxed">
-                                            {trimmed}
-                                        </p>
-                                    );
-
+                                    const cleaned = item.trim()
+                                    if (!cleaned) return null
                                     return (
-                                        <div key={i} className="flex gap-3 text-sm text-zinc-400">
-                                            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-zinc-600" />
-                                            <p className="leading-tight">{trimmed}</p>
+                                        <div key={i} className="flex gap-4 group/item">
+                                            <div className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500/40 group-hover/item:bg-amber-500 transition-colors" />
+                                            <p className="text-zinc-400 leading-relaxed group-hover/item:text-zinc-300 transition-colors">
+                                                {cleaned}
+                                            </p>
                                         </div>
-                                    );
+                                    )
                                 })}
                             </div>
                         ) : (
-                            <p className="text-zinc-400 leading-relaxed">{product.description}</p>
+                            <p className="text-zinc-400 leading-relaxed font-sans">{product.description}</p>
                         )}
                     </div>
                 )}

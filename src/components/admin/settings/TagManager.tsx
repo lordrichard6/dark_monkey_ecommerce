@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, Tag as TagIcon, Save, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Plus, Tag as TagIcon, Save, X } from 'lucide-react'
+import { createTag, deleteTag } from '@/actions/admin-tags'
 import { toast } from 'sonner'
 
 interface Tag {
@@ -22,31 +22,26 @@ export function TagManager({ initialTags }: TagManagerProps) {
     const [newSlug, setNewSlug] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
-    const supabase = createClient()
-
     async function handleAdd() {
         if (!newName || !newSlug) return
         setIsLoading(true)
 
         try {
-            const { data, error } = await supabase
-                .from('tags')
-                .insert([{
-                    name: newName,
-                    slug: newSlug
-                }])
-                .select()
-                .single()
+            const result = await createTag({
+                name: newName,
+                slug: newSlug
+            })
 
-            if (error) throw error
+            if (!result.ok) throw new Error(result.error)
 
-            setTags([...tags, data])
+            setTags([...tags, result.data as Tag])
             setNewName('')
             setNewSlug('')
             setIsAdding(false)
             toast.success('Tag added')
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to add tag')
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to add tag'
+            toast.error(message)
         } finally {
             setIsLoading(false)
         }
@@ -57,17 +52,15 @@ export function TagManager({ initialTags }: TagManagerProps) {
         setIsLoading(true)
 
         try {
-            const { error } = await supabase
-                .from('tags')
-                .delete()
-                .eq('id', id)
+            const result = await deleteTag(id)
 
-            if (error) throw error
+            if (!result.ok) throw new Error(result.error)
 
             setTags(tags.filter(t => t.id !== id))
             toast.success('Tag deleted')
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to delete tag')
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to delete tag'
+            toast.error(message)
         } finally {
             setIsLoading(false)
         }

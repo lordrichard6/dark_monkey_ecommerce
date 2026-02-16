@@ -8,7 +8,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { SUPPORTED_CURRENCIES, SupportedCurrency } from '@/lib/currency'
 import Image from 'next/image'
-import { Instagram, Twitter, Facebook, Send, Loader2, Phone, Mail, Clock } from 'lucide-react'
+import { Instagram, Twitter, Facebook, Send, Loader2, Mail, Clock } from 'lucide-react'
 import { subscribeToNewsletter } from '@/actions/newsletter'
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -259,8 +259,8 @@ export function Footer() {
                 </div>
                 <div className="flex items-center gap-3 text-sm text-zinc-400">
                   <Mail className="h-4 w-4 text-zinc-500" />
-                  <a href="mailto:support@darkmonkey.com" className="hover:text-amber-400 transition-colors">
-                    support@darkmonkey.ch
+                  <a href="mailto:support@dark-monkey.ch" className="hover:text-amber-400 transition-colors">
+                    support@dark-monkey.ch
                   </a>
                 </div>
               </div>

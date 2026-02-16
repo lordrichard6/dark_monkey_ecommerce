@@ -3,22 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createProduct } from '@/actions/admin-products'
-
+import { RichTextEditor } from '@/components/admin/RichTextEditor'
 import { CATEGORIES } from '@/lib/categories'
 
-type Tag = { id: string; name: string }
-
-type Props = {
-  availableTags: Tag[]
-}
-
-export function CreateProductForm({ availableTags }: Props) {
+export function CreateProductForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [selectedTagIds] = useState<string[]>([])
   const [selectedParentId, setSelectedParentId] = useState('')
   const [selectedSubId, setSelectedSubId] = useState('')
+  const [description, setDescription] = useState('')
 
   const activeParent = CATEGORIES.find(c => c.id === selectedParentId)
 
@@ -76,12 +71,14 @@ export function CreateProductForm({ availableTags }: Props) {
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300">Description</label>
-        <textarea
-          name="description"
-          rows={2}
-          className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100"
+        <label className="block text-sm font-medium text-zinc-300 mb-2">Description</label>
+        <RichTextEditor
+          value={description}
+          onChange={setDescription}
+          minHeight="150px"
         />
+        {/* Hidden input to include in form data if needed, or update handleSubmit */}
+        <input type="hidden" name="description" value={description} />
       </div>
 
       <div className="space-y-6">

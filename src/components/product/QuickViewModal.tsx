@@ -90,16 +90,26 @@ export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
                                 </h2>
 
                                 <div className="mt-4 flex flex-col gap-4">
-                                    <p className="text-zinc-400 line-clamp-4 leading-relaxed">
-                                        {product.description}
-                                    </p>
+                                    {product.description && (product.description.includes('<') && product.description.includes('>')) ? (
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: product.description }}
+                                            className="text-zinc-400 line-clamp-4 leading-relaxed prose prose-sm prose-invert max-w-none"
+                                        />
+                                    ) : (
+                                        <p className="text-zinc-400 line-clamp-4 leading-relaxed">
+                                            {product.description}
+                                        </p>
+                                    )}
 
                                     <AddToCartForm
                                         productId={product.id}
                                         productSlug={product.slug}
                                         productName={product.name}
                                         variants={(product.product_variants || []).map((v: any) => ({
-                                            ...v,
+                                            id: v.id,
+                                            name: v.name,
+                                            price_cents: v.price_cents,
+                                            attributes: v.attributes,
                                             stock: Array.isArray(v.product_inventory)
                                                 ? (v.product_inventory[0]?.quantity ?? 0)
                                                 : (v.product_inventory?.quantity ?? 0)

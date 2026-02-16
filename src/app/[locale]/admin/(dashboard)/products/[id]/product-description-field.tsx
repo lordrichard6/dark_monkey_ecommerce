@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProduct } from '@/actions/admin-products'
+import { RichTextEditor } from '@/components/admin/RichTextEditor'
 
 type Props = {
   productId: string
@@ -34,11 +35,10 @@ export function ProductDescriptionField({ productId, description }: Props) {
       <h3 className="text-sm font-medium text-zinc-400">Description</h3>
       {editing ? (
         <div className="mt-2 flex flex-col gap-2">
-          <textarea
+          <RichTextEditor
             value={value}
-            onChange={(e) => setValue(e.target.value)}
-            rows={4}
-            className="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            onChange={setValue}
+            minHeight="200px"
           />
           <div className="flex gap-2">
             <button
@@ -60,13 +60,17 @@ export function ProductDescriptionField({ productId, description }: Props) {
           </div>
         </div>
       ) : (
-        <p
+        <div
           onClick={() => setEditing(true)}
           className="mt-2 cursor-pointer rounded px-2 py-1 text-sm text-zinc-300 hover:bg-zinc-800/80"
           title="Click to edit"
         >
-          {description || <span className="italic text-zinc-500">No description. Click to add.</span>}
-        </p>
+          {description ? (
+            <div dangerouslySetInnerHTML={{ __html: description }} className="prose prose-sm prose-invert max-w-none" />
+          ) : (
+            <span className="italic text-zinc-500">No description. Click to add.</span>
+          )}
+        </div>
       )}
       {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
     </div>

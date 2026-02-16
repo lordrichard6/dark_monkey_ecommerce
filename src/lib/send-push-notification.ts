@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server'
 // Configure web-push with VAPID keys
 if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
     webpush.setVapidDetails(
-        'mailto:support@darkmonkey.com', // Contact email
+        'mailto:support@dark-monkey.ch', // Contact email
         process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
         process.env.VAPID_PRIVATE_KEY
     )
@@ -84,15 +84,18 @@ export async function sendPushNotification(
                         .eq('id', sub.id)
 
                     sent++
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.error(`Failed to send to subscription ${sub.id}:`, error)
 
                     // If subscription is expired/invalid, mark as inactive
-                    if (error.statusCode === 410 || error.statusCode === 404) {
-                        await supabase
-                            .from('push_subscriptions')
-                            .update({ is_active: false })
-                            .eq('id', sub.id)
+                    if (error instanceof Error && 'statusCode' in error) {
+                        const statusCode = (error as { statusCode: number }).statusCode
+                        if (statusCode === 410 || statusCode === 404) {
+                            await supabase
+                                .from('push_subscriptions')
+                                .update({ is_active: false })
+                                .eq('id', sub.id)
+                        }
                     }
 
                     failed++
