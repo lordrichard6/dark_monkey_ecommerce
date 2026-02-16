@@ -399,45 +399,49 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
     }
     if (offset === 0) totalFromApi = listRes.total ?? 0
 
-    for (const pf of listRes.products) {
-      const detailRes = await fetchSyncProduct(pf.id)
-      if (debug) {
-        logger.debug('Fetched sync product detail', { productId: pf.id, name: pf.name, operation: 'sync' })
-      }
-      if (!detailRes.ok || !detailRes.product?.sync_variants?.length) {
-        if (detailRes.error && !firstError) firstError = `Printful API: ${detailRes.error}`
-        skipped++
-        continue
-      }
+    // Batched Processing
+    const BATCH_SIZE = 5
+    for (let i = 0; i < listRes.products.length; i += BATCH_SIZE) {
+      const batch = listRes.products.slice(i, i + BATCH_SIZE)
 
-      const { sync_product, sync_variants } = detailRes.product
-      const msg = `Syncing product: ${sync_product.name} (ID: ${sync_product.id})`;
-      console.log(msg);
-      logs.push(msg);
+      await Promise.all(batch.map(async (pf) => {
+        const detailRes = await fetchSyncProduct(pf.id)
+        if (debug) {
+          logger.debug('Fetched sync product detail', { productId: pf.id, name: pf.name, operation: 'sync' })
+        }
+        if (!detailRes.ok || !detailRes.product?.sync_variants?.length) {
+          if (detailRes.error && !firstError) firstError = `Printful API: ${detailRes.error}`
+          skipped++
+          return
+        }
 
-      // 1. Upsert Product
-      const productRes = await upsertProduct(supabase, sync_product, sync_variants, categoryId)
-      if (!productRes.productId) {
-        if (productRes.error && !firstError) firstError = productRes.error
-        skipped++
-        continue
-      }
-      if (productRes.synced) synced++
+        const { sync_product, sync_variants } = detailRes.product
+        const msg = `Syncing product: ${sync_product.name} (ID: ${sync_product.id})`;
+        console.log(msg);
+        logs.push(msg);
 
-      // 2. Sync Variants
-      const variantRes = await syncVariants(supabase, productRes.productId, sync_product, sync_variants)
-      if (variantRes.error) {
-        if (!firstError) firstError = variantRes.error
-        // Don't skip product based on variant failure, try to process what we can
-      }
+        // 1. Upsert Product
+        const productRes = await upsertProduct(supabase, sync_product, sync_variants, categoryId)
+        if (!productRes.productId) {
+          if (productRes.error && !firstError) firstError = productRes.error
+          skipped++
+          return
+        }
+        if (productRes.synced) synced++
 
-      // 3. Sync Images
-      // Only if we have the variant map
-      if (variantRes.variantIdMap) {
-        await ensureProductImages(supabase, productRes.productId, sync_product, sync_variants, variantRes.variantIdMap, logs)
-      }
+        // 2. Sync Variants
+        const variantRes = await syncVariants(supabase, productRes.productId, sync_product, sync_variants)
+        if (variantRes.error) {
+          if (!firstError) firstError = variantRes.error
+        }
 
-      if (onlyLatest) break
+        // 3. Sync Images
+        if (variantRes.variantIdMap) {
+          await ensureProductImages(supabase, productRes.productId, sync_product, sync_variants, variantRes.variantIdMap, logs)
+        }
+      }))
+
+      if (onlyLatest && i === 0) break
     }
 
     if (onlyLatest) break
