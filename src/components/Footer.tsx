@@ -7,9 +7,9 @@ import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { SUPPORTED_CURRENCIES, SupportedCurrency } from '@/lib/currency'
+import Image from 'next/image'
 import { Instagram, Twitter, Facebook, Send, Loader2, Phone, Mail, Clock } from 'lucide-react'
 import { subscribeToNewsletter } from '@/actions/newsletter'
-import { VisaIcon, MastercardIcon, PayPalIcon, KlarnaIcon, AmexIcon } from '@/components/icons/PaymentIcons'
 
 const COUNTRY_FLAGS: Record<string, string> = {
   CH: '🇨🇭',
@@ -163,11 +163,12 @@ export function Footer() {
   function selectCountry(value: (typeof COUNTRY_REGION_OPTIONS)[number]['value']) {
     setCountryValue(value)
     setCountryOpen(false)
+    // eslint-disable-next-line react-hooks/immutability
     document.cookie = `${COUNTRY_COOKIE}=${value};path=/;max-age=${60 * 60 * 24 * 365}`
 
     // Auto-switch currency
     const opt = COUNTRY_REGION_OPTIONS.find(o => o.value === value)
-    if (opt && SUPPORTED_CURRENCIES.includes(opt.currency as any)) {
+    if (opt && SUPPORTED_CURRENCIES.includes(opt.currency as SupportedCurrency)) {
       setCurrency(opt.currency as SupportedCurrency)
     }
   }
@@ -333,18 +334,24 @@ export function Footer() {
               </span>
               <div className="flex flex-wrap items-center gap-2">
                 {[
-                  { name: 'Visa', Icon: VisaIcon },
-                  { name: 'Mastercard', Icon: MastercardIcon },
-                  { name: 'PayPal', Icon: PayPalIcon },
-                  { name: 'Klarna', Icon: KlarnaIcon },
-                  { name: 'Amex', Icon: AmexIcon },
-                ].map(({ name, Icon }) => (
+                  { name: 'Visa', src: '/payments/visa.png', width: 40, height: 25 },
+                  { name: 'Mastercard', src: '/payments/mastercard.png', width: 40, height: 25 },
+                  { name: 'PayPal', src: '/payments/paypal.png', width: 40, height: 25 },
+                  { name: 'Klarna', src: '/payments/klarna.png', width: 42, height: 25 },
+                  { name: 'Twint', src: '/payments/twint.png', width: 40, height: 25 },
+                ].map(({ name, src, width, height }) => (
                   <div
                     key={name}
-                    className="flex h-8 min-w-[50px] items-center justify-center rounded bg-white px-2 py-1 transition-opacity hover:opacity-80"
+                    className="flex h-8 w-[50px] items-center justify-center rounded bg-white px-1 py-1 transition-opacity hover:opacity-80"
                     aria-label={name}
                   >
-                    <Icon className="h-full w-auto" />
+                    <Image
+                      src={src}
+                      alt={name}
+                      width={width}
+                      height={height}
+                      className="h-full w-auto object-contain"
+                    />
                   </div>
                 ))}
               </div>
@@ -390,6 +397,6 @@ export function Footer() {
           ))}
         </div>
       </div>
-    </footer>
+    </footer >
   )
 }
