@@ -27,8 +27,15 @@ export async function fetchWithRetry(
     let delay = cfg.initialDelay
 
     for (let attempt = 0; attempt <= cfg.maxRetries; attempt++) {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), PRINTFUL_CONFIG.CONSTANTS.API_TIMEOUT_MS)
+        let response: Response | undefined
+
         try {
-            const response = await fetch(url, options)
+            response = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+            })
 
             // If success or not a retryable status, return immediately
             if (response.ok || !cfg.retryableStatuses.includes(response.status)) {
@@ -56,6 +63,8 @@ export async function fetchWithRetry(
                 error instanceof Error ? error.message : 'Unknown network error',
                 error instanceof Error ? error : undefined
             )
+        } finally {
+            clearTimeout(timeoutId)
         }
 
         // Prepare for next attempt if we haven't exhausted retries

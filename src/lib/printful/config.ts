@@ -58,5 +58,6 @@ export const PRINTFUL_CONFIG = {
         WHOLESALE_MARKUP_MULTIPLIER: 2.5,
         DEFAULT_INVENTORY_QTY: 50,
         SYNC_LIMIT: 20,
+        API_TIMEOUT_MS: 30000, // 30 seconds
     }
 }
