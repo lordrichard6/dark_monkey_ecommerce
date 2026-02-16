@@ -1,5 +1,6 @@
 'use client'
 
+import { CreditCard } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { addToCart } from '@/actions/cart'
 import { useRouter } from 'next/navigation'
@@ -14,6 +15,7 @@ import { ColorOption } from '@/types/product'
 import { SizeGuideModal } from '@/components/product/SizeGuideModal'
 import { StockNotificationButton } from '@/components/product/StockNotificationButton'
 import { useCurrency } from '@/components/currency/CurrencyContext'
+import { useCart } from '@/components/cart/CartProvider'
 import { trackAddToCart, trackCustomization } from '@/lib/analytics'
 
 type Variant = {
@@ -82,6 +84,7 @@ export function AddToCartForm({
   const t = useTranslations('product')
   const { format, currency } = useCurrency()
   const router = useRouter()
+  const { cart } = useCart()
 
   // Internal fallback if not controlled (though we aim to control it)
   const colors = useMemo<ColorOption[]>(
@@ -447,6 +450,17 @@ export function AddToCartForm({
             >
               {isAdding ? t('adding') : t('addToCart')}
             </button>
+            {/* Show Checkout button ONLY if cart has items */}
+            {cart.items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => router.push('/checkout')}
+                title={t('goToCheckout')}
+                className="flex aspect-square h-[42px] items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800 text-zinc-100 transition hover:bg-zinc-700 hover:text-amber-400"
+              >
+                <CreditCard className="h-5 w-5" />
+              </button>
+            )}
           </>
         )}
       </div>
