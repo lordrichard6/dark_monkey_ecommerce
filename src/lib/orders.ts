@@ -129,7 +129,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
             discount_id: discountId || null,
             discount_cents: Number.isFinite(discountCents) ? discountCents : 0,
         })
-        .select('id')
+        .select('id, user_email, guest_email')
         .single()
 
     if (orderError) {
@@ -218,7 +218,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
     }
 
     // Notification
-    const email = guestEmail ?? undefined
+    const email = guestEmail ?? order.user_email ?? undefined
     if (email) {
         console.log('[OrderProcess] Sending confirmation email...')
         await sendOrderConfirmation({
@@ -283,6 +283,8 @@ export async function processSuccessfulCheckout(sessionId: string) {
             if (printfulItems.length > 0) {
                 console.log(`[OrderProcess] Calling createPrintfulOrder with ${printfulItems.length} items...`)
                 const addr = shippingAddressJson.address
+
+                // Always create as DRAFT (confirm: false) so merchant can review/approve in Printful Dashboard
                 const pfResult = await createPrintfulOrder({
                     recipient: {
                         name: shippingAddressJson.name || 'Customer',
@@ -295,14 +297,14 @@ export async function processSuccessfulCheckout(sessionId: string) {
                     },
                     items: printfulItems,
                     external_id: order.id.replace(/-/g, ''),
-                }, false)
+                }, false) // False = Draft / Pending Approval
 
                 if (pfResult.ok && pfResult.printfulOrderId) {
-                    console.log(`[OrderProcess] SUCCESS: Printful Order Created: ${pfResult.printfulOrderId}`)
+                    console.log(`[OrderProcess] SUCCESS: Printful Draft Order Created: ${pfResult.printfulOrderId}`)
                     const { error: updError } = await supabase.from('orders').update({ printful_order_id: pfResult.printfulOrderId }).eq('id', order.id)
                     if (updError) console.error('[OrderProcess] ERROR updating order with PF ID:', updError)
                 } else {
-                    console.error('[OrderProcess] FAILED to create Printful order:', pfResult.error)
+                    console.error('[OrderProcess] FAILED to create Printful draft order:', pfResult.error)
                 }
             } else {
                 console.warn('[OrderProcess] ! No items were valid for Printful fulfillment.')
