@@ -201,7 +201,7 @@ export async function createCheckoutSession(
 
   const getBaseUrl = () => {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+    if (process.env.VERCEL_URL) return 'https://www.dark-monkey.ch'
     return 'http://localhost:3000'
   }
   const baseUrl = getBaseUrl()
