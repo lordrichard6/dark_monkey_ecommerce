@@ -13,7 +13,6 @@ import { colorToHex } from '@/lib/color-swatch'
 import { ColorOption } from '@/types/product'
 import { StockNotificationButton } from '@/components/product/StockNotificationButton'
 import { useCurrency } from '@/components/currency/CurrencyContext'
-import { useCart } from '@/components/cart/CartProvider'
 import { trackAddToCart, trackCustomization } from '@/lib/analytics'
 
 export type Variant = {
@@ -130,7 +129,6 @@ export function AddToCartForm({
   const t = useTranslations('product')
   const { format, currency } = useCurrency()
   const router = useRouter()
-  const { addToCart: contextAddToCart } = useCart()
 
   const [quantity, setQuantity] = useState(1)
   const [isAdding, setIsAdding] = useState(false)
@@ -172,12 +170,13 @@ export function AddToCartForm({
       const def = variantsForColor.find((v) => v.stock > 0)?.id || variantsForColor[0]?.id || null
       setSelectedVariantId(def)
     }
-  }, [selectedColor, variantsForColor])
+  }, [selectedColor, variantsForColor, selectedVariantId])
 
+  const { onVariantChange } = props
   useEffect(() => {
     const v = variants.find((v) => v.id === selectedVariantId)
-    props.onVariantChange?.(v ?? null)
-  }, [selectedVariantId])
+    onVariantChange?.(v ?? null)
+  }, [selectedVariantId, variants, onVariantChange])
 
   const selectedVariant = variants.find((v) => v.id === selectedVariantId)
   const priceCents = selectedVariant?.price_cents || 0
@@ -191,7 +190,7 @@ export function AddToCartForm({
       (props.images || []).find((img) => img.color === selectedColor)?.url || primaryImageUrl
 
     try {
-      await contextAddToCart({
+      await addToCart({
         variantId: selectedVariant.id,
         productId,
         productSlug,

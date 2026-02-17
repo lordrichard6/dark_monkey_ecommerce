@@ -72,7 +72,13 @@ export default async function AdminProductsPage({
 
       <div className="mt-8">
         <ProductListTable
-          products={products || []}
+          products={
+            (products || []).map((p) => ({
+              ...p,
+              categories: Array.isArray(p.categories) ? p.categories[0] : p.categories,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            })) as any
+          }
           currentPage={page}
           totalPages={totalPages}
         />

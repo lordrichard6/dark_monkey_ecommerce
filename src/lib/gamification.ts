@@ -13,7 +13,7 @@ export type TierInfo = {
 }
 
 // Tier thresholds (in cents)
-const TIER_THRESHOLDS = {
+export const TIER_THRESHOLDS = {
   bronze: 0, // CHF 0+
   silver: 50000, // CHF 500+
   gold: 200000, // CHF 2000+
@@ -167,7 +167,14 @@ export const POINTS_REDEMPTION = {
   5000: 6500, // 5000 points = CHF 65 discount (1.3% return rate)
 } as const
 
-/** 
+// Aliases for backward compatibility in tests
+export const XP_REFERRAL_FIRST_PURCHASE = POINTS_RULES.REFERRAL_PURCHASE
+export const xpForPurchase = calculatePurchasePoints
+export const getXpProgress = getTierProgress
+export const getXpToNextTier = getSpendToNextTier
+export const getTierForXp = getTierFromSpend
+
+/**
  * --- CORE GAMIFICATION SERVICE LOGIC ---
  * Extracted here to be shared between server actions and the orders library.
  */
@@ -201,14 +208,12 @@ export async function processXpForPurchase(
   const newOrdersTotal = currentOrders + 1
 
   // Award points via transaction
-  const { error: transactionError } = await supabase
-    .from('points_transactions')
-    .insert({
-      user_id: userId,
-      points: points,
-      reason: 'purchase',
-      reference_id: orderId,
-    })
+  const { error: transactionError } = await supabase.from('points_transactions').insert({
+    user_id: userId,
+    points: points,
+    reason: 'purchase',
+    reference_id: orderId,
+  })
 
   if (transactionError) return { ok: false, error: transactionError.message }
 
@@ -249,14 +254,12 @@ export async function processXpForReferral(
   const newPointsTotal = currentPoints + points
   const newReferralCount = currentReferrals + 1
 
-  const { error: transactionError } = await supabase
-    .from('points_transactions')
-    .insert({
-      user_id: referrerId,
-      points: points,
-      reason: 'referral_purchase',
-      reference_id: null,
-    })
+  const { error: transactionError } = await supabase.from('points_transactions').insert({
+    user_id: referrerId,
+    points: points,
+    reason: 'referral_purchase',
+    reference_id: null,
+  })
 
   if (transactionError) return { ok: false, error: transactionError.message }
 
@@ -275,10 +278,7 @@ export async function processXpForReferral(
   return { ok: true, xp: points, newTotal: newPointsTotal }
 }
 
-export async function checkAndAwardAchievements(
-  supabase: SupabaseClient,
-  userId: string
-) {
+export async function checkAndAwardAchievements(supabase: SupabaseClient, userId: string) {
   // Fetch user stats
   const { data: profile } = await supabase
     .from('user_profiles')
