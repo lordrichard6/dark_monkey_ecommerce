@@ -19,16 +19,30 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, locale } = await params
   const t = await getTranslations('store')
   const category = await getCategoryMetadata(slug)
 
   if (!category) return { title: 'Category' }
 
   const title = t('categoryProductsTitle', { name: category.name })
+  const description = category.description ?? title
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
+
   return {
     title,
-    description: category.description ?? title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: `${SITE_URL}/${locale}/categories/${slug}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   }
 }
 

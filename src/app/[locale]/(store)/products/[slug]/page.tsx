@@ -31,12 +31,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return { title: 'Product' }
 
+  const description = product.description ?? `Shop ${product.name} at DarkMonkey`
+
   return {
     title: product.name,
-    description: product.description ?? `Shop ${product.name}`,
+    description,
     openGraph: {
+      type: 'website',
       title: product.name,
-      description: product.description ?? undefined,
+      description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description,
     },
   }
 }
@@ -97,8 +105,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
     price_cents: number
     attributes: Record<string, string>
     sort_order: number
-    product_inventory: any
     printful_sync_variant_id?: number
+    product_inventory?: Array<{ quantity: number }> | { quantity: number } | null
   }>) ?? []
 
   const minPrice = (variants || []).length ? Math.min(...(variants || []).map((v) => v.price_cents || 0)) : 0
@@ -157,6 +165,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           product={{
             ...product,
             categories: Array.isArray(product.categories) ? product.categories[0] : product.categories,
+            images: sortedImages,
           }}
           images={sortedImages}
           variants={variantsWithStock}

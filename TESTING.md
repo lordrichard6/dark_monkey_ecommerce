@@ -28,6 +28,7 @@ Complete guide for testing the DarkMonkey e-commerce platform.
 - **48 E2E Tests** - Full user journey testing
 
 **Frameworks:**
+
 - **Vitest** - Unit and integration tests
 - **Playwright** - End-to-end tests
 - **Testing Library** - React component testing
@@ -37,7 +38,7 @@ Complete guide for testing the DarkMonkey e-commerce platform.
 ## Test Suite Structure
 
 ```
-ecommerce_premium_app/
+dark_monkey_app/
 ├── src/
 │   ├── actions/__tests__/
 │   │   ├── cart.test.ts                    # Cart actions (6 tests)
@@ -116,12 +117,14 @@ npm test && npm run test:e2e
 ### What to Test
 
 ✅ **Pure Functions**
+
 - Gamification calculations (XP, tiers)
 - Currency conversions
 - Price formatting
 - Utility functions
 
 ✅ **Business Logic**
+
 - Cart operations (add, update, remove)
 - Discount validation
 - Stock management
@@ -143,7 +146,7 @@ describe('Gamification', () => {
 
   it('should award XP for purchases', () => {
     expect(xpForPurchase(10000)).toBe(100) // 100 CHF = 100 XP
-    expect(xpForPurchase(500)).toBe(10)    // 5 CHF = 10 XP (minimum)
+    expect(xpForPurchase(500)).toBe(10) // 5 CHF = 10 XP (minimum)
   })
 })
 ```
@@ -161,12 +164,14 @@ describe('Gamification', () => {
 ### What to Test
 
 ✅ **Multi-Component Flows**
+
 - Authentication (login, signup, logout)
 - Order creation with webhooks
 - Payment processing
 - Email notifications
 
 ✅ **External Integrations**
+
 - Stripe webhooks
 - Supabase database operations
 - Printful order creation
@@ -180,7 +185,7 @@ import { describe, it, expect, vi } from 'vitest'
 describe('Authentication', () => {
   it('should login with valid credentials', async () => {
     const { createClient } = await import('@/lib/supabase/server')
-    
+
     vi.mocked(createClient).mockResolvedValue({
       auth: {
         signInWithPassword: vi.fn().mockResolvedValue({
@@ -215,17 +220,20 @@ describe('Authentication', () => {
 ### What to Test
 
 ✅ **User Journeys**
+
 - Browse products → Add to cart → Checkout
 - Signup → Login → View profile
 - Apply discount → Complete purchase
 - Customize product → Add to cart
 
 ✅ **Cross-Browser**
+
 - Chromium (Chrome/Edge)
 - Firefox
 - Mobile Chrome
 
 ✅ **Viewports**
+
 - Desktop (1280x720)
 - Tablet (768x1024)
 - Mobile (375x667)
@@ -237,23 +245,23 @@ import { test, expect } from '@playwright/test'
 
 test('should complete guest checkout', async ({ page }) => {
   await page.goto('/')
-  
+
   // Add product to cart
   await page.waitForSelector('[data-testid="product-card"]')
   await page.locator('[data-testid="product-card"]').first().click()
   await page.click('button:has-text("Add to Cart")')
-  
+
   // Proceed to checkout
   await page.click('[data-testid="cart-trigger"]')
   await page.click('button:has-text("Checkout")')
-  
+
   // Fill checkout form
   await page.fill('input[name="email"]', 'guest@example.com')
   await page.fill('input[name="fullName"]', 'John Doe')
-  
+
   // Submit
   await page.click('button:has-text("Continue to Payment")')
-  
+
   // Should redirect to Stripe
   await expect(page).toHaveURL(/stripe\.com/)
 })
@@ -314,10 +322,10 @@ it('should calculate discount correctly', () => {
   // Arrange
   const subtotal = 10000
   const discountPercent = 10
-  
+
   // Act
   const discount = calculateDiscount(subtotal, discountPercent)
-  
+
   // Assert
   expect(discount).toBe(1000)
 })
@@ -333,8 +341,12 @@ beforeEach(() => {
 
 // ❌ Bad: Tests depend on each other
 let userId: string
-it('should create user', () => { userId = 'user-123' })
-it('should fetch user', () => { fetchUser(userId) }) // Depends on previous test
+it('should create user', () => {
+  userId = 'user-123'
+})
+it('should fetch user', () => {
+  fetchUser(userId)
+}) // Depends on previous test
 ```
 
 ### 4. Mock External Dependencies
@@ -367,6 +379,7 @@ expect(result.data).toBeTruthy()
 ### GitHub Actions Workflow
 
 Tests run automatically on:
+
 - ✅ Pull requests
 - ✅ Pushes to `main`
 - ✅ Nightly builds
@@ -457,32 +470,32 @@ npm run test:e2e -- --headed
 
 ### Test Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm test` | Run unit/integration tests |
-| `npm test -- --watch` | Watch mode |
-| `npm run test:ui` | Vitest UI |
-| `npm run test:coverage` | Coverage report |
-| `npm run test:e2e` | E2E tests |
-| `npm run test:e2e:ui` | Playwright UI |
+| Command                 | Description                |
+| ----------------------- | -------------------------- |
+| `npm test`              | Run unit/integration tests |
+| `npm test -- --watch`   | Watch mode                 |
+| `npm run test:ui`       | Vitest UI                  |
+| `npm run test:coverage` | Coverage report            |
+| `npm run test:e2e`      | E2E tests                  |
+| `npm run test:e2e:ui`   | Playwright UI              |
 
 ### Coverage Thresholds
 
-| Type | Target |
-|------|--------|
-| Critical paths | 90%+ |
-| Business logic | 80%+ |
-| Utilities | 70%+ |
-| Overall | 70%+ |
+| Type           | Target |
+| -------------- | ------ |
+| Critical paths | 90%+   |
+| Business logic | 80%+   |
+| Utilities      | 70%+   |
+| Overall        | 70%+   |
 
 ### Test Distribution
 
-| Type | Count | Purpose |
-|------|-------|---------|
-| Unit | 89 | Fast, isolated testing |
-| Integration | 29 | Multi-component flows |
-| E2E | 48 | Full user journeys |
-| **Total** | **166** | Complete coverage |
+| Type        | Count   | Purpose                |
+| ----------- | ------- | ---------------------- |
+| Unit        | 89      | Fast, isolated testing |
+| Integration | 29      | Multi-component flows  |
+| E2E         | 48      | Full user journeys     |
+| **Total**   | **166** | Complete coverage      |
 
 ---
 

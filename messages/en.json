@@ -157,6 +157,8 @@
     "metaDescription": "Premium gamified e-commerce — commerce, customization, and progression. Browse our collection.",
     "featuredProducts": "Featured products",
     "premium": "Premium",
+    "quality": "Quality",
+    "craftedFor": "Crafted For",
     "qualityCraftedFor": "Quality Crafted For",
     "you": "You",
     "heroSubtitle": "Experience the pinnacle of craftsmanship and design. Our exclusive collection is designed for those who demand excellence.",
@@ -284,7 +286,12 @@
     "length": "Length",
     "lengthMeasurement": "Measure from the highest point of the shoulder to the bottom hem.",
     "sleeve": "Sleeve",
-    "sleeveMeasurement": "Measure from the center back neck to the wrist with arm extended."
+    "sleeveMeasurement": "Measure from the center back of the neck to the wrist with the arm extended.",
+    "buyNow": "Buy now",
+    "details": "Product Details",
+    "freeShipping": "Free Shipping",
+    "thirtyDayReturns": "30-Day Returns",
+    "oneYearWarranty": "1-Year Warranty"
   },
   "cart": {
     "cartWithItems": "Cart with {count} items",

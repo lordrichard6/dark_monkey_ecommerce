@@ -231,7 +231,12 @@
     "bundlePriceComingSoon": "Calculé à la caisse",
     "addAllToCart": "Tout ajouter au panier",
     "bundle": "Lot Exclusif",
-    "saveAmount": "Meilleure Offre"
+    "saveAmount": "Meilleure Offre",
+    "buyNow": "Acheter maintenant",
+    "details": "Détails du produit",
+    "freeShipping": "Livraison gratuite",
+    "thirtyDayReturns": "Retour sous 30 jours",
+    "oneYearWarranty": "Garantie d'un an"
   },
   "cart": {
     "cartWithItems": "Panier avec {count} articles",

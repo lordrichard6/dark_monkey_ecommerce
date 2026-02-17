@@ -36,17 +36,20 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
     if (open) {
       document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = 'unset'
     }
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
   }, [open])
 
   // Reset categories view when menu closes
   useEffect(() => {
-    if (!open) {
+    if (!open && showCategories) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowCategories(false)
     }
-  }, [open])
+  }, [open, showCategories])
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/'
@@ -87,16 +90,18 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
       {/* Overlay */}
       <div
         role="presentation"
-        className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${open ? 'opacity-100' : 'pointer-events-none opacity-0'
-          }`}
+        className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         onClick={closeMenu}
         aria-hidden={!open}
       />
 
       {/* Slide-out menu */}
       <aside
-        className={`fixed top-0 right-0 z-[70] flex h-full w-[min(320px,85vw)] flex-col border-l border-white/10 bg-zinc-950/98 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out md:hidden ${open ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed top-0 right-0 z-[70] flex h-full w-[min(320px,85vw)] flex-col border-l border-white/10 bg-zinc-950/98 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out md:hidden ${
+          open ? 'translate-x-0' : 'translate-x-full'
+        }`}
         aria-modal="true"
         aria-label="Navigation menu"
         aria-hidden={!open}
@@ -104,10 +109,14 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
         <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
           <button
             type="button"
-            onClick={() => showCategories ? setShowCategories(false) : closeMenu()}
+            onClick={() => (showCategories ? setShowCategories(false) : closeMenu())}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
           >
-            {showCategories ? <ChevronIcon className="h-5 w-5 rotate-180" /> : <CloseIcon className="h-5 w-5" />}
+            {showCategories ? (
+              <ChevronIcon className="h-5 w-5 rotate-180" />
+            ) : (
+              <CloseIcon className="h-5 w-5" />
+            )}
           </button>
           <div className="flex-1 flex justify-center">
             <DarkMonkeyLogo size="sm" href="/" onClick={closeMenu} />
@@ -118,17 +127,24 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
         <div className="relative flex-1 overflow-hidden">
           {/* Main Focused View */}
           <div
-            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${showCategories ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
-              }`}
+            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${
+              showCategories
+                ? '-translate-y-full opacity-0 pointer-events-none'
+                : 'translate-y-0 opacity-100'
+            }`}
           >
-            <nav className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <nav
+              className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               <Link
                 href="/"
                 onClick={closeMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/')
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                  }`}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                  isActive('/')
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                }`}
               >
                 <HomeIcon className="h-5 w-5 shrink-0" />
                 {t('shop')}
@@ -137,10 +153,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
               <Link
                 href="/art"
                 onClick={closeMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/art')
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                  }`}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                  isActive('/art')
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                }`}
               >
                 <ImageIcon className="h-5 w-5 shrink-0" />
                 Art
@@ -149,10 +166,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
               <Link
                 href="/account/wishlist"
                 onClick={closeMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/account/wishlist')
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                  }`}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                  isActive('/account/wishlist')
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                }`}
               >
                 <HeartIcon className="h-5 w-5 shrink-0" />
                 {t('wishlist')}
@@ -161,10 +179,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
               <button
                 type="button"
                 onClick={() => setShowCategories(true)}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${showCategories
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                  }`}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                  showCategories
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                }`}
               >
                 <GridIcon className="h-5 w-5 shrink-0" />
                 <span className="flex-1 text-left">Browse Categories</span>
@@ -179,10 +198,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   <Link
                     href="/admin/dashboard"
                     onClick={closeMenu}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/dashboard')
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                      isActive('/admin/dashboard')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'text-amber-500/60 hover:bg-white/10 hover:text-amber-400'
+                    }`}
                   >
                     <LayoutDashboardIcon className="h-5 w-5 shrink-0" />
                     Dashboard
@@ -190,10 +210,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   <Link
                     href="/admin/products"
                     onClick={closeMenu}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/products')
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                      isActive('/admin/products')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'text-amber-500/60 hover:bg-white/10 hover:text-amber-400'
+                    }`}
                   >
                     <BoxIcon className="h-5 w-5 shrink-0" />
                     Products
@@ -201,10 +222,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   <Link
                     href="/admin/orders"
                     onClick={closeMenu}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/orders')
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                      isActive('/admin/orders')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'text-amber-500/60 hover:bg-white/10 hover:text-amber-400'
+                    }`}
                   >
                     <PackageIcon className="h-5 w-5 shrink-0" />
                     Orders
@@ -212,10 +234,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   <Link
                     href="/admin/discounts"
                     onClick={closeMenu}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/discounts')
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                      isActive('/admin/discounts')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'text-amber-500/60 hover:bg-white/10 hover:text-amber-400'
+                    }`}
                   >
                     <TagIcon className="h-5 w-5 shrink-0" />
                     Discounts
@@ -223,10 +246,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   <Link
                     href="/admin/gallery"
                     onClick={closeMenu}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/gallery')
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                      isActive('/admin/gallery')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'text-amber-500/60 hover:bg-white/10 hover:text-amber-400'
+                    }`}
                   >
                     <ImageIcon className="h-5 w-5 shrink-0" />
                     Gallery
@@ -234,10 +258,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   <Link
                     href="/admin/settings"
                     onClick={closeMenu}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/settings')
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                      isActive('/admin/settings')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'text-amber-500/60 hover:bg-white/10 hover:text-amber-400'
+                    }`}
                   >
                     <SettingsIcon className="h-5 w-5 shrink-0" />
                     Settings
@@ -245,10 +270,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                   <Link
                     href="/admin/features"
                     onClick={closeMenu}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/admin/features')
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                      }`}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                      isActive('/admin/features')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'text-amber-500/60 hover:bg-white/10 hover:text-amber-400'
+                    }`}
                   >
                     <SparklesIcon className="h-5 w-5 shrink-0" />
                     Features
@@ -260,12 +286,17 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
 
           {/* Categories Expanded View */}
           <div
-            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${showCategories ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
-              }`}
+            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${
+              showCategories
+                ? 'translate-y-0 opacity-100'
+                : 'translate-y-full opacity-0 pointer-events-none'
+            }`}
           >
             <nav className="flex-1 overflow-y-auto p-4">
               <div className="mb-4 flex items-center justify-between px-2">
-                <h3 className="text-sm font-bold text-zinc-50 uppercase tracking-widest">{t('categories')}</h3>
+                <h3 className="text-sm font-bold text-zinc-50 uppercase tracking-widest">
+                  {t('categories')}
+                </h3>
                 <button
                   onClick={() => setShowCategories(false)}
                   className="text-[10px] font-bold text-amber-400 uppercase"
@@ -276,10 +307,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
               <Link
                 href="/categories"
                 onClick={closeMenu}
-                className={`block rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/categories')
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                  }`}
+                className={`block rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                  isActive('/categories')
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                }`}
               >
                 {t('allCategories')}
               </Link>
@@ -291,10 +323,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                       <button
                         type="button"
                         onClick={() => setOpenCategoryId(isCatOpen ? null : cat.id)}
-                        className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition ${isActive(`/categories/${cat.slug}`)
-                          ? 'text-amber-400 bg-white/5'
-                          : 'text-zinc-400 hover:text-zinc-50 hover:bg-white/5'
-                          }`}
+                        className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition ${
+                          isActive(`/categories/${cat.slug}`)
+                            ? 'text-amber-400 bg-white/5'
+                            : 'text-zinc-400 hover:text-zinc-50 hover:bg-white/5'
+                        }`}
                       >
                         <span className="text-sm font-medium">{cat.name}</span>
                         {cat.subcategories && cat.subcategories.length > 0 && (
@@ -304,21 +337,23 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                         )}
                       </button>
                       <div
-                        className={`grid transition-all duration-200 ease-in-out ${isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                          }`}
+                        className={`grid transition-all duration-200 ease-in-out ${
+                          isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                        }`}
                       >
                         <div className="overflow-hidden">
                           {cat.subcategories && (
                             <div className="space-y-1 bg-black/20 px-2 py-1 ml-4 rounded-lg">
-                              {cat.subcategories.map(sub => (
+                              {cat.subcategories.map((sub) => (
                                 <Link
                                   key={sub.id}
                                   href={`/categories/${sub.slug}`}
                                   onClick={closeMenu}
-                                  className={`block rounded-lg px-6 py-2 text-xs transition ${isActive(`/categories/${sub.slug}`)
-                                    ? 'text-amber-500 font-bold'
-                                    : 'text-zinc-500 hover:text-zinc-300'
-                                    }`}
+                                  className={`block rounded-lg px-6 py-2 text-xs transition ${
+                                    isActive(`/categories/${sub.slug}`)
+                                      ? 'text-amber-500 font-bold'
+                                      : 'text-zinc-500 hover:text-zinc-300'
+                                  }`}
                                 >
                                   {sub.name}
                                 </Link>
@@ -351,17 +386,16 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                     </span>
                   )}
                 </div>
-                {user.email && (
-                  <p className="truncate text-xs text-zinc-500">{user.email}</p>
-                )}
+                {user.email && <p className="truncate text-xs text-zinc-500">{user.email}</p>}
               </div>
               <Link
                 href="/account"
                 onClick={closeMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/account')
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                  }`}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                  isActive('/account')
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                }`}
               >
                 <UserIcon className="h-5 w-5 shrink-0" />
                 {tUser('account')}
@@ -369,10 +403,11 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
               <Link
                 href="/account/orders"
                 onClick={closeMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${isActive('/account/orders')
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                  }`}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                  isActive('/account/orders')
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+                }`}
               >
                 <OrdersIcon className="h-5 w-5 shrink-0" />
                 {tUser('orders')}
@@ -572,7 +607,16 @@ function LogOutIcon({ className }: { className?: string }) {
 
 function LayoutDashboardIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <rect width="7" height="9" x="3" y="3" rx="1" />
       <rect width="7" height="5" x="14" y="3" rx="1" />
       <rect width="7" height="9" x="14" y="12" rx="1" />
@@ -583,7 +627,16 @@ function LayoutDashboardIcon({ className }: { className?: string }) {
 
 function BoxIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
       <path d="m3.3 7 8.7 5 8.7-5" />
       <path d="M12 22V12" />
@@ -593,7 +646,16 @@ function BoxIcon({ className }: { className?: string }) {
 
 function PackageIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
       <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
       <path d="M12 11v4" />
@@ -604,7 +666,16 @@ function PackageIcon({ className }: { className?: string }) {
 
 function TagIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
       <path d="M7 7h.01" />
     </svg>
@@ -613,7 +684,16 @@ function TagIcon({ className }: { className?: string }) {
 
 function SettingsIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
       <circle cx="12" cy="12" r="3" />
     </svg>

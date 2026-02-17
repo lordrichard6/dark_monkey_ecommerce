@@ -9,7 +9,7 @@ import {
   fetchCatalogProduct,
   isPrintfulConfigured,
   PrintfulSyncProduct,
-  PrintfulSyncVariant
+  PrintfulSyncVariant,
 } from '@/lib/printful'
 import { PRINTFUL_CONFIG } from '@/lib/printful/config'
 import { revalidatePath } from 'next/cache'
@@ -23,11 +23,18 @@ import { printfulAnalytics } from '@/lib/printful/analytics'
 async function resolveCatalogDetails(
   retailPrice: string | undefined,
   catalogVariantId: number
-): Promise<{ priceCents: number; rrpCents: number; colorCode?: string; colorCode2?: string; inStock: boolean }> {
+): Promise<{
+  priceCents: number
+  rrpCents: number
+  colorCode?: string
+  colorCode2?: string
+  inStock: boolean
+}> {
   const retail = parseFloat(retailPrice || '0')
   const details = await fetchCatalogVariant(catalogVariantId)
 
-  let priceCents = retail > 0 ? Math.round(retail * 100) : PRINTFUL_CONFIG.CONSTANTS.DEFAULT_RETAIL_PRICE_CENTS
+  let priceCents =
+    retail > 0 ? Math.round(retail * 100) : PRINTFUL_CONFIG.CONSTANTS.DEFAULT_RETAIL_PRICE_CENTS
   let rrpCents = priceCents
   let colorCode: string | undefined
   let colorCode2: string | undefined
@@ -49,7 +56,6 @@ async function resolveCatalogDetails(
   return { priceCents, rrpCents, colorCode, colorCode2, inStock }
 }
 
-
 async function ensureProductImages(
   supabase: NonNullable<ReturnType<typeof import('@/lib/supabase/admin').getAdminClient>>,
   productId: string,
@@ -59,7 +65,10 @@ async function ensureProductImages(
   logs?: string[]
 ) {
   // 1. Identify "Keeper" URLs with metadata
-  const keepers = new Map<string, { url: string; color: string | null; printful_sync_variant_id?: number }>()
+  const keepers = new Map<
+    string,
+    { url: string; color: string | null; printful_sync_variant_id?: number }
+  >()
 
   // A. Main Thumbnail
   const thumbUrl = (sync_product.thumbnail_url || sync_variants[0]?.product?.image) ?? undefined
@@ -73,21 +82,35 @@ async function ensureProductImages(
     const color = sv.color || null
 
     if (sv.name.includes('Carolina Blue')) {
-      const logMsg = `[ensureProductImages] Processing Carolina Blue files (Variant ID: ${sv.id}):\n` +
-        (sv.files ? sv.files.map(f => `  - Type: ${f.type}, URL: ${f.preview_url || f.thumbnail_url}`).join('\n') : '  - No files') + '\n';
+      const logMsg =
+        `[ensureProductImages] Processing Carolina Blue files (Variant ID: ${sv.id}):\n` +
+        (sv.files
+          ? sv.files
+              .map((f) => `  - Type: ${f.type}, URL: ${f.preview_url || f.thumbnail_url}`)
+              .join('\n')
+          : '  - No files') +
+        '\n'
       // console.log(logMsg);
-      if (logs) logs.push(logMsg);
+      if (logs) logs.push(logMsg)
       try {
-        fs.appendFileSync(path.join(process.cwd(), 'sync-debug.log'), logMsg);
-      } catch (e) { console.error('Failed to write to log file', e); }
+        fs.appendFileSync(path.join(process.cwd(), 'sync-debug.log'), logMsg)
+      } catch (e) {
+        console.error('Failed to write to log file', e)
+      }
     }
 
     const allFiles = sv.files || []
-    const previewFiles = allFiles.filter(f => f.type === 'preview' && (f.preview_url || f.thumbnail_url))
-    const otherFiles = allFiles.filter(f =>
-      (f.type === 'default' || f.type === 'back' || f.type === 'front' || f.type.includes('sleeve')) &&
-      (f.preview_url || f.thumbnail_url) &&
-      f.type !== 'preview'
+    const previewFiles = allFiles.filter(
+      (f) => f.type === 'preview' && (f.preview_url || f.thumbnail_url)
+    )
+    const otherFiles = allFiles.filter(
+      (f) =>
+        (f.type === 'default' ||
+          f.type === 'back' ||
+          f.type === 'front' ||
+          f.type.includes('sleeve')) &&
+        (f.preview_url || f.thumbnail_url) &&
+        f.type !== 'preview'
     )
 
     if (previewFiles.length > 0) {
@@ -116,7 +139,7 @@ async function ensureProductImages(
   }
 
   // 2. DELETE ALL existing Printful images for this product
-  const { data: _deletedImages } = await supabase
+  await supabase
     .from('product_images')
     .delete()
     .eq('product_id', productId)
@@ -126,22 +149,22 @@ async function ensureProductImages(
   // console.log(`[ensureProductImages] Deleted ${deletedImages?.length || 0} old Printful images for product ${productId}`)
 
   // 3. Insert ALL keeper images with variant mapping
-  const toInsert = Array.from(keepers.values())
-    .map((metadata, index) => {
-      const { url, color, printful_sync_variant_id } = metadata
-      const variant_id = printful_sync_variant_id && variantIdMap
+  const toInsert = Array.from(keepers.values()).map((metadata, index) => {
+    const { url, color, printful_sync_variant_id } = metadata
+    const variant_id =
+      printful_sync_variant_id && variantIdMap
         ? variantIdMap.get(printful_sync_variant_id) || null
         : null
 
-      return {
-        product_id: productId,
-        url,
-        alt: color ? `${sync_product.name} (${color})` : sync_product.name,
-        sort_order: index,
-        color,
-        variant_id,
-      }
-    })
+    return {
+      product_id: productId,
+      url,
+      alt: color ? `${sync_product.name} (${color})` : sync_product.name,
+      sort_order: index,
+      color,
+      variant_id,
+    }
+  })
 
   if (toInsert.length > 0) {
     const { error: insertError } = await supabase.from('product_images').insert(toInsert)
@@ -160,7 +183,6 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, '')
 }
 
-
 /**
  * Helper to Create or Update Product
  */
@@ -171,7 +193,6 @@ async function upsertProduct(
   sync_variants: PrintfulSyncVariant[],
   categoryId: string | null
 ): Promise<{ productId?: string; error?: string; skipped?: boolean; synced?: boolean }> {
-
   // Check existing
   const { data: existing } = await supabase
     .from('products')
@@ -242,7 +263,6 @@ async function syncVariants(
   sync_product: PrintfulSyncProduct,
   sync_variants: PrintfulSyncVariant[]
 ): Promise<{ variantIdMap?: Map<number, string>; error?: string }> {
-
   const { data: existingVariants } = await supabase
     .from('product_variants')
     .select('id, printful_sync_variant_id, price_cents')
@@ -257,7 +277,7 @@ async function syncVariants(
   )
 
   // Resolve details
-  const variantPromises = sync_variants.map(sv =>
+  const variantPromises = sync_variants.map((sv) =>
     resolveCatalogDetails(sv.retail_price, sv.variant_id)
   )
   const variantDetails = await Promise.all(variantPromises)
@@ -266,7 +286,7 @@ async function syncVariants(
     const sv = sync_variants[i]
     const { priceCents, rrpCents, colorCode, colorCode2, inStock } = variantDetails[i]
 
-    const attrs: Record<string, any> = {}
+    const attrs: Record<string, string | number> = {}
     if (sv.size) attrs.size = sv.size
     if (sv.color) attrs.color = sv.color
     if (colorCode) attrs.color_code = colorCode
@@ -280,7 +300,7 @@ async function syncVariants(
         .from('product_variants')
         .update({
           price_cents: existingVar.price_cents === 0 ? priceCents : existingVar.price_cents,
-          attributes: attrs
+          attributes: attrs,
         })
         .eq('id', existingVar.id)
 
@@ -288,7 +308,7 @@ async function syncVariants(
       await supabase.from('product_inventory').upsert(
         {
           variant_id: existingVar.id,
-          quantity: inStock ? PRINTFUL_CONFIG.CONSTANTS.DEFAULT_INVENTORY_QTY : 0
+          quantity: inStock ? PRINTFUL_CONFIG.CONSTANTS.DEFAULT_INVENTORY_QTY : 0,
         },
         { onConflict: 'variant_id' }
       )
@@ -314,7 +334,7 @@ async function syncVariants(
       await supabase.from('product_inventory').upsert(
         {
           variant_id: newVar.id,
-          quantity: inStock ? PRINTFUL_CONFIG.CONSTANTS.DEFAULT_INVENTORY_QTY : 0
+          quantity: inStock ? PRINTFUL_CONFIG.CONSTANTS.DEFAULT_INVENTORY_QTY : 0,
         },
         { onConflict: 'variant_id' }
       )
@@ -339,8 +359,89 @@ async function syncVariants(
   return { variantIdMap }
 }
 
+export async function getPrintfulSyncStats(): Promise<{
+  ok: boolean
+  total?: number
+  error?: string
+}> {
+  if (!isPrintfulConfigured()) return { ok: false, error: 'Printful not configured' }
+  const res = await fetchStoreProducts(0, 1)
+  if (!res.ok) return { ok: false, error: res.error }
+  return { ok: true, total: res.total }
+}
 
-export async function syncPrintfulProducts(debug = false, onlyLatest = false): Promise<{
+export async function getPrintfulSyncProductIds(
+  limit = 100,
+  offset = 0
+): Promise<{
+  ok: boolean
+  products?: { id: number; name: string }[]
+  total?: number
+  error?: string
+}> {
+  if (!isPrintfulConfigured()) return { ok: false, error: 'Printful not configured' }
+  const res = await fetchStoreProducts(offset, limit)
+  if (!res.ok) return { ok: false, error: res.error }
+  return {
+    ok: true,
+    products: res.products?.map((p) => ({ id: p.id, name: p.name })),
+    total: res.total,
+  }
+}
+
+export async function syncPrintfulProductById(
+  pfProductId: number
+): Promise<{ ok: boolean; error?: string; product?: { id: string; name: string } }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Database not configured' }
+
+  const detailRes = await fetchSyncProduct(pfProductId)
+  if (!detailRes.ok || !detailRes.product?.sync_variants?.length) {
+    return { ok: false, error: detailRes.error ?? 'Product not found or has no variants' }
+  }
+
+  const { sync_product, sync_variants } = detailRes.product
+
+  const { data: defaultCat } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', 'apparel')
+    .single()
+  const categoryId = defaultCat?.id ?? null
+
+  // 1. Upsert Product
+  const productRes = await upsertProduct(supabase, sync_product, sync_variants, categoryId)
+  if (!productRes.productId)
+    return { ok: false, error: productRes.error || 'Failed to sync product' }
+
+  // 2. Sync Variants
+  const variantRes = await syncVariants(supabase, productRes.productId, sync_product, sync_variants)
+  if (variantRes.error) return { ok: false, error: variantRes.error }
+
+  // 3. Sync Images
+  if (variantRes.variantIdMap) {
+    await ensureProductImages(
+      supabase,
+      productRes.productId,
+      sync_product,
+      sync_variants,
+      variantRes.variantIdMap
+    )
+  }
+
+  return {
+    ok: true,
+    product: { id: productRes.productId, name: sync_product.name },
+  }
+}
+
+export async function syncPrintfulProducts(
+  debug = false,
+  onlyLatest = false
+): Promise<{
   ok: boolean
   synced?: number
   skipped?: number
@@ -355,7 +456,8 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
   const user = isCli ? { id: 'cli-admin', email: 'cli@example.com' } : await getAdminUser()
 
   if (!user) return { ok: false, error: 'Unauthorized' }
-  if (!isPrintfulConfigured()) return { ok: false, error: 'Printful not configured (PRINTFUL_API_TOKEN)' }
+  if (!isPrintfulConfigured())
+    return { ok: false, error: 'Printful not configured (PRINTFUL_API_TOKEN)' }
 
   const supabase = getAdminClient()
   if (!supabase) return { ok: false, error: 'Database not configured' }
@@ -368,19 +470,20 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
   let offset = 0
   const limit = onlyLatest ? 1 : PRINTFUL_CONFIG.CONSTANTS.SYNC_LIMIT
 
-  const { data: defaultCat } = await supabase
-    .from('categories')
-    .select('id')
-    .eq('slug', 'apparel')
-    .single()
-  const categoryId = defaultCat?.id ?? null
-
   while (true) {
     const listRes = await fetchStoreProducts(offset, limit)
 
     if (debug) {
-      logger.debug('Fetched store products', { offset, limit, count: listRes.products?.length ?? 0, operation: 'sync' })
-      logger.info(`Fetched store products offset=${offset} limit=${limit} count=${listRes.products?.length ?? 0}`, { operation: 'sync' });
+      logger.debug('Fetched store products', {
+        offset,
+        limit,
+        count: listRes.products?.length ?? 0,
+        operation: 'sync',
+      })
+      logger.info(
+        `Fetched store products offset=${offset} limit=${limit} count=${listRes.products?.length ?? 0}`,
+        { operation: 'sync' }
+      )
     }
     if (!listRes.ok) {
       return { ok: false, error: listRes.error ?? 'Printful API error', logs }
@@ -392,7 +495,7 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
           synced: 0,
           skipped: 0,
           error: 'No products in your Printful store.',
-          logs
+          logs,
         }
       }
       break
@@ -404,42 +507,20 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
     for (let i = 0; i < listRes.products.length; i += BATCH_SIZE) {
       const batch = listRes.products.slice(i, i + BATCH_SIZE)
 
-      await Promise.all(batch.map(async (pf) => {
-        const detailRes = await fetchSyncProduct(pf.id)
-        if (debug) {
-          logger.debug('Fetched sync product detail', { productId: pf.id, name: pf.name, operation: 'sync' })
-        }
-        if (!detailRes.ok || !detailRes.product?.sync_variants?.length) {
-          if (detailRes.error && !firstError) firstError = `Printful API: ${detailRes.error}`
-          skipped++
-          return
-        }
-
-        const { sync_product, sync_variants } = detailRes.product
-        const msg = `Syncing product: ${sync_product.name} (ID: ${sync_product.id})`;
-        console.log(msg);
-        logs.push(msg);
-
-        // 1. Upsert Product
-        const productRes = await upsertProduct(supabase, sync_product, sync_variants, categoryId)
-        if (!productRes.productId) {
-          if (productRes.error && !firstError) firstError = productRes.error
-          skipped++
-          return
-        }
-        if (productRes.synced) synced++
-
-        // 2. Sync Variants
-        const variantRes = await syncVariants(supabase, productRes.productId, sync_product, sync_variants)
-        if (variantRes.error) {
-          if (!firstError) firstError = variantRes.error
-        }
-
-        // 3. Sync Images
-        if (variantRes.variantIdMap) {
-          await ensureProductImages(supabase, productRes.productId, sync_product, sync_variants, variantRes.variantIdMap, logs)
-        }
-      }))
+      await Promise.all(
+        batch.map(async (pf) => {
+          const syncRes = await syncPrintfulProductById(pf.id)
+          if (!syncRes.ok) {
+            if (!firstError) firstError = syncRes.error ?? 'Unknown error'
+            skipped++
+            return
+          }
+          synced++
+          const msg = `Syncing product: ${syncRes.product?.name} (ID: ${pf.id})`
+          console.log(msg)
+          logs.push(msg)
+        })
+      )
 
       if (onlyLatest && i === 0) break
     }
@@ -454,7 +535,7 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
     revalidatePath('/admin/products')
     revalidatePath('/admin/dashboard')
     revalidatePath('/')
-  } catch (_err) {
+  } catch {
     // Ignored: revalidatePath fails in standalone scripts
     if (debug) console.warn('revalidatePath skipped (script context)')
   }
@@ -465,14 +546,15 @@ export async function syncPrintfulProducts(debug = false, onlyLatest = false): P
     skipped,
     totalFromApi,
     duration,
-    errors: firstError ? [firstError] : undefined
+    errors: firstError ? [firstError] : undefined,
   })
 
   return {
     ok: true,
     synced,
     skipped,
-    error: synced > 0 ? undefined : (firstError ?? (totalFromApi === 0 ? 'No products' : undefined)),
-    logs
+    error:
+      synced > 0 ? undefined : (firstError ?? (totalFromApi === 0 ? 'No products' : undefined)),
+    logs,
   }
 }

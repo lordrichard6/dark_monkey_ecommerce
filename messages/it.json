@@ -231,7 +231,12 @@
     "bundlePriceComingSoon": "Calcolato al checkout",
     "addAllToCart": "Aggiungi tutti al carrello",
     "bundle": "Pacchetto Esclusivo",
-    "saveAmount": "Miglior Prezzo"
+    "saveAmount": "Miglior Prezzo",
+    "buyNow": "Acquista ora",
+    "details": "Dettagli del prodotto",
+    "freeShipping": "Spedizione gratuita",
+    "thirtyDayReturns": "Reso entro 30 giorni",
+    "oneYearWarranty": "1 anno di garanzia"
   },
   "cart": {
     "cartWithItems": "Carrello con {count} articoli",

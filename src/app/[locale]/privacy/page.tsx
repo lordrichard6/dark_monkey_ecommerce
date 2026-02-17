@@ -4,9 +4,22 @@ import { PolicyPageLayout } from '@/components/PolicyPageLayout'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('privacy')
+  const title = t('title')
+  const description = t('description')
+
   return {
-    title: t('title'),
-    description: t('description'),
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   }
 }
 

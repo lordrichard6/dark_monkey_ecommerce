@@ -32,7 +32,7 @@ type Props = {
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params
   // Fix: Check if locale exists in routing.locales directly since hasLocale might not be available
-  if (!routing.locales.includes(locale as any)) notFound()
+  if (!routing.locales.includes(locale as typeof routing.locales[number])) notFound()
   setRequestLocale(locale)
 
   const [messages, cart, announcements] = await Promise.all([
@@ -81,9 +81,15 @@ export default async function LocaleLayout({ children, params }: Props) {
             zIndex={99999}
           />
           <GradientBackground />
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[99999] focus:rounded-lg focus:bg-green-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-lg"
+          >
+            Skip to main content
+          </a>
           <AnnouncementBar announcements={announcements} />
           <Header />
-          <main className="relative flex min-h-screen flex-col pt-14 md:pl-16">
+          <main id="main-content" className="relative flex min-h-screen flex-col pt-14 md:pl-16">
             {children}
           </main>
           <Footer />

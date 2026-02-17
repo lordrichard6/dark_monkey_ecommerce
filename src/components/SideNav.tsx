@@ -29,12 +29,12 @@ export function SideNav({ isAdmin }: Props) {
 
   const adminItems = isAdmin
     ? [
-      { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutDashboardIcon },
-      { href: '/admin/products', label: t('products'), icon: BoxIcon },
-      { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
-      { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon },
-      { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
-    ]
+        { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutDashboardIcon },
+        { href: '/admin/products', label: t('products'), icon: BoxIcon },
+        { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
+        { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon },
+        { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
+      ]
     : []
 
   return (
@@ -53,16 +53,16 @@ export function SideNav({ isAdmin }: Props) {
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
         {commonItems.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
+          const isActive = pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${isActive
-                ? 'bg-white/10 text-zinc-50'
-                : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
-                }`}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
+                isActive
+                  ? 'bg-white/10 text-zinc-50'
+                  : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
+              }`}
             >
               <Icon className="h-5 w-5 shrink-0" />
               {expanded && <span className="truncate">{label}</span>}
@@ -75,10 +75,11 @@ export function SideNav({ isAdmin }: Props) {
           <button
             type="button"
             onClick={() => setCategoriesOpen(!categoriesOpen)}
-            className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${pathname.startsWith('/categories')
-              ? 'bg-white/10 text-zinc-50'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
-              }`}
+            className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
+              pathname.startsWith('/categories')
+                ? 'bg-white/10 text-zinc-50'
+                : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
+            }`}
           >
             <span className="flex items-center gap-3">
               <GridIcon className="h-5 w-5 shrink-0" />
@@ -91,17 +92,19 @@ export function SideNav({ isAdmin }: Props) {
             )}
           </button>
           <div
-            className={`grid transition-all duration-300 ease-in-out ${categoriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-              }`}
+            className={`grid transition-all duration-300 ease-in-out ${
+              categoriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+            }`}
           >
             <div className="overflow-hidden">
               <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-3 pb-2">
                 <Link
                   href="/categories"
-                  className={`block rounded px-2 py-1.5 text-xs transition ${pathname === '/categories'
-                    ? 'text-amber-400'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
+                  className={`block rounded px-2 py-1.5 text-xs transition ${
+                    pathname === '/categories'
+                      ? 'text-amber-400'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
                 >
                   {t('allCategories')}
                 </Link>
@@ -112,10 +115,11 @@ export function SideNav({ isAdmin }: Props) {
                       <button
                         type="button"
                         onClick={() => setOpenCategoryId(isCatOpen ? null : cat.id)}
-                        className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-xs transition ${pathname.startsWith(`/categories/${cat.slug}`)
-                          ? 'text-amber-400'
-                          : 'text-zinc-500 hover:text-zinc-300'
-                          }`}
+                        className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-xs transition ${
+                          pathname.startsWith(`/categories/${cat.slug}`)
+                            ? 'text-amber-400'
+                            : 'text-zinc-500 hover:text-zinc-300'
+                        }`}
                       >
                         <span>{cat.name}</span>
                         {cat.subcategories && cat.subcategories.length > 0 && (
@@ -125,20 +129,22 @@ export function SideNav({ isAdmin }: Props) {
                         )}
                       </button>
                       <div
-                        className={`grid transition-all duration-200 ease-in-out ${isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                          }`}
+                        className={`grid transition-all duration-200 ease-in-out ${
+                          isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                        }`}
                       >
                         <div className="overflow-hidden">
                           {cat.subcategories && (
                             <div className="ml-2 mt-0.5 space-y-0.5 border-l border-white/5 pl-2">
-                              {cat.subcategories.map(sub => (
+                              {cat.subcategories.map((sub) => (
                                 <Link
                                   key={sub.id}
                                   href={`/categories/${sub.slug}`}
-                                  className={`block rounded px-2 py-1 transition text-[10px] ${pathname === `/categories/${sub.slug}`
-                                    ? 'text-amber-500'
-                                    : 'text-zinc-600 hover:text-zinc-400'
-                                    }`}
+                                  className={`block rounded px-2 py-1 transition text-[10px] ${
+                                    pathname === `/categories/${sub.slug}`
+                                      ? 'text-amber-500'
+                                      : 'text-zinc-600 hover:text-zinc-400'
+                                  }`}
                                 >
                                   {sub.name}
                                 </Link>
@@ -170,10 +176,11 @@ export function SideNav({ isAdmin }: Props) {
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${isActive
-                    ? 'bg-white/10 text-zinc-50'
-                    : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-50'
-                    }`}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
+                    isActive
+                      ? 'bg-amber-500/20 text-amber-400 font-bold'
+                      : 'text-amber-500/60 hover:bg-amber-500/10 hover:text-amber-400 focus:text-amber-400'
+                  }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
                   {expanded && <span className="truncate">{label}</span>}
@@ -280,7 +287,16 @@ function ChevronIcon({ className }: { className?: string }) {
 
 function LayoutDashboardIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <rect width="7" height="9" x="3" y="3" rx="1" />
       <rect width="7" height="5" x="14" y="3" rx="1" />
       <rect width="7" height="9" x="14" y="12" rx="1" />
@@ -291,7 +307,16 @@ function LayoutDashboardIcon({ className }: { className?: string }) {
 
 function BoxIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
       <path d="m3.3 7 8.7 5 8.7-5" />
       <path d="M12 22V12" />
@@ -301,7 +326,16 @@ function BoxIcon({ className }: { className?: string }) {
 
 function PackageIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
       <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
       <path d="M12 11v4" />
@@ -312,7 +346,16 @@ function PackageIcon({ className }: { className?: string }) {
 
 function TagIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
       <path d="M7 7h.01" />
     </svg>
@@ -321,7 +364,16 @@ function TagIcon({ className }: { className?: string }) {
 
 function SettingsIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -329,7 +381,16 @@ function SettingsIcon({ className }: { className?: string }) {
 }
 function MessageSquareIcon({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   )

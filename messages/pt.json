@@ -78,6 +78,8 @@
     "metaDescription": "E-commerce premium gamificado — comércio, personalização e progressão. Explora a nossa coleção.",
     "featuredProducts": "Produtos em destaque",
     "premium": "Premium",
+    "quality": "Qualidade",
+    "craftedFor": "Feita Para",
     "qualityCraftedFor": "Qualidade Feita Para",
     "you": "Ti",
     "heroSubtitle": "Experimenta o auge do artesanato e design. A nossa coleção exclusiva foi pensada para quem exige excelência.",
@@ -268,7 +270,12 @@
     "length": "Comprimento",
     "lengthMeasurement": "Meça desde o ponto mais alto do ombro até à bainha inferior.",
     "sleeve": "Manga",
-    "sleeveMeasurement": "Meça desde o centro da nuca até ao pulso com o braço estendido."
+    "sleeveMeasurement": "Meça desde o centro da nuca até ao pulso com o braço estendido.",
+    "buyNow": "Comprar agora",
+    "details": "Detalhes do Produto",
+    "freeShipping": "Portes Grátis",
+    "thirtyDayReturns": "Reembolso em 30 Dias",
+    "oneYearWarranty": "1 Ano de Garantia"
   },
   "cart": {
     "cartWithItems": "Carrinho com {count} artigos",

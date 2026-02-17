@@ -268,7 +268,12 @@
     "length": "Länge",
     "lengthMeasurement": "Messen Sie vom höchsten Punkt der Schulter bis zum unteren Saum.",
     "sleeve": "Ärmel",
-    "sleeveMeasurement": "Messen Sie von der hinteren Mitte des Halses bis zum Handgelenk bei gestrecktem Arm."
+    "sleeveMeasurement": "Messen Sie von der hinteren Mitte des Halses bis zum Handgelenk bei gestrecktem Arm.",
+    "buyNow": "Jetzt kaufen",
+    "details": "Produktdetails",
+    "freeShipping": "Kostenloser Versand",
+    "thirtyDayReturns": "30 Tage Rückgaberecht",
+    "oneYearWarranty": "1 Jahr Garantie"
   },
   "cart": {
     "cartWithItems": "Warenkorb mit {count} Artikeln",
