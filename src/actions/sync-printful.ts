@@ -265,15 +265,23 @@ async function syncVariants(
 ): Promise<{ variantIdMap?: Map<number, string>; error?: string }> {
   const { data: existingVariants } = await supabase
     .from('product_variants')
-    .select('id, printful_sync_variant_id, price_cents')
+    .select('id, printful_sync_variant_id, printful_variant_id, price_cents, sku')
     .eq('product_id', productId)
 
+  // Primary lookup: by printful_sync_variant_id (already synced variants)
   const existingByPfId = new Map(
     (existingVariants ?? [])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((v: any) => v.printful_sync_variant_id != null)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((v: any) => [v.printful_sync_variant_id, v])
+  )
+
+  // Fallback lookup: by SKU (catches variants that exist but have null printful_sync_variant_id)
+   
+  const existingBySku = new Map(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (existingVariants ?? []).filter((v: any) => v.sku != null).map((v: any) => [v.sku, v])
   )
 
   // Resolve details
@@ -294,13 +302,16 @@ async function syncVariants(
     if (rrpCents) attrs.rrp_cents = rrpCents
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingVar = existingByPfId.get(sv.id) as any
+    const existingVar = (existingByPfId.get(sv.id) ?? existingBySku.get(sv.sku ?? '')) as any
     if (existingVar) {
       await supabase
         .from('product_variants')
         .update({
           price_cents: existingVar.price_cents === 0 ? priceCents : existingVar.price_cents,
           attributes: attrs,
+          // Always ensure Printful IDs are written — they may be null on older variants
+          printful_sync_variant_id: sv.id,
+          printful_variant_id: sv.variant_id ?? existingVar.printful_variant_id ?? null,
         })
         .eq('id', existingVar.id)
 
