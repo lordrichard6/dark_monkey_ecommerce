@@ -28,6 +28,8 @@ export type GuestCheckoutInput = {
   /** Discount code to apply (validated server-side) */
   discountCode?: string | null
   currency?: string
+  /** Active locale (e.g. 'en', 'de') used to build the success/cancel redirect URLs. */
+  locale?: string
 }
 
 export type ValidateDiscountResult =
@@ -295,8 +297,10 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
     })
   }
 
-  const successUrl = `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
-  const cancelUrl = `${baseUrl}/checkout`
+  // Include locale prefix — next-intl uses localePrefix: 'always', so every route needs /{locale}/
+  const localePrefix = input?.locale ? `/${input.locale}` : '/en'
+  const successUrl = `${baseUrl}${localePrefix}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
+  const cancelUrl = `${baseUrl}${localePrefix}/checkout`
 
   // Metadata should probably store original CHF amounts and the currency used
   const metadata: Record<string, string> = {

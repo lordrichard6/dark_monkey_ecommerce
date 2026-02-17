@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { createCheckoutSession, validateDiscountCode } from '@/actions/checkout'
 import type { CartItem } from '@/types/cart'
 import { trackBeginCheckout, trackAddPaymentInfo } from '@/lib/analytics'
@@ -34,13 +34,17 @@ export function CheckoutForm({
   stripeConfigured,
 }: CheckoutFormProps) {
   const router = useRouter()
+  const locale = useLocale()
   const t = useTranslations('checkout')
   const tAuth = useTranslations('auth')
   const tCart = useTranslations('cart')
   const { currency } = useCurrency()
   const [email, setEmail] = useState(defaultEmail)
   const [discountCode, setDiscountCode] = useState('')
-  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; discountCents: number } | null>(null)
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string
+    discountCents: number
+  } | null>(null)
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,8 +56,8 @@ export function CheckoutForm({
       name: 'Premium Fabric Protector',
       priceCents: 1500,
       imageUrl: '/images/protector.png', // Placeholder
-      discountPercentage: 20
-    }
+      discountPercentage: 20,
+    },
   ])
 
   // Track begin_checkout on mount
@@ -61,13 +65,13 @@ export function CheckoutForm({
     trackBeginCheckout({
       total: totalCents,
       currency,
-      items: items.map(item => ({
+      items: items.map((item) => ({
         id: item.productId,
         name: item.productName,
         price: item.priceCents,
         quantity: item.quantity,
         variant: item.variantName || undefined,
-      }))
+      })),
     })
   }, [items, totalCents, currency])
 
@@ -104,6 +108,7 @@ export function CheckoutForm({
       postalCode: '',
       country: 'PT',
       discountCode: appliedDiscount ? appliedDiscount.code : discountCode.trim() || undefined,
+      locale,
     })
 
     setLoading(false)
@@ -137,9 +142,7 @@ export function CheckoutForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-50">
-          {t('contact')}
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('contact')}</h2>
         <label htmlFor="email" className="block text-sm text-zinc-400">
           {t('contact')}
         </label>
@@ -152,15 +155,11 @@ export function CheckoutForm({
           className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
           placeholder="you@example.com"
         />
-        <p className="mt-2 text-sm text-zinc-500">
-          {t('shippingCollected')}
-        </p>
+        <p className="mt-2 text-sm text-zinc-500">{t('shippingCollected')}</p>
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-50">
-          {t('discountCode')}
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('discountCode')}</h2>
         <div className="flex gap-2">
           <input
             type="text"
@@ -181,9 +180,7 @@ export function CheckoutForm({
             {t('apply')}
           </button>
         </div>
-        {discountError && (
-          <p className="mt-2 text-sm text-red-400">{discountError}</p>
-        )}
+        {discountError && <p className="mt-2 text-sm text-red-400">{discountError}</p>}
         {appliedDiscount && (
           <p className="mt-2 text-sm text-amber-400">
             {t('discountAppliedLabel')}: −{formatPrice(appliedDiscount.discountCents)}
@@ -192,9 +189,7 @@ export function CheckoutForm({
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-zinc-50">
-          {t('orderSummary')}
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('orderSummary')}</h2>
         <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800">
           {items.map((item, idx) => (
             <li
@@ -209,7 +204,9 @@ export function CheckoutForm({
                     fill
                     className="object-cover"
                     sizes="64px"
-                    unoptimized={item.imageUrl?.endsWith('.svg') || item.imageUrl?.includes('picsum.photos')}
+                    unoptimized={
+                      item.imageUrl?.endsWith('.svg') || item.imageUrl?.includes('picsum.photos')
+                    }
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-zinc-600">
@@ -219,12 +216,13 @@ export function CheckoutForm({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-zinc-50">{item.productName}</p>
-                {item.variantName && (
-                  <p className="text-sm text-zinc-500">{item.variantName}</p>
-                )}
+                {item.variantName && <p className="text-sm text-zinc-500">{item.variantName}</p>}
                 {item.config && Object.keys(item.config).length > 0 && (
                   <p className="text-xs text-amber-400/90">
-                    {tCart('customLabel')}: {Object.entries(item.config).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                    {tCart('customLabel')}:{' '}
+                    {Object.entries(item.config)
+                      .map(([k, v]) => `${k}: ${v}`)
+                      .join(', ')}
                   </p>
                 )}
                 <p className="text-sm text-zinc-400">
@@ -251,9 +249,7 @@ export function CheckoutForm({
         <div className="mt-4 flex justify-between text-lg font-semibold text-zinc-50">
           <span>{t('total')}</span>
           <span>
-            {formatPrice(
-              appliedDiscount ? totalCents - appliedDiscount.discountCents : totalCents
-            )}
+            {formatPrice(appliedDiscount ? totalCents - appliedDiscount.discountCents : totalCents)}
           </span>
         </div>
       </div>
@@ -276,7 +272,11 @@ export function CheckoutForm({
           disabled={loading || !stripeConfigured}
           className="flex-1 rounded-lg bg-white py-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? t('redirecting') : stripeConfigured ? t('payWithStripe') : t('configureStripe')}
+          {loading
+            ? t('redirecting')
+            : stripeConfigured
+              ? t('payWithStripe')
+              : t('configureStripe')}
         </button>
       </div>
     </form>

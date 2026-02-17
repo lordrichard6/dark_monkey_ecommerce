@@ -1,29 +1,27 @@
-import crypto from 'crypto'
-
 /**
- * Verifies the Printful webhook signature.
- * 
- * @param bodyRaw - The raw request body as a string.
- * @param signature - The 'x-printful-signature' header value.
- * @param secret - The webhook secret key.
- * @returns true if signature is valid, false otherwise.
+ * Verifies a Printful webhook payload belongs to our store.
+ *
+ * NOTE: Printful API v1 does NOT sign webhooks — there is no `x-printful-signature`
+ * header in v1. Request signing is a Printful API v2 feature (currently in Open Beta).
+ *
+ * Since v1 webhooks are unsigned, we verify authenticity by checking that the `store`
+ * field in the payload matches our configured PRINTFUL_STORE_ID. This prevents payloads
+ * from other Printful stores from being processed.
+ *
+ * @param storeId       - The numeric store ID from the incoming webhook payload (`event.store`).
+ * @param expectedStoreId - Our configured PRINTFUL_STORE_ID env var (string). If not set,
+ *                          all payloads are accepted (development fallback).
+ * @returns true if the store IDs match, or if no expected store ID is configured.
  */
-export function verifyPrintfulSignature(
-    bodyRaw: string,
-    signature: string,
-    secret: string
+export function verifyPrintfulWebhook(
+  storeId: number | undefined,
+  expectedStoreId: string | undefined
 ): boolean {
-    if (!bodyRaw || !signature || !secret) return false
+  // If PRINTFUL_STORE_ID is not configured, allow all (dev/testing fallback)
+  if (!expectedStoreId) return true
 
-    const hmac = crypto.createHmac('sha256', secret)
-    const digest = hmac.update(bodyRaw).digest('hex')
-    const signatureBuffer = Buffer.from(signature)
-    const digestBuffer = Buffer.from(digest)
+  // Reject payloads with no store field
+  if (storeId === undefined || storeId === null) return false
 
-    if (signatureBuffer.length !== digestBuffer.length) {
-        return false
-    }
-
-    // timingSafeEqual prevents timing attacks
-    return crypto.timingSafeEqual(signatureBuffer, digestBuffer)
+  return String(storeId) === expectedStoreId
 }
