@@ -30,13 +30,19 @@ export type GuestCheckoutInput = {
   currency?: string
 }
 
-
-
 export type ValidateDiscountResult =
   | { ok: true; discountId: string; discountCents: number; code: string }
   | { ok: false; error: string }
 
-/** Validate discount code and return discount amount in cents for given subtotal. */
+/**
+ * Validates a discount code against the `discounts` table and computes the discount amount.
+ * Performs case-insensitive lookup and checks validity window, max uses, and minimum order value.
+ *
+ * @param code - Raw discount code entered by the user (trimmed + uppercased internally).
+ * @param subtotalCents - Cart subtotal in cents (used to check `min_order_cents` threshold).
+ * @returns On success: `{ ok: true, discountId, discountCents, code }`.
+ *          On failure: `{ ok: false, error }` with a user-facing message.
+ */
 export async function validateDiscountCode(
   code: string,
   subtotalCents: number
@@ -47,7 +53,9 @@ export async function validateDiscountCode(
   const supabase = await createClient()
   const { data: discount, error } = await supabase
     .from('discounts')
-    .select('id, code, type, value_cents, min_order_cents, valid_from, valid_until, max_uses, use_count')
+    .select(
+      'id, code, type, value_cents, min_order_cents, valid_from, valid_until, max_uses, use_count'
+    )
     .ilike('code', trimmed)
     .single()
 
@@ -55,7 +63,8 @@ export async function validateDiscountCode(
 
   const now = new Date().toISOString()
   if (discount.valid_from > now) return { ok: false, error: 'Code not yet valid' }
-  if (discount.valid_until && discount.valid_until < now) return { ok: false, error: 'Code has expired' }
+  if (discount.valid_until && discount.valid_until < now)
+    return { ok: false, error: 'Code has expired' }
   if (discount.max_uses != null && (discount.use_count ?? 0) >= discount.max_uses) {
     return { ok: false, error: 'Code has reached maximum uses' }
   }
@@ -112,9 +121,17 @@ function validateStripePayload(data: {
   }
 }
 
-export async function createCheckoutSession(
-  input?: GuestCheckoutInput
-): Promise<CheckoutResult> {
+/**
+ * Creates a Stripe Checkout Session for the current cart.
+ * Supports both authenticated users (pre-filled email) and guest checkout.
+ * Applies currency conversion and optional discount codes server-side.
+ * Clears the cart cookie after a successful session is created.
+ *
+ * @param input - Optional guest checkout data (email, address, discount code, currency).
+ * @returns `{ ok: true, url }` with the Stripe-hosted checkout URL, or `{ ok: false, error }` on failure.
+ *          Error codes: `STRIPE_NOT_CONFIGURED`, `CART_EMPTY`, `VALIDATION_FAILED`.
+ */
+export async function createCheckoutSession(input?: GuestCheckoutInput): Promise<CheckoutResult> {
   if (!isStripeConfigured()) {
     return { ok: false, error: 'STRIPE_NOT_CONFIGURED' }
   }
@@ -126,13 +143,15 @@ export async function createCheckoutSession(
 
   const supabase = await createClient()
 
-  const requestedCurrency = input?.currency && SUPPORTED_CURRENCIES.includes(input.currency as any)
-    ? (input.currency as SupportedCurrency)
-    : 'CHF'
+  const requestedCurrency =
+    input?.currency &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    SUPPORTED_CURRENCIES.includes(input.currency as any)
+      ? (input.currency as SupportedCurrency)
+      : 'CHF'
 
   // Validate cart: prices, stock
-  const validatedItems: { item: CartItem; priceCents: number; stock: number }[] =
-    []
+  const validatedItems: { item: CartItem; priceCents: number; stock: number }[] = []
 
   for (const item of cart.items) {
     const { data: variant, error: variantError } = await supabase
@@ -225,9 +244,18 @@ export async function createCheckoutSession(
     // Convert price to target currency
     const convertedPrice = convertPrice(priceCents, requestedCurrency)
 
-    const desc = item.config && Object.keys(item.config).length > 0
-      ? [item.variantName, 'Custom: ' + Object.entries(item.config).map(([k, v]) => `${k}: ${v}`).join(', ')].filter(Boolean).join(' · ')
-      : item.variantName
+    const desc =
+      item.config && Object.keys(item.config).length > 0
+        ? [
+            item.variantName,
+            'Custom: ' +
+              Object.entries(item.config)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(', '),
+          ]
+            .filter(Boolean)
+            .join(' · ')
+        : item.variantName
 
     const validated = validateStripePayload({
       name: item.productName,
@@ -281,7 +309,9 @@ export async function createCheckoutSession(
     metadata.discount_cents = String(discountCents)
   }
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (user?.id) metadata.user_id = user.id
 
   if (input?.email) {
@@ -300,10 +330,8 @@ export async function createCheckoutSession(
     console.log('[Checkout] Debug: Line Items:', JSON.stringify(lineItems, null, 2))
     console.log('[Checkout] Debug: Metadata:', JSON.stringify(metadata, null, 2))
 
-
-
     // Check for whitespace
-    if (key && (key.trim() !== key)) {
+    if (key && key.trim() !== key) {
       console.error('[Checkout] CRITICAL: Key has whitespace!')
     }
 
@@ -313,7 +341,9 @@ export async function createCheckoutSession(
       success_url: successUrl,
       cancel_url: cancelUrl,
       customer_email: input?.email ?? undefined,
-      shipping_address_collection: { allowed_countries: ['CH', 'PT', 'ES', 'FR', 'DE', 'GB', 'US'] as const },
+      shipping_address_collection: {
+        allowed_countries: ['CH', 'PT', 'ES', 'FR', 'DE', 'GB', 'US'] as const,
+      },
       metadata,
     })
 
@@ -337,8 +367,8 @@ export async function createCheckoutSession(
               quantity: item.quantity,
               priceCents: item.priceCents,
               config: item.config ?? {},
-              name: item.productName
-            }))
+              name: item.productName,
+            })),
           },
         })
         if (error) {
@@ -367,6 +397,7 @@ export async function createCheckoutSession(
     }
 
     return { ok: false, error: 'Failed to create checkout session' }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     console.error('[Checkout] Stripe Session Error:', err)
     console.error('[Checkout] Error Type:', err.type)

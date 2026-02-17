@@ -1,27 +1,27 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Pacifico } from "next/font/google";
-import { Suspense } from "react";
-import "./globals.css";
-import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
-import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import type { Metadata, Viewport } from 'next'
+import { Geist, Geist_Mono, Pacifico } from 'next/font/google'
+import { Suspense } from 'react'
+import './globals.css'
+import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister'
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+})
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+})
 
 const pacifico = Pacifico({
-  weight: "400",
-  variable: "--font-pacifico",
-  subsets: ["latin"],
-});
+  weight: '400',
+  variable: '--font-pacifico',
+  subsets: ['latin'],
+})
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
 const SITE_NAME = 'DarkMonkey'
@@ -58,30 +58,34 @@ export const metadata: Metadata = {
     images: ['/opengraph-image.png'],
   },
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo.webp', sizes: 'any' },
+    ],
+    shortcut: '/favicon-32x32.png',
+    apple: '/logo.webp',
   },
-  manifest: "/manifest.json",
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: 'black-translucent',
     title: SITE_NAME,
   },
-};
+}
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#000000",
-};
+  themeColor: '#000000',
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -100,5 +104,5 @@ export default function RootLayout({
         <SpeedInsights />
       </body>
     </html>
-  );
+  )
 }

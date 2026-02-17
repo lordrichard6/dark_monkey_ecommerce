@@ -460,12 +460,28 @@
     "exclusionsIntro": "Custom or personalized items, and items marked as final sale, are not eligible for return unless defective."
   },
   "legal": {
-    "title": "Legal notice",
-    "description": "DarkMonkey legal notice and company information.",
-    "publisherTitle": "Publisher",
-    "publisherIntro": "This store is operated by DarkMonkey. For company details, registered address, and registration number, please refer to the contact information on our Contact page or email support@dark-monkey.ch.",
+    "title": "Legal Notice (Impressum)",
+    "description": "DarkMonkey legal notice, company information, and contact details as required by Swiss law.",
+    "publisherTitle": "Company Information",
+    "companyName": "DarkMonkey GmbH",
+    "companyAddress": "[Street & Number — TO BE FILLED BY CLIENT]",
+    "companyCity": "[ZIP City — TO BE FILLED BY CLIENT]",
+    "companyCountry": "Switzerland",
+    "registrationTitle": "Registration",
+    "uidLabel": "UID:",
+    "uidValue": "CHE-[XXX.XXX.XXX] — TO BE FILLED BY CLIENT",
+    "legalFormLabel": "Legal form:",
+    "legalFormValue": "GmbH (Gesellschaft mit beschränkter Haftung)",
+    "registeredLabel": "Registered in:",
+    "registeredValue": "[Canton — TO BE FILLED BY CLIENT]",
+    "contactTitle": "Contact",
+    "emailLabel": "Email:",
+    "responsibleLabel": "Responsible:",
+    "responsibleValue": "[Full Name — TO BE FILLED BY CLIENT]",
+    "disputeTitle": "Dispute Resolution",
+    "disputeIntro": "We are not obliged and not willing to participate in dispute resolution proceedings before a consumer arbitration board. Consumers in the EU may use the European Commission's Online Dispute Resolution platform at https://ec.europa.eu/consumers/odr. In Switzerland, the cantonal conciliation authority has jurisdiction.",
     "disclaimerTitle": "Disclaimer",
-    "disclaimerIntro": "We strive to keep the information on this site accurate and up to date. We do not warrant that the site is error-free or uninterrupted. Use of the site is at your own risk."
+    "disclaimerIntro": "We strive to keep the information on this site accurate and up to date. We do not warrant that the site is error-free or uninterrupted. Use of the site is at your own risk. External links are provided for convenience; we are not responsible for the content of linked sites."
   },
   "reviews": {
     "title": "Customer reviews",

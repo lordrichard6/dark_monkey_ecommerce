@@ -402,12 +402,28 @@
     "exclusionsIntro": "Les articles personnalisés ou en solde finale ne sont pas échangeables, sauf défaut."
   },
   "legal": {
-    "title": "Mentions légales",
-    "description": "Mentions légales et informations société DarkMonkey.",
-    "publisherTitle": "Éditeur",
-    "publisherIntro": "Cette boutique est exploitée par DarkMonkey. Pour les détails de la société, adresse et numéro d'immatriculation, voir la page Contact ou envoyer un e-mail à support@dark-monkey.ch.",
+    "title": "Mentions légales (Impressum)",
+    "description": "Informations légales et coordonnées de DarkMonkey conformément au droit suisse.",
+    "publisherTitle": "Informations sur la société",
+    "companyName": "DarkMonkey GmbH",
+    "companyAddress": "[Rue & Numéro — À COMPLÉTER PAR LE CLIENT]",
+    "companyCity": "[NPA Ville — À COMPLÉTER PAR LE CLIENT]",
+    "companyCountry": "Suisse",
+    "registrationTitle": "Immatriculation",
+    "uidLabel": "IDE :",
+    "uidValue": "CHE-[XXX.XXX.XXX] — À COMPLÉTER PAR LE CLIENT",
+    "legalFormLabel": "Forme juridique :",
+    "legalFormValue": "Sàrl",
+    "registeredLabel": "Immatriculé dans :",
+    "registeredValue": "[Canton — À COMPLÉTER PAR LE CLIENT]",
+    "contactTitle": "Contact",
+    "emailLabel": "E-mail :",
+    "responsibleLabel": "Responsable :",
+    "responsibleValue": "[Nom complet — À COMPLÉTER PAR LE CLIENT]",
+    "disputeTitle": "Résolution des litiges",
+    "disputeIntro": "Nous ne sommes pas tenus de participer à des procédures de règlement des litiges devant un organe de conciliation des consommateurs. En Suisse, l'autorité de conciliation cantonale est compétente.",
     "disclaimerTitle": "Avertissement",
-    "disclaimerIntro": "Nous nous efforçons de maintenir les informations du site exactes et à jour. Nous ne garantissons pas l'absence d'erreurs ou d'interruptions. L'utilisation du site est à vos risques."
+    "disclaimerIntro": "Nous nous efforçons de maintenir les informations à jour et exactes. Nous déclinons toute responsabilité en cas d'erreur ou d'interruption du site. L'utilisation du site se fait à vos risques."
   },
   "reviews": {
     "title": "Avis clients",

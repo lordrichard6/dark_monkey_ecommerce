@@ -18,6 +18,15 @@ const addressSchema = z.object({
 
 export type AddressFormData = z.infer<typeof addressSchema>
 
+/**
+ * Adds a new shipping or billing address for the authenticated user.
+ * Validates input against `addressSchema` (Zod). If `is_default` is true,
+ * any existing default address of the same type is unset first.
+ * Revalidates `/account/addresses` on success.
+ *
+ * @param data - Address form data validated by `AddressFormData` (Zod schema).
+ * @returns `{ ok: true }` on success or `{ ok: false, error }` on validation or DB failure.
+ */
 export async function addAddress(data: AddressFormData) {
   const supabase = await createClient()
   const {
@@ -55,6 +64,15 @@ export async function addAddress(data: AddressFormData) {
   return { ok: true }
 }
 
+/**
+ * Updates an existing address record owned by the authenticated user.
+ * Validates input via Zod and enforces row-level security by requiring `user_id` match.
+ * If `is_default` is true, unsets any existing default of the same type first.
+ *
+ * @param id - UUID of the address to update.
+ * @param data - Updated address form data validated by `AddressFormData`.
+ * @returns `{ ok: true }` on success or `{ ok: false, error }` on validation or DB failure.
+ */
 export async function updateAddress(id: string, data: AddressFormData) {
   const supabase = await createClient()
   const {
@@ -93,6 +111,14 @@ export async function updateAddress(id: string, data: AddressFormData) {
   return { ok: true }
 }
 
+/**
+ * Permanently deletes an address record owned by the authenticated user.
+ * Enforces ownership via `user_id` match (RLS double-check at the action layer).
+ * Revalidates `/account/addresses` on success.
+ *
+ * @param id - UUID of the address to delete.
+ * @returns `{ ok: true }` on success or `{ ok: false, error }` if not authenticated or DB error.
+ */
 export async function deleteAddress(id: string) {
   const supabase = await createClient()
   const {
@@ -103,11 +129,7 @@ export async function deleteAddress(id: string) {
     return { ok: false, error: 'Unauthorized' }
   }
 
-  const { error } = await supabase
-    .from('addresses')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id)
+  const { error } = await supabase.from('addresses').delete().eq('id', id).eq('user_id', user.id)
 
   if (error) {
     return { ok: false, error: error.message }
@@ -117,6 +139,15 @@ export async function deleteAddress(id: string) {
   return { ok: true }
 }
 
+/**
+ * Sets an address as the default for a given address type (shipping or billing).
+ * First unsets all existing defaults of that type, then marks the specified address as default.
+ * Revalidates `/account/addresses` on success.
+ *
+ * @param id - UUID of the address to set as default.
+ * @param type - Address type: `'shipping'` or `'billing'`.
+ * @returns `{ ok: true }` on success or `{ ok: false, error }` if not authenticated or DB error.
+ */
 export async function setDefaultAddress(id: string, type: 'shipping' | 'billing') {
   const supabase = await createClient()
   const {

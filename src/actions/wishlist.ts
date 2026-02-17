@@ -3,9 +3,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function addToWishlist(productId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+/**
+ * Adds a product to the authenticated user's wishlist.
+ * Uses upsert to prevent duplicate entries.
+ * Revalidates wishlist and product listing pages on success.
+ *
+ * @param productId - UUID of the product to add.
+ * @returns `{ ok: true }` on success or `{ ok: false, error }` if not authenticated or DB error.
+ */
+export async function addToWishlist(
+  productId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'Sign in to save items' }
 
   const { error } = await supabase
@@ -21,9 +33,20 @@ export async function addToWishlist(productId: string): Promise<{ ok: true } | {
   return { ok: true }
 }
 
-export async function removeFromWishlist(productId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+/**
+ * Removes a product from the authenticated user's wishlist.
+ * Revalidates wishlist and product listing pages on success.
+ *
+ * @param productId - UUID of the product to remove.
+ * @returns `{ ok: true }` on success or `{ ok: false, error }` if not authenticated or DB error.
+ */
+export async function removeFromWishlist(
+  productId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'Not authenticated' }
 
   const { error } = await supabase
@@ -41,7 +64,18 @@ export async function removeFromWishlist(productId: string): Promise<{ ok: true 
   return { ok: true }
 }
 
-export async function toggleWishlist(productId: string, isInWishlist: boolean): Promise<{ ok: true; inWishlist: boolean } | { ok: false; error: string }> {
+/**
+ * Toggles a product's wishlist status for the authenticated user.
+ * Adds the product if `isInWishlist` is false; removes it if true.
+ *
+ * @param productId - UUID of the product to toggle.
+ * @param isInWishlist - Current wishlist state of the product.
+ * @returns `{ ok: true, inWishlist: boolean }` reflecting the new state, or `{ ok: false, error }` on failure.
+ */
+export async function toggleWishlist(
+  productId: string,
+  isInWishlist: boolean
+): Promise<{ ok: true; inWishlist: boolean } | { ok: false; error: string }> {
   if (isInWishlist) {
     const result = await removeFromWishlist(productId)
     return result.ok ? { ok: true, inWishlist: false } : result
