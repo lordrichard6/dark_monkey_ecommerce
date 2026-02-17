@@ -25,7 +25,7 @@ jobs:
 
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --prefer-offline
 
       - name: Run unit and integration tests
         run: npm run test:coverage
@@ -75,7 +75,7 @@ jobs:
 
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --prefer-offline
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
@@ -117,7 +117,7 @@ jobs:
 
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --prefer-offline
 
       - name: Run ESLint
         run: npm run lint
