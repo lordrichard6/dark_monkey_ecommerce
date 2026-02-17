@@ -105,11 +105,14 @@ export async function processSuccessfulCheckout(sessionId: string) {
   const totalCents = Number(cartSummary.totalCents || fullSession.metadata?.totalCents || 0)
 
   // 4. Extract shipping details
-  const shippingDetails = fullSession.shipping_details || fullSession.customer_details?.shipping
+  // Stripe may return the address under shipping_details (when collect_shipping_address=true
+  // with a separate shipping step) OR under customer_details when the address is collected
+  // as part of the billing/customer form. We check both.
+  const shippingDetails = fullSession.shipping_details || fullSession.customer_details
   const address = shippingDetails?.address
   const shippingAddressJson = address
     ? {
-        name: shippingDetails.name ?? '',
+        name: shippingDetails.name ?? fullSession.customer_details?.name ?? '',
         address: {
           line1: address.line1 ?? '',
           line2: address.line2 ?? '',
