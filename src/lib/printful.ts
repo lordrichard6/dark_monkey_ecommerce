@@ -13,7 +13,7 @@ import type {
   PrintfulSyncProductDetail,
   PrintfulCatalogProduct,
   PrintfulCatalogVariant,
-  PrintfulOrderItem
+  PrintfulOrderItem,
 } from './printful/types'
 
 export * from './printful/types'
@@ -64,7 +64,7 @@ async function fetchPrintful<T>(url: string, options?: RequestInit): Promise<Pri
         status: response.status,
         code: data.code,
         message: msg,
-        error: data.error
+        error: data.error,
       })
       throw new PrintfulApiError(msg, response.status, data.error?.reason)
     }
@@ -74,8 +74,7 @@ async function fetchPrintful<T>(url: string, options?: RequestInit): Promise<Pri
 }
 
 export async function createOrder(
-  payload: PrintfulCreateOrderPayload,
-  confirm = true
+  payload: PrintfulCreateOrderPayload
 ): Promise<{ ok: boolean; printfulOrderId?: number; error?: string }> {
   if (!isPrintfulConfigured()) {
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
@@ -87,9 +86,9 @@ export async function createOrder(
 
     const base = {
       quantity: item.quantity,
-      files: item.files?.map(f => ({
+      files: item.files?.map((f) => ({
         ...f,
-        type: f.type || 'default' // Ensure type is present
+        type: f.type || 'default', // Ensure type is present
       })),
       retail_price: retailPrice,
     }
@@ -103,7 +102,6 @@ export async function createOrder(
   const body = {
     recipient: payload.recipient,
     items,
-    confirm: confirm ? 1 : 0,
     external_id: payload.external_id,
   }
 
@@ -117,14 +115,18 @@ export async function createOrder(
     })
 
     if (data.result?.id) {
-      console.log(`[Printful] Order created successfully: ${data.result.id}`)
+      console.log(`[Printful] Order created as draft (requires manual review): ${data.result.id}`)
       return { ok: true, printfulOrderId: data.result.id }
     }
 
     return { ok: false, error: 'No order ID returned' }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    logger.error('createOrder failed', { operation: 'createOrder', error: message, items: payload.items.length })
+    logger.error('createOrder failed', {
+      operation: 'createOrder',
+      error: message,
+      items: payload.items.length,
+    })
     console.error('[Printful] createOrder exception:', err)
     return { ok: false, error: message }
   }
@@ -138,9 +140,12 @@ export async function fetchCatalogProduct(
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
   try {
-    const data = await fetchPrintful<{ product?: { description?: string } }>(`${API_BASE}/products/${productId}`, {
-      headers: getHeaders(),
-    })
+    const data = await fetchPrintful<{ product?: { description?: string } }>(
+      `${API_BASE}/products/${productId}`,
+      {
+        headers: getHeaders(),
+      }
+    )
 
     if (data.result?.product) {
       const desc = data.result.product.description
@@ -169,9 +174,12 @@ export async function fetchCatalogVariant(
   }
 
   try {
-    const data = await fetchPrintful<{ variant?: PrintfulCatalogVariant }>(`${API_BASE}/products/variant/${variantId}`, {
-      headers: getHeaders(),
-    })
+    const data = await fetchPrintful<{ variant?: PrintfulCatalogVariant }>(
+      `${API_BASE}/products/variant/${variantId}`,
+      {
+        headers: getHeaders(),
+      }
+    )
 
     if (data.result?.variant) {
       // Cache the result
@@ -185,7 +193,11 @@ export async function fetchCatalogVariant(
   }
 }
 
-export async function fetchStoreProducts(offset = 0, limit = PRINTFUL_CONFIG.CONSTANTS.SYNC_LIMIT, status?: string): Promise<{
+export async function fetchStoreProducts(
+  offset = 0,
+  limit = PRINTFUL_CONFIG.CONSTANTS.SYNC_LIMIT,
+  status?: string
+): Promise<{
   ok: boolean
   products?: PrintfulSyncProduct[]
   total?: number
@@ -200,10 +212,7 @@ export async function fetchStoreProducts(offset = 0, limit = PRINTFUL_CONFIG.CON
       url += `&status=${status}`
     }
 
-    const data = await fetchPrintful<PrintfulSyncProduct[]>(
-      url,
-      { headers: getHeaders() }
-    )
+    const data = await fetchPrintful<PrintfulSyncProduct[]>(url, { headers: getHeaders() })
 
     if (Array.isArray(data.result)) {
       return {
@@ -241,7 +250,6 @@ export async function searchCatalogProducts(query: string): Promise<{
       return { ok: true, products: data.result }
     }
     return { ok: false, error: 'Invalid response format' }
-
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: msg }
@@ -255,9 +263,12 @@ export async function fetchSyncProduct(
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
   try {
-    const data = await fetchPrintful<PrintfulSyncProductDetail>(`${API_BASE}/store/products/${id}`, {
-      headers: getHeaders(),
-    })
+    const data = await fetchPrintful<PrintfulSyncProductDetail>(
+      `${API_BASE}/store/products/${id}`,
+      {
+        headers: getHeaders(),
+      }
+    )
 
     if (data.result) {
       return { ok: true, product: data.result }
@@ -297,9 +308,7 @@ export async function fetchStoreOrder(
 export function getDefaultPrintFileUrl(): string {
   const base =
     PRINTFUL_CONFIG?.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'https://www.dark-monkey.ch')
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.dark-monkey.ch')
 
   const finalBase = base.includes('localhost') ? 'https://www.dark-monkey.ch' : base
   return `${finalBase.replace(/\/$/, '')}/logo.png`

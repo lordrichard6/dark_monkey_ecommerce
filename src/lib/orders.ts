@@ -285,24 +285,21 @@ export async function processSuccessfulCheckout(sessionId: string) {
 
       if (printfulItems.length > 0) {
         console.log('[OrderProcess] Calling Printful API...')
-        // confirm: true → Printful immediately queues production.
-        // Set to false here only if you need manual review in the Printful dashboard.
-        const pfResult = await createPrintfulOrder(
-          {
-            recipient: {
-              name: shippingAddressJson.name || 'Customer',
-              address1: shippingAddressJson.address.line1,
-              city: shippingAddressJson.address.city,
-              state_code: shippingAddressJson.address.state || undefined,
-              country_code: shippingAddressJson.address.country,
-              zip: shippingAddressJson.address.postalCode,
-              email: email ?? undefined,
-            },
-            items: printfulItems,
-            external_id: order.id.replace(/-/g, ''),
+        // Orders are created as draft intentionally — manual review required
+        // before Printful queues them for production.
+        const pfResult = await createPrintfulOrder({
+          recipient: {
+            name: shippingAddressJson.name || 'Customer',
+            address1: shippingAddressJson.address.line1,
+            city: shippingAddressJson.address.city,
+            state_code: shippingAddressJson.address.state || undefined,
+            country_code: shippingAddressJson.address.country,
+            zip: shippingAddressJson.address.postalCode,
+            email: email ?? undefined,
           },
-          true
-        )
+          items: printfulItems,
+          external_id: order.id.replace(/-/g, ''),
+        })
 
         console.log('[OrderProcess] Printful API Result:', JSON.stringify(pfResult, null, 2))
 
