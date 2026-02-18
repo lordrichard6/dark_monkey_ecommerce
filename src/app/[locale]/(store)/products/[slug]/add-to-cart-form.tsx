@@ -23,6 +23,29 @@ export type Variant = {
   stock: number
 }
 
+// Standard apparel size order
+const SIZE_ORDER: Record<string, number> = {
+  '2XS': 0,
+  XXS: 0,
+  XS: 1,
+  S: 2,
+  M: 3,
+  L: 4,
+  XL: 5,
+  '2XL': 6,
+  XXL: 6,
+  '3XL': 7,
+  XXXL: 7,
+  '4XL': 8,
+  XXXXL: 8,
+  '5XL': 9,
+}
+
+function getSizeOrder(size: string): number {
+  const normalized = size.toUpperCase().trim()
+  return SIZE_ORDER[normalized] ?? 99
+}
+
 // --- SUB-COMPONENTS ---
 
 export function ProductQuantitySelector({
@@ -164,6 +187,21 @@ export function AddToCartForm({
     [variants, selectedColor]
   )
 
+  // Sorted sizes for the selected color
+  const sizedVariants = useMemo(() => {
+    return [...variantsForColor].sort((a, b) => {
+      const sizeA = (a.attributes?.size as string) || a.name || ''
+      const sizeB = (b.attributes?.size as string) || b.name || ''
+      return getSizeOrder(sizeA) - getSizeOrder(sizeB)
+    })
+  }, [variantsForColor])
+
+  // Determine if this product has multiple size options
+  const hasSizes = useMemo(
+    () => variantsForColor.some((v) => v.attributes?.size || (v.name && v.name !== selectedColor)),
+    [variantsForColor, selectedColor]
+  )
+
   useEffect(() => {
     const matched = variantsForColor.find((v) => v.id === selectedVariantId)
     if (!matched) {
@@ -220,6 +258,8 @@ export function AddToCartForm({
     router.push('/checkout')
   }
 
+  const selectedColorOption = colors.find((c) => c.name === selectedColor)
+
   return (
     <div className="flex flex-col gap-6">
       {/* Price & Stock info */}
@@ -238,20 +278,83 @@ export function AddToCartForm({
 
       {/* Colors */}
       {colors.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {colors.map((c) => (
-            <button
-              key={c.name}
-              type="button"
-              onClick={() => {
-                setSelectedColor(c.name)
-                props.onColorChange?.(c.name)
-              }}
-              className={`h-8 w-8 rounded-full border-2 transition-all ${selectedColor === c.name ? 'border-amber-500 ring-4 ring-amber-500/10 scale-110 shadow-lg shadow-amber-500/10' : 'border-white/10 hover:border-white/30'}`}
-              style={{ background: c.hex }}
-              title={c.name}
-            />
-          ))}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              {t('color')}
+            </span>
+            {selectedColorOption && (
+              <span className="text-[10px] font-semibold text-zinc-300">
+                {selectedColorOption.name}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {colors.map((c) => (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => {
+                  setSelectedColor(c.name)
+                  props.onColorChange?.(c.name)
+                }}
+                className={`h-8 w-8 rounded-full border-2 transition-all ${selectedColor === c.name ? 'border-amber-500 ring-4 ring-amber-500/10 scale-110 shadow-lg shadow-amber-500/10' : 'border-white/10 hover:border-white/30'}`}
+                style={{
+                  background: c.hex2
+                    ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
+                    : c.hex,
+                }}
+                title={c.name}
+                aria-label={c.name}
+                aria-pressed={selectedColor === c.name}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Size Selector */}
+      {hasSizes && (
+        <div className="flex flex-col gap-2">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+            {t('size')}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {sizedVariants.map((v) => {
+              const sizeLabel = (v.attributes?.size as string) || v.name || '—'
+              const isSelected = v.id === selectedVariantId
+              const outOfStock = v.stock === 0
+
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setSelectedVariantId(v.id)}
+                  disabled={outOfStock}
+                  aria-pressed={isSelected}
+                  aria-label={`Size ${sizeLabel}${outOfStock ? ' (out of stock)' : ''}`}
+                  className={`relative h-10 min-w-[2.5rem] px-3 rounded-lg border text-xs font-bold transition-all
+                    ${
+                      isSelected
+                        ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                        : outOfStock
+                          ? 'border-white/5 text-zinc-600 cursor-not-allowed'
+                          : 'border-white/10 text-zinc-300 hover:border-white/30 hover:text-white'
+                    }`}
+                >
+                  {sizeLabel}
+                  {outOfStock && (
+                    <span
+                      className="absolute inset-0 flex items-center justify-center"
+                      aria-hidden="true"
+                    >
+                      <span className="absolute left-1/2 top-1/2 h-px w-[80%] -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] bg-zinc-600" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
 

@@ -64,7 +64,7 @@ export const getProductMetadata = cache(async (slug: string) => {
 
   const { data: product } = await supabase
     .from('products')
-    .select('name, description')
+    .select('name, description, categories (name, slug), product_images (url, sort_order)')
     .eq('slug', slug)
     .eq('is_active', true)
     .single()
@@ -81,7 +81,8 @@ export const getProductReviews = cache(async (productId: string) => {
 
   const { data: reviewsData } = await supabase
     .from('product_reviews')
-    .select(`
+    .select(
+      `
       id,
       rating,
       comment,
@@ -91,7 +92,8 @@ export const getProductReviews = cache(async (productId: string) => {
       photos,
       user_id,
       user_profiles!inner(avatar_url)
-    `)
+    `
+    )
     .eq('product_id', productId)
     .order('created_at', { ascending: false })
 
@@ -120,7 +122,8 @@ export const getUserProductReview = cache(async (productId: string, userId: stri
 
   const { data: userReviewRow } = await supabase
     .from('product_reviews')
-    .select(`
+    .select(
+      `
       id,
       rating,
       comment,
@@ -130,7 +133,8 @@ export const getUserProductReview = cache(async (productId: string, userId: stri
       photos,
       user_id,
       user_profiles!inner(avatar_url)
-    `)
+    `
+    )
     .eq('product_id', productId)
     .eq('user_id', userId)
     .maybeSingle()
@@ -246,10 +250,7 @@ export const getActiveCategories = cache(async () => {
 export const getUserWishlistProductIds = cache(async (userId: string) => {
   const supabase = await createClient()
 
-  const { data } = await supabase
-    .from('user_wishlist')
-    .select('product_id')
-    .eq('user_id', userId)
+  const { data } = await supabase.from('user_wishlist').select('product_id').eq('user_id', userId)
 
   return data?.map((w) => w.product_id) ?? []
 })

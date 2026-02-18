@@ -209,20 +209,27 @@ export function ProductMain({
             </div>
 
             {/* Colors swatches for mobile split */}
-            <div className="flex flex-wrap gap-1.5 mt-1">
-              {colorItems.map((c) => (
-                <button
-                  key={c.name}
-                  type="button"
-                  onClick={() => setSelectedColor(c.name)}
-                  className={`h-6 w-6 rounded-full border-2 transition-all ${selectedColor === c.name ? 'border-amber-500 ring-2 ring-amber-500/10' : 'border-white/10'}`}
-                  style={{
-                    background: c.hex2
-                      ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
-                      : c.hex,
-                  }}
-                />
-              ))}
+            <div className="flex flex-col gap-1 mt-1">
+              {colorItems.length > 1 && selectedColor && (
+                <span className="text-[9px] font-semibold text-zinc-400">{selectedColor}</span>
+              )}
+              <div className="flex flex-wrap gap-1.5">
+                {colorItems.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => setSelectedColor(c.name)}
+                    aria-label={c.name}
+                    aria-pressed={selectedColor === c.name}
+                    className={`h-6 w-6 rounded-full border-2 transition-all ${selectedColor === c.name ? 'border-amber-500 ring-2 ring-amber-500/10' : 'border-white/10'}`}
+                    style={{
+                      background: c.hex2
+                        ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
+                        : c.hex,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 

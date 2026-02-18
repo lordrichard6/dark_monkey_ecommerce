@@ -245,6 +245,7 @@
     "quantity": "Quantity",
     "addToCart": "Add to cart",
     "adding": "Adding...",
+    "addedToCart": "Added to cart!",
     "inStock": "in stock",
     "onlyXLeft": "Only {count} left!",
     "saveForLater": "Save for later",
