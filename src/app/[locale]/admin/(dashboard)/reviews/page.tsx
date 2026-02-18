@@ -1,41 +1,83 @@
-import { getReviewsWithPhotos } from '@/actions/admin-reviews'
+import { getReviewsWithPhotos, getAdminReviews } from '@/actions/admin-reviews'
 import { ReviewPhotoModerator } from '@/components/admin/ReviewPhotoModerator'
+import { ReviewsTable } from '@/components/admin/ReviewsTable'
 import { redirect } from 'next/navigation'
+import { Star } from 'lucide-react'
 
 export const metadata = {
-    title: 'Review Moderation | Admin',
-    description: 'Moderate customer review photos',
+  title: 'Reviews | Admin',
+  description: 'Manage customer reviews',
 }
 
-export default async function AdminReviewsPage() {
-    const { data: reviews, error } = await getReviewsWithPhotos()
+type SearchParams = Promise<{ page?: string }>
 
-    if (error) {
-        if (error === 'Not authenticated') {
-            redirect('/admin/login')
-        }
-        if (error === 'Not authorized') {
-            redirect('/admin')
-        }
-        throw new Error(error)
-    }
+export default async function AdminReviewsPage({ searchParams }: { searchParams: SearchParams }) {
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+  const perPage = 30
 
-    return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">Review Moderation</h1>
-                <p className="text-neutral-400">
-                    Manage customer review photos. Delete inappropriate or low-quality images.
-                </p>
-            </div>
+  const [reviewsResult, photosResult] = await Promise.all([
+    getAdminReviews(page, perPage),
+    getReviewsWithPhotos(),
+  ])
 
-            <div className="p-4 rounded-lg bg-neutral-900/50 border border-neutral-800">
-                <p className="text-sm text-neutral-300">
-                    <strong>{reviews?.length || 0}</strong> reviews with photos
-                </p>
-            </div>
+  if (reviewsResult.error === 'Not authenticated' || photosResult.error === 'Not authenticated') {
+    redirect('/admin/login')
+  }
+  if (reviewsResult.error === 'Not authorized' || photosResult.error === 'Not authorized') {
+    redirect('/admin')
+  }
 
-            <ReviewPhotoModerator reviews={reviews || []} />
+  const totalCount = reviewsResult.count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / perPage))
+  const reviews = reviewsResult.data ?? []
+
+  return (
+    <div className="space-y-10 p-6 md:p-8">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Star className="h-6 w-6 text-zinc-400" />
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-50">Reviews</h1>
+          <p className="mt-0.5 text-sm text-zinc-400">
+            Manage all customer reviews. Delete inappropriate content below.
+          </p>
         </div>
-    )
+      </div>
+
+      {/* Full reviews table */}
+      <ReviewsTable
+        reviews={reviews.map((r) => ({
+          id: r!.id,
+          rating: r!.rating,
+          comment: r!.comment ?? null,
+          photos: (r as unknown as { photos: string[] }).photos ?? [],
+          reviewer_display_name: r!.reviewer_display_name ?? null,
+          created_at: r!.created_at,
+          products: r!.products as unknown as
+            | { name: string; slug: string }
+            | { name: string; slug: string }[]
+            | null,
+        }))}
+        totalCount={totalCount}
+        currentPage={page}
+        totalPages={totalPages}
+      />
+
+      {/* Divider */}
+      <div className="border-t border-zinc-800 pt-8">
+        <h2 className="mb-1 text-lg font-semibold text-zinc-50">Photo Moderation</h2>
+        <p className="mb-6 text-sm text-zinc-400">
+          Reviews with photos — delete individual images or entire reviews.
+        </p>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300">
+          <strong>{photosResult.data?.length ?? 0}</strong> review
+          {(photosResult.data?.length ?? 0) !== 1 ? 's' : ''} with photos
+        </div>
+        <div className="mt-4">
+          <ReviewPhotoModerator reviews={photosResult.data ?? []} />
+        </div>
+      </div>
+    </div>
+  )
 }

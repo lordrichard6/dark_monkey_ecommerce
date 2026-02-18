@@ -10,62 +10,62 @@ export type ModeratePhotoResult = { ok: true } | { ok: false; error: string }
  * Only admins can perform this action
  */
 export async function deleteReviewPhoto(
-    reviewId: string,
-    photoUrl: string
+  reviewId: string,
+  photoUrl: string
 ): Promise<ModeratePhotoResult> {
-    const supabase = await createClient()
+  const supabase = await createClient()
 
-    // Check admin status
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { ok: false, error: 'Not authenticated' }
+  // Check admin status
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated' }
 
-    const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
 
-    if (!profile?.is_admin) {
-        return { ok: false, error: 'Not authorized' }
-    }
+  if (!profile?.is_admin) {
+    return { ok: false, error: 'Not authorized' }
+  }
 
-    // Get current review
-    const { data: review, error: fetchError } = await supabase
-        .from('product_reviews')
-        .select('photos')
-        .eq('id', reviewId)
-        .single()
+  // Get current review
+  const { data: review, error: fetchError } = await supabase
+    .from('product_reviews')
+    .select('photos')
+    .eq('id', reviewId)
+    .single()
 
-    if (fetchError || !review) {
-        return { ok: false, error: 'Review not found' }
-    }
+  if (fetchError || !review) {
+    return { ok: false, error: 'Review not found' }
+  }
 
-    // Remove photo from array
-    const updatedPhotos = (review.photos || []).filter((p: string) => p !== photoUrl)
+  // Remove photo from array
+  const updatedPhotos = (review.photos || []).filter((p: string) => p !== photoUrl)
 
-    // Update review
-    const { error: updateError } = await supabase
-        .from('product_reviews')
-        .update({ photos: updatedPhotos })
-        .eq('id', reviewId)
+  // Update review
+  const { error: updateError } = await supabase
+    .from('product_reviews')
+    .update({ photos: updatedPhotos })
+    .eq('id', reviewId)
 
-    if (updateError) {
-        return { ok: false, error: updateError.message }
-    }
+  if (updateError) {
+    return { ok: false, error: updateError.message }
+  }
 
-    // Delete from storage
-    try {
-        const path = new URL(photoUrl).pathname.split('/').slice(-2).join('/')
-        await supabase.storage
-            .from('review-photos')
-            .remove([path])
-    } catch (err) {
-        // Photo deleted from DB but not storage - acceptable
-        console.error('Failed to delete from storage:', err)
-    }
+  // Delete from storage
+  try {
+    const path = new URL(photoUrl).pathname.split('/').slice(-2).join('/')
+    await supabase.storage.from('review-photos').remove([path])
+  } catch (err) {
+    // Photo deleted from DB but not storage - acceptable
+    console.error('Failed to delete from storage:', err)
+  }
 
-    revalidatePath('/admin/reviews')
-    return { ok: true }
+  revalidatePath('/admin/reviews')
+  return { ok: true }
 }
 
 /**
@@ -73,80 +73,122 @@ export async function deleteReviewPhoto(
  * Only admins can perform this action
  */
 export async function deleteReview(reviewId: string): Promise<ModeratePhotoResult> {
-    const supabase = await createClient()
+  const supabase = await createClient()
 
-    // Check admin status
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { ok: false, error: 'Not authenticated' }
+  // Check admin status
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated' }
 
-    const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
 
-    if (!profile?.is_admin) {
-        return { ok: false, error: 'Not authorized' }
+  if (!profile?.is_admin) {
+    return { ok: false, error: 'Not authorized' }
+  }
+
+  // Get review photos for cleanup
+  const { data: review } = await supabase
+    .from('product_reviews')
+    .select('photos')
+    .eq('id', reviewId)
+    .single()
+
+  // Delete review
+  const { error } = await supabase.from('product_reviews').delete().eq('id', reviewId)
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  // Clean up storage photos
+  if (review?.photos && review.photos.length > 0) {
+    try {
+      const paths = review.photos.map((url: string) => {
+        return new URL(url).pathname.split('/').slice(-2).join('/')
+      })
+      await supabase.storage.from('review-photos').remove(paths)
+    } catch (err) {
+      console.error('Failed to delete photos from storage:', err)
     }
+  }
 
-    // Get review photos for cleanup
-    const { data: review } = await supabase
-        .from('product_reviews')
-        .select('photos')
-        .eq('id', reviewId)
-        .single()
+  revalidatePath('/admin/reviews')
+  return { ok: true }
+}
 
-    // Delete review
-    const { error } = await supabase
-        .from('product_reviews')
-        .delete()
-        .eq('id', reviewId)
+/**
+ * Get all reviews (paginated) for full admin management table
+ */
+export async function getAdminReviews(page: number = 1, perPage: number = 30) {
+  const supabase = await createClient()
 
-    if (error) {
-        return { ok: false, error: error.message }
-    }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { data: null, count: 0, error: 'Not authenticated' }
 
-    // Clean up storage photos
-    if (review?.photos && review.photos.length > 0) {
-        try {
-            const paths = review.photos.map((url: string) => {
-                return new URL(url).pathname.split('/').slice(-2).join('/')
-            })
-            await supabase.storage
-                .from('review-photos')
-                .remove(paths)
-        } catch (err) {
-            console.error('Failed to delete photos from storage:', err)
-        }
-    }
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
 
-    revalidatePath('/admin/reviews')
-    return { ok: true }
+  if (!profile?.is_admin) return { data: null, count: 0, error: 'Not authorized' }
+
+  const start = (page - 1) * perPage
+  const end = start + perPage - 1
+
+  const { data, count, error } = await supabase
+    .from('product_reviews')
+    .select(
+      `
+            id,
+            rating,
+            comment,
+            photos,
+            reviewer_display_name,
+            created_at,
+            products ( name, slug )
+        `,
+      { count: 'exact' }
+    )
+    .order('created_at', { ascending: false })
+    .range(start, end)
+
+  return { data, count: count ?? 0, error: error?.message }
 }
 
 /**
  * Get all reviews with photos for moderation
  */
 export async function getReviewsWithPhotos() {
-    const supabase = await createClient()
+  const supabase = await createClient()
 
-    // Check admin status
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: 'Not authenticated' }
+  // Check admin status
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: 'Not authenticated' }
 
-    const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
 
-    if (!profile?.is_admin) {
-        return { data: null, error: 'Not authorized' }
-    }
+  if (!profile?.is_admin) {
+    return { data: null, error: 'Not authorized' }
+  }
 
-    const { data, error } = await supabase
-        .from('product_reviews')
-        .select(`
+  const { data, error } = await supabase
+    .from('product_reviews')
+    .select(
+      `
       id,
       rating,
       comment,
@@ -158,9 +200,10 @@ export async function getReviewsWithPhotos() {
         name,
         slug
       )
-    `)
-        .not('photos', 'eq', '{}')
-        .order('created_at', { ascending: false })
+    `
+    )
+    .not('photos', 'eq', '{}')
+    .order('created_at', { ascending: false })
 
-    return { data, error: error?.message }
+  return { data, error: error?.message }
 }

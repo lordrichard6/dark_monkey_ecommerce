@@ -42,11 +42,18 @@ function formatRelativeTime(dateString: string) {
 
 export default async function AdminDashboardPage() {
   const supabase = getAdminClient()
-  if (!supabase) return <div className="p-8"><AdminNotConfigured /></div>
+  if (!supabase)
+    return (
+      <div className="p-8">
+        <AdminNotConfigured />
+      </div>
+    )
 
   // Fetch current admin profile
   const serverSupabase = await createServerClient()
-  const { data: { user } } = await serverSupabase.auth.getUser()
+  const {
+    data: { user },
+  } = await serverSupabase.auth.getUser()
   let adminName = 'Admin'
 
   if (user) {
@@ -71,10 +78,17 @@ export default async function AdminDashboardPage() {
     { count: ordersCount },
     { data: recentOrders },
     { data: historicalOrders },
-    { data: allSuccessfulOrders }
+    { data: allSuccessfulOrders },
   ] = await Promise.all([
-    supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
-    supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['paid', 'processing', 'shipped', 'delivered']),
+    supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .is('deleted_at', null),
+    supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['paid', 'processing', 'shipped', 'delivered']),
     supabase
       .from('orders')
       .select('id, status, total_cents, created_at, guest_email, user_id, shipping_address_id')
@@ -88,7 +102,8 @@ export default async function AdminDashboardPage() {
       .order('created_at', { ascending: true }),
     supabase
       .from('orders')
-      .select(`
+      .select(
+        `
         id,
         user_id,
         guest_email,
@@ -102,8 +117,9 @@ export default async function AdminDashboardPage() {
             )
           )
         )
-      `)
-      .in('status', ['paid', 'processing', 'shipped', 'delivered'])
+      `
+      )
+      .in('status', ['paid', 'processing', 'shipped', 'delivered']),
   ])
 
   // Calculate top customers and top items
@@ -114,29 +130,38 @@ export default async function AdminDashboardPage() {
     allSuccessfulOrders.forEach((order: any) => {
       // Top Customers
       const customerId = order.user_id || order.guest_email || 'Unknown'
-      const existingCustomer = customerRevenueMap.get(customerId) || { name: order.guest_email || 'User', revenue: 0 }
+      const existingCustomer = customerRevenueMap.get(customerId) || {
+        name: order.guest_email || 'User',
+        revenue: 0,
+      }
       customerRevenueMap.set(customerId, {
         name: existingCustomer.name,
-        revenue: existingCustomer.revenue + order.total_cents
+        revenue: existingCustomer.revenue + order.total_cents,
       })
 
       // Top Items
       order.order_items?.forEach((item: any) => {
         const productName = item.product_variants?.products?.name || 'Unknown Product'
-        const existingProduct = productQuantityMap.get(productName) || { name: productName, quantity: 0 }
+        const existingProduct = productQuantityMap.get(productName) || {
+          name: productName,
+          quantity: 0,
+        }
         productQuantityMap.set(productName, {
           name: productName,
-          quantity: existingProduct.quantity + (item.quantity || 0)
+          quantity: existingProduct.quantity + (item.quantity || 0),
         })
       })
     })
   }
 
   // Refine customer names (fetch profiles for user_ids)
-  const userIdsToFetch = Array.from(customerRevenueMap.keys()).filter(id => id.length === 36) // Simple UUID check
+  const userIdsToFetch = Array.from(customerRevenueMap.keys()).filter((id) => id.length === 36) // Simple UUID check
   if (userIdsToFetch.length > 0) {
-    const { data: profiles } = await supabase.from('user_profiles').select('id, display_name').in('id', userIdsToFetch)
-    profiles?.forEach(p => {
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('id, display_name')
+      .in('id', userIdsToFetch)
+    profiles?.forEach((p) => {
       if (customerRevenueMap.has(p.id)) {
         customerRevenueMap.get(p.id)!.name = p.display_name || 'User'
       }
@@ -179,12 +204,18 @@ export default async function AdminDashboardPage() {
   // Manually fetch related data to avoid foreign key ambiguity
   let enrichedOrders: any[] = []
   if (recentOrders && recentOrders.length > 0) {
-    const shippingIds = recentOrders.map((o: any) => o.shipping_address_id).filter(Boolean) as string[]
+    const shippingIds = recentOrders
+      .map((o: any) => o.shipping_address_id)
+      .filter(Boolean) as string[]
     const userIds = recentOrders.map((o: any) => o.user_id).filter(Boolean) as string[]
 
     const [addressesResult, profilesResult] = await Promise.all([
-      shippingIds.length > 0 ? supabase.from('addresses').select('id, full_name').in('id', shippingIds) : { data: [] as any[] },
-      userIds.length > 0 ? supabase.from('user_profiles').select('id, display_name').in('id', userIds) : { data: [] as any[] }
+      shippingIds.length > 0
+        ? supabase.from('addresses').select('id, full_name').in('id', shippingIds)
+        : { data: [] as any[] },
+      userIds.length > 0
+        ? supabase.from('user_profiles').select('id, display_name').in('id', userIds)
+        : { data: [] as any[] },
     ])
 
     const addressMap = new Map(addressesResult.data?.map((a: any) => [a.id, a.full_name]) ?? [])
@@ -193,7 +224,7 @@ export default async function AdminDashboardPage() {
     enrichedOrders = recentOrders.map((order: any) => ({
       ...order,
       shippingName: order.shipping_address_id ? addressMap.get(order.shipping_address_id) : '-',
-      userName: order.user_id ? profileMap.get(order.user_id) : (order.guest_email || 'Guest'),
+      userName: order.user_id ? profileMap.get(order.user_id) : order.guest_email || 'Guest',
     }))
   }
 
@@ -202,27 +233,38 @@ export default async function AdminDashboardPage() {
     .select('total_cents')
     .in('status', ['paid', 'processing', 'shipped', 'delivered'])
 
-  const totalRevenue = (revenueData ?? []).reduce((s: number, o: any) => s + (o.total_cents ?? 0), 0)
+  const totalRevenue = (revenueData ?? []).reduce(
+    (s: number, o: any) => s + (o.total_cents ?? 0),
+    0
+  )
 
   return (
     <div className="p-8">
       <div className="flex items-baseline gap-4">
         <h1 className="text-2xl font-bold text-zinc-50">Dashboard</h1>
-        <p className="text-zinc-400">Welcome, <span className="text-zinc-50 font-medium">{adminName}</span></p>
+        <p className="text-zinc-400">
+          Welcome, <span className="text-zinc-50 font-medium">{adminName}</span>
+        </p>
       </div>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
           <p className="text-sm text-zinc-400">Active products</p>
           <p className="mt-2 text-2xl font-bold text-zinc-50">{productsCount ?? 0}</p>
-          <Link href="/admin/products" className="mt-2 block text-sm text-amber-400 hover:text-amber-300">
+          <Link
+            href="/admin/products"
+            className="mt-2 block text-sm text-amber-400 hover:text-amber-300"
+          >
             Manage →
           </Link>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
           <p className="text-sm text-zinc-400">Total orders</p>
           <p className="mt-2 text-2xl font-bold text-zinc-50">{ordersCount ?? 0}</p>
-          <Link href="/admin/orders" className="mt-2 block text-sm text-amber-400 hover:text-amber-300">
+          <Link
+            href="/admin/orders"
+            className="mt-2 block text-sm text-amber-400 hover:text-amber-300"
+          >
             View all →
           </Link>
         </div>
@@ -246,6 +288,24 @@ export default async function AdminDashboardPage() {
               >
                 + New discount
               </Link>
+              <Link
+                href="/admin/customers"
+                className="block text-sm text-amber-400 hover:text-amber-300"
+              >
+                → Customers
+              </Link>
+              <Link
+                href="/admin/newsletter"
+                className="block text-sm text-amber-400 hover:text-amber-300"
+              >
+                → Newsletter
+              </Link>
+              <Link
+                href="/admin/stock-notifications"
+                className="block text-sm text-amber-400 hover:text-amber-300"
+              >
+                → Stock notifications
+              </Link>
             </div>
           </div>
         </div>
@@ -258,15 +318,22 @@ export default async function AdminDashboardPage() {
           <h3 className="text-base font-semibold text-zinc-50">Top 3 Customers</h3>
           <div className="mt-4 space-y-4">
             {topCustomers.map((customer, i) => (
-              <div key={i} className="flex items-center justify-between border-b border-zinc-800/50 pb-4 last:border-0 last:pb-0">
+              <div
+                key={i}
+                className="flex items-center justify-between border-b border-zinc-800/50 pb-4 last:border-0 last:pb-0"
+              >
                 <div>
                   <p className="text-sm font-medium text-zinc-50">{customer.name}</p>
                   <p className="text-xs text-zinc-500">Total spent</p>
                 </div>
-                <p className="text-sm font-bold text-emerald-400">{formatPrice(customer.revenue)}</p>
+                <p className="text-sm font-bold text-emerald-400">
+                  {formatPrice(customer.revenue)}
+                </p>
               </div>
             ))}
-            {topCustomers.length === 0 && <p className="text-sm text-zinc-500">No customer data yet</p>}
+            {topCustomers.length === 0 && (
+              <p className="text-sm text-zinc-500">No customer data yet</p>
+            )}
           </div>
         </div>
 
@@ -274,7 +341,10 @@ export default async function AdminDashboardPage() {
           <h3 className="text-base font-semibold text-zinc-50">Top 3 Best Selling Items</h3>
           <div className="mt-4 space-y-4">
             {topProducts.map((product, i) => (
-              <div key={i} className="flex items-center justify-between border-b border-zinc-800/50 pb-4 last:border-0 last:pb-0">
+              <div
+                key={i}
+                className="flex items-center justify-between border-b border-zinc-800/50 pb-4 last:border-0 last:pb-0"
+              >
                 <div>
                   <p className="text-sm font-medium text-zinc-50">{product.name}</p>
                   <p className="text-xs text-zinc-500">Units sold</p>
@@ -304,10 +374,15 @@ export default async function AdminDashboardPage() {
         {/* Mobile View: Card List */}
         <div className="mt-4 space-y-4 md:hidden">
           {enrichedOrders.map((order) => (
-            <div key={order.id} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 transition-colors hover:bg-zinc-800/30">
+            <div
+              key={order.id}
+              className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 transition-colors hover:bg-zinc-800/30"
+            >
               <div className="flex items-center justify-between">
                 <span className="font-mono text-sm text-zinc-500">#{order.id.slice(0, 8)}</span>
-                <span className="text-xs text-zinc-500">{formatRelativeTime(order.created_at)}</span>
+                <span className="text-xs text-zinc-500">
+                  {formatRelativeTime(order.created_at)}
+                </span>
               </div>
 
               <div className="mt-3 flex items-center justify-between">
@@ -316,7 +391,9 @@ export default async function AdminDashboardPage() {
                   <p className="text-xs text-zinc-500">{order.shippingName}</p>
                 </div>
                 <div className="text-right space-y-1">
-                  <p className="text-sm font-bold text-zinc-200">{formatPrice(order.total_cents)}</p>
+                  <p className="text-sm font-bold text-zinc-200">
+                    {formatPrice(order.total_cents)}
+                  </p>
                   <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500 ring-1 ring-inset ring-emerald-500/20 capitalize">
                     {order.status}
                   </span>
@@ -346,20 +423,36 @@ export default async function AdminDashboardPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-800 bg-zinc-900/80">
-                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Order</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Customer</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Recipient</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Total</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Date</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-zinc-500">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Order
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Customer
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Recipient
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Total
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Date
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/50">
                 {enrichedOrders.map((order) => (
                   <tr key={order.id} className="group hover:bg-zinc-800/20 transition-colors">
                     <td className="whitespace-nowrap px-6 py-4">
-                      <span className="font-mono text-sm text-zinc-500">#{order.id.slice(0, 8)}</span>
+                      <span className="font-mono text-sm text-zinc-500">
+                        #{order.id.slice(0, 8)}
+                      </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-300">
                       {order.userName}
@@ -372,7 +465,9 @@ export default async function AdminDashboardPage() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-zinc-300">{formatPrice(order.total_cents)}</td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-zinc-300">
+                      {formatPrice(order.total_cents)}
+                    </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-500">
                       {formatRelativeTime(order.created_at)}
                     </td>
