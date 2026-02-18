@@ -34,7 +34,7 @@ export function DarkMonkeyLogo({
     <>
       {!textOnly && (
         <Image
-          src="/logo.png"
+          src="/logo.webp"
           alt="DarkMonkey"
           width={img}
           height={img}

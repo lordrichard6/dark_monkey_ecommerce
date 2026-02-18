@@ -40,11 +40,7 @@ export function CartDrawer() {
   return (
     <>
       {isOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50"
-          onClick={closeCart}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 z-50 bg-black/50" onClick={closeCart} aria-hidden="true" />
       )}
       <aside
         className={`fixed top-0 right-0 z-50 h-full w-full max-w-md transform border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl shadow-2xl transition-transform duration-200 ease-out ${
@@ -54,7 +50,14 @@ export function CartDrawer() {
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-4">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-50">
-              <Image src="/logo.png" alt="" width={32} height={32} className="rounded-full" unoptimized />
+              <Image
+                src="/logo.webp"
+                alt=""
+                width={32}
+                height={32}
+                className="rounded-full"
+                unoptimized
+              />
               {tCommon('cart')} ({itemCount} {itemCount === 1 ? t('item') : t('items')})
             </h2>
             <button
@@ -81,9 +84,7 @@ export function CartDrawer() {
 
           <div className="flex-1 overflow-y-auto p-4">
             {cart.items.length === 0 ? (
-              <p className="py-12 text-center text-zinc-500">
-                {t('yourCartEmpty')}
-              </p>
+              <p className="py-12 text-center text-zinc-500">{t('yourCartEmpty')}</p>
             ) : (
               <ul className="space-y-4">
                 {cart.items.map((item, idx) => (
@@ -99,7 +100,10 @@ export function CartDrawer() {
                           fill
                           className="object-cover"
                           sizes="80px"
-                          unoptimized={item.imageUrl?.endsWith('.svg') || item.imageUrl?.includes('picsum.photos')}
+                          unoptimized={
+                            item.imageUrl?.endsWith('.svg') ||
+                            item.imageUrl?.includes('picsum.photos')
+                          }
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-xs text-zinc-600">
@@ -120,18 +124,17 @@ export function CartDrawer() {
                       )}
                       {item.config && Object.keys(item.config).length > 0 && (
                         <p className="text-xs text-amber-400/90">
-                          Custom: {Object.entries(item.config).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                          Custom:{' '}
+                          {Object.entries(item.config)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(', ')}
                         </p>
                       )}
                       <div className="mt-2 flex items-center gap-2">
                         <select
                           value={item.quantity}
                           onChange={(e) =>
-                            handleUpdate(
-                              item.variantId,
-                              parseInt(e.target.value, 10),
-                              item.config
-                            )
+                            handleUpdate(item.variantId, parseInt(e.target.value, 10), item.config)
                           }
                           className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-100"
                         >

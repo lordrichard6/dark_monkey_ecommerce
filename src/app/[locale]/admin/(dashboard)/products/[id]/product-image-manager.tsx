@@ -3,7 +3,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, X } from 'lucide-react'
-import { uploadProductImage, deleteProductImage, setPrimaryProductImage, updateProductImageColor } from '@/actions/admin-products'
+import {
+  uploadProductImage,
+  deleteProductImage,
+  setPrimaryProductImage,
+  updateProductImageColor,
+} from '@/actions/admin-products'
 
 type Image = {
   id: string
@@ -20,10 +25,16 @@ type Props = {
   availableColors?: string[]
 }
 
-export function ProductImageManager({ productId, images, selectedColor, availableColors = [] }: Props) {
+export function ProductImageManager({
+  productId,
+  images,
+  selectedColor,
+  availableColors = [],
+}: Props) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
   const [updatingColorId, setUpdatingColorId] = useState<string | null>(null)
@@ -40,7 +51,7 @@ export function ProductImageManager({ productId, images, selectedColor, availabl
   // Show images with matching color OR null (universal)
   // If no specific color selected, show all
   const filteredImages = selectedColor
-    ? images.filter(img => !img.color || img.color === selectedColor)
+    ? images.filter((img) => !img.color || img.color === selectedColor)
     : images
 
   const displayImage = filteredImages[selectedIndex] ?? filteredImages[0]
@@ -54,24 +65,29 @@ export function ProductImageManager({ productId, images, selectedColor, availabl
   }, [lightboxUrl])
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
 
     setError(null)
     setUploading(true)
 
-    const formData = new FormData()
-    formData.append('file', file)
-
-    const result = await uploadProductImage(productId, formData, selectedColor)
-    setUploading(false)
-
-    if (result.ok) {
-      router.refresh()
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    } else {
-      setError(result.error || 'Upload failed')
+    const errors: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress(files.length > 1 ? `Uploading ${i + 1} / ${files.length}…` : null)
+      const formData = new FormData()
+      formData.append('file', files[i])
+      const result = await uploadProductImage(productId, formData, selectedColor)
+      if (!result.ok) errors.push(`${files[i].name}: ${result.error}`)
     }
+
+    setUploading(false)
+    setUploadProgress(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+
+    if (errors.length) {
+      setError(errors.join(' · '))
+    }
+    router.refresh()
   }
 
   async function handleUpdateColor(imageId: string, color: string | null) {
@@ -131,21 +147,42 @@ export function ProductImageManager({ productId, images, selectedColor, availabl
             ref={fileInputRef}
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
+            multiple
             onChange={handleUpload}
             disabled={uploading}
             className="hidden"
           />
           <span
             className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 shadow-sm ring-1 ring-zinc-700/50 transition hover:bg-amber-500/20 hover:text-amber-400 hover:ring-amber-500/30 disabled:opacity-50"
-            title="Add images"
+            title="Add images (select multiple)"
           >
             {uploading ? (
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
-                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  opacity="0.25"
+                />
+                <path
+                  d="M12 2a10 10 0 0 1 10 10"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             ) : (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M12 5v14M5 12h14" />
               </svg>
             )}
@@ -153,6 +190,7 @@ export function ProductImageManager({ productId, images, selectedColor, availabl
         </label>
       </div>
 
+      {uploadProgress && <p className="text-xs text-amber-400">{uploadProgress}</p>}
       {error && <p className="text-xs text-red-400">{error}</p>}
 
       {/* Main image above - click to expand */}
@@ -164,7 +202,11 @@ export function ProductImageManager({ productId, images, selectedColor, availabl
           onKeyDown={(e) => e.key === 'Enter' && setLightboxUrl(displayImage.url)}
           className="relative aspect-square w-48 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
-          <img src={displayImage.url} alt={displayImage.alt ?? ''} className="h-full w-full object-cover" />
+          <img
+            src={displayImage.url}
+            alt={displayImage.alt ?? ''}
+            className="h-full w-full object-cover"
+          />
         </div>
       ) : (
         <div className="flex aspect-square w-48 items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 text-xs text-zinc-500">
@@ -183,14 +225,19 @@ export function ProductImageManager({ productId, images, selectedColor, availabl
                 tabIndex={0}
                 onClick={() => setSelectedIndex(i)}
                 onKeyDown={(e) => e.key === 'Enter' && setSelectedIndex(i)}
-                className={`relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${selectedIndex === i ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
-                  }`}
+                className={`relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                  selectedIndex === i
+                    ? 'border-amber-500 ring-2 ring-amber-500/20'
+                    : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
+                }`}
               >
                 <img src={img.url} alt={img.alt ?? ''} className="h-full w-full object-cover" />
 
                 {/* Primary Marker */}
                 {isPrimary && (
-                  <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">#1</span>
+                  <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">
+                    #1
+                  </span>
                 )}
 
                 {/* Set Primary Button */}
@@ -229,9 +276,13 @@ export function ProductImageManager({ productId, images, selectedColor, availabl
                   className="w-20 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                 >
                   <option value="">Universal</option>
-                  {availableColors.filter(c => c !== 'Default').map(color => (
-                    <option key={color} value={color}>{color}</option>
-                  ))}
+                  {availableColors
+                    .filter((c) => c !== 'Default')
+                    .map((color) => (
+                      <option key={color} value={color}>
+                        {color}
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>

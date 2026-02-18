@@ -31,7 +31,25 @@
     "authSubtitle": "Treten Sie unserer Community bei, um exklusive Angebote zu erhalten, Ihre Bestellungen einfach zu verfolgen und als Erster von neuen Drops zu erfahren.",
     "createAccount": "Konto erstellen",
     "logIn": "Anmelden",
-    "alreadyHaveAccount": "Haben Sie bereits ein Konto? Melden Sie sich an, um Ihre Punkte zu sehen."
+    "alreadyHaveAccount": "Haben Sie bereits ein Konto? Melden Sie sich an, um Ihre Punkte zu sehen.",
+    "achievements": "Errungenschaften",
+    "allProducts": "Alle Produkte",
+    "artGallery": "Kunstgalerie",
+    "back": "Zurück",
+    "cancel": "Abbrechen",
+    "creative": "Kreativ",
+    "editProfile": "Profil bearbeiten",
+    "error": "Fehler",
+    "featured": "Empfohlen",
+    "points": "Punkte",
+    "referralCopied": "Kopiert!",
+    "referralCopy": "Link kopieren",
+    "referralStats": "Du hast {total} Freund(e) geworben. {completed} haben einen Erstkauf getätigt.",
+    "referralStatsNone": "Noch keine Empfehlungen. Teile deinen Link, um XP zu verdienen.",
+    "referralYourLink": "Dein Empfehlungslink",
+    "seasonDrops": "Season Drops",
+    "statistics": "Statistiken",
+    "success": "Erfolg"
   },
   "search": {
     "placeholder": "Produkte suchen...",
@@ -112,7 +130,9 @@
     "errorLoadingProducts": "Produkte konnten nicht geladen werden.",
     "tryAgain": "Erneut versuchen",
     "featured": "Vorgestellt",
-    "creative": "Kreativ"
+    "creative": "Kreativ",
+    "craftedFor": "Gemacht für",
+    "quality": "Qualität"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",
@@ -273,7 +293,9 @@
     "details": "Produktdetails",
     "freeShipping": "Kostenloser Versand",
     "thirtyDayReturns": "30 Tage Rückgaberecht",
-    "oneYearWarranty": "1 Jahr Garantie"
+    "oneYearWarranty": "1 Jahr Garantie",
+    "recentlyViewed": "Zuletzt angesehen",
+    "recentlyViewedSubtitle": "Mach weiter, wo du aufgehört hast."
   },
   "cart": {
     "cartWithItems": "Warenkorb mit {count} Artikeln",
@@ -345,7 +367,19 @@
     "featured": "Vorgestellt",
     "seasonDrops": "Saisonale Drops",
     "creative": "Kreativ",
-    "artGallery": "Kunstgalerie"
+    "artGallery": "Kunstgalerie",
+    "addNewAddress": "Neue Adresse hinzufügen",
+    "addressAdded": "Adresse erfolgreich hinzugefügt",
+    "addressDeleted": "Adresse gelöscht",
+    "addressUpdated": "Adresse erfolgreich aktualisiert",
+    "backToAddresses": "Zurück zu Adressen",
+    "defaultSet": "Standardadresse aktualisiert",
+    "editAddress": "Adresse bearbeiten",
+    "manageAddresses": "Adressen verwalten",
+    "noAddresses": "Keine Adressen gefunden. Füge eine hinzu, um den Checkout zu beschleunigen.",
+    "saveAddress": "Adresse speichern",
+    "setDefault": "Als Standard festlegen",
+    "viewAddresses": "Lieferadressen anzeigen und verwalten"
   },
   "checkout": {
     "contact": "Kontakt",
@@ -368,7 +402,15 @@
     "orderConfirmedTitle": "Bestellung bestätigt",
     "thankYouDescription": "Vielen Dank für Ihre Bestellung",
     "total": "Gesamt",
-    "discountAppliedLabel": "Rabatt angewendet"
+    "discountAppliedLabel": "Rabatt angewendet",
+    "addToOrder": "Zur Bestellung hinzufügen",
+    "exclusiveOffers": "Exklusive Angebote",
+    "off": "RABATT",
+    "orderFinalizing": "Deine Bestellung wird abgeschlossen...",
+    "orderWait": "Bitte warte einen Moment, während wir deine Zahlung bearbeiten.",
+    "paymentError": "Zahlungsverifizierung fehlgeschlagen",
+    "paymentErrorMessage": "Bei der Verifizierung deiner Zahlung ist ein Fehler aufgetreten. Falls du belastet wurdest, wende dich bitte an den Support.",
+    "upsellPitch": "Spezielles Angebot nur für dich!"
   },
   "forgotPassword": {
     "title": "Passwort vergessen",
@@ -524,7 +566,16 @@
     "nextTier": "Nächste Stufe",
     "unlockedOn": "Freigeschaltet am",
     "locked": "Gesperrt",
-    "earnPoints": "Punkte verdienen"
+    "earnPoints": "Punkte verdienen",
+    "bioPlaceholder": "Erzähl uns von dir",
+    "birthdayHint": "Erhalte besondere Angebote an deinem Geburtstag",
+    "cancel": "Abbrechen",
+    "copyLink": "Link kopieren",
+    "displayNamePlaceholder": "Dein Name",
+    "makeProfilePublicHint": "Anderen erlauben, deine Wunschliste und Errungenschaften zu sehen",
+    "preferredSizeHint": "Hilft uns, die richtige Größe zu empfehlen",
+    "saveChanges": "Änderungen speichern",
+    "stylePreferencesHint": "Hilft uns, Produkte für dich zusammenzustellen"
   },
   "wishlist": {
     "share": "Teilen",

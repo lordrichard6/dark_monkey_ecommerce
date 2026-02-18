@@ -32,13 +32,13 @@ type Props = {
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params
   // Fix: Check if locale exists in routing.locales directly since hasLocale might not be available
-  if (!routing.locales.includes(locale as typeof routing.locales[number])) notFound()
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) notFound()
   setRequestLocale(locale)
 
   const [messages, cart, announcements] = await Promise.all([
     getMessages(),
     getCart(),
-    getAnnouncements()
+    getAnnouncements(),
   ])
 
   const organizationJsonLd = {
@@ -46,18 +46,14 @@ export default async function LocaleLayout({ children, params }: Props) {
     '@type': 'Organization',
     name: 'DARKMONKEY',
     url: process.env.NEXT_PUBLIC_SITE_URL,
-    logo: `${process.env.NEXT_PUBLIC_SITE_URL}/logo.png`,
-    sameAs: [
-      'https://instagram.com/darkmonkey',
-      'https://facebook.com/darkmonkey'
-    ],
+    logo: `${process.env.NEXT_PUBLIC_SITE_URL}/logo.webp`,
+    sameAs: ['https://instagram.com/darkmonkey', 'https://facebook.com/darkmonkey'],
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+41-XX-XXX-XXXX',
       contactType: 'customer service',
       areaServed: 'CH',
-      availableLanguage: ['English', 'Portuguese', 'German']
-    }
+      availableLanguage: ['English', 'Portuguese', 'German'],
+    },
   }
 
   return (

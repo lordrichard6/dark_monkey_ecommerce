@@ -11,7 +11,7 @@ export function HeroLogo() {
       />
       <div className="relative">
         <Image
-          src="/logo.png"
+          src="/logo.webp"
           alt="DarkMonkey"
           width={160}
           height={160}

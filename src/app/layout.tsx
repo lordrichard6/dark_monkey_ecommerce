@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Pacifico } from 'next/font/google'
 import { Suspense } from 'react'
+import { headers } from 'next/headers'
 import './globals.css'
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
@@ -64,7 +65,7 @@ export const metadata: Metadata = {
       { url: '/logo.webp', sizes: 'any' },
     ],
     shortcut: '/favicon-32x32.png',
-    apple: '/logo.webp',
+    apple: '/apple-touch-icon.png',
   },
   manifest: '/manifest.json',
   appleWebApp: {
@@ -82,13 +83,18 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // next-intl middleware sets x-next-intl-locale on every request.
+  // Reading it here lets us set the correct html[lang] without touching
+  // the route params, which keeps the root layout signature valid for Next.js.
+  const headersList = await headers()
+  const lang = headersList.get('x-next-intl-locale') ?? 'en'
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={lang} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
         suppressHydrationWarning
