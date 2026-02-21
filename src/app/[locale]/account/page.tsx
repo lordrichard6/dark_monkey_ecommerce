@@ -7,7 +7,7 @@ import { ProfileStats } from '@/components/profile/ProfileStats'
 import { PointsDisplay } from '@/components/profile/PointsDisplay'
 import { ReferralCard } from '@/components/profile/ReferralCard'
 import { AchievementGrid } from '@/components/profile/AchievementBadge'
-import { Edit, ShoppingBag, Heart } from 'lucide-react'
+import { Edit, ShoppingBag, Heart, Shield } from 'lucide-react'
 import md5 from 'md5'
 
 export default async function AccountPage() {
@@ -39,11 +39,7 @@ export default async function AccountPage() {
     { data: wishlistItems, count: wishlistCount },
     { data: orders, count: ordersCount },
   ] = await Promise.all([
-    supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single(),
+    supabase.from('user_profiles').select('*').eq('id', user.id).single(),
     supabase
       .from('points_transactions')
       .select('*')
@@ -55,10 +51,7 @@ export default async function AccountPage() {
       .select('*')
       .eq('is_active', true)
       .order('tier', { ascending: true }),
-    supabase
-      .from('user_achievements')
-      .select('achievement_id, unlocked_at')
-      .eq('user_id', user.id),
+    supabase.from('user_achievements').select('achievement_id, unlocked_at').eq('user_id', user.id),
     supabase
       .from('user_wishlist')
       .select('product_id', { count: 'exact', head: true })
@@ -70,9 +63,7 @@ export default async function AccountPage() {
       .in('status', ['paid', 'processing', 'shipped', 'delivered']),
   ])
 
-  const unlockedAchievementIds = new Set(
-    userAchievements?.map((ua) => ua.achievement_id) || []
-  )
+  const unlockedAchievementIds = new Set(userAchievements?.map((ua) => ua.achievement_id) || [])
 
   // Get Gravatar URL
   const getGravatarUrl = (email: string) => {
@@ -117,13 +108,7 @@ export default async function AccountPage() {
             {/* Avatar */}
             {avatarUrl ? (
               <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-zinc-800 bg-zinc-900">
-                <Image
-                  src={avatarUrl}
-                  alt="Avatar"
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
+                <Image src={avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
               </div>
             ) : (
               <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-zinc-800 bg-gradient-to-br from-amber-500 to-amber-600 text-2xl font-bold text-white">
@@ -206,6 +191,17 @@ export default async function AccountPage() {
                   <p className="text-sm text-zinc-500">{t('viewAddresses')}</p>
                 </div>
               </Link>
+
+              <Link
+                href="/account/privacy"
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+              >
+                <Shield className="h-5 w-5 text-zinc-400" />
+                <div>
+                  <p className="font-medium text-zinc-50">{t('privacy')}</p>
+                  <p className="text-sm text-zinc-500">{t('viewPrivacy')}</p>
+                </div>
+              </Link>
             </section>
           </div>
 
@@ -214,7 +210,11 @@ export default async function AccountPage() {
             {/* Points */}
             <section>
               <h2 className="mb-4 text-xl font-semibold text-zinc-50">{t('points')}</h2>
-              <PointsDisplay totalPoints={stats.totalPoints} userId={user.id} transactions={pointsTransactions || []} />
+              <PointsDisplay
+                totalPoints={stats.totalPoints}
+                userId={user.id}
+                transactions={pointsTransactions || []}
+              />
             </section>
 
             {/* Referral */}
