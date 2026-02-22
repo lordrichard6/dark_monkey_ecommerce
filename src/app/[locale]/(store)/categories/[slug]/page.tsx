@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { createClient, getUserSafe } from '@/lib/supabase/server'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { notFound } from 'next/navigation'
@@ -8,6 +8,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { getCategoryMetadata, getCategoryBySlug, getUserWishlistProductIds } from '@/lib/queries'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { ScrollOnParamChange } from '@/components/ScrollOnParamChange'
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>
@@ -72,21 +73,31 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const wishlistProductIds = user?.id ? await getUserWishlistProductIds(user.id) : []
 
   const productsWithPrice = filteredProducts.map((p) => {
-    const variants = p.product_variants as { price_cents: number }[] | null
+    const variants = p.product_variants as
+      | { price_cents: number; compare_at_price_cents: number | null }[]
+      | null
     const images = p.product_images as
       | { url: string; alt: string | null; sort_order: number }[]
       | null
-    const minPrice = variants?.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
+    // Pick cheapest variant and its compare price
+    const minVariant = variants?.length
+      ? variants.reduce((min, v) => (v.price_cents < min.price_cents ? v : min), variants[0])
+      : null
+    const minPrice = minVariant?.price_cents ?? 0
+    const compareAtPrice = minVariant?.compare_at_price_cents ?? null
     const primaryImage = images?.sort((a, b) => a.sort_order - b.sort_order)[0]
     return {
       productId: p.id,
       slug: p.slug,
       name: p.name,
       priceCents: minPrice,
-      imageUrl: primaryImage?.url ?? '/next.svg',
+      compareAtPriceCents: compareAtPrice,
+      imageUrl: primaryImage?.url ?? '/images/hero_bg.webp',
       imageAlt: primaryImage?.alt ?? p.name,
       isInWishlist: wishlistProductIds.includes(p.id),
       isBestseller: bestsellerIds.has(p.id),
+      isOnSale: !!(compareAtPrice && compareAtPrice > minPrice),
+      createdAt: p.created_at,
     }
   })
 
@@ -130,16 +141,16 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
         {/* Subcategory tabs (only for parent categories) */}
         {subcategories.length > 0 && (
-          <div className="mb-8 flex flex-wrap gap-2">
+          <div className="mb-8 flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
             <Link
               href={`/categories/${slug}${sort !== 'newest' ? `?sort=${sort}` : ''}`}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                 !activeSub
                   ? 'bg-amber-500 text-black'
                   : 'border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white'
               }`}
             >
-              All ({products.length})
+              {t('all')} ({products.length})
             </Link>
             {subcategories.map((sub) => {
               const isActive = activeSub?.id === sub.id
@@ -148,7 +159,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 <Link
                   key={sub.id}
                   href={href}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                     isActive
                       ? 'bg-amber-500 text-black'
                       : 'border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white'
@@ -161,6 +172,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           </div>
         )}
 
+        <Suspense fallback={null}>
+          <ScrollOnParamChange />
+        </Suspense>
         <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-zinc-900" />}>
           <VirtualProductGrid products={sortedProducts} title={title} sort={sort} />
         </Suspense>

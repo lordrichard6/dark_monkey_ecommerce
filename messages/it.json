@@ -235,7 +235,10 @@
     "shopCategory": "Acquista {name} →",
     "noCategories": "Ancora nessuna categoria.",
     "categoryProductsTitle": "Prodotti {name}",
-    "noImage": "Nessuna immagine"
+    "noImage": "Nessuna immagine",
+    "exploreCollection": "Esplora la Collezione",
+    "all": "Tutto",
+    "productCount": "{count, plural, =1 {# prodotto} other {# prodotti}}"
   },
   "product": {
     "color": "Colore",
@@ -255,6 +258,7 @@
     "outOfStock": "Esaurito",
     "notAvailableInColor": "Non disponibile in questo colore",
     "bestseller": "Bestseller",
+    "quickView": "Anteprima rapida",
     "onlyXLeft": "Solo {count} rimasti!",
     "orderWithinForDispatch": "Ordina nelle prossime {hours}h {minutes}m per spedizione oggi",
     "shipsInDays": "Spedizione in 2–3 giorni lavorativi",

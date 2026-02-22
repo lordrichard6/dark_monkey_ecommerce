@@ -1,9 +1,11 @@
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 
 type Props = { params: Promise<{ locale: string }> }
+
+export const revalidate = 3600
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
@@ -56,7 +58,7 @@ export default async function CategoriesPage() {
   const categoryCards = (rootCategories ?? []).map((cat) => ({
     title: cat.name,
     description: cat.description || '',
-    href: `/categories/${cat.slug}`,
+    href: `/categories/${cat.slug}` as '/',
     image: cat.image_url || '/images/hero_bg.webp',
     productCount: countByParent[cat.id] ?? 0,
   }))
@@ -100,16 +102,16 @@ export default async function CategoriesPage() {
                   </h2>
                   {card.productCount > 0 && (
                     <p className="mt-1 text-xs font-medium text-zinc-400">
-                      {card.productCount} {card.productCount === 1 ? 'product' : 'products'}
+                      {t('productCount', { count: card.productCount })}
                     </p>
                   )}
                   {card.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-zinc-300 opacity-0 transition-all duration-500 group-hover:opacity-100">
+                    <p className="mt-2 line-clamp-2 text-sm text-zinc-300 md:opacity-0 md:transition-all md:duration-500 md:group-hover:opacity-100">
                       {card.description}
                     </p>
                   )}
                   <div className="mt-6 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-400">
-                    <span>Explore Collection</span>
+                    <span>{t('exploreCollection')}</span>
                     <svg
                       className="h-4 w-4 transition-transform group-hover:translate-x-2"
                       fill="none"

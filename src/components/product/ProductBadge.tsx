@@ -1,5 +1,5 @@
 type BadgeProps = {
-  type: 'new' | 'featured' | 'sale'
+  type: 'new' | 'featured' | 'sale' | 'bestseller'
   className?: string
 }
 
@@ -16,6 +16,10 @@ export function ProductBadge({ type, className = '' }: BadgeProps) {
     sale: {
       label: 'Sale',
       classes: 'bg-red-500/90 text-white',
+    },
+    bestseller: {
+      label: 'Bestseller',
+      classes: 'bg-amber-600/90 text-white',
     },
   }
 

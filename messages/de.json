@@ -235,7 +235,10 @@
     "shopCategory": "{name} einkaufen →",
     "noCategories": "Noch keine Kategorien.",
     "categoryProductsTitle": "{name} Produkte",
-    "noImage": "Kein Bild"
+    "noImage": "Kein Bild",
+    "exploreCollection": "Kollektion entdecken",
+    "all": "Alle",
+    "productCount": "{count, plural, =1 {# Produkt} other {# Produkte}}"
   },
   "product": {
     "color": "Farbe",
@@ -261,6 +264,7 @@
     "stockNotificationError": "Benachrichtigung konnte nicht registriert werden. Bitte versuchen Sie es erneut.",
     "emailPlaceholder": "ihre.email@beispiel.com",
     "bestseller": "Bestseller",
+    "quickView": "Schnellansicht",
     "onlyXLeft": "Nur noch {count} übrig!",
     "orderWithinForDispatch": "Bestellen Sie in den nächsten {hours}h {minutes}m für Versand heute",
     "shipsInDays": "Versand in 2–3 Werktagen",

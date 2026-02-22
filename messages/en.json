@@ -231,7 +231,10 @@
     "shopCategory": "Shop {name} →",
     "noCategories": "No categories yet.",
     "categoryProductsTitle": "{name} products",
-    "noImage": "No image"
+    "noImage": "No image",
+    "exploreCollection": "Explore Collection",
+    "all": "All",
+    "productCount": "{count, plural, =1 {# product} other {# products}}"
   },
   "product": {
     "color": "Color",
@@ -258,6 +261,7 @@
     "stockNotificationError": "Failed to register notification. Please try again.",
     "emailPlaceholder": "your.email@example.com",
     "bestseller": "Bestseller",
+    "quickView": "Quick View",
     "orderWithinForDispatch": "Order in the next {hours}h {minutes}m for same-day dispatch",
     "shipsInDays": "Ships in 2–3 business days",
     "orderTodayShipsTomorrow": "Order today — ships tomorrow",

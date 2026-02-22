@@ -231,7 +231,10 @@
     "shopCategory": "Comprar {name} →",
     "noCategories": "Ainda não há categorias.",
     "categoryProductsTitle": "{name} produtos",
-    "noImage": "Sem imagem"
+    "noImage": "Sem imagem",
+    "exploreCollection": "Explorar Coleção",
+    "all": "Tudo",
+    "productCount": "{count, plural, =1 {# produto} other {# produtos}}"
   },
   "product": {
     "color": "Cor",
@@ -257,6 +260,7 @@
     "stockNotificationError": "Falha ao registar notificação. Por favor tente novamente.",
     "emailPlaceholder": "seu.email@exemplo.com",
     "bestseller": "Bestseller",
+    "quickView": "Ver Produto",
     "onlyXLeft": "Só restam {count}!",
     "orderWithinForDispatch": "Encomende nos próximos {hours}h {minutes}m para envio no mesmo dia",
     "shipsInDays": "Envio em 2–3 dias úteis",
