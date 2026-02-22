@@ -10,7 +10,10 @@ const CategorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().min(1, 'Slug is required'),
   description: z.string().optional(),
-  image_url: z.string().optional(),
+  image_url: z
+    .string()
+    .optional()
+    .transform((v) => v || undefined),
   parent_id: z.string().uuid().optional().nullable(),
   sort_order: z.coerce.number().default(0),
 })
@@ -89,6 +92,16 @@ export async function upsertCategory(
   }
 
   const supabase = await createClient()
+
+  const { data: existing } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', validated.data.slug)
+    .neq('id', validated.data.id ?? '')
+    .maybeSingle()
+
+  if (existing) return { ok: false, error: 'Slug is already in use by another category' }
+
   const { id, ...payload } = validated.data
 
   let error
@@ -105,6 +118,23 @@ export async function upsertCategory(
 
   if (error) {
     return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/admin/categories')
+  revalidatePath('/', 'layout')
+  return { ok: true }
+}
+
+export async function reorderCategories(orderedIds: string[]): Promise<ActionState> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
+
+  const supabase = await createClient()
+  for (let i = 0; i < orderedIds.length; i++) {
+    await supabase
+      .from('categories')
+      .update({ sort_order: i, updated_at: new Date().toISOString() })
+      .eq('id', orderedIds[i])
   }
 
   revalidatePath('/admin/categories')

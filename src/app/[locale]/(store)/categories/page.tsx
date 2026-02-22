@@ -29,20 +29,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// ISR: Revalidate categories page every 1 hour (static content, rarely changes)
-export const revalidate = 3600
-
-import { CATEGORIES } from '@/lib/categories'
-
 export default async function CategoriesPage() {
   const t = await getTranslations('store')
 
-  // Map the hard-coded categories to card format
-  const categoryCards = CATEGORIES.map((cat) => ({
+  const supabase = await createClient()
+
+  // Fetch root categories and sub-categories with product counts in parallel
+  const [{ data: rootCategories }, { data: subCatCounts }] = await Promise.all([
+    supabase
+      .from('categories')
+      .select('id, name, slug, description, image_url')
+      .is('parent_id', null)
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true }),
+    supabase.from('categories').select('id, parent_id, products(id)').not('parent_id', 'is', null),
+  ])
+
+  // Sum product counts per root category
+  const countByParent: Record<string, number> = {}
+  for (const sub of subCatCounts ?? []) {
+    if (!sub.parent_id) continue
+    const count = Array.isArray(sub.products) ? sub.products.length : 0
+    countByParent[sub.parent_id] = (countByParent[sub.parent_id] ?? 0) + count
+  }
+
+  const categoryCards = (rootCategories ?? []).map((cat) => ({
     title: cat.name,
     description: cat.description || '',
     href: `/categories/${cat.slug}`,
-    image: cat.imageUrl || '/images/hero_bg.webp', // Fallback image
+    image: cat.image_url || '/images/hero_bg.webp',
+    productCount: countByParent[cat.id] ?? 0,
   }))
 
   return (
@@ -82,6 +98,11 @@ export default async function CategoriesPage() {
                   <h2 className="text-3xl font-black uppercase tracking-tight text-white drop-shadow-lg">
                     {card.title}
                   </h2>
+                  {card.productCount > 0 && (
+                    <p className="mt-1 text-xs font-medium text-zinc-400">
+                      {card.productCount} {card.productCount === 1 ? 'product' : 'products'}
+                    </p>
+                  )}
                   {card.description && (
                     <p className="mt-2 line-clamp-2 text-sm text-zinc-300 opacity-0 transition-all duration-500 group-hover:opacity-100">
                       {card.description}

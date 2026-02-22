@@ -2,7 +2,7 @@
 
 import { upsertCategory, type Category, type ActionState } from '@/actions/admin-categories'
 import { useRouter } from '@/i18n/navigation'
-import { useActionState, useEffect, useCallback } from 'react'
+import { useActionState, useEffect, useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
 interface CategoryFormProps {
@@ -22,6 +22,7 @@ function slugify(value: string) {
 export function CategoryForm({ category, categories }: CategoryFormProps) {
   const router = useRouter()
   const [state, action, isPending] = useActionState(upsertCategory, { ok: true } as ActionState)
+  const [slugPreview, setSlugPreview] = useState(category?.slug ?? '')
 
   useEffect(() => {
     if (state.error) {
@@ -45,7 +46,9 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
       if (category) return
       const slugInput = document.getElementById('slug') as HTMLInputElement | null
       if (slugInput && !slugInput.dataset.userEdited) {
-        slugInput.value = slugify(e.target.value)
+        const generated = slugify(e.target.value)
+        slugInput.value = generated
+        setSlugPreview(generated)
       }
     },
     [category]
@@ -88,14 +91,21 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
               placeholder="e.g. hoodies"
               required
               onInput={(e) => {
-                // Mark as user-edited so auto-fill stops
-                ;(e.target as HTMLInputElement).dataset.userEdited = '1'
+                const input = e.target as HTMLInputElement
+                input.dataset.userEdited = '1'
+                setSlugPreview(input.value)
               }}
               className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             />
             <p className="text-xs text-zinc-500">
               Auto-generated from name. Edit manually if needed.
             </p>
+            {slugPreview && (
+              <p className="text-xs text-zinc-600">
+                <span className="text-zinc-500">URL: </span>
+                <span className="font-mono text-amber-500/70">/categories/{slugPreview}</span>
+              </p>
+            )}
           </div>
 
           {/* Parent Category — root only */}

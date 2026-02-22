@@ -1,7 +1,7 @@
 import { getCategories } from '@/actions/admin-categories'
 import { Link } from '@/i18n/navigation'
-import { Plus, Edit } from 'lucide-react'
-import { DeleteCategoryButton } from './delete-category-button'
+import { Plus } from 'lucide-react'
+import { AdminCategoriesClient } from './AdminCategoriesClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,12 +30,17 @@ export default async function AdminCategoriesPage() {
     return nodes.flatMap((node) => [{ ...node, level }, ...flatten(node.children, level + 1)])
   }
 
-  const categories = flatten(roots)
+  const flatList = flatten(roots)
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Drag root categories to reorder. Changes save automatically.
+          </p>
+        </div>
         <Link href="/admin/categories/new">
           <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-amber-500 text-black hover:bg-amber-600 h-9 px-4 py-2">
             <Plus className="mr-2 h-4 w-4" />
@@ -44,65 +49,7 @@ export default async function AdminCategoriesPage() {
         </Link>
       </div>
 
-      <div className="rounded-lg border border-zinc-800">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-zinc-800 bg-zinc-900/80">
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Name</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Slug</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Sort</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Products</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map((category) => (
-              <tr
-                key={category.id}
-                className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/50"
-              >
-                <td className="px-4 py-3 font-medium text-zinc-50">
-                  <div
-                    style={{ paddingLeft: `${category.level * 24}px` }}
-                    className="flex items-center"
-                  >
-                    {category.level > 0 && <span className="text-zinc-600 mr-2">└</span>}
-                    {category.name}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-zinc-400">{category.slug}</td>
-                <td className="px-4 py-3 text-sm text-zinc-400">{category.sort_order}</td>
-                <td className="px-4 py-3 text-sm text-zinc-400">{category.product_count ?? 0}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    <Link href={`/admin/categories/${category.id}`}>
-                      <button className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-amber-400">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                    </Link>
-                    <DeleteCategoryButton id={category.id} name={category.name} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {categories.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-12 text-center">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="mb-4 rounded-full bg-zinc-900 p-4 ring-1 ring-zinc-800">
-                      <Plus className="h-6 w-6 text-zinc-500" />
-                    </div>
-                    <h3 className="text-lg font-medium text-zinc-200">No categories found</h3>
-                    <p className="mt-1 max-w-sm text-sm text-zinc-500">
-                      Create your first category to get started.
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminCategoriesClient roots={roots.map((r) => ({ ...r, level: 0 }))} flatList={flatList} />
     </div>
   )
 }

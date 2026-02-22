@@ -192,20 +192,44 @@ export const isProductInWishlist = cache(async (productId: string, userId: strin
 
 /**
  * Get category by slug with products
- * Used in category pages
+ * - For parent categories: returns all products from child categories + subcategory list for tabs
+ * - For child categories: returns its own products + parent info for breadcrumbs
  */
 export const getCategoryBySlug = cache(async (slug: string) => {
   const supabase = await createClient()
 
   const { data: category, error } = await supabase
     .from('categories')
-    .select('id, name, slug, description')
+    .select('id, name, slug, description, parent_id, sort_order')
     .eq('slug', slug)
     .single()
 
   if (error || !category) {
     return { data: null, error }
   }
+
+  // Fetch subcategories (children of this category)
+  const { data: subcategories } = await supabase
+    .from('categories')
+    .select('id, name, slug, sort_order')
+    .eq('parent_id', category.id)
+    .order('sort_order', { ascending: true })
+
+  // Fetch parent if this is a child category
+  let parent: { id: string; name: string; slug: string } | null = null
+  if (category.parent_id) {
+    const { data: parentData } = await supabase
+      .from('categories')
+      .select('id, name, slug')
+      .eq('id', category.parent_id)
+      .single()
+    parent = parentData ?? null
+  }
+
+  // Roll up products: if this is a parent category, fetch from all children;
+  // otherwise fetch directly from this category
+  const childIds = (subcategories ?? []).map((s) => s.id)
+  const categoryIds = childIds.length > 0 ? childIds : [category.id]
 
   const { data: products } = await supabase
     .from('products')
@@ -220,12 +244,20 @@ export const getCategoryBySlug = cache(async (slug: string) => {
       product_variants (price_cents, product_inventory (quantity))
     `
     )
-    .eq('category_id', category.id)
+    .in('category_id', categoryIds)
     .eq('is_active', true)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
-  return { data: { category, products: products ?? [] }, error: null }
+  return {
+    data: {
+      category,
+      products: products ?? [],
+      subcategories: subcategories ?? [],
+      parent,
+    },
+    error: null,
+  }
 })
 
 /**
