@@ -254,7 +254,7 @@ describe('processSuccessfulCheckout', () => {
     mockSupabase.from.mockReturnValue(makeQuery({ data: null, error: null }))
 
     await expect(processSuccessfulCheckout('sess_expired')).rejects.toThrow(
-      'Session status is expired'
+      'Session not complete (status: expired)'
     )
   })
 
