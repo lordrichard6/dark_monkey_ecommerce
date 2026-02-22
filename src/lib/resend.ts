@@ -52,12 +52,12 @@ export async function sendOrderConfirmation(
     body: strings.thankYou,
     details: [
       { label: strings.orderNumber.replace('#{orderId}', payload.orderId), value: totalFormatted },
-      { label: strings.items, value: String(payload.itemCount) }
+      { label: strings.items, value: String(payload.itemCount) },
     ],
     total: totalFormatted,
     ctaText: strings.viewOrder,
-    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/orders/${payload.orderId}`,
-    registerUrl: payload.registerUrl
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/en/account/orders`,
+    registerUrl: payload.registerUrl,
   })
 
   try {
@@ -106,9 +106,9 @@ export async function sendAbandonedCartEmail(
     previewText: strings.title,
     title: strings.title,
     body: strings.body,
-    items: payload.productNames.map(name => ({ name })),
+    items: payload.productNames.map((name) => ({ name })),
     ctaText: strings.cta,
-    ctaUrl: payload.cartUrl
+    ctaUrl: payload.cartUrl,
   })
 
   try {
@@ -155,7 +155,7 @@ export async function sendRestockAlert(
     body: strings.body,
     items: [{ name: payload.productName }],
     ctaText: strings.cta,
-    ctaUrl: payload.productUrl
+    ctaUrl: payload.productUrl,
   })
 
   try {
@@ -196,7 +196,7 @@ export async function sendWishlistReminderEmail(
     title: strings.title,
     body: strings.body.replace('{count}', String(payload.itemCount)),
     ctaText: strings.cta,
-    ctaUrl: payload.wishlistUrl
+    ctaUrl: payload.wishlistUrl,
   })
 
   try {

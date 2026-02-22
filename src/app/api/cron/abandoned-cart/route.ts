@@ -48,13 +48,14 @@ export async function GET(request: NextRequest) {
     const summary = (row.cart_summary ?? {}) as {
       itemCount?: number
       totalCents?: number
-      productNames?: string[]
+      items?: { name?: string }[]
     }
+    const productNames = (summary.items ?? []).map((i) => i.name ?? '').filter(Boolean)
     const result = await sendAbandonedCartEmail({
       to: row.email,
       itemCount: summary.itemCount ?? 0,
       totalCents: summary.totalCents ?? 0,
-      productNames: summary.productNames ?? [],
+      productNames,
       cartUrl,
     })
     if (result.ok) {
