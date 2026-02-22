@@ -38,7 +38,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   const [messages, cart, announcements] = await Promise.all([
     getMessages(),
     getCart(),
-    getAnnouncements(),
+    getAnnouncements(locale),
   ])
 
   const organizationJsonLd = {

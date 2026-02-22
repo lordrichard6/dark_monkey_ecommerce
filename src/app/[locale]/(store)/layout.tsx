@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server'
 import { getAnnouncements } from '@/actions/announcements'
 import { AnnouncementBar } from '@/components/AnnouncementBar'
 import { GradientBackground } from '@/components/GradientBackground'
@@ -10,21 +11,16 @@ import { BackToTop } from '@/components/BackToTop'
 import { SupportWidget } from '@/components/SupportWidget'
 import { CompareBar } from '@/components/product/CompareBar'
 
-export default async function StoreLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const announcements = await getAnnouncements()
+export default async function StoreLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+  const announcements = await getAnnouncements(locale)
 
   return (
     <>
       <GradientBackground />
       <AnnouncementBar announcements={announcements} />
       <Header />
-      <main className="relative flex min-h-screen flex-col pt-14 md:pl-16">
-        {children}
-      </main>
+      <main className="relative flex min-h-screen flex-col pt-14 md:pl-16">{children}</main>
       <Footer />
       <CartDrawer />
       <CookieConsent />
