@@ -54,16 +54,23 @@ export async function processSuccessfulCheckout(sessionId: string) {
   }
 
   // 2. Retrieve full session details
+  // expand shipping_details so the nested address object is always present
   console.log('[OrderProcess] Step 2: Retrieving session from Stripe...')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fullSession: any = await stripe.checkout.sessions.retrieve(sessionId)
+  const fullSession: any = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['shipping_details', 'customer_details'],
+  })
   console.log(
     `[OrderProcess] Stripe session retrieved. Status: ${fullSession.status}, Payment status: ${fullSession.payment_status}`
   )
 
-  if (fullSession.status !== 'complete' && fullSession.status !== 'open') {
+  // Only process fully-paid sessions. 'open' means the customer hasn't paid yet —
+  // processing it would create an order with no shipping address and no Printful fulfillment.
+  if (fullSession.status !== 'complete') {
     console.warn(`[OrderProcess] ! Session status is ${fullSession.status}, aborting.`)
-    throw new Error(`Session status is ${fullSession.status}, not ready for processing.`)
+    throw new Error(
+      `Session not complete (status: ${fullSession.status}). Will retry when payment is confirmed.`
+    )
   }
 
   // 3. Fetch cart items from abandoned_checkouts
