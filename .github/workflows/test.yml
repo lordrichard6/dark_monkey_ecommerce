@@ -58,8 +58,6 @@ jobs:
   e2e-tests:
     name: E2E Tests (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    # E2E tests require Supabase secrets; allow failure when secrets are not set
-    continue-on-error: true
 
     strategy:
       fail-fast: false
@@ -70,19 +68,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check E2E prerequisites
+        id: prereq
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "⚠️ E2E tests skipped — NEXT_PUBLIC_SUPABASE_URL secret not configured in GitHub Actions."
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+
       - name: Setup Node.js
+        if: steps.prereq.outputs.skip == 'false'
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
 
-
       - name: Install dependencies
+        if: steps.prereq.outputs.skip == 'false'
         run: npm install --prefer-offline
 
       - name: Install Playwright browsers
+        if: steps.prereq.outputs.skip == 'false'
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Build application
+        if: steps.prereq.outputs.skip == 'false'
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -90,6 +103,7 @@ jobs:
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
 
       - name: Run E2E tests (${{ matrix.browser }})
+        if: steps.prereq.outputs.skip == 'false'
         run: npm run test:e2e -- --project=${{ matrix.browser }}
         env:
           CI: true
@@ -98,7 +112,7 @@ jobs:
 
       - name: Upload Playwright report (${{ matrix.browser }})
         uses: actions/upload-artifact@v4
-        if: always()
+        if: steps.prereq.outputs.skip == 'false'
         with:
           name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
