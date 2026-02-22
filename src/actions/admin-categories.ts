@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminUser } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -24,6 +25,7 @@ export type Category = {
   sort_order: number
   created_at: string
   updated_at: string
+  product_count?: number
 }
 
 export type ActionState = {
@@ -36,7 +38,7 @@ export async function getCategories() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('categories')
-    .select('*')
+    .select('*, products(id)')
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true })
 
@@ -44,7 +46,12 @@ export async function getCategories() {
     console.error('Error fetching categories:', error)
     return []
   }
-  return data as Category[]
+
+  return (data ?? []).map((c: any) => ({
+    ...c,
+    product_count: Array.isArray(c.products) ? c.products.length : 0,
+    products: undefined,
+  })) as Category[]
 }
 
 export async function getCategory(id: string) {
@@ -59,6 +66,9 @@ export async function upsertCategory(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
+
   const rawData = {
     id: formData.get('id') as string,
     name: formData.get('name'),
@@ -83,11 +93,12 @@ export async function upsertCategory(
 
   let error
   if (id) {
-    // Update
-    const { error: updateError } = await supabase.from('categories').update(payload).eq('id', id)
+    const { error: updateError } = await supabase
+      .from('categories')
+      .update({ ...payload, updated_at: new Date().toISOString() })
+      .eq('id', id)
     error = updateError
   } else {
-    // Insert
     const { error: insertError } = await supabase.from('categories').insert(payload)
     error = insertError
   }
@@ -97,10 +108,14 @@ export async function upsertCategory(
   }
 
   revalidatePath('/admin/categories')
+  revalidatePath('/', 'layout')
   return { ok: true }
 }
 
 export async function deleteCategory(id: string): Promise<ActionState> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
+
   const supabase = await createClient()
   const { error } = await supabase.from('categories').delete().eq('id', id)
 
@@ -109,5 +124,6 @@ export async function deleteCategory(id: string): Promise<ActionState> {
   }
 
   revalidatePath('/admin/categories')
+  revalidatePath('/', 'layout')
   return { ok: true }
 }

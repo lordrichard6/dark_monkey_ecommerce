@@ -1,19 +1,22 @@
 'use client'
 
-import {
-  upsertCategory,
-  type Category,
-  type ActionState,
-  getCategories,
-} from '@/actions/admin-categories'
+import { upsertCategory, type Category, type ActionState } from '@/actions/admin-categories'
 import { useRouter } from '@/i18n/navigation'
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import clsx from 'clsx'
 
 interface CategoryFormProps {
   category?: Category | null
   categories: Category[]
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip accents
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 export function CategoryForm({ category, categories }: CategoryFormProps) {
@@ -21,18 +24,10 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
   const [state, action, isPending] = useActionState(upsertCategory, { ok: true } as ActionState)
 
   useEffect(() => {
-    if (
-      state.ok &&
-      !state.error &&
-      !isPending &&
-      state !== undefined &&
-      state.ok === true
-    ) {
-      // toast.success('Category saved') // moved to onSubmit wrapper for immediate feedback if optimistic
-    } else if (state.error) {
+    if (state.error) {
       toast.error(state.error)
     }
-  }, [state, isPending])
+  }, [state])
 
   const handleSubmit = async (formData: FormData) => {
     const result = await upsertCategory({ ok: true }, formData)
@@ -44,17 +39,30 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
     }
   }
 
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Only auto-fill slug when creating a new category
+      if (category) return
+      const slugInput = document.getElementById('slug') as HTMLInputElement | null
+      if (slugInput && !slugInput.dataset.userEdited) {
+        slugInput.value = slugify(e.target.value)
+      }
+    },
+    [category]
+  )
+
+  // Root-level categories only (no parent), excluding self
+  const rootCategories = categories.filter((c) => !c.parent_id && c.id !== category?.id)
+
   return (
     <div className="rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl">
       <div className="p-6">
         <form action={handleSubmit} className="space-y-6">
           <input type="hidden" name="id" value={category?.id ?? ''} />
 
+          {/* Name */}
           <div className="space-y-2">
-            <label
-              htmlFor="name"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label htmlFor="name" className="text-sm font-medium leading-none">
               Name
             </label>
             <input
@@ -63,15 +71,14 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
               defaultValue={category?.name}
               placeholder="e.g. Hoodies"
               required
-              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              onChange={handleNameChange}
+              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             />
           </div>
 
+          {/* Slug */}
           <div className="space-y-2">
-            <label
-              htmlFor="slug"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label htmlFor="slug" className="text-sm font-medium leading-none">
               Slug
             </label>
             <input
@@ -80,39 +87,41 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
               defaultValue={category?.slug}
               placeholder="e.g. hoodies"
               required
-              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              onInput={(e) => {
+                // Mark as user-edited so auto-fill stops
+                ;(e.target as HTMLInputElement).dataset.userEdited = '1'
+              }}
+              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             />
+            <p className="text-xs text-zinc-500">
+              Auto-generated from name. Edit manually if needed.
+            </p>
           </div>
 
+          {/* Parent Category — root only */}
           <div className="space-y-2">
-            <label
-              htmlFor="parent_id"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label htmlFor="parent_id" className="text-sm font-medium leading-none">
               Parent Category
             </label>
             <select
               id="parent_id"
               name="parent_id"
               defaultValue={category?.parent_id ?? ''}
-              className="flex h-10 w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             >
               <option value="">None (Top Level)</option>
-              {categories
-                .filter((c) => c.id !== category?.id) // Prevent selecting self as parent
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+              {rootCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
+            <p className="text-xs text-zinc-500">Only top-level categories can be parents.</p>
           </div>
 
+          {/* Sort Order */}
           <div className="space-y-2">
-            <label
-              htmlFor="sort_order"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label htmlFor="sort_order" className="text-sm font-medium leading-none">
               Sort Order
             </label>
             <input
@@ -121,15 +130,13 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
               type="number"
               defaultValue={category?.sort_order ?? 0}
               required
-              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             />
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
-            <label
-              htmlFor="description"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label htmlFor="description" className="text-sm font-medium leading-none">
               Description
             </label>
             <textarea
@@ -137,24 +144,22 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
               name="description"
               defaultValue={category?.description ?? ''}
               placeholder="Category description..."
-              rows={4}
-              className="flex min-h-[80px] w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              rows={3}
+              className="flex min-h-[80px] w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             />
           </div>
 
+          {/* Image URL */}
           <div className="space-y-2">
-            <label
-              htmlFor="image_url"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label htmlFor="image_url" className="text-sm font-medium leading-none">
               Image URL
             </label>
             <input
               id="image_url"
               name="image_url"
               defaultValue={category?.image_url ?? ''}
-              placeholder="e.g. /images/categories/mens.jpg"
-              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="e.g. /images/categories/hoodies.jpg"
+              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             />
           </div>
 
@@ -162,14 +167,14 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
             <button
               type="button"
               onClick={() => router.back()}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-white/10 bg-transparent hover:bg-white/10 h-10 px-4 py-2"
+              className="inline-flex items-center justify-center rounded-md border border-white/10 bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-amber-500 text-black hover:bg-amber-600 h-10 px-4 py-2"
+              className="inline-flex items-center justify-center rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-amber-600 disabled:opacity-50"
             >
               {isPending ? 'Saving...' : 'Save Category'}
             </button>

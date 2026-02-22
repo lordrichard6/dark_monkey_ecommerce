@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { getCategories } from '@/actions/admin-categories'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { ProductEditor } from './product-editor'
 import { ProductEditableFields } from './product-editable-fields'
@@ -29,7 +30,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
       </div>
     )
 
-  const [productRes, tagsRes, productTagsRes] = await Promise.all([
+  const [productRes, tagsRes, productTagsRes, allCategories] = await Promise.all([
     supabase
       .from('products')
       .select(
@@ -58,6 +59,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
       .single(),
     supabase.from('tags').select('id, name').order('name', { ascending: true }),
     supabase.from('product_tags').select('tag_id').eq('product_id', id),
+    getCategories(),
   ])
 
   const { data: product, error } = productRes
@@ -149,7 +151,11 @@ export default async function AdminProductDetailPage({ params }: Props) {
 
         {/* Category & Tags */}
         <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
-          <ProductCategoryField productId={product.id} categoryId={product.category_id ?? null} />
+          <ProductCategoryField
+            productId={product.id}
+            categoryId={product.category_id ?? null}
+            categories={allCategories}
+          />
           <ProductTagsField
             productId={product.id}
             initialTagIds={currentTagIds}
