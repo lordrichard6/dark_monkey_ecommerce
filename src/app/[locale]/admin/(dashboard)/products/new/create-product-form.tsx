@@ -4,9 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createProduct } from '@/actions/admin-products'
 import { RichTextEditor } from '@/components/admin/RichTextEditor'
-import { CATEGORIES } from '@/lib/categories'
+import { type Category } from '@/actions/admin-categories'
 
-export function CreateProductForm() {
+type Props = {
+  categories: Category[]
+}
+
+export function CreateProductForm({ categories }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -15,7 +19,10 @@ export function CreateProductForm() {
   const [selectedSubId, setSelectedSubId] = useState('')
   const [description, setDescription] = useState('')
 
-  const activeParent = CATEGORIES.find(c => c.id === selectedParentId)
+  const roots = categories.filter((c) => !c.parent_id)
+  const subsOf = (id: string) => categories.filter((c) => c.parent_id === id)
+  const activeSubs = selectedParentId ? subsOf(selectedParentId) : []
+  const activeParentName = roots.find((c) => c.id === selectedParentId)?.name
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -33,7 +40,7 @@ export function CreateProductForm() {
       variantName: formData.get('variantName') as string,
       priceCents: Math.round(parseFloat(formData.get('priceCents') as string) * 100),
       stock: parseInt(formData.get('stock') as string, 10) || 0,
-      imageUrl: formData.get('imageUrl') as string || undefined,
+      imageUrl: (formData.get('imageUrl') as string) || undefined,
       tagIds: selectedTagIds,
     })
     setLoading(false)
@@ -72,11 +79,7 @@ export function CreateProductForm() {
       </div>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-2">Description</label>
-        <RichTextEditor
-          value={description}
-          onChange={setDescription}
-          minHeight="150px"
-        />
+        <RichTextEditor value={description} onChange={setDescription} minHeight="150px" />
         {/* Hidden input to include in form data if needed, or update handleSubmit */}
         <input type="hidden" name="description" value={description} />
       </div>
@@ -93,7 +96,7 @@ export function CreateProductForm() {
             className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
           >
             <option value="">Select a category</option>
-            {CATEGORIES.map((c) => (
+            {roots.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
@@ -103,10 +106,11 @@ export function CreateProductForm() {
 
         {/* Subcategories - Smooth Expand/Collapse */}
         <div
-          className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${activeParent && activeParent.subcategories && activeParent.subcategories.length > 0
-            ? 'grid-rows-[1fr] opacity-100'
-            : 'grid-rows-[0fr] opacity-0'
-            }`}
+          className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${
+            selectedParentId && activeSubs.length > 0
+              ? 'grid-rows-[1fr] opacity-100'
+              : 'grid-rows-[0fr] opacity-0'
+          }`}
         >
           <div className="overflow-hidden">
             <div className="space-y-3 pt-1">
@@ -118,8 +122,8 @@ export function CreateProductForm() {
                 onChange={(e) => setSelectedSubId(e.target.value)}
                 className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               >
-                <option value="">All {activeParent?.name}</option>
-                {activeParent?.subcategories?.map((s) => (
+                <option value="">All {activeParentName}</option>
+                {activeSubs.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
@@ -131,7 +135,11 @@ export function CreateProductForm() {
       </div>
 
       <label className="flex items-center gap-2">
-        <input type="checkbox" name="isCustomizable" className="rounded border-zinc-600 bg-zinc-800" />
+        <input
+          type="checkbox"
+          name="isCustomizable"
+          className="rounded border-zinc-600 bg-zinc-800"
+        />
         <span className="text-sm text-zinc-300">Customizable</span>
       </label>
       <div className="border-t border-zinc-800 pt-6">

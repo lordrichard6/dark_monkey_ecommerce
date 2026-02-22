@@ -9,15 +9,18 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { signOut } from '@/actions/auth'
 import { Search } from 'lucide-react'
 
-import { CATEGORIES } from '@/lib/categories'
+import { type Category } from '@/actions/admin-categories'
+
+type NavCategory = Category & { subcategories: Category[] }
 
 type Props = {
   user: { email?: string | null } | null
   displayName: string | null
   isAdmin: boolean
+  categories: NavCategory[]
 }
 
-export function MobileHeader({ user, displayName, isAdmin }: Props) {
+export function MobileHeader({ user, displayName, isAdmin, categories }: Props) {
   const t = useTranslations('common')
   const tUser = useTranslations('userMenu')
   const router = useRouter()
@@ -316,7 +319,7 @@ export function MobileHeader({ user, displayName, isAdmin }: Props) {
                 {t('allCategories')}
               </Link>
               <div className="mt-2 space-y-1">
-                {CATEGORIES.map((cat) => {
+                {categories.map((cat) => {
                   const isCatOpen = openCategoryId === cat.id
                   return (
                     <div key={cat.id} className="space-y-1">

@@ -4,17 +4,19 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/navigation'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
+import { type Category } from '@/actions/admin-categories'
 
-import { CATEGORIES } from '@/lib/categories'
+type NavCategory = Category & { subcategories: Category[] }
 
 type Props = {
   isAdmin?: boolean
+  categories: NavCategory[]
 }
 
 const SIDEBAR_COLLAPSED = 64
 const SIDEBAR_EXPANDED = 240
 
-export function SideNav({ isAdmin }: Props) {
+export function SideNav({ isAdmin, categories }: Props) {
   const t = useTranslations('common')
   const pathname = usePathname()
   const [expanded, setExpanded] = useState(false)
@@ -85,7 +87,7 @@ export function SideNav({ isAdmin }: Props) {
               <GridIcon className="h-5 w-5 shrink-0" />
               {expanded && <span className="truncate">{t('categories')}</span>}
             </span>
-            {expanded && CATEGORIES.length > 0 && (
+            {expanded && categories.length > 0 && (
               <ChevronIcon
                 className={`h-4 w-4 shrink-0 transition ${categoriesOpen ? 'rotate-90' : ''}`}
               />
@@ -108,7 +110,7 @@ export function SideNav({ isAdmin }: Props) {
                 >
                   {t('allCategories')}
                 </Link>
-                {CATEGORIES.map((cat) => {
+                {categories.map((cat) => {
                   const isCatOpen = openCategoryId === cat.id
                   return (
                     <div key={cat.id} className="space-y-0.5">
