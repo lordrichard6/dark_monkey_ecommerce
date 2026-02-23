@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { getAdminUser } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 
 export type Announcement = {
@@ -65,7 +67,11 @@ export async function createAnnouncement(data: {
   variant?: 'default' | 'info' | 'promo' | 'warning'
   locale?: string | null
 }) {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { error: 'Not authorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { error: 'Server misconfiguration' }
 
   // Get max position to append to end
   const { data: maxPosData } = await supabase
@@ -97,7 +103,11 @@ export async function createAnnouncement(data: {
 }
 
 export async function updateAnnouncement(id: string, data: Partial<Announcement>) {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { error: 'Not authorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { error: 'Server misconfiguration' }
 
   const { error } = await supabase.from('announcements').update(data).eq('id', id)
 
@@ -111,7 +121,11 @@ export async function updateAnnouncement(id: string, data: Partial<Announcement>
 }
 
 export async function deleteAnnouncement(id: string) {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { error: 'Not authorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { error: 'Server misconfiguration' }
 
   const { error } = await supabase.from('announcements').delete().eq('id', id)
 
@@ -129,10 +143,21 @@ export async function toggleAnnouncementActive(id: string, active: boolean) {
 }
 
 export async function reorderAnnouncements(orderedIds: string[]): Promise<{ success: boolean }> {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { success: false }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { success: false }
 
   for (let i = 0; i < orderedIds.length; i++) {
-    await supabase.from('announcements').update({ position: i }).eq('id', orderedIds[i])
+    const { error } = await supabase
+      .from('announcements')
+      .update({ position: i })
+      .eq('id', orderedIds[i])
+    if (error) {
+      console.error(`Error reordering announcement ${orderedIds[i]}:`, error)
+      return { success: false }
+    }
   }
 
   revalidatePath('/', 'layout')
@@ -140,7 +165,11 @@ export async function reorderAnnouncements(orderedIds: string[]): Promise<{ succ
 }
 
 export async function bulkDeleteAnnouncements(ids: string[]): Promise<{ success: boolean }> {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { success: false }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { success: false }
 
   const { error } = await supabase.from('announcements').delete().in('id', ids)
 
@@ -157,7 +186,11 @@ export async function bulkToggleAnnouncements(
   ids: string[],
   active: boolean
 ): Promise<{ success: boolean }> {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { success: false }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { success: false }
 
   const { error } = await supabase.from('announcements').update({ active }).in('id', ids)
 

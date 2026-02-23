@@ -36,16 +36,18 @@ export async function createProduct(input: {
     .select('id')
     .single()
 
-  if (productError || !product) return { ok: false, error: productError?.message ?? 'Failed to create product' }
+  if (productError || !product)
+    return { ok: false, error: productError?.message ?? 'Failed to create product' }
 
-  // Add tags
+  // Add tags (non-fatal: log error but don't block product creation)
   if (input.tagIds && input.tagIds.length > 0) {
-    await supabase.from('product_tags').insert(
-      input.tagIds.map(tagId => ({
+    const { error: tagError } = await supabase.from('product_tags').insert(
+      input.tagIds.map((tagId) => ({
         product_id: product.id,
-        tag_id: tagId
+        tag_id: tagId,
       }))
     )
+    if (tagError) console.error('[createProduct] Failed to add tags:', tagError)
   }
 
   const sku = `SKU-${product.id.slice(0, 8).toUpperCase()}`
@@ -67,18 +69,21 @@ export async function createProduct(input: {
     return { ok: false, error: variantError?.message ?? 'Failed to create variant' }
   }
 
-  await supabase.from('product_inventory').insert({
+  const { error: inventoryError } = await supabase.from('product_inventory').insert({
     variant_id: variant.id,
     quantity: Math.max(0, input.stock),
   })
+  if (inventoryError)
+    console.error('[createProduct] Failed to create inventory record:', inventoryError)
 
   if (input.imageUrl?.trim()) {
-    await supabase.from('product_images').insert({
+    const { error: imageError } = await supabase.from('product_images').insert({
       product_id: product.id,
       url: input.imageUrl.trim(),
       alt: input.name,
       sort_order: 0,
     })
+    if (imageError) console.error('[createProduct] Failed to save product image:', imageError)
   }
 
   // Revalidate admin pages
@@ -316,10 +321,7 @@ export async function deleteProductImage(
   if (!image) return { ok: false, error: 'Image not found' }
 
   // Delete from database
-  const { error: deleteError } = await supabase
-    .from('product_images')
-    .delete()
-    .eq('id', imageId)
+  const { error: deleteError } = await supabase.from('product_images').delete().eq('id', imageId)
 
   if (deleteError) return { ok: false, error: deleteError.message }
 
@@ -532,12 +534,12 @@ export async function updateProductTags(
 
     // Then, insert new tags
     if (tagIds.length > 0) {
-      const { error: insertError } = await supabase
-        .from('product_tags')
-        .insert(tagIds.map(tagId => ({
+      const { error: insertError } = await supabase.from('product_tags').insert(
+        tagIds.map((tagId) => ({
           product_id: productId,
-          tag_id: tagId
-        })))
+          tag_id: tagId,
+        }))
+      )
 
       if (insertError) throw insertError
     }
@@ -557,10 +559,7 @@ export async function updateProductImageColor(imageId: string, color: string | n
     const supabase = getAdminClient()
     if (!supabase) return { ok: false, error: 'Database error' }
 
-    const { error } = await supabase
-      .from('product_images')
-      .update({ color })
-      .eq('id', imageId)
+    const { error } = await supabase.from('product_images').update({ color }).eq('id', imageId)
 
     if (error) return { ok: false, error: error.message }
 

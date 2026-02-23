@@ -2,12 +2,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminUser } from '@/lib/auth-admin'
+import { AdminFooter } from '@/components/admin/AdminFooter'
 
-export default async function AdminDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   let user = null
   try {
@@ -62,5 +59,10 @@ export default async function AdminDashboardLayout({
     )
   }
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <AdminFooter />
+    </>
+  )
 }

@@ -134,10 +134,14 @@ export async function reorderCategories(orderedIds: string[]): Promise<ActionSta
   if (!adminClient) return { ok: false, error: 'Server misconfiguration: missing service role key' }
 
   for (let i = 0; i < orderedIds.length; i++) {
-    await adminClient
+    const { error } = await adminClient
       .from('categories')
       .update({ sort_order: i, updated_at: new Date().toISOString() })
       .eq('id', orderedIds[i])
+    if (error) {
+      console.error(`Error reordering category ${orderedIds[i]}:`, error)
+      return { ok: false, error: 'Failed to reorder categories' }
+    }
   }
 
   revalidatePath('/admin/categories')

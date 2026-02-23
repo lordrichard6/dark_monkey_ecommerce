@@ -17,14 +17,19 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
   const roots = categories.filter((c) => !c.parent_id)
   const subsOf = (rootId: string) => categories.filter((c) => c.parent_id === rootId)
 
-  // Determine initial parent: the category that IS the categoryId (if root),
-  // or the category whose children contain it (if sub)
-  const initialParent = categories.find(
+  // Determine initial parent by searching only root categories:
+  // - if the product's category IS a root → initialParent is that root, no subcategory selected
+  // - if the product's category is a subcategory → initialParent is the root that owns it
+  const initialParent = roots.find(
     (c) => c.id === categoryId || subsOf(c.id).some((s) => s.id === categoryId)
   )
 
+  // subId is only set when categoryId belongs to a subcategory (not a root)
+  const initialSubId =
+    categoryId && initialParent && initialParent.id !== categoryId ? categoryId : ''
+
   const [parentId, setParentId] = useState(initialParent?.id ?? '')
-  const [subId, setSubId] = useState(categoryId ?? '')
+  const [subId, setSubId] = useState(initialSubId)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

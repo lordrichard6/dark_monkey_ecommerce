@@ -54,40 +54,44 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
         <div className="min-w-0 flex-1">
           <label className="text-sm font-medium text-zinc-400">Name</label>
           {editing === 'name' ? (
-          <div className="mt-1 flex items-center gap-2">
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
-              autoFocus
-            />
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={loading}
-              className="rounded bg-amber-500 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSave()
+                  if (e.key === 'Escape') handleCancel()
+                }}
+                className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={loading}
+                className="rounded bg-amber-500 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
+              >
+                {loading ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={loading}
+                className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <p
+              onClick={() => startEdit('name')}
+              className="mt-1 cursor-pointer rounded px-2 py-1 text-xl font-bold text-zinc-50 hover:bg-zinc-800/80"
+              title="Click to edit"
             >
-              {loading ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              disabled={loading}
-              className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <p
-            onClick={() => startEdit('name')}
-            className="mt-1 cursor-pointer rounded px-2 py-1 text-xl font-bold text-zinc-50 hover:bg-zinc-800/80"
-            title="Click to edit"
-          >
-            {name}
-          </p>
-        )}
+              {name}
+            </p>
+          )}
         </div>
         {nameAction}
       </div>
@@ -101,6 +105,10 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave()
+                if (e.key === 'Escape') handleCancel()
+              }}
               className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
             />
             <button

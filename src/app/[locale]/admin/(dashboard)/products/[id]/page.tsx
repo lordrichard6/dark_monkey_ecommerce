@@ -10,14 +10,6 @@ import { ProductTagsField } from './product-tags-field'
 
 export const dynamic = 'force-dynamic'
 
-function formatPrice(cents: number) {
-  return new Intl.NumberFormat('de-CH', {
-    style: 'currency',
-    currency: 'CHF',
-    minimumFractionDigits: 2,
-  }).format(cents / 100)
-}
-
 type Props = { params: Promise<{ id: string }> }
 
 export default async function AdminProductDetailPage({ params }: Props) {
@@ -96,7 +88,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
   ).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-4 pb-20 md:p-8">
+    <div className="min-h-screen p-4 pb-24 md:p-8">
       {/* Back Button */}
       <Link
         href="/admin/products"
@@ -114,10 +106,14 @@ export default async function AdminProductDetailPage({ params }: Props) {
         Back to products
       </Link>
 
-      {/* Product Header */}
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
+      <ProductEditor
+        productId={product.id}
+        printfulSyncProductId={product.printful_sync_product_id ?? null}
+        images={images}
+        variants={variants}
+        metaSlot={
+          <div className="space-y-5">
+            {/* Name + Slug + store link */}
             <ProductEditableFields
               productId={product.id}
               name={product.name}
@@ -146,68 +142,71 @@ export default async function AdminProductDetailPage({ params }: Props) {
                 </Link>
               }
             />
-          </div>
-        </div>
 
-        {/* Category & Tags */}
-        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
-          <ProductCategoryField
-            productId={product.id}
-            categoryId={product.category_id ?? null}
-            categories={allCategories}
-          />
-          <ProductTagsField
-            productId={product.id}
-            initialTagIds={currentTagIds}
-            availableTags={availableTags}
-          />
-        </div>
+            <div className="border-t border-zinc-800" />
 
-        {/* Status Badges */}
-        <div className="flex flex-wrap gap-2">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
-              product.is_active ? 'bg-emerald-900/40 text-emerald-400' : 'bg-zinc-800 text-zinc-500'
-            }`}
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${product.is_active ? 'bg-emerald-400' : 'bg-zinc-500'}`}
-            />
-            {product.is_active ? 'Active' : 'Inactive'}
-          </span>
-          {product.is_customizable && (
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-900/40 px-3 py-1.5 text-xs font-medium text-amber-400">
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+            {/* Category & Tags side by side */}
+            <div className="grid gap-5 sm:grid-cols-2">
+              <ProductCategoryField
+                productId={product.id}
+                categoryId={product.category_id ?? null}
+                categories={allCategories}
+              />
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  Tags
+                </label>
+                <div className="mt-2">
+                  <ProductTagsField
+                    productId={product.id}
+                    initialTagIds={currentTagIds}
+                    availableTags={availableTags}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-800" />
+
+            {/* Status badges */}
+            <div className="flex flex-wrap gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
+                  product.is_active
+                    ? 'bg-emerald-900/40 text-emerald-400'
+                    : 'bg-zinc-800 text-zinc-500'
+                }`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${product.is_active ? 'bg-emerald-400' : 'bg-zinc-500'}`}
                 />
-              </svg>
-              Customizable
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content - Stacked on mobile, side-by-side on desktop */}
-      <ProductEditor
-        productId={product.id}
-        printfulSyncProductId={product.printful_sync_product_id ?? null}
-        images={images}
-        variants={variants}
+                {product.is_active ? 'Active' : 'Inactive'}
+              </span>
+              {product.is_customizable && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-900/40 px-3 py-1.5 text-xs font-medium text-amber-400">
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+                    />
+                  </svg>
+                  Customizable
+                </span>
+              )}
+            </div>
+          </div>
+        }
+        descriptionSlot={
+          <ProductDescriptionField productId={product.id} description={product.description} />
+        }
       />
-
-      {/* Description below */}
-      <div className="mt-6 border-t border-zinc-800 pt-6">
-        <ProductDescriptionField productId={product.id} description={product.description} />
-      </div>
     </div>
   )
 }

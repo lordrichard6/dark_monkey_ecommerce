@@ -53,7 +53,7 @@ export function SideNav({ isAdmin, categories }: Props) {
         <DarkMonkeyLogo size="sm" href="/" showText={expanded} />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2 [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.1)_transparent] [scrollbar-width:thin]">
         {commonItems.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
           return (
@@ -99,7 +99,7 @@ export function SideNav({ isAdmin, categories }: Props) {
             }`}
           >
             <div className="overflow-hidden">
-              <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-3 pb-2">
+              <div className="ml-4 mt-1 max-h-[calc(100vh-280px)] overflow-y-auto border-l border-white/10 pb-2 pl-3 [scrollbar-color:rgba(255,255,255,0.15)_transparent] [scrollbar-width:thin]">
                 <Link
                   href="/categories"
                   className={`block rounded px-2 py-1.5 text-xs transition ${

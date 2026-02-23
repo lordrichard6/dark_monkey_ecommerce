@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --background: #050508;
@@ -89,7 +89,6 @@ body {
 }
 
 @keyframes gradientFloatA {
-
   0%,
   100% {
     transform: translate(0, 0) scale(1);
@@ -105,7 +104,6 @@ body {
 }
 
 @keyframes gradientFloatB {
-
   0%,
   100% {
     transform: translate(0, 0) scale(1);
@@ -121,7 +119,6 @@ body {
 }
 
 @keyframes gradientFloatC {
-
   0%,
   100% {
     transform: translate(0, 0) scale(1);
@@ -138,7 +135,6 @@ body {
 
 /* Golden flashing effect for hero logo */
 @keyframes golden-pulse {
-
   0%,
   100% {
     opacity: 0.5;
@@ -149,7 +145,9 @@ body {
   50% {
     opacity: 1;
     transform: scale(1.7);
-    box-shadow: 0 0 80px 40px rgba(251, 191, 36, 0.6), 0 0 120px 50px rgba(245, 158, 11, 0.3);
+    box-shadow:
+      0 0 80px 40px rgba(251, 191, 36, 0.6),
+      0 0 120px 50px rgba(245, 158, 11, 0.3);
   }
 }
 
@@ -214,7 +212,6 @@ body {
 
 /* Admin shield glow pulse */
 @keyframes adminShieldGlow {
-
   0%,
   100% {
     opacity: 0.2;
@@ -232,7 +229,6 @@ body {
 }
 
 @keyframes shake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -256,4 +252,65 @@ body {
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+/* Admin rich text display — renders HTML from the WYSIWYG editor */
+.admin-rich-text {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #d4d4d8;
+}
+.admin-rich-text p {
+  margin-bottom: 0.75rem;
+}
+.admin-rich-text p:last-child {
+  margin-bottom: 0;
+}
+.admin-rich-text h1,
+.admin-rich-text h2,
+.admin-rich-text h3,
+.admin-rich-text h4 {
+  font-weight: 600;
+  color: #f4f4f5;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.admin-rich-text h1 {
+  font-size: 1.25rem;
+}
+.admin-rich-text h2 {
+  font-size: 1.125rem;
+}
+.admin-rich-text h3 {
+  font-size: 1rem;
+}
+.admin-rich-text strong,
+.admin-rich-text b {
+  font-weight: 600;
+  color: #f4f4f5;
+}
+.admin-rich-text em,
+.admin-rich-text i {
+  font-style: italic;
+}
+.admin-rich-text ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.admin-rich-text ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.admin-rich-text li {
+  margin-bottom: 0.25rem;
+}
+.admin-rich-text a {
+  color: #fbbf24;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.admin-rich-text a:hover {
+  color: #f59e0b;
 }

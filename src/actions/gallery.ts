@@ -350,7 +350,13 @@ export async function uploadGalleryItem(
       }))
     )
 
-    if (tagError) console.error('Failed to add tags:', tagError)
+    if (tagError) {
+      console.error('Failed to add tags:', tagError)
+      // Cleanup: remove image and item since tags are required for proper display
+      await supabase.from('gallery_items').delete().eq('id', item.id)
+      await supabase.storage.from('product-images').remove([filename])
+      return { ok: false, error: 'Failed to attach tags to gallery item' }
+    }
   }
 
   revalidatePath('/art')

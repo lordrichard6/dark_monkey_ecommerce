@@ -42,9 +42,23 @@ export function ProductImageManager({
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
 
-  // Reset selected index when color changes
+  // When color changes, prefer the first image that specifically matches that color
+  // Fall back to index 0 (which may be a universal image) if none found
   useEffect(() => {
-    setSelectedIndex(0)
+    if (!selectedColor) {
+      setSelectedIndex(0)
+      return
+    }
+    const colorSpecificIndex = images.findIndex((img) => img.color === selectedColor)
+    if (colorSpecificIndex !== -1) {
+      // Convert global index to filtered index
+      const filtered = images.filter((img) => !img.color || img.color === selectedColor)
+      const colorSpecificImg = images[colorSpecificIndex]
+      const filteredIdx = filtered.findIndex((img) => img.id === colorSpecificImg.id)
+      setSelectedIndex(filteredIdx !== -1 ? filteredIdx : 0)
+    } else {
+      setSelectedIndex(0)
+    }
   }, [selectedColor])
 
   // Filter images based on selected color (or no color)
@@ -200,7 +214,7 @@ export function ProductImageManager({
           tabIndex={0}
           onClick={() => setLightboxUrl(displayImage.url)}
           onKeyDown={(e) => e.key === 'Enter' && setLightboxUrl(displayImage.url)}
-          className="relative aspect-square w-48 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="relative aspect-square w-full overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <img
             src={displayImage.url}
@@ -209,7 +223,7 @@ export function ProductImageManager({
           />
         </div>
       ) : (
-        <div className="flex aspect-square w-48 items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 text-xs text-zinc-500">
+        <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 text-xs text-zinc-500">
           No image
         </div>
       )}
@@ -288,8 +302,11 @@ export function ProductImageManager({
             </div>
           )
         })}
-        {images.length === 0 && (
+        {filteredImages.length === 0 && images.length === 0 && (
           <p className="py-4 text-xs text-zinc-500">No images. Click + to upload.</p>
+        )}
+        {filteredImages.length === 0 && images.length > 0 && (
+          <p className="py-4 text-xs text-zinc-500">No images for this color.</p>
         )}
       </div>
 

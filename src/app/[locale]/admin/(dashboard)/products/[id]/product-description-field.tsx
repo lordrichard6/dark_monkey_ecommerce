@@ -22,24 +22,31 @@ export function ProductDescriptionField({ productId, description }: Props) {
     setError(null)
     const result = await updateProduct(productId, { description: value.trim() || null })
     setLoading(false)
-    setEditing(false)
     if (result.ok) {
+      setEditing(false)
       router.refresh()
     } else {
-      setError(result.error)
+      setError(result.error) // keep editor open so user can retry
     }
   }
 
   return (
-    <div className="mt-6">
-      <h3 className="text-sm font-medium text-zinc-400">Description</h3>
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-xs font-medium uppercase tracking-wider text-zinc-500">Description</h3>
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition"
+          >
+            Edit
+          </button>
+        )}
+      </div>
       {editing ? (
-        <div className="mt-2 flex flex-col gap-2">
-          <RichTextEditor
-            value={value}
-            onChange={setValue}
-            minHeight="200px"
-          />
+        <div className="flex flex-col gap-2">
+          <RichTextEditor value={value} onChange={setValue} minHeight="200px" />
           <div className="flex gap-2">
             <button
               type="button"
@@ -51,7 +58,11 @@ export function ProductDescriptionField({ productId, description }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => { setEditing(false); setValue(description ?? ''); setError(null) }}
+              onClick={() => {
+                setEditing(false)
+                setValue(description ?? '')
+                setError(null)
+              }}
               disabled={loading}
               className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
             >
@@ -62,13 +73,13 @@ export function ProductDescriptionField({ productId, description }: Props) {
       ) : (
         <div
           onClick={() => setEditing(true)}
-          className="mt-2 cursor-pointer rounded px-2 py-1 text-sm text-zinc-300 hover:bg-zinc-800/80"
+          className="cursor-pointer rounded px-2 py-1 hover:bg-zinc-800/80"
           title="Click to edit"
         >
           {description ? (
-            <div dangerouslySetInnerHTML={{ __html: description }} className="prose prose-sm prose-invert max-w-none" />
+            <div dangerouslySetInnerHTML={{ __html: description }} className="admin-rich-text" />
           ) : (
-            <span className="italic text-zinc-500">No description. Click to add.</span>
+            <span className="italic text-zinc-500 text-sm">No description. Click to add.</span>
           )}
         </div>
       )}
