@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -79,23 +80,20 @@ export async function upsertCategory(
     sort_order: formData.get('sort_order'),
   }
 
-  console.log('[upsertCategory] rawData:', JSON.stringify(rawData))
-
   const validated = CategorySchema.safeParse(rawData)
 
   if (!validated.success) {
-    console.log('[upsertCategory] validation failed:', validated.error.errors)
     return {
       ok: false,
       error: validated.error.errors[0].message,
     }
   }
 
-  console.log('[upsertCategory] validated.data:', JSON.stringify(validated.data))
+  // Use service-role client for writes — RLS blocks anon-key updates
+  const adminClient = getAdminClient()
+  if (!adminClient) return { ok: false, error: 'Server misconfiguration: missing service role key' }
 
-  const supabase = await createClient()
-
-  const { data: existing } = await supabase
+  const { data: existing } = await adminClient
     .from('categories')
     .select('id')
     .eq('slug', validated.data.slug)
@@ -106,20 +104,16 @@ export async function upsertCategory(
 
   const { id, ...payload } = validated.data
 
-  console.log('[upsertCategory] payload to DB:', JSON.stringify(payload))
-
   let error
   if (id) {
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminClient
       .from('categories')
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
     error = updateError
-    console.log('[upsertCategory] update error:', updateError)
   } else {
-    const { error: insertError } = await supabase.from('categories').insert(payload)
+    const { error: insertError } = await adminClient.from('categories').insert(payload)
     error = insertError
-    console.log('[upsertCategory] insert error:', insertError)
   }
 
   if (error) {
@@ -135,9 +129,11 @@ export async function reorderCategories(orderedIds: string[]): Promise<ActionSta
   const admin = await getAdminUser()
   if (!admin) return { ok: false, error: 'Not authorized' }
 
-  const supabase = await createClient()
+  const adminClient = getAdminClient()
+  if (!adminClient) return { ok: false, error: 'Server misconfiguration: missing service role key' }
+
   for (let i = 0; i < orderedIds.length; i++) {
-    await supabase
+    await adminClient
       .from('categories')
       .update({ sort_order: i, updated_at: new Date().toISOString() })
       .eq('id', orderedIds[i])
@@ -169,14 +165,16 @@ export async function uploadCategoryImage(
   const ext = file.name.split('.').pop() ?? 'jpg'
   const filename = `categories/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
-  const supabase = await createClient()
-  const { error: uploadError } = await supabase.storage
+  const adminClient = getAdminClient()
+  if (!adminClient) return { ok: false, error: 'Server misconfiguration: missing service role key' }
+
+  const { error: uploadError } = await adminClient.storage
     .from('category-images')
     .upload(filename, file, { cacheControl: '3600', upsert: false })
 
   if (uploadError) return { ok: false, error: uploadError.message }
 
-  const { data: urlData } = supabase.storage.from('category-images').getPublicUrl(filename)
+  const { data: urlData } = adminClient.storage.from('category-images').getPublicUrl(filename)
   return { ok: true, url: urlData.publicUrl }
 }
 
@@ -184,8 +182,10 @@ export async function deleteCategory(id: string): Promise<ActionState> {
   const admin = await getAdminUser()
   if (!admin) return { ok: false, error: 'Not authorized' }
 
-  const supabase = await createClient()
-  const { error } = await supabase.from('categories').delete().eq('id', id)
+  const adminClient = getAdminClient()
+  if (!adminClient) return { ok: false, error: 'Server misconfiguration: missing service role key' }
+
+  const { error } = await adminClient.from('categories').delete().eq('id', id)
 
   if (error) {
     return { ok: false, error: error.message }
