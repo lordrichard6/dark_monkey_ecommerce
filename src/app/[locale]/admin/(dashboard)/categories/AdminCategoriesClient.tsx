@@ -19,7 +19,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Link } from '@/i18n/navigation'
-import { Plus, Edit, GripVertical } from 'lucide-react'
+import { Plus, Edit, GripVertical, ChevronRight } from 'lucide-react'
 import { DeleteCategoryButton } from './delete-category-button'
 import { reorderCategories, type Category } from '@/actions/admin-categories'
 
@@ -30,7 +30,13 @@ type Props = {
   flatList: CategoryWithLevel[]
 }
 
-function SortableRootRow({ category }: { category: CategoryWithLevel }) {
+function SortableRootRow({
+  category,
+  subs,
+}: {
+  category: CategoryWithLevel
+  subs: CategoryWithLevel[]
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id,
   })
@@ -41,38 +47,122 @@ function SortableRootRow({ category }: { category: CategoryWithLevel }) {
   }
 
   return (
-    <tr
-      ref={setNodeRef}
-      style={style}
-      className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/50"
-    >
-      <td className="px-4 py-3 font-medium text-zinc-50">
-        <div className="flex items-center gap-2">
+    <>
+      {/* Root row */}
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/50"
+      >
+        {/* Mobile card layout */}
+        <div className="flex items-center gap-3 px-3 py-3 sm:hidden">
           <button
             {...listeners}
             {...attributes}
-            className="cursor-grab text-zinc-600 hover:text-zinc-400 active:cursor-grabbing touch-none"
+            className="shrink-0 cursor-grab touch-none text-zinc-600 hover:text-zinc-400 active:cursor-grabbing"
             aria-label="Drag to reorder"
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          {category.name}
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-zinc-50">{category.name}</p>
+            <p className="truncate text-xs text-zinc-500 font-mono">{category.slug}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
+              {category.product_count ?? 0}p
+            </span>
+            <Link href={`/admin/categories/${category.id}`}>
+              <button className="rounded p-1.5 text-zinc-400 hover:bg-zinc-700 hover:text-amber-400">
+                <Edit className="h-4 w-4" />
+              </button>
+            </Link>
+            <DeleteCategoryButton id={category.id} name={category.name} />
+          </div>
         </div>
-      </td>
-      <td className="px-4 py-3 text-sm text-zinc-400">{category.slug}</td>
-      <td className="px-4 py-3 text-sm text-zinc-400">{category.sort_order}</td>
-      <td className="px-4 py-3 text-sm text-zinc-400">{category.product_count ?? 0}</td>
-      <td className="px-4 py-3">
-        <div className="flex gap-2">
-          <Link href={`/admin/categories/${category.id}`}>
-            <button className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-amber-400">
-              <Edit className="h-4 w-4" />
-            </button>
-          </Link>
-          <DeleteCategoryButton id={category.id} name={category.name} />
+
+        {/* Desktop table row */}
+        <div className="hidden sm:grid sm:grid-cols-[auto_1fr_1fr_80px_80px_80px] sm:items-center sm:gap-0">
+          <div className="px-4 py-3 font-medium text-zinc-50">
+            <div className="flex items-center gap-2">
+              <button
+                {...listeners}
+                {...attributes}
+                className="cursor-grab touch-none text-zinc-600 hover:text-zinc-400 active:cursor-grabbing"
+                aria-label="Drag to reorder"
+              >
+                <GripVertical className="h-4 w-4" />
+              </button>
+              {category.name}
+            </div>
+          </div>
+          <div className="px-4 py-3 text-sm text-zinc-400 font-mono">{category.slug}</div>
+          <div className="px-4 py-3 text-sm text-zinc-400">{category.sort_order}</div>
+          <div className="px-4 py-3 text-sm text-zinc-400">{category.product_count ?? 0}</div>
+          <div className="px-4 py-3">
+            <div className="flex gap-2">
+              <Link href={`/admin/categories/${category.id}`}>
+                <button className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-amber-400">
+                  <Edit className="h-4 w-4" />
+                </button>
+              </Link>
+              <DeleteCategoryButton id={category.id} name={category.name} />
+            </div>
+          </div>
         </div>
-      </td>
-    </tr>
+      </div>
+
+      {/* Sub-category rows */}
+      {subs.map((sub) => (
+        <div
+          key={sub.id}
+          className="border-b border-zinc-800/30 bg-zinc-950/40 transition-colors hover:bg-zinc-800/30"
+        >
+          {/* Mobile */}
+          <div className="flex items-center gap-3 px-3 py-2.5 sm:hidden">
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-zinc-700 ml-7" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-zinc-400">{sub.name}</p>
+              <p className="truncate text-xs text-zinc-600 font-mono">{sub.slug}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-xs text-zinc-500">
+                {sub.product_count ?? 0}p
+              </span>
+              <Link href={`/admin/categories/${sub.id}`}>
+                <button className="rounded p-1.5 text-zinc-500 hover:bg-zinc-700 hover:text-amber-400">
+                  <Edit className="h-3.5 w-3.5" />
+                </button>
+              </Link>
+              <DeleteCategoryButton id={sub.id} name={sub.name} />
+            </div>
+          </div>
+
+          {/* Desktop */}
+          <div className="hidden sm:grid sm:grid-cols-[auto_1fr_1fr_80px_80px_80px] sm:items-center">
+            <div className="px-4 py-2.5 text-sm text-zinc-400">
+              <div className="flex items-center pl-9">
+                <span className="mr-2 text-zinc-700">└</span>
+                {sub.name}
+              </div>
+            </div>
+            <div className="px-4 py-2.5 text-xs text-zinc-500 font-mono">{sub.slug}</div>
+            <div className="px-4 py-2.5 text-xs text-zinc-500">{sub.sort_order}</div>
+            <div className="px-4 py-2.5 text-xs text-zinc-500">{sub.product_count ?? 0}</div>
+            <div className="px-4 py-2.5">
+              <div className="flex gap-2">
+                <Link href={`/admin/categories/${sub.id}`}>
+                  <button className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400">
+                    <Edit className="h-3.5 w-3.5" />
+                  </button>
+                </Link>
+                <DeleteCategoryButton id={sub.id} name={sub.name} />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
 
@@ -106,80 +196,52 @@ export function AdminCategoriesClient({ roots, flatList }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-zinc-800">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-zinc-800 bg-zinc-900/80">
-            <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Name</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Slug</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Sort</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Products</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {flatList.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="py-12 text-center">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="mb-4 rounded-full bg-zinc-900 p-4 ring-1 ring-zinc-800">
-                    <Plus className="h-6 w-6 text-zinc-500" />
-                  </div>
-                  <h3 className="text-lg font-medium text-zinc-200">No categories found</h3>
-                  <p className="mt-1 max-w-sm text-sm text-zinc-500">
-                    Create your first category to get started.
-                  </p>
-                </div>
-              </td>
-            </tr>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+    <div className="rounded-lg border border-zinc-800 overflow-hidden">
+      {/* Desktop header row */}
+      <div className="hidden sm:grid sm:grid-cols-[auto_1fr_1fr_80px_80px_80px] border-b border-zinc-800 bg-zinc-900/80">
+        <div className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Name</div>
+        <div className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Slug</div>
+        <div className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Sort</div>
+        <div className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Products</div>
+        <div className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Actions</div>
+      </div>
+
+      {/* Mobile header */}
+      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/80 px-3 py-2.5 sm:hidden">
+        <span className="text-xs font-medium text-zinc-400">Categories</span>
+        <span className="text-xs text-zinc-600">Drag to reorder</span>
+      </div>
+
+      <div>
+        {flatList.length === 0 ? (
+          <div className="py-12 text-center">
+            <div className="flex flex-col items-center justify-center">
+              <div className="mb-4 rounded-full bg-zinc-900 p-4 ring-1 ring-zinc-800">
+                <Plus className="h-6 w-6 text-zinc-500" />
+              </div>
+              <h3 className="text-lg font-medium text-zinc-200">No categories found</h3>
+              <p className="mt-1 max-w-sm text-sm text-zinc-500">
+                Create your first category to get started.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={rootOrder.map((r) => r.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={rootOrder.map((r) => r.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {rootOrder.map((root) => (
-                  <>
-                    <SortableRootRow key={root.id} category={root} />
-                    {(subsByParent[root.id] ?? []).map((sub) => (
-                      <tr
-                        key={sub.id}
-                        className="border-b border-zinc-800/30 transition-colors hover:bg-zinc-800/30"
-                      >
-                        <td className="px-4 py-2.5 text-sm text-zinc-400">
-                          <div className="flex items-center" style={{ paddingLeft: '36px' }}>
-                            <span className="mr-2 text-zinc-700">└</span>
-                            {sub.name}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5 text-xs text-zinc-500">{sub.slug}</td>
-                        <td className="px-4 py-2.5 text-xs text-zinc-500">{sub.sort_order}</td>
-                        <td className="px-4 py-2.5 text-xs text-zinc-500">
-                          {sub.product_count ?? 0}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex gap-2">
-                            <Link href={`/admin/categories/${sub.id}`}>
-                              <button className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400">
-                                <Edit className="h-3.5 w-3.5" />
-                              </button>
-                            </Link>
-                            <DeleteCategoryButton id={sub.id} name={sub.name} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </>
-                ))}
-              </SortableContext>
-            </DndContext>
-          )}
-        </tbody>
-      </table>
+              {rootOrder.map((root) => (
+                <SortableRootRow key={root.id} category={root} subs={subsByParent[root.id] ?? []} />
+              ))}
+            </SortableContext>
+          </DndContext>
+        )}
+      </div>
     </div>
   )
 }

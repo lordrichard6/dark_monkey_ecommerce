@@ -33,18 +33,18 @@ export default async function AdminCategoriesPage() {
   const flatList = flatten(roots)
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+    <div className="flex-1 space-y-4 p-4 pt-4 sm:p-8 sm:pt-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">Categories</h1>
+          <p className="mt-0.5 text-xs text-zinc-500 sm:mt-1 sm:text-sm">
             Drag root categories to reorder. Changes save automatically.
           </p>
         </div>
-        <Link href="/admin/categories/new">
-          <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-amber-500 text-black hover:bg-amber-600 h-9 px-4 py-2">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Category
+        <Link href="/admin/categories/new" className="shrink-0">
+          <button className="inline-flex items-center justify-center rounded-md bg-amber-500 px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 sm:px-4">
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Add Category</span>
           </button>
         </Link>
       </div>

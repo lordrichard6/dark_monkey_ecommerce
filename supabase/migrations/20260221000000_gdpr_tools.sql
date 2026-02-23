@@ -21,17 +21,24 @@ CREATE INDEX IF NOT EXISTS idx_deletion_requests_status ON data_deletion_request
 -- RLS: users can only see and create their own requests
 ALTER TABLE data_deletion_requests ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can insert their own deletion request" ON data_deletion_requests
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can view their own deletion requests" ON data_deletion_requests
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Admins have full access to deletion requests" ON data_deletion_requests
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE user_profiles.id = auth.uid()
-        AND user_profiles.is_admin = true
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='data_deletion_requests' AND policyname='Users can insert their own deletion request') THEN
+    CREATE POLICY "Users can insert their own deletion request" ON data_deletion_requests
+      FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='data_deletion_requests' AND policyname='Users can view their own deletion requests') THEN
+    CREATE POLICY "Users can view their own deletion requests" ON data_deletion_requests
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='data_deletion_requests' AND policyname='Admins have full access to deletion requests') THEN
+    CREATE POLICY "Admins have full access to deletion requests" ON data_deletion_requests
+      FOR ALL USING (
+        EXISTS (
+          SELECT 1 FROM user_profiles
+          WHERE user_profiles.id = auth.uid()
+            AND user_profiles.is_admin = true
+        )
+      );
+  END IF;
+END $$;

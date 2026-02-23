@@ -24,6 +24,16 @@ ON stock_notifications(email);
 ALTER TABLE stock_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Allow public inserts
-CREATE POLICY "Allow public inserts for stock_notifications"
-ON stock_notifications FOR INSERT
-WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'stock_notifications'
+      AND policyname = 'Allow public inserts for stock_notifications'
+  ) THEN
+    CREATE POLICY "Allow public inserts for stock_notifications"
+    ON stock_notifications FOR INSERT
+    WITH CHECK (true);
+  END IF;
+END $$;

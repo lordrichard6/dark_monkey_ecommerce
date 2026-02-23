@@ -10,10 +10,7 @@ const CategorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   slug: z.string().min(1, 'Slug is required'),
   description: z.string().optional(),
-  image_url: z
-    .string()
-    .optional()
-    .transform((v) => v || undefined),
+  image_url: z.string().optional().nullable(),
   parent_id: z.string().uuid().optional().nullable(),
   sort_order: z.coerce.number().default(0),
 })
@@ -165,12 +162,12 @@ export async function uploadCategoryImage(
 
   const supabase = await createClient()
   const { error: uploadError } = await supabase.storage
-    .from('product-images')
+    .from('category-images')
     .upload(filename, file, { cacheControl: '3600', upsert: false })
 
   if (uploadError) return { ok: false, error: uploadError.message }
 
-  const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filename)
+  const { data: urlData } = supabase.storage.from('category-images').getPublicUrl(filename)
   return { ok: true, url: urlData.publicUrl }
 }
 
