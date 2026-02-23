@@ -50,24 +50,30 @@ export async function middleware(request: NextRequest) {
     return intlResponse
   }
 
-  // Inject x-pathname as a request header so server components can read it
-  // (e.g. to hide storefront-only components on admin routes)
+  // Build a NextResponse.next() that forwards x-pathname to server components.
+  // This is the ONLY reliable way to pass custom headers to server components
+  // in Next.js App Router — they must be set on the request headers of a
+  // NextResponse.next(), not on any arbitrary response object.
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-pathname', pathname)
 
-  const pathedRequest = new NextRequest(request.url, {
-    headers: requestHeaders,
-    method: request.method,
-    body: request.body,
+  const nextResponse = NextResponse.next({
+    request: { headers: requestHeaders },
   })
 
-  // Copy cookies from intlResponse into the patched request so Supabase sees them
-  intlResponse.cookies.getAll().forEach((cookie) => {
-    pathedRequest.cookies.set(cookie.name, cookie.value)
+  // Copy all cookies from intlResponse so locale cookies are preserved
+  intlResponse.cookies.getAll().forEach(({ name, value }) => {
+    nextResponse.cookies.set(name, value)
+  })
+  // Copy intl response headers (e.g. x-middleware-rewrite, x-nextjs-matched-path)
+  intlResponse.headers.forEach((value, key) => {
+    if (key.startsWith('x-') || key === 'link') {
+      nextResponse.headers.set(key, value)
+    }
   })
 
   // Chain to Supabase session middleware
-  return await updateSession(pathedRequest, intlResponse)
+  return await updateSession(request, nextResponse)
 }
 
 export const config = {
