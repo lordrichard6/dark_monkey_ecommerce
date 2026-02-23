@@ -1,6 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import { routing } from '@/i18n/routing'
 import { getCart } from '@/lib/cart'
 import { getAnnouncements } from '@/actions/announcements'
@@ -34,6 +35,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Fix: Check if locale exists in routing.locales directly since hasLocale might not be available
   if (!routing.locales.includes(locale as (typeof routing.locales)[number])) notFound()
   setRequestLocale(locale)
+
+  const headersList = await headers()
+  const isAdmin = (headersList.get('x-pathname') ?? '').includes('/admin')
 
   const [messages, cart, announcements] = await Promise.all([
     getMessages(),
@@ -88,13 +92,12 @@ export default async function LocaleLayout({ children, params }: Props) {
           <main id="main-content" className="relative flex min-h-screen flex-col pt-14 md:pl-16">
             {children}
           </main>
-          <Footer />
+          {!isAdmin && <Footer />}
+          {!isAdmin && <BackToTop />}
+          {!isAdmin && <SupportWidget />}
+          {!isAdmin && <CompareBar />}
           <CartDrawer />
           <CookieConsent />
-          <InstallPrompt />
-          <BackToTop />
-          <SupportWidget />
-          <CompareBar />
           <Toaster position="top-center" richColors />
         </CartProvider>
       </CurrencyProvider>

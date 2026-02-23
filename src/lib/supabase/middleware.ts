@@ -21,30 +21,32 @@ export async function updateSession(request: NextRequest, response?: NextRespons
       return response || NextResponse.next({ request })
     }
 
-    let supabaseResponse = response || NextResponse.next({
-      request,
-    })
-
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value)
-            )
-            // Do not reset the response, just update cookies on the existing one
-            cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options)
-            )
-          },
+    const supabaseResponse =
+      response ||
+      NextResponse.next({
+        request: {
+          headers: (() => {
+            const h = new Headers(request.headers)
+            h.set('x-pathname', request.nextUrl.pathname)
+            return h
+          })(),
         },
-      }
-    )
+      })
+
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          // Do not reset the response, just update cookies on the existing one
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    })
 
     const { pathname } = request.nextUrl
     const { path: pathWithoutLocale, locale } = getPathWithoutLocale(pathname)
@@ -55,13 +57,18 @@ export async function updateSession(request: NextRequest, response?: NextRespons
     const hasAuthCookies = request.cookies.getAll().some((c) => c.name.startsWith('sb-'))
 
     // On login pages: clear stale auth cookies and redirect (avoids "Refresh Token Not Found" errors)
-    if ((pathWithoutLocale === '/login' || pathWithoutLocale === '/admin/login') && hasAuthCookies) {
+    if (
+      (pathWithoutLocale === '/login' || pathWithoutLocale === '/admin/login') &&
+      hasAuthCookies
+    ) {
       const allCookies = request.cookies.getAll()
       const authCookies = allCookies.filter((c) => c.name.startsWith('sb-'))
       authCookies.forEach((c) => {
         supabaseResponse.cookies.set(c.name, '', { maxAge: 0, path: '/' })
       })
-      return NextResponse.redirect(new URL(pathname, request.url), { headers: supabaseResponse.headers })
+      return NextResponse.redirect(new URL(pathname, request.url), {
+        headers: supabaseResponse.headers,
+      })
     }
 
     // Validate session: call getUser on any request with auth cookies (to refresh or detect invalid tokens)
@@ -73,7 +80,10 @@ export async function updateSession(request: NextRequest, response?: NextRespons
         user = data.user
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: string }).code : undefined
+        const code =
+          err && typeof err === 'object' && 'code' in err
+            ? (err as { code?: string }).code
+            : undefined
         const isRefreshTokenError =
           code === 'refresh_token_not_found' ||
           message.includes('Refresh Token') ||
@@ -95,7 +105,9 @@ export async function updateSession(request: NextRequest, response?: NextRespons
 
     if (isProtected && !user) {
       const url = request.nextUrl.clone()
-      url.pathname = pathWithoutLocale.startsWith('/admin') ? `/${locale}/admin/login` : `/${locale}/login`
+      url.pathname = pathWithoutLocale.startsWith('/admin')
+        ? `/${locale}/admin/login`
+        : `/${locale}/login`
       if (!pathWithoutLocale.startsWith('/admin')) url.searchParams.set('redirectTo', pathname)
       return NextResponse.redirect(url)
     }
