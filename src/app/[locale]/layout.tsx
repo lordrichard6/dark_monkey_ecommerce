@@ -1,7 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import { routing } from '@/i18n/routing'
 import { getCart } from '@/lib/cart'
 import { getAnnouncements } from '@/actions/announcements'
@@ -11,15 +10,11 @@ import { AnnouncementBar } from '@/components/AnnouncementBar'
 import { GradientBackground } from '@/components/GradientBackground'
 import { Header } from '@/components/Header'
 import { CookieConsent } from '@/components/CookieConsent'
-import { Footer } from '@/components/Footer'
 import { CurrencyProvider } from '@/components/currency/CurrencyContext'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
+import { StorefrontShell } from '@/components/StorefrontShell'
 import { Toaster } from 'sonner'
 import NextTopLoader from 'nextjs-toploader'
-
-import { BackToTop } from '@/components/BackToTop'
-import { SupportWidget } from '@/components/SupportWidget'
-import { CompareBar } from '@/components/product/CompareBar'
 
 export async function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
@@ -35,16 +30,6 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Fix: Check if locale exists in routing.locales directly since hasLocale might not be available
   if (!routing.locales.includes(locale as (typeof routing.locales)[number])) notFound()
   setRequestLocale(locale)
-
-  const headersList = await headers()
-  // Debug: log ALL headers to find what's available
-  const allHeaders: Record<string, string> = {}
-  headersList.forEach((value, key) => {
-    allHeaders[key] = value
-  })
-  console.log('[layout] ALL HEADERS:', JSON.stringify(allHeaders))
-  const xPathname = headersList.get('x-pathname') ?? ''
-  const isAdmin = xPathname.includes('/admin')
 
   const [messages, cart, announcements] = await Promise.all([
     getMessages(),
@@ -99,10 +84,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <main id="main-content" className="relative flex min-h-screen flex-col pt-14 md:pl-16">
             {children}
           </main>
-          {!isAdmin && <Footer />}
-          {!isAdmin && <BackToTop />}
-          {!isAdmin && <SupportWidget />}
-          {!isAdmin && <CompareBar />}
+          <StorefrontShell />
           <CartDrawer />
           <CookieConsent />
           <Toaster position="top-center" richColors />
