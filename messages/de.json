@@ -134,7 +134,9 @@
     "craftedFor": "Gemacht für",
     "quality": "Qualität",
     "devBannerTitle": "Shop in Entwicklung",
-    "devBannerSubtitle": "Bestellungen werden nicht bearbeitet"
+    "devBannerSubtitle": "Bestellungen werden nicht bearbeitet",
+    "shopByCategory": "Nach Kategorie einkaufen",
+    "viewAllCategories": "Alle ansehen"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",

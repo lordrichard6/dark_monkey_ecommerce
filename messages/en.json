@@ -197,7 +197,9 @@
     "featured": "Featured",
     "creative": "Creative",
     "devBannerTitle": "Store Under Development",
-    "devBannerSubtitle": "Orders will not be processed"
+    "devBannerSubtitle": "Orders will not be processed",
+    "shopByCategory": "Shop by Category",
+    "viewAllCategories": "View all"
   },
   "userMenu": {
     "account": "Account",

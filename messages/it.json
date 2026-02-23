@@ -201,7 +201,9 @@
     "featured": "In evidenza",
     "quality": "Qualità",
     "devBannerTitle": "Negozio in Sviluppo",
-    "devBannerSubtitle": "Gli ordini non verranno elaborati"
+    "devBannerSubtitle": "Gli ordini non verranno elaborati",
+    "shopByCategory": "Acquista per Categoria",
+    "viewAllCategories": "Vedi tutto"
   },
   "userMenu": {
     "account": "Account",

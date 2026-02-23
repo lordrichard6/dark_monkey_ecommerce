@@ -201,7 +201,9 @@
     "featured": "En vedette",
     "quality": "Qualité",
     "devBannerTitle": "Boutique en Développement",
-    "devBannerSubtitle": "Les commandes ne seront pas traitées"
+    "devBannerSubtitle": "Les commandes ne seront pas traitées",
+    "shopByCategory": "Acheter par Catégorie",
+    "viewAllCategories": "Voir tout"
   },
   "userMenu": {
     "account": "Compte",

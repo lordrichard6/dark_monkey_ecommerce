@@ -10,9 +10,10 @@ import type { Metadata } from 'next'
 import { GalleryPreviewSection } from '@/components/gallery/GalleryPreviewSection'
 import { AuthCTASection } from '@/components/auth/AuthCTASection'
 import { Link } from '@/i18n/navigation'
+import { CategoryStrip } from '@/components/category/CategoryStrip'
 
 type Props = {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ sort?: string; tag?: string }>
 }
 
@@ -54,8 +55,14 @@ export default async function HomePage({ params, searchParams }: Props) {
         <NewArrivalsSection />
       </Suspense>
 
+      <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-12 h-64 animate-pulse" />}>
+        <CategoryStrip />
+      </Suspense>
+
       <div id="products" className="mx-auto max-w-6xl px-4 py-16 scroll-mt-4">
-        <Suspense fallback={<div className="h-12 w-full animate-pulse rounded-lg bg-zinc-900/50 mb-8" />}>
+        <Suspense
+          fallback={<div className="h-12 w-full animate-pulse rounded-lg bg-zinc-900/50 mb-8" />}
+        >
           <TagFilterSection selectedTag={tag} />
         </Suspense>
 
