@@ -24,13 +24,7 @@ export async function updateSession(request: NextRequest, response?: NextRespons
     const supabaseResponse =
       response ||
       NextResponse.next({
-        request: {
-          headers: (() => {
-            const h = new Headers(request.headers)
-            h.set('x-pathname', request.nextUrl.pathname)
-            return h
-          })(),
-        },
+        request,
       })
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {

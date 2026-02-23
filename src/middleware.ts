@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
 import { routing } from '@/i18n/routing'
 import { updateSession } from '@/lib/supabase/middleware'
@@ -50,8 +50,24 @@ export async function middleware(request: NextRequest) {
     return intlResponse
   }
 
-  // Otherwise, chain the response to Supabase middleware to preserve locale cookies
-  return await updateSession(request, intlResponse)
+  // Inject x-pathname as a request header so server components can read it
+  // (e.g. to hide storefront-only components on admin routes)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-pathname', pathname)
+
+  const pathedRequest = new NextRequest(request.url, {
+    headers: requestHeaders,
+    method: request.method,
+    body: request.body,
+  })
+
+  // Copy cookies from intlResponse into the patched request so Supabase sees them
+  intlResponse.cookies.getAll().forEach((cookie) => {
+    pathedRequest.cookies.set(cookie.name, cookie.value)
+  })
+
+  // Chain to Supabase session middleware
+  return await updateSession(pathedRequest, intlResponse)
 }
 
 export const config = {
