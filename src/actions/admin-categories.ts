@@ -5,6 +5,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import sharp from 'sharp'
 
 const CategorySchema = z.object({
   id: z.string().optional(),
@@ -162,15 +163,25 @@ export async function uploadCategoryImage(
     return { ok: false, error: 'File too large. Maximum size: 10MB' }
   }
 
-  const ext = file.name.split('.').pop() ?? 'jpg'
-  const filename = `categories/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-
   const adminClient = getAdminClient()
   if (!adminClient) return { ok: false, error: 'Server misconfiguration: missing service role key' }
 
+  // Compress & convert to WebP using sharp (server-side)
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const compressed = await sharp(buffer)
+    .resize(800, 800, { fit: 'cover', position: 'centre' })
+    .webp({ quality: 82 })
+    .toBuffer()
+
+  const filename = `categories/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`
+
   const { error: uploadError } = await adminClient.storage
     .from('category-images')
-    .upload(filename, file, { cacheControl: '3600', upsert: false })
+    .upload(filename, compressed, {
+      contentType: 'image/webp',
+      cacheControl: '31536000',
+      upsert: false,
+    })
 
   if (uploadError) return { ok: false, error: uploadError.message }
 
