@@ -37,9 +37,14 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale)
 
   const headersList = await headers()
+  // Debug: log ALL headers to find what's available
+  const allHeaders: Record<string, string> = {}
+  headersList.forEach((value, key) => {
+    allHeaders[key] = value
+  })
+  console.log('[layout] ALL HEADERS:', JSON.stringify(allHeaders))
   const xPathname = headersList.get('x-pathname') ?? ''
   const isAdmin = xPathname.includes('/admin')
-  if (xPathname) console.log('[layout] x-pathname:', xPathname, '| isAdmin:', isAdmin)
 
   const [messages, cart, announcements] = await Promise.all([
     getMessages(),
