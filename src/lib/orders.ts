@@ -54,12 +54,9 @@ export async function processSuccessfulCheckout(sessionId: string) {
   }
 
   // 2. Retrieve full session details
-  // expand shipping_details so the nested address object is always present
   console.log('[OrderProcess] Step 2: Retrieving session from Stripe...')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fullSession: any = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ['shipping_details', 'customer_details'],
-  })
+  const fullSession: any = await stripe.checkout.sessions.retrieve(sessionId)
   console.log(
     `[OrderProcess] Stripe session retrieved. Status: ${fullSession.status}, Payment status: ${fullSession.payment_status}`
   )
