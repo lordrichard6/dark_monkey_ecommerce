@@ -79,14 +79,19 @@ export async function upsertCategory(
     sort_order: formData.get('sort_order'),
   }
 
+  console.log('[upsertCategory] rawData:', JSON.stringify(rawData))
+
   const validated = CategorySchema.safeParse(rawData)
 
   if (!validated.success) {
+    console.log('[upsertCategory] validation failed:', validated.error.errors)
     return {
       ok: false,
       error: validated.error.errors[0].message,
     }
   }
+
+  console.log('[upsertCategory] validated.data:', JSON.stringify(validated.data))
 
   const supabase = await createClient()
 
@@ -101,6 +106,8 @@ export async function upsertCategory(
 
   const { id, ...payload } = validated.data
 
+  console.log('[upsertCategory] payload to DB:', JSON.stringify(payload))
+
   let error
   if (id) {
     const { error: updateError } = await supabase
@@ -108,9 +115,11 @@ export async function upsertCategory(
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
     error = updateError
+    console.log('[upsertCategory] update error:', updateError)
   } else {
     const { error: insertError } = await supabase.from('categories').insert(payload)
     error = insertError
+    console.log('[upsertCategory] insert error:', insertError)
   }
 
   if (error) {
