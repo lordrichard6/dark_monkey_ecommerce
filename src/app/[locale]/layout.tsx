@@ -12,9 +12,15 @@ import { Header } from '@/components/Header'
 import { CookieConsent } from '@/components/CookieConsent'
 import { CurrencyProvider } from '@/components/currency/CurrencyContext'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
-import { StorefrontShell } from '@/components/StorefrontShell'
+import dynamic from 'next/dynamic'
 import { Toaster } from 'sonner'
 import NextTopLoader from 'nextjs-toploader'
+
+// ssr: false so it never renders on the server — no flash of footer on admin pages
+const StorefrontShell = dynamic(
+  () => import('@/components/StorefrontShell').then((m) => m.StorefrontShell),
+  { ssr: false }
+)
 
 export async function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
