@@ -3,8 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOrderStatus } from '@/actions/admin-orders'
+import { toast } from 'sonner'
 
-const STATUSES = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
+const STATUSES = [
+  'pending',
+  'paid',
+  'processing',
+  'shipped',
+  'delivered',
+  'cancelled',
+  'refunded',
+] as const
 
 type Props = { orderId: string; currentStatus: string }
 
@@ -18,7 +27,12 @@ export function UpdateOrderStatusForm({ orderId, currentStatus }: Props) {
     setLoading(true)
     const result = await updateOrderStatus(orderId, status)
     setLoading(false)
-    if (result.ok) router.refresh()
+    if (result.ok) {
+      toast.success(`Status updated to "${status}"`)
+      router.refresh()
+    } else {
+      toast.error(result.error ?? 'Failed to update status')
+    }
   }
 
   return (
@@ -26,11 +40,11 @@ export function UpdateOrderStatusForm({ orderId, currentStatus }: Props) {
       <select
         value={status}
         onChange={(e) => setStatus(e.target.value)}
-        className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100"
+        className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 focus:border-amber-500/60 focus:outline-none"
       >
         {STATUSES.map((s) => (
           <option key={s} value={s}>
-            {s}
+            {s.charAt(0).toUpperCase() + s.slice(1)}
           </option>
         ))}
       </select>
@@ -39,7 +53,7 @@ export function UpdateOrderStatusForm({ orderId, currentStatus }: Props) {
         disabled={loading || status === currentStatus}
         className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
       >
-        {loading ? 'Saving...' : 'Update'}
+        {loading ? 'Saving…' : 'Update'}
       </button>
     </form>
   )

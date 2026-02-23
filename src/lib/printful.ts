@@ -280,6 +280,46 @@ export async function fetchSyncProduct(
   }
 }
 
+/**
+ * Confirm a draft Printful order for fulfillment.
+ * Moves the order from "draft" → "pending" (queued for production).
+ * Only call this when you are ready to commit — this triggers real fulfillment costs.
+ *
+ * POST https://api.printful.com/orders/{id}/confirm
+ */
+export async function confirmPrintfulOrder(
+  printfulOrderId: number
+): Promise<{ ok: boolean; status?: string; error?: string }> {
+  if (!isPrintfulConfigured()) {
+    return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
+  }
+
+  try {
+    const data = await fetchPrintful<{ id: number; status: string }>(
+      `${API_BASE}/orders/${printfulOrderId}/confirm`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    )
+
+    if (data.result?.id) {
+      console.log(`[Printful] Order ${printfulOrderId} confirmed — status: ${data.result.status}`)
+      return { ok: true, status: data.result.status }
+    }
+
+    return { ok: false, error: 'No confirmation response from Printful' }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    logger.error('confirmPrintfulOrder failed', {
+      operation: 'confirmPrintfulOrder',
+      error: message,
+      printfulOrderId,
+    })
+    return { ok: false, error: message }
+  }
+}
+
 export async function fetchStoreOrder(
   orderId: number
 ): Promise<{ ok: boolean; order?: any; error?: string }> {
