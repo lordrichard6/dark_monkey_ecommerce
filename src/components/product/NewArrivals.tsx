@@ -160,7 +160,7 @@ export function NewArrivals({ products, categories }: Props) {
             displayedProducts.map((product) => (
               <div
                 key={product.slug}
-                className="md:min-w-[320px] flex-shrink-0 transition-transform hover:-translate-y-1"
+                className="md:min-w-[280px] md:w-[280px] flex-shrink-0 transition-transform hover:-translate-y-1"
               >
                 <ProductCardWithWishlist
                   productId={product.productId}

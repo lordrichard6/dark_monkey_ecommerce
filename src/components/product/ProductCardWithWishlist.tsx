@@ -61,8 +61,8 @@ export function ProductCardWithWishlist({
 
   return (
     <>
-      <div className="group relative block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20">
-        <Link href={`/products/${slug}`} className="block">
+      <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20 h-full">
+        <Link href={`/products/${slug}`} className="flex flex-col flex-1">
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
             {/* Display badges */}
             {badges.length > 0 && (
@@ -111,9 +111,9 @@ export function ProductCardWithWishlist({
               </button>
             </div>
           </div>
-          <div className="p-4">
+          <div className="p-4 flex flex-col flex-1">
             <ProductName name={name} />
-            <div className="mt-2 flex items-baseline gap-2">
+            <div className="mt-auto pt-2 flex items-baseline gap-2">
               {compareAtPriceCents && compareAtPriceCents > priceCents && (
                 <span className="text-sm text-zinc-500 line-through decoration-zinc-500/50">
                   {format(compareAtPriceCents)}
