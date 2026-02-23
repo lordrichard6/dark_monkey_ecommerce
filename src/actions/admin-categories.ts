@@ -142,6 +142,38 @@ export async function reorderCategories(orderedIds: string[]): Promise<ActionSta
   return { ok: true }
 }
 
+export async function uploadCategoryImage(
+  formData: FormData
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
+
+  const file = formData.get('image_file') as File | null
+  if (!file || file.size === 0) return { ok: false, error: 'No file provided' }
+
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    return { ok: false, error: 'Invalid file type. Allowed: PNG, JPEG, WebP, GIF' }
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    return { ok: false, error: 'File too large. Maximum size: 10MB' }
+  }
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const filename = `categories/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+  const supabase = await createClient()
+  const { error: uploadError } = await supabase.storage
+    .from('product-images')
+    .upload(filename, file, { cacheControl: '3600', upsert: false })
+
+  if (uploadError) return { ok: false, error: uploadError.message }
+
+  const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filename)
+  return { ok: true, url: urlData.publicUrl }
+}
+
 export async function deleteCategory(id: string): Promise<ActionState> {
   const admin = await getAdminUser()
   if (!admin) return { ok: false, error: 'Not authorized' }

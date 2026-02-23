@@ -1,9 +1,15 @@
 'use client'
 
-import { upsertCategory, type Category, type ActionState } from '@/actions/admin-categories'
+import {
+  upsertCategory,
+  uploadCategoryImage,
+  type Category,
+  type ActionState,
+} from '@/actions/admin-categories'
 import { useRouter } from '@/i18n/navigation'
-import { useActionState, useEffect, useCallback, useState } from 'react'
+import { useActionState, useEffect, useCallback, useState, useRef } from 'react'
 import { toast } from 'sonner'
+import { ImagePlus, X } from 'lucide-react'
 
 interface CategoryFormProps {
   category?: Category | null
@@ -21,8 +27,13 @@ function slugify(value: string) {
 
 export function CategoryForm({ category, categories }: CategoryFormProps) {
   const router = useRouter()
-  const [state, action, isPending] = useActionState(upsertCategory, { ok: true } as ActionState)
+  const [state, , isPending] = useActionState(upsertCategory, { ok: true } as ActionState)
   const [slugPreview, setSlugPreview] = useState(category?.slug ?? '')
+  const [imageUrl, setImageUrl] = useState(category?.image_url ?? '')
+  const [previewUrl, setPreviewUrl] = useState(category?.image_url ?? '')
+  const [loading, setLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (state.error) {
@@ -31,7 +42,26 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
   }, [state])
 
   const handleSubmit = async (formData: FormData) => {
+    setLoading(true)
+
+    // Upload image first if a new file was selected
+    if (pendingFile) {
+      const uploadData = new FormData()
+      uploadData.set('image_file', pendingFile)
+      const uploaded = await uploadCategoryImage(uploadData)
+      if (!uploaded.ok) {
+        toast.error(uploaded.error)
+        setLoading(false)
+        return
+      }
+      formData.set('image_url', uploaded.url)
+      setImageUrl(uploaded.url)
+    } else {
+      formData.set('image_url', imageUrl)
+    }
+
     const result = await upsertCategory({ ok: true }, formData)
+    setLoading(false)
     if (result.ok) {
       toast.success('Category saved')
       router.push('/admin/categories')
@@ -54,6 +84,21 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
     [category]
   )
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPendingFile(file)
+    const localUrl = URL.createObjectURL(file)
+    setPreviewUrl(localUrl)
+  }
+
+  function handleRemoveImage() {
+    setPendingFile(null)
+    setPreviewUrl('')
+    setImageUrl('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   // Root-level categories only (no parent), excluding self
   const rootCategories = categories.filter((c) => !c.parent_id && c.id !== category?.id)
 
@@ -62,6 +107,7 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
       <div className="p-6">
         <form action={handleSubmit} className="space-y-6">
           <input type="hidden" name="id" value={category?.id ?? ''} />
+          <input type="hidden" name="image_url" value={imageUrl} />
 
           {/* Name */}
           <div className="space-y-2">
@@ -159,18 +205,50 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
             />
           </div>
 
-          {/* Image URL */}
+          {/* Category Image Upload */}
           <div className="space-y-2">
-            <label htmlFor="image_url" className="text-sm font-medium leading-none">
-              Image URL
-            </label>
+            <label className="text-sm font-medium leading-none">Category Image</label>
             <input
-              id="image_url"
-              name="image_url"
-              defaultValue={category?.image_url ?? ''}
-              placeholder="e.g. /images/categories/hoodies.jpg"
-              className="flex h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={handleFileChange}
             />
+
+            {previewUrl ? (
+              <div className="relative w-full overflow-hidden rounded-lg border border-white/10">
+                <img src={previewUrl} alt="Category preview" className="h-48 w-full object-cover" />
+                <div className="absolute inset-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-3">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 backdrop-blur-sm transition-colors hover:bg-red-500/30"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex h-36 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-white/10 bg-white/5 text-zinc-500 transition-colors hover:border-amber-500/40 hover:bg-amber-500/5 hover:text-amber-500"
+              >
+                <ImagePlus className="h-7 w-7" />
+                <span className="text-xs">Click to upload image</span>
+                <span className="text-[10px] text-zinc-600">PNG, JPEG, WebP, GIF · max 10MB</span>
+              </button>
+            )}
           </div>
 
           <div className="flex justify-end gap-4">
@@ -183,10 +261,10 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
             </button>
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || loading}
               className="inline-flex items-center justify-center rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-amber-600 disabled:opacity-50"
             >
-              {isPending ? 'Saving...' : 'Save Category'}
+              {isPending || loading ? 'Saving...' : 'Save Category'}
             </button>
           </div>
         </form>
