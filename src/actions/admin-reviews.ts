@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { getAdminUser } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 
 export type ModeratePhotoResult = { ok: true } | { ok: false; error: string }
@@ -13,26 +15,14 @@ export async function deleteReviewPhoto(
   reviewId: string,
   photoUrl: string
 ): Promise<ModeratePhotoResult> {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
 
-  // Check admin status
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated' }
-
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) {
-    return { ok: false, error: 'Not authorized' }
-  }
+  const adminClient = getAdminClient()
+  if (!adminClient) return { ok: false, error: 'Server misconfiguration' }
 
   // Get current review
-  const { data: review, error: fetchError } = await supabase
+  const { data: review, error: fetchError } = await adminClient
     .from('product_reviews')
     .select('photos')
     .eq('id', reviewId)
@@ -46,7 +36,7 @@ export async function deleteReviewPhoto(
   const updatedPhotos = (review.photos || []).filter((p: string) => p !== photoUrl)
 
   // Update review
-  const { error: updateError } = await supabase
+  const { error: updateError } = await adminClient
     .from('product_reviews')
     .update({ photos: updatedPhotos })
     .eq('id', reviewId)
@@ -58,7 +48,7 @@ export async function deleteReviewPhoto(
   // Delete from storage
   try {
     const path = new URL(photoUrl).pathname.split('/').slice(-2).join('/')
-    await supabase.storage.from('review-photos').remove([path])
+    await adminClient.storage.from('review-photos').remove([path])
   } catch (err) {
     // Photo deleted from DB but not storage - acceptable
     console.error('Failed to delete from storage:', err)
@@ -73,33 +63,21 @@ export async function deleteReviewPhoto(
  * Only admins can perform this action
  */
 export async function deleteReview(reviewId: string): Promise<ModeratePhotoResult> {
-  const supabase = await createClient()
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
 
-  // Check admin status
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated' }
-
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) {
-    return { ok: false, error: 'Not authorized' }
-  }
+  const adminClient = getAdminClient()
+  if (!adminClient) return { ok: false, error: 'Server misconfiguration' }
 
   // Get review photos for cleanup
-  const { data: review } = await supabase
+  const { data: review } = await adminClient
     .from('product_reviews')
     .select('photos')
     .eq('id', reviewId)
     .single()
 
   // Delete review
-  const { error } = await supabase.from('product_reviews').delete().eq('id', reviewId)
+  const { error } = await adminClient.from('product_reviews').delete().eq('id', reviewId)
 
   if (error) {
     return { ok: false, error: error.message }
@@ -111,7 +89,7 @@ export async function deleteReview(reviewId: string): Promise<ModeratePhotoResul
       const paths = review.photos.map((url: string) => {
         return new URL(url).pathname.split('/').slice(-2).join('/')
       })
-      await supabase.storage.from('review-photos').remove(paths)
+      await adminClient.storage.from('review-photos').remove(paths)
     } catch (err) {
       console.error('Failed to delete photos from storage:', err)
     }
@@ -125,20 +103,10 @@ export async function deleteReview(reviewId: string): Promise<ModeratePhotoResul
  * Get all reviews (paginated) for full admin management table
  */
 export async function getAdminReviews(page: number = 1, perPage: number = 30) {
+  const admin = await getAdminUser()
+  if (!admin) return { data: null, count: 0, error: 'Not authorized' }
+
   const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { data: null, count: 0, error: 'Not authenticated' }
-
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) return { data: null, count: 0, error: 'Not authorized' }
 
   const start = (page - 1) * perPage
   const end = start + perPage - 1
@@ -167,23 +135,10 @@ export async function getAdminReviews(page: number = 1, perPage: number = 30) {
  * Get all reviews with photos for moderation
  */
 export async function getReviewsWithPhotos() {
+  const admin = await getAdminUser()
+  if (!admin) return { data: null, error: 'Not authorized' }
+
   const supabase = await createClient()
-
-  // Check admin status
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: 'Not authenticated' }
-
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_admin) {
-    return { data: null, error: 'Not authorized' }
-  }
 
   const { data, error } = await supabase
     .from('product_reviews')
