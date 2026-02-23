@@ -171,35 +171,34 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
             <p className="text-xs text-zinc-500">Only top-level categories can be parents.</p>
           </div>
 
-          {/* Sort Order + Description — side by side on larger screens */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-[120px_1fr]">
-            <div className="space-y-1.5">
-              <label htmlFor="sort_order" className="text-sm font-medium leading-none">
-                Sort Order
-              </label>
-              <input
-                id="sort_order"
-                name="sort_order"
-                type="number"
-                defaultValue={category?.sort_order ?? 0}
-                required
-                className="flex h-11 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
-              />
-            </div>
+          {/* Sort Order */}
+          <div className="space-y-1.5">
+            <label htmlFor="sort_order" className="text-sm font-medium leading-none">
+              Sort Order
+            </label>
+            <input
+              id="sort_order"
+              name="sort_order"
+              type="number"
+              defaultValue={category?.sort_order ?? 0}
+              required
+              className="flex h-11 w-28 rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+            />
+          </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="description" className="text-sm font-medium leading-none">
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                defaultValue={category?.description ?? ''}
-                placeholder="Category description..."
-                rows={1}
-                className="flex w-full rounded-md border border-white/10 bg-transparent px-3 py-2.5 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50 resize-none"
-              />
-            </div>
+          {/* Description */}
+          <div className="space-y-1.5">
+            <label htmlFor="description" className="text-sm font-medium leading-none">
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              defaultValue={category?.description ?? ''}
+              placeholder="Category description..."
+              rows={3}
+              className="flex w-full rounded-md border border-white/10 bg-transparent px-3 py-2.5 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50 resize-none"
+            />
           </div>
 
           {/* Category Image Upload */}
@@ -217,8 +216,8 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
             />
 
             {previewUrl ? (
-              <div className="relative overflow-hidden rounded-lg border border-white/10">
-                <div className="aspect-square w-full sm:aspect-video">
+              <div className="relative overflow-hidden rounded-lg border border-white/10 sm:max-w-xs">
+                <div className="aspect-square w-full">
                   <img
                     src={previewUrl}
                     alt="Category preview"
