@@ -132,7 +132,9 @@
     "featured": "Vorgestellt",
     "creative": "Kreativ",
     "craftedFor": "Gemacht für",
-    "quality": "Qualität"
+    "quality": "Qualität",
+    "devBannerTitle": "Shop in Entwicklung",
+    "devBannerSubtitle": "Bestellungen werden nicht bearbeitet"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",

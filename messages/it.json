@@ -199,7 +199,9 @@
     "craftedFor": "Creato per",
     "creative": "Creativo",
     "featured": "In evidenza",
-    "quality": "Qualità"
+    "quality": "Qualità",
+    "devBannerTitle": "Negozio in Sviluppo",
+    "devBannerSubtitle": "Gli ordini non verranno elaborati"
   },
   "userMenu": {
     "account": "Account",

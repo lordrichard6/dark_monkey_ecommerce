@@ -65,6 +65,71 @@ export function Hero() {
       {/* Dark Overlay/Gradient - lighter at bottom to fade into content */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-zinc-950 via-black/50 to-black/30" />
 
+      {/* Dev Watermark */}
+      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
+        {/* Rotated banner across the hero */}
+        <div
+          className="relative flex flex-col items-center gap-1 -rotate-[18deg] select-none"
+          style={{ width: '140%' }}
+        >
+          {/* Repeating stripe background */}
+          <div className="w-full overflow-hidden">
+            <div
+              className="flex items-center justify-center gap-8 py-4 px-8"
+              style={{
+                background:
+                  'repeating-linear-gradient(90deg, rgba(239,68,68,0.12) 0px, rgba(239,68,68,0.12) 40px, transparent 40px, transparent 80px)',
+                borderTop: '1px solid rgba(239,68,68,0.3)',
+                borderBottom: '1px solid rgba(239,68,68,0.3)',
+                backdropFilter: 'blur(2px)',
+              }}
+            >
+              {/* Repeated text across full width */}
+              {Array.from({ length: 6 }).map((_, i) => (
+                <span key={i} className="flex items-center gap-3 shrink-0">
+                  <span
+                    className="text-xs font-black uppercase tracking-[0.35em] text-red-400/70"
+                    style={{ textShadow: '0 0 12px rgba(239,68,68,0.5)' }}
+                  >
+                    {t('devBannerTitle')}
+                  </span>
+                  <span className="text-red-500/40 text-xs">✕</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dev Badge - top right corner */}
+      <div className="absolute top-4 right-4 z-20 pointer-events-none select-none">
+        <div
+          className="flex flex-col items-end gap-0.5 rounded-lg px-3 py-2"
+          style={{
+            background: 'rgba(0,0,0,0.6)',
+            border: '1px solid rgba(239,68,68,0.4)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 0 20px rgba(239,68,68,0.15), inset 0 0 20px rgba(239,68,68,0.05)',
+          }}
+        >
+          <div className="flex items-center gap-1.5">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"
+              style={{ boxShadow: '0 0 6px rgba(239,68,68,0.8)' }}
+            />
+            <span
+              className="text-[10px] font-black uppercase tracking-[0.25em] text-red-400"
+              style={{ textShadow: '0 0 8px rgba(239,68,68,0.6)' }}
+            >
+              {t('devBannerTitle')}
+            </span>
+          </div>
+          <span className="text-[9px] font-medium tracking-wide text-red-300/60 ml-3">
+            {t('devBannerSubtitle')}
+          </span>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-4xl text-center">
         {/* Urgency Badge */}
         <div className="mb-8 mt-12 flex justify-center md:mt-8">

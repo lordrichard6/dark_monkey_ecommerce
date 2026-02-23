@@ -132,7 +132,9 @@
     "errorLoadingProducts": "Não foi possível carregar os produtos.",
     "tryAgain": "Tentar Novamente",
     "featured": "Destaque",
-    "creative": "Criativo"
+    "creative": "Criativo",
+    "devBannerTitle": "Loja em Desenvolvimento",
+    "devBannerSubtitle": "Os pedidos não serão processados"
   },
   "cookie": {
     "message": "Usamos cookies para persistência do carrinho, autenticação e uma melhor experiência de compra.",

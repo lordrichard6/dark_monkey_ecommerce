@@ -195,7 +195,9 @@
     "errorLoadingProducts": "Unable to load products.",
     "tryAgain": "Try Again",
     "featured": "Featured",
-    "creative": "Creative"
+    "creative": "Creative",
+    "devBannerTitle": "Store Under Development",
+    "devBannerSubtitle": "Orders will not be processed"
   },
   "userMenu": {
     "account": "Account",

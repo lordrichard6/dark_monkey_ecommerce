@@ -199,7 +199,9 @@
     "craftedFor": "Conçu pour",
     "creative": "Créatif",
     "featured": "En vedette",
-    "quality": "Qualité"
+    "quality": "Qualité",
+    "devBannerTitle": "Boutique en Développement",
+    "devBannerSubtitle": "Les commandes ne seront pas traitées"
   },
   "userMenu": {
     "account": "Compte",
