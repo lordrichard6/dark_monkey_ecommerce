@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Pencil } from 'lucide-react'
 import { ProductActionsDropdown } from '@/app/[locale]/admin/(dashboard)/products/product-actions-dropdown'
 import { SyncPrintfulButton } from '@/app/[locale]/admin/(dashboard)/products/sync-printful-button'
 import { bulkDeleteProducts, bulkUpdateProductStatus } from '@/actions/admin-products'
+import { CategoryPickerDialog, type PickerCategory } from './CategoryPickerDialog'
 
 type Product = {
   id: string
@@ -14,6 +15,7 @@ type Product = {
   slug: string
   is_active: boolean
   is_customizable: boolean
+  category_id: string | null
   categories: { name: string } | null
   product_images: { id: string; url: string; sort_order?: number }[]
   product_variants: { id: string; price_cents: number }[]
@@ -24,7 +26,10 @@ type Props = {
   products: Product[]
   currentPage: number
   totalPages: number
+  categories: PickerCategory[]
 }
+
+type PickerTarget = { id: string; name: string; categoryId: string | null }
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('de-CH', {
@@ -42,10 +47,11 @@ function formatDate(dateString: string) {
   })
 }
 
-export function ProductListTable({ products, currentPage, totalPages }: Props) {
+export function ProductListTable({ products, currentPage, totalPages, categories }: Props) {
   const router = useRouter()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null)
 
   const safeProducts = products || []
   const allSelected = safeProducts.length > 0 && selectedIds.size === safeProducts.length
@@ -237,15 +243,26 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-zinc-400">
-                    {p.categories ? (
-                      p.categories.name
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-amber-500">
-                        <AlertTriangle className="h-4 w-4" />
-                        <span className="text-xs font-medium">Missing</span>
-                      </div>
-                    )}
+                  <td
+                    className="group/cat cursor-pointer px-4 py-3 text-sm text-zinc-400"
+                    onClick={() =>
+                      setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
+                    }
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {p.categories ? (
+                        <>
+                          <span>{p.categories.name}</span>
+                          <Pencil className="h-3 w-3 text-zinc-600 opacity-0 transition-opacity group-hover/cat:opacity-100" />
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="h-4 w-4 text-amber-500" />
+                          <span className="text-xs font-medium text-amber-500">Missing</span>
+                          <Pencil className="h-3 w-3 text-amber-600 opacity-0 transition-opacity group-hover/cat:opacity-100" />
+                        </>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-400">{images.length}</td>
                   <td className="px-4 py-3 text-sm text-zinc-300">{priceRange}</td>
@@ -325,14 +342,26 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
                       {p.name}
                     </Link>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs">
-                      {p.categories ? (
-                        <span className="text-zinc-400">{p.categories.name}</span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-amber-500">
-                          <AlertTriangle className="h-3 w-3" />
-                          Missing Category
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
+                        }
+                        className="flex items-center gap-1 transition-colors hover:text-amber-400"
+                      >
+                        {p.categories ? (
+                          <>
+                            <span className="text-zinc-400">{p.categories.name}</span>
+                            <Pencil className="h-2.5 w-2.5 text-zinc-600" />
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="h-3 w-3 text-amber-500" />
+                            <span className="text-amber-500">Missing Category</span>
+                            <Pencil className="h-2.5 w-2.5 text-amber-600" />
+                          </>
+                        )}
+                      </button>
                       {p.is_customizable && (
                         <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
                           Customizable
@@ -409,6 +438,17 @@ export function ProductListTable({ products, currentPage, totalPages }: Props) {
             </Link>
           </div>
         </div>
+      )}
+
+      {/* Category Picker Dialog */}
+      {pickerTarget && (
+        <CategoryPickerDialog
+          productId={pickerTarget.id}
+          productName={pickerTarget.name}
+          currentCategoryId={pickerTarget.categoryId}
+          categories={categories}
+          onClose={() => setPickerTarget(null)}
+        />
       )}
 
       {/* Pagination Controls */}

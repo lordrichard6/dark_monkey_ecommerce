@@ -24,29 +24,33 @@ export default async function AdminProductsPage({
   const start = (page - 1) * limit
   const end = start + limit - 1
 
-  const {
-    data: products,
-    count,
-    error,
-  } = await supabase
-    .from('products')
-    .select(
-      `
-      id,
-      name,
-      slug,
-      is_active,
-      is_customizable,
-      categories (name),
-      product_images (id, url, sort_order),
-      product_variants (id, price_cents),
-      created_at
-    `,
-      { count: 'exact' }
-    )
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .range(start, end)
+  const [{ data: products, count, error }, { data: allCategories }] = await Promise.all([
+    supabase
+      .from('products')
+      .select(
+        `
+        id,
+        name,
+        slug,
+        is_active,
+        is_customizable,
+        category_id,
+        categories (name),
+        product_images (id, url, sort_order),
+        product_variants (id, price_cents),
+        created_at
+      `,
+        { count: 'exact' }
+      )
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .range(start, end),
+    supabase
+      .from('categories')
+      .select('id, name, parent_id')
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true }),
+  ])
 
   if (error) {
     console.error('[AdminProductsPage] Database error:', error)
@@ -81,6 +85,7 @@ export default async function AdminProductsPage({
           }
           currentPage={page}
           totalPages={totalPages}
+          categories={allCategories ?? []}
         />
       </div>
     </div>
