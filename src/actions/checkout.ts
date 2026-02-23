@@ -222,8 +222,9 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
   const totalCents = Math.max(0, subtotalCents - discountCents)
 
   const getBaseUrl = () => {
-    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-    if (process.env.VERCEL_URL) return 'https://www.dark-monkey.ch'
+    if (process.env.NEXT_PUBLIC_APP_URL)
+      return process.env.NEXT_PUBLIC_APP_URL.trim().replace(/\/$/, '')
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL.trim()}`
     return 'http://localhost:3000'
   }
   const baseUrl = getBaseUrl()
