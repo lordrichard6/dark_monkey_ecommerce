@@ -314,3 +314,12 @@ body {
 .admin-rich-text a:hover {
   color: #f59e0b;
 }
+
+/* Hide scrollbar while keeping scroll functionality */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}

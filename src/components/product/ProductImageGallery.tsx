@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { ProductImageWithFallback } from './ProductImageWithFallback'
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 
@@ -74,23 +74,44 @@ export function ProductImageGallery({
     [filtered, selectedVariantId, selectedColor]
   )
 
+  // When the selected colour changes, jump to the best matching image immediately:
+  // 1. Prefer an image whose colour tag exactly matches selectedColor
+  // 2. Fall back to unique[0] (which is already sorted colour-first)
   useEffect(() => {
-    if (unique.length > 0) {
-      const stillInList = unique.find((img) => img.url === selectedImage?.url)
-      if (!stillInList) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSelectedImage(unique[0])
-      }
-    }
-  }, [unique, selectedImage?.url])
+    if (unique.length === 0) return
+    const colourMatch = selectedColor ? unique.find((img) => img.color === selectedColor) : null
+     
+    setSelectedImage(colourMatch ?? unique[0])
+    // selectedColor is the trigger — unique re-derives from it so both deps are correct
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedColor, selectedVariantId])
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index)
     setIsLightboxOpen(true)
   }
 
-  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % unique.length)
-  const prevImage = () => setLightboxIndex((prev) => (prev - 1 + unique.length) % unique.length)
+  const closeLightbox = useCallback(() => setIsLightboxOpen(false), [])
+  const nextImage = useCallback(
+    () => setLightboxIndex((prev) => (prev + 1) % unique.length),
+    [unique.length]
+  )
+  const prevImage = useCallback(
+    () => setLightboxIndex((prev) => (prev - 1 + unique.length) % unique.length),
+    [unique.length]
+  )
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!isLightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox()
+      else if (e.key === 'ArrowRight') nextImage()
+      else if (e.key === 'ArrowLeft') prevImage()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isLightboxOpen, closeLightbox, nextImage, prevImage])
 
   if (unique.length === 0) return null
 
@@ -128,10 +149,11 @@ export function ProductImageGallery({
               key={`${img.url}-${i}`}
               type="button"
               onClick={() => setSelectedImage(img)}
-              className={`relative aspect-square w-12 shrink-0 overflow-hidden rounded-lg border-2 transition ${safeIndex === i
+              className={`relative aspect-square w-12 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                safeIndex === i
                   ? 'border-amber-500 shadow-lg shadow-amber-500/20 scale-105'
                   : 'border-white/5 bg-zinc-900/40 hover:border-white/20'
-                }`}
+              }`}
             >
               <ProductImageWithFallback
                 src={img.url}
@@ -148,9 +170,15 @@ export function ProductImageGallery({
 
       {/* Lightbox Modal */}
       {isLightboxOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-lg">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Image viewer — ${productName}`}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-lg"
+        >
           <button
-            onClick={() => setIsLightboxOpen(false)}
+            onClick={closeLightbox}
+            aria-label="Close image viewer"
             className="absolute right-6 top-6 z-10 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20 border border-white/10"
           >
             <X className="h-7 w-7" />
@@ -179,7 +207,7 @@ export function ProductImageGallery({
             </>
           )}
 
-          <div className="relative h-[85vh] w-[90vw]" onClick={() => setIsLightboxOpen(false)}>
+          <div className="relative h-[85vh] w-[90vw]" onClick={closeLightbox}>
             <ProductImageWithFallback
               src={unique[lightboxIndex].url}
               alt={unique[lightboxIndex].alt ?? productName}
@@ -200,10 +228,11 @@ export function ProductImageGallery({
                     e.stopPropagation()
                     setLightboxIndex(i)
                   }}
-                  className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${i === lightboxIndex
+                  className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                    i === lightboxIndex
                       ? 'border-amber-500 scale-110 ring-4 ring-amber-500/20'
                       : 'border-white/10 opacity-40 hover:opacity-100'
-                    }`}
+                  }`}
                 >
                   <ProductImageWithFallback
                     src={img.url}

@@ -100,7 +100,7 @@ export async function generateStaticParams() {
 }
 
 export default async function ProductPage({ params, searchParams }: Props) {
-  const { slug } = await params
+  const { slug, locale } = await params
   const { order_id: orderIdFromQuery } = (await searchParams) ?? {}
   const supabase = await createClient()
 
@@ -247,9 +247,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
           }
         />
 
-        <FrequentlyBought productId={product.id} locale={slug} />
+        <FrequentlyBought productId={product.id} locale={locale} />
 
-        <RelatedProducts productId={product.id} locale={slug} />
+        <RelatedProducts productId={product.id} locale={locale} />
 
         <RecentlyViewed userId={user?.id} productId={product.id} />
       </div>

@@ -138,7 +138,7 @@ export async function getGalleryItems(
   const items: GalleryItem[] = []
 
   // Optimization: Fetch all relevant votes for this batch of items in one query instead of N+1
-  const itemIds = data.map((i: any) => i.id)
+  const itemIds = (data as { id: string }[]).map((i) => i.id)
   const userVotesMap = new Set<string>()
 
   if (itemIds.length > 0) {
@@ -151,7 +151,7 @@ export async function getGalleryItems(
         .in('item_id', itemIds)
         .gt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
 
-      myVotes?.forEach((v: any) => userVotesMap.add(v.item_id))
+      myVotes?.forEach((v: { item_id: string }) => userVotesMap.add(v.item_id))
     } else if (fingerprint) {
       // Fetch votes by this fingerprint for these items (All time? Or 24h?)
       // Requirement: "Saved in cookies ... not able to vote many times".
@@ -172,13 +172,25 @@ export async function getGalleryItems(
         .in('item_id', itemIds)
         .gt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
 
-      myVotes?.forEach((v: any) => userVotesMap.add(v.item_id))
+      myVotes?.forEach((v: { item_id: string }) => userVotesMap.add(v.item_id))
     }
   }
 
-  for (const item of data as any[]) {
+  type RawGalleryItem = {
+    id: string
+    title: string
+    description: string | null
+    image_url: string
+    created_at: string
+    gallery_item_tags: { tag: { id: string; name: string; slug: string } | null }[]
+    gallery_votes: { count: number }[]
+  }
+
+  for (const item of data as RawGalleryItem[]) {
     // Filter out null tags (from left join if any)
-    const tags = item.gallery_item_tags.map((t: any) => t.tag).filter((t: any) => t !== null)
+    const tags = item.gallery_item_tags
+      .map((t) => t.tag)
+      .filter((t): t is { id: string; name: string; slug: string } => t !== null)
 
     // Get count
     const votesCount = item.gallery_votes?.[0]?.count || 0

@@ -45,13 +45,13 @@ export function ProductCard({
       // If we don't have fullProduct, we construct a partial one for the UI
       addProduct(
         fullProduct ||
-        ({
-          id,
-          slug,
-          name,
-          price_cents: priceCents,
-          image_url: imageUrl, // Mapping for comparison UI
-        } as unknown as Product)
+          ({
+            id,
+            slug,
+            name,
+            price_cents: priceCents,
+            image_url: imageUrl, // Mapping for comparison UI
+          } as unknown as Product)
       )
     }
   }
@@ -61,22 +61,29 @@ export function ProductCard({
       <div className="group block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20">
         <Link href={`/products/${slug}`} className="block">
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
-            <Image
-              src={imageUrl}
-              alt={imageAlt}
-              fill
-              className="object-cover transition group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              loading="lazy"
-              unoptimized={imageUrl.endsWith('.svg') || imageUrl.includes('picsum.photos')}
-            />
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={imageAlt}
+                fill
+                className="object-cover transition group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                loading="lazy"
+                unoptimized={imageUrl.endsWith('.svg') || imageUrl.includes('picsum.photos')}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 text-zinc-600">
+                <span className="text-xs">No image</span>
+              </div>
+            )}
             {/* Compare Button */}
             <button
               onClick={toggleCompare}
-              className={`absolute top-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${isComparing
+              className={`absolute top-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${
+                isComparing
                   ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/40'
                   : 'bg-black/40 text-white backdrop-blur-md hover:bg-black/60 opacity-0 group-hover:opacity-100'
-                }`}
+              }`}
               title={isComparing ? 'Remove from comparison' : 'Add to comparison'}
             >
               <ArrowRightLeft

@@ -70,7 +70,9 @@ export function RecentlyViewed({ userId, productId }: RecentlyViewedProps) {
             name={product.name}
             priceCents={product.price_cents || 0}
             imageUrl={
-              Array.isArray(product.product_images) ? (product.product_images[0] as any)?.url : ''
+              (Array.isArray(product.product_images)
+                ? (product.product_images[0] as any)?.url
+                : undefined) || ''
             }
             imageAlt={product.name}
             fullProduct={product}

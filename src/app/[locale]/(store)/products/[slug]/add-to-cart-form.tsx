@@ -100,18 +100,21 @@ export function ProductActionButtons({
 
   return (
     <div className="grid grid-cols-2 gap-3 w-full">
+      {/* Add to cart — primary amber */}
       <button
         type="button"
         disabled={disabled || isAdding}
         onClick={onSubmit}
-        className="h-12 flex items-center justify-center rounded-xl bg-blue-600 text-[10px] font-black uppercase tracking-[0.15em] text-white transition-all hover:bg-blue-500 disabled:opacity-50"
+        className="h-12 flex items-center justify-center rounded-xl bg-amber-500 text-[10px] font-black uppercase tracking-[0.15em] text-zinc-950 transition-all hover:bg-amber-400 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {isAdding ? t('adding') : t('addToCart')}
       </button>
+      {/* Buy now — ghost white outline */}
       <button
         type="button"
         onClick={onBuyNow}
-        className="h-12 flex items-center justify-center rounded-xl bg-[#f97316] text-[10px] font-black uppercase tracking-[0.15em] text-white transition-all hover:bg-orange-500"
+        disabled={disabled || isAdding}
+        className="h-12 flex items-center justify-center rounded-xl border border-white/20 bg-white/5 text-[10px] font-black uppercase tracking-[0.15em] text-white transition-all hover:bg-white/10 hover:border-white/40 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {t('buyNow')}
       </button>
@@ -130,6 +133,8 @@ interface AddToCartFormProps {
   selectedColor?: string
   onColorChange?: (color: string) => void
   onVariantChange?: (variant: Variant | null) => void
+  onConfigChange?: (config: Record<string, string>) => void
+  onQuantityChange?: (quantity: number) => void
   availableColors?: ColorOption[]
   images?: Array<{
     url: string
@@ -137,6 +142,11 @@ interface AddToCartFormProps {
     sort_order: number
     variant_id?: string | null
   }>
+  // When provided, the form delegates add-to-cart and buy-now to the parent
+  // (ProductMain owns the unified state). If absent, the form handles it internally.
+  externalIsAdding?: boolean
+  onAddToCart?: () => Promise<boolean>
+  onBuyNow?: () => Promise<void>
 }
 
 export function AddToCartForm({
@@ -147,6 +157,9 @@ export function AddToCartForm({
   primaryImageUrl,
   customizationRule,
   productCategory,
+  externalIsAdding,
+  onAddToCart: externalOnAddToCart,
+  onBuyNow: externalOnBuyNow,
   ...props
 }: AddToCartFormProps) {
   const t = useTranslations('product')
@@ -156,6 +169,17 @@ export function AddToCartForm({
   const [quantity, setQuantity] = useState(1)
   const [isAdding, setIsAdding] = useState(false)
   const [config, setConfig] = useState<Record<string, string>>({})
+
+  // Notify parent of config/quantity changes so unified state stays in sync
+  useEffect(() => {
+    props.onConfigChange?.(config)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config])
+
+  useEffect(() => {
+    props.onQuantityChange?.(quantity)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quantity])
 
   const colors = useMemo(() => {
     const colorMap = new Map<string, ColorOption>()
@@ -221,8 +245,11 @@ export function AddToCartForm({
   const stock = selectedVariant?.stock || 0
   const canAdd = !!selectedVariant && stock > 0
 
-  const handleAddToCart = async () => {
-    if (!selectedVariant) return
+  const handleAddToCart = async (): Promise<boolean> => {
+    // Delegate to parent (ProductMain) when it owns the unified state
+    if (externalOnAddToCart) return externalOnAddToCart()
+
+    if (!selectedVariant) return false
     setIsAdding(true)
     const cartImageUrl =
       (props.images || []).find((img) => img.color === selectedColor)?.url || primaryImageUrl
@@ -248,15 +275,21 @@ export function AddToCartForm({
         category: productCategory,
         variant: selectedVariant.name || undefined,
       })
+      return true
+    } catch {
+      return false
     } finally {
       setIsAdding(false)
     }
   }
 
   const handleBuyNow = async () => {
-    await handleAddToCart()
-    router.push('/checkout')
+    if (externalOnBuyNow) return externalOnBuyNow()
+    const success = await handleAddToCart()
+    if (success) router.push('/checkout')
   }
+
+  const effectiveIsAdding = externalIsAdding ?? isAdding
 
   const selectedColorOption = colors.find((c) => c.name === selectedColor)
 
@@ -383,7 +416,7 @@ export function AddToCartForm({
           />
         ) : (
           <ProductActionButtons
-            isAdding={isAdding}
+            isAdding={effectiveIsAdding}
             stock={stock}
             onSubmit={handleAddToCart}
             onBuyNow={handleBuyNow}
