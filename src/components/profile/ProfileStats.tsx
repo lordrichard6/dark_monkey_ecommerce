@@ -49,7 +49,7 @@ export function ProfileStats({ stats }: Props) {
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500" suppressHydrationWarning>
               Spend {format(spendToNext)} more to unlock {tierInfo.nextTier} tier
             </p>
           </div>
@@ -133,11 +133,11 @@ function StatCard({
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700">
       <div className="mb-2 flex items-center gap-2">
         <div className={color}>{icon}</div>
-        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-          {label}
-        </span>
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{label}</span>
       </div>
-      <div className="text-2xl font-bold text-zinc-50">{value}</div>
+      <div className="text-2xl font-bold text-zinc-50" suppressHydrationWarning>
+        {value}
+      </div>
     </div>
   )
 }
