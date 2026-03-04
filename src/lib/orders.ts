@@ -82,31 +82,32 @@ export async function processSuccessfulCheckout(sessionId: string) {
     console.error('[OrderProcess] ERROR fetching abandoned_checkout:', abandonedError)
   }
 
-  if (!checkoutData?.cart_summary) {
+  const cartSummaryMissing = !checkoutData?.cart_summary
+
+  if (cartSummaryMissing) {
+    // Graceful recovery: don't throw — the webhook must return 200 to prevent infinite Stripe retries.
+    // The order will be created without line items and requires manual fulfillment by an admin.
     console.error(
-      `[OrderProcess] CRITICAL: Missing abandoned_checkout record for session: ${sessionId}. Cart recovery impossible.`
+      `[OrderProcess] WARNING: Missing abandoned_checkout for session ${sessionId}. ` +
+        `Order will be created without items — manual fulfillment required.`
     )
-    // Log what we DO have for debugging
-    const { data: allAbandoned } = await supabase
-      .from('abandoned_checkouts')
-      .select('stripe_session_id')
-      .limit(5)
-    console.log(
-      '[OrderProcess] Recent abandoned checkouts in DB:',
-      allAbandoned?.map((a) => a.stripe_session_id)
-    )
-    throw new Error('Missing abandoned_checkout record (required for cart recovery)')
+  } else {
+    console.log('[OrderProcess] Checkout data recovered successfully')
   }
 
-  console.log('[OrderProcess] Checkout data recovered successfully')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cartSummary = checkoutData.cart_summary as any
+  const cartSummary = (checkoutData?.cart_summary ?? {}) as any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cartItems = (cartSummary.items || []).map((item: any) => ({
-    ...item,
-    quantity: Number(item.quantity),
-  }))
-  const totalCents = Number(cartSummary.totalCents || fullSession.metadata?.totalCents || 0)
+  const cartItems: any[] = cartSummaryMissing
+    ? []
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (cartSummary.items || []).map((item: any) => ({
+        ...item,
+        quantity: Number(item.quantity),
+      }))
+  const totalCents = Number(
+    cartSummary.totalCents || fullSession.metadata?.totalCents || fullSession.amount_total || 0
+  )
 
   // 4. Extract shipping details
   // Stripe may return the address under shipping_details (when collect_shipping_address=true
@@ -223,7 +224,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
   if (email) {
     const registerUrl =
       !userId && email
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/login?mode=signup&email=${encodeURIComponent(email)}`
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/signup?email=${encodeURIComponent(email)}`
         : undefined
 
     fulfillmentPromises.push(
