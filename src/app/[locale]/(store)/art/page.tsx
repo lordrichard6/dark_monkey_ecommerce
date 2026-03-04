@@ -13,13 +13,36 @@ type Props = {
   searchParams: Promise<{ tag?: string; page?: string }>
 }
 
-export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { locale } = await params
   const t = await getTranslations('art')
   const { tag } = await searchParams
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
   const title = tag ? `${t('titleWithTag', { tag })} — DarkMonkey` : `${t('title')} — DarkMonkey`
+  const description = t('description')
+  const url = `${siteUrl}/${locale}/art`
   return {
     title,
-    description: t('description'),
+    description,
+    alternates: {
+      canonical: url,
+      languages: Object.fromEntries(SUPPORTED_LOCALES.map((loc) => [loc, `${siteUrl}/${loc}/art`])),
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'DarkMonkey',
+      locale,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   }
 }
 

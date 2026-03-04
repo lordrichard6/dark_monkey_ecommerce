@@ -107,6 +107,7 @@
     "forgotPassword": "Forgot password?",
     "createAccount": "Create account",
     "passwordsDoNotMatch": "Passwords do not match",
+    "passwordTooWeak": "Password is too weak. Please include uppercase letters, numbers, and symbols.",
     "passwordsMatch": "Passwords match",
     "supabaseNotConfigured": "Supabase not configured",
     "somethingWrong": "Something went wrong",

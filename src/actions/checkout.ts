@@ -375,8 +375,6 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
         })
         if (error) {
           console.error('[Checkout] Abandoned checkout insert failed:', error.message)
-        } else {
-          console.log('[Checkout] Abandoned checkout recorded for session:', session.id)
         }
       } else {
         console.error('[Checkout] Admin client missing, skipping abandoned checkout recording')

@@ -164,6 +164,7 @@
     "forgotPassword": "Esqueceu a palavra-passe?",
     "createAccount": "Criar conta",
     "passwordsDoNotMatch": "As palavras-passe não coincidem",
+    "passwordTooWeak": "A palavra-passe é demasiado fraca. Inclua letras maiúsculas, números e símbolos.",
     "passwordsMatch": "As palavras-passe coincidem",
     "supabaseNotConfigured": "Supabase não configurado",
     "somethingWrong": "Algo correu mal",

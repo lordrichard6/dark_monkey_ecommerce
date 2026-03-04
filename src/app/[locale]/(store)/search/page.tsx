@@ -6,23 +6,44 @@ import { getTranslations } from 'next-intl/server'
 import { Metadata } from 'next'
 import Link from 'next/link'
 
+const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
+
 type Props = {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ q?: string }>
 }
 
-export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { locale } = await params
   const { q: query } = await searchParams
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
+  const url = `${siteUrl}/${locale}/search`
 
-  if (!query) {
-    return {
-      title: 'Search',
-      description: 'Search for products',
-    }
-  }
+  const title = query ? `Search: ${query}` : 'Search'
+  const description = query ? `Search results for "${query}"` : 'Search for products'
 
   return {
-    title: `Search: ${query}`,
-    description: `Search results for "${query}"`,
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: Object.fromEntries(
+        SUPPORTED_LOCALES.map((loc) => [loc, `${siteUrl}/${loc}/search`])
+      ),
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'DarkMonkey',
+      locale,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   }
 }
 
@@ -36,12 +57,8 @@ export default async function SearchPage({ searchParams }: Props) {
     return (
       <div className="min-h-[calc(100vh-3.5rem)]">
         <div className="mx-auto max-w-6xl px-4 py-16 text-center">
-          <h1 className="mb-4 text-2xl font-bold text-zinc-50">
-            {t('title')}
-          </h1>
-          <p className="text-zinc-400">
-            {t('enterQuery')}
-          </p>
+          <h1 className="mb-4 text-2xl font-bold text-zinc-50">{t('title')}</h1>
+          <p className="text-zinc-400">{t('enterQuery')}</p>
           <Link
             href="/"
             className="mt-8 inline-block rounded-lg bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-700"
@@ -83,9 +100,7 @@ export default async function SearchPage({ searchParams }: Props) {
     return (
       <div className="min-h-[calc(100vh-3.5rem)]">
         <div className="mx-auto max-w-6xl px-4 py-16 text-center">
-          <h1 className="mb-4 text-2xl font-bold text-zinc-50">
-            {t('errorTitle')}
-          </h1>
+          <h1 className="mb-4 text-2xl font-bold text-zinc-50">{t('errorTitle')}</h1>
           <p className="text-zinc-400">{t('errorMessage')}</p>
         </div>
       </div>
@@ -100,13 +115,9 @@ export default async function SearchPage({ searchParams }: Props) {
   for (const p of products) {
     const variants = p.product_variants as any[]
     const images = p.product_images as any[]
-    const category = Array.isArray(p.categories)
-      ? p.categories[0]
-      : p.categories as any
+    const category = Array.isArray(p.categories) ? p.categories[0] : (p.categories as any)
 
-    const minPrice = variants?.length
-      ? Math.min(...variants.map((v) => v.price_cents))
-      : 0
+    const minPrice = variants?.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
 
     const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) || []
     const primaryImage = sortedImages[0]
@@ -187,14 +198,10 @@ export default async function SearchPage({ searchParams }: Props) {
   const searchResultIds = new Set(searchResults.map((r) => r.id))
 
   // Filter filterable products to match search results
-  const filteredProducts = filterableProducts.filter((p) =>
-    searchResultIds.has(p.id)
-  )
+  const filteredProducts = filterableProducts.filter((p) => searchResultIds.has(p.id))
 
   // Build categories list
-  const categories = Array.from(categoryMap.values()).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  )
+  const categories = Array.from(categoryMap.values()).sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
@@ -209,11 +216,7 @@ export default async function SearchPage({ searchParams }: Props) {
         </nav>
 
         {/* Search Results with Filters */}
-        <SearchResults
-          products={filteredProducts}
-          categories={categories}
-          query={query}
-        />
+        <SearchResults products={filteredProducts} categories={categories} query={query} />
       </div>
     </div>
   )

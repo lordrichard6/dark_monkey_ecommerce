@@ -107,6 +107,7 @@
     "forgotPassword": "Mot de passe oublié ?",
     "createAccount": "Créer un compte",
     "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+    "passwordTooWeak": "Mot de passe trop faible. Veuillez inclure des majuscules, des chiffres et des symboles.",
     "passwordsMatch": "Les mots de passe correspondent",
     "supabaseNotConfigured": "Supabase non configuré",
     "somethingWrong": "Une erreur s'est produite",

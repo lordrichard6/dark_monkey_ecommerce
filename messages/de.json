@@ -164,6 +164,7 @@
     "forgotPassword": "Passwort vergessen?",
     "createAccount": "Konto erstellen",
     "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+    "passwordTooWeak": "Das Passwort ist zu schwach. Bitte Großbuchstaben, Zahlen und Sonderzeichen verwenden.",
     "passwordsMatch": "Passwörter stimmen überein",
     "supabaseNotConfigured": "Supabase nicht konfiguriert",
     "somethingWrong": "Etwas ist schiefgelaufen",

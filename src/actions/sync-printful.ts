@@ -138,17 +138,17 @@ async function ensureProductImages(
     }
   }
 
-  // 2. DELETE ALL existing Printful images for this product
-  await supabase
+  // 2. Fetch IDs of existing Printful images BEFORE any changes (for safe rollback)
+  const { data: existingImages } = await supabase
     .from('product_images')
-    .delete()
+    .select('id')
     .eq('product_id', productId)
     .like('url', '%printful.com%')
-    .select('id')
 
-  // console.log(`[ensureProductImages] Deleted ${deletedImages?.length || 0} old Printful images for product ${productId}`)
+  const existingIds = existingImages?.map((img) => img.id) ?? []
 
-  // 3. Insert ALL keeper images with variant mapping
+  // 3. Build and INSERT new keeper images FIRST (insert-first pattern).
+  //    If insert fails, old images remain intact — no data loss.
   const toInsert = Array.from(keepers.values()).map((metadata, index) => {
     const { url, color, printful_sync_variant_id } = metadata
     const variant_id =
@@ -169,10 +169,18 @@ async function ensureProductImages(
   if (toInsert.length > 0) {
     const { error: insertError } = await supabase.from('product_images').insert(toInsert)
     if (insertError) {
-      console.error(`[ensureProductImages] Failed to insert images:`, insertError)
-    } else {
-      // console.log(`[ensureProductImages] Inserted ${toInsert.length} images`)
+      // Abort without deleting old images — product keeps its existing images
+      console.error(
+        `[ensureProductImages] Failed to insert new images, keeping existing images:`,
+        insertError
+      )
+      return
     }
+  }
+
+  // 4. Delete OLD Printful images only AFTER successful insert (by their fetched IDs)
+  if (existingIds.length > 0) {
+    await supabase.from('product_images').delete().in('id', existingIds)
   }
 }
 
@@ -278,7 +286,7 @@ async function syncVariants(
   )
 
   // Fallback lookup: by SKU (catches variants that exist but have null printful_sync_variant_id)
-   
+
   const existingBySku = new Map(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (existingVariants ?? []).filter((v: any) => v.sku != null).map((v: any) => [v.sku, v])

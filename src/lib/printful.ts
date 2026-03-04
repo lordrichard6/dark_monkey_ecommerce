@@ -105,8 +105,6 @@ export async function createOrder(
     external_id: payload.external_id,
   }
 
-  console.log('[Printful] Sending order payload:', JSON.stringify(body, null, 2))
-
   try {
     const data = await fetchPrintful<{ id: number }>(`${API_BASE}/orders`, {
       method: 'POST',
