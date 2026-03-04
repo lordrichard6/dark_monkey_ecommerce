@@ -35,14 +35,15 @@ export async function POST(request: NextRequest) {
   }
 
   const session = eventBytes.data.object as any
+  // Log only non-PII fields — never log shipping_details (customer name/address)
   console.log(
-    `[Stripe Webhook] checkout.session.completed received. Session: ${session.id}, Status: ${session.status}, Payment: ${session.payment_status}, Shipping: ${JSON.stringify(session.shipping_details)}`
+    `[Stripe Webhook] checkout.session.completed — session: ${session.id}, status: ${session.status}, payment: ${session.payment_status}`
   )
 
   try {
     const result = await processSuccessfulCheckout(session.id)
     console.log(
-      `[Stripe Webhook] Processing complete. Order: ${result.orderId}, AlreadyProcessed: ${result.alreadyProcessed}`
+      `[Stripe Webhook] Processing complete — order: ${result.orderId}, alreadyProcessed: ${result.alreadyProcessed}`
     )
     return NextResponse.json({
       received: true,

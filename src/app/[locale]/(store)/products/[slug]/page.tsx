@@ -3,6 +3,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { sanitizeProductHtml } from '@/lib/sanitize-html.server'
 import { ProductMain } from './product-main'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { getTranslations } from 'next-intl/server'
@@ -226,6 +227,10 @@ export default async function ProductPage({ params, searchParams }: Props) {
         <ProductMain
           product={{
             ...product,
+            // Sanitize HTML server-side before it reaches the client component.
+            // Prevents XSS if product descriptions contain malicious markup
+            // from a compromised data source.
+            description: sanitizeProductHtml(product.description),
             categories: category,
             images: sortedImages,
           }}
@@ -239,7 +244,17 @@ export default async function ProductPage({ params, searchParams }: Props) {
           orderIdFromQuery={orderIdFromQuery}
           primaryImageUrl={primaryImage?.url}
           userId={user?.id}
-          storyContent={product.story_content}
+          storyContent={
+            // Sanitize story body server-side — story content is admin-entered HTML
+            product.story_content
+              ? {
+                  ...(product.story_content as Record<string, unknown>),
+                  body: sanitizeProductHtml(
+                    (product.story_content as Record<string, unknown>)?.body as string
+                  ),
+                }
+              : product.story_content
+          }
           customizationRule={
             customizationRule?.rule_def
               ? (customizationRule.rule_def as import('@/types/customization').CustomizationRuleDef)

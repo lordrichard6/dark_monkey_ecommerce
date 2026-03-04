@@ -229,9 +229,7 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
   }
   const baseUrl = getBaseUrl()
 
-  console.log('[Checkout] Debug: Base URL resolved to:', baseUrl)
-  console.log('[Checkout] Debug: NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)
-  console.log('[Checkout] Debug: VERCEL_URL:', process.env.VERCEL_URL)
+  // Debug URL logs removed — base URL resolution is stable
 
   const imageUrl = (url: string) =>
     url?.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
@@ -326,18 +324,17 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
 
   try {
     const key = process.env.STRIPE_SECRET_KEY?.trim()
-    console.log('[Checkout] Debug: Starting Stripe Session Create')
-    console.log('[Checkout] Debug: Runtime:', process.env.NEXT_RUNTIME ?? 'Node (default)')
-    console.log('[Checkout] Debug: Key Length:', key ? key.length : 'MISSING')
-    console.log('[Checkout] Debug: Key Prefix:', key ? key.substring(0, 7) : 'N/A')
-    console.log('[Checkout] Debug: Key Suffix (last 4):', key ? key.slice(-4) : 'N/A')
-    console.log('[Checkout] Debug: URLs:', { successUrl, cancelUrl })
-    console.log('[Checkout] Debug: Line Items:', JSON.stringify(lineItems, null, 2))
-    console.log('[Checkout] Debug: Metadata:', JSON.stringify(metadata, null, 2))
 
-    // Check for whitespace
-    if (key && key.trim() !== key) {
-      console.error('[Checkout] CRITICAL: Key has whitespace!')
+    // Fail fast if the key has leading/trailing whitespace — a common misconfiguration
+    // that causes Stripe to reject the request with an unhelpful auth error.
+    if (!key) {
+      throw new Error('[Checkout] STRIPE_SECRET_KEY is missing or empty.')
+    }
+    if (key !== process.env.STRIPE_SECRET_KEY) {
+      throw new Error(
+        '[Checkout] STRIPE_SECRET_KEY has leading/trailing whitespace. ' +
+          'Fix the env var in Vercel dashboard — do not use `echo` to set it.'
+      )
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -352,7 +349,7 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
       metadata,
     })
 
-    console.log('[Checkout] Debug: Session created successfully', session.id)
+    // Session created — record in logs without exposing sensitive data
 
     const emailForAbandoned = input?.email ?? undefined
     // DO NOT use fire-and-forget here - the webhook RELIES on this record.

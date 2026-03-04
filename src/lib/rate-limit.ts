@@ -1,8 +1,10 @@
 /**
  * Rate limiting using Upstash Redis + @upstash/ratelimit.
  *
- * Falls open (no-op) when UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN
- * are not configured, so the site never breaks due to missing credentials.
+ * In development: falls open (no-op) when Upstash credentials are absent.
+ * In production: logs a critical error if credentials are missing, but still
+ * allows requests through to prevent a misconfiguration from taking the site down.
+ * Monitor Sentry for the error and configure Upstash ASAP.
  *
  * Usage (Edge middleware or API routes):
  *   const result = await rateLimit(identifier, 'auth')
@@ -18,7 +20,18 @@ const NO_OP_RESULT = { success: true, limit: 0, remaining: 0, reset: 0 }
 function makeRedis(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  if (!url || !token) return null
+  if (!url || !token) {
+    if (process.env.NODE_ENV === 'production') {
+      // In production this is a misconfiguration — rate limiting is disabled.
+      // Sentry will capture this console.error. Configure UPSTASH_REDIS_REST_URL
+      // and UPSTASH_REDIS_REST_TOKEN in your Vercel environment variables.
+      console.error(
+        '[rate-limit] CRITICAL: Upstash Redis credentials missing in production. ' +
+          'Rate limiting is DISABLED. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
+      )
+    }
+    return null
+  }
   return new Redis({ url, token })
 }
 

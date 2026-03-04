@@ -27,7 +27,7 @@ export function getCartCookieConfig() {
     maxAge: MAX_AGE,
     path: '/',
     sameSite: 'lax' as const,
-    httpOnly: false, // allow client read for hydration if needed
+    httpOnly: true, // cart is initialised server-side; client reads from CartProvider props
     secure: process.env.NODE_ENV === 'production',
   }
 }
