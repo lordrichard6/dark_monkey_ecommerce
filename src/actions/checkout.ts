@@ -397,15 +397,17 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
     }
 
     return { ok: false, error: 'Failed to create checkout session' }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
+  } catch (err: unknown) {
+    // Stripe errors carry type, code, message, and raw properties
+    type StripeErr = { type?: string; code?: string; message?: string; raw?: unknown }
+    const stripeErr = err as StripeErr
     console.error('[Checkout] Stripe Session Error:', err)
-    console.error('[Checkout] Error Type:', err.type)
-    console.error('[Checkout] Error Code:', err.code)
-    console.error('[Checkout] Error Detail:', err.message)
-    if (err.raw) {
-      console.error('[Checkout] Raw Error:', JSON.stringify(err.raw, null, 2))
+    console.error('[Checkout] Error Type:', stripeErr.type)
+    console.error('[Checkout] Error Code:', stripeErr.code)
+    console.error('[Checkout] Error Detail:', stripeErr.message)
+    if (stripeErr.raw) {
+      console.error('[Checkout] Raw Error:', JSON.stringify(stripeErr.raw, null, 2))
     }
-    return { ok: false, error: err.message || 'Error occurred during checkout' }
+    return { ok: false, error: stripeErr.message || 'Error occurred during checkout' }
   }
 }

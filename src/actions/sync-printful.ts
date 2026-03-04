@@ -1,5 +1,6 @@
 'use server'
 
+import { SupabaseClient } from '@supabase/supabase-js'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser } from '@/lib/auth-admin'
 import {
@@ -190,12 +191,20 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, '')
 }
 
+/** Subset of product_variants row returned by the sync query */
+type SyncedVariant = {
+  id: string
+  printful_sync_variant_id: number | null
+  printful_variant_id: number | null
+  price_cents: number
+  sku: string | null
+}
+
 /**
  * Helper to Create or Update Product
  */
 async function upsertProduct(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   sync_product: PrintfulSyncProduct,
   sync_variants: PrintfulSyncVariant[],
   categoryId: string | null
@@ -264,8 +273,7 @@ async function upsertProduct(
  * Helper to Sync Variants
  */
 async function syncVariants(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   productId: string,
   sync_product: PrintfulSyncProduct,
   sync_variants: PrintfulSyncVariant[]
@@ -276,19 +284,17 @@ async function syncVariants(
     .eq('product_id', productId)
 
   // Primary lookup: by printful_sync_variant_id (already synced variants)
-  const existingByPfId = new Map(
+  const existingByPfId = new Map<number, SyncedVariant>(
     (existingVariants ?? [])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((v: any) => v.printful_sync_variant_id != null)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((v: any) => [v.printful_sync_variant_id, v])
+      .filter((v: SyncedVariant) => v.printful_sync_variant_id != null)
+      .map((v: SyncedVariant) => [v.printful_sync_variant_id!, v])
   )
 
   // Fallback lookup: by SKU (catches variants that exist but have null printful_sync_variant_id)
-
-  const existingBySku = new Map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (existingVariants ?? []).filter((v: any) => v.sku != null).map((v: any) => [v.sku, v])
+  const existingBySku = new Map<string, SyncedVariant>(
+    (existingVariants ?? [])
+      .filter((v: SyncedVariant) => v.sku != null)
+      .map((v: SyncedVariant) => [v.sku!, v])
   )
 
   // Resolve details
@@ -308,8 +314,7 @@ async function syncVariants(
     if (colorCode2) attrs.color_code2 = colorCode2
     if (rrpCents) attrs.rrp_cents = rrpCents
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingVar = (existingByPfId.get(sv.id) ?? existingBySku.get(sv.sku ?? '')) as any
+    const existingVar = existingByPfId.get(sv.id) ?? existingBySku.get(sv.sku ?? '')
     if (existingVar) {
       await supabase
         .from('product_variants')

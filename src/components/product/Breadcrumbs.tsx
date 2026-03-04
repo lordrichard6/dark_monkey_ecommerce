@@ -1,16 +1,14 @@
-'use client'
-
 import { ChevronRight, Home } from 'lucide-react'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 
 interface BreadcrumbsProps {
   category?: string
   productName: string
 }
 
-export function Breadcrumbs({ category, productName }: BreadcrumbsProps) {
-  const t = useTranslations('common')
+export async function Breadcrumbs({ category, productName }: BreadcrumbsProps) {
+  const t = await getTranslations('common')
 
   return (
     <nav className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest text-zinc-500 mb-4 overflow-x-auto scrollbar-hide whitespace-nowrap">

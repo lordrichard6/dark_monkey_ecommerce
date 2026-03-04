@@ -43,8 +43,8 @@ export async function submitReview(
       .from('order_items')
       .select('product_variants!inner(product_id)')
       .eq('order_id', orderId)
-    const productIds = (items ?? []).map(
-      (i: any) => i.product_variants?.product_id
+    const productIds = (items ?? []).flatMap((i: { product_variants: { product_id: string }[] }) =>
+      i.product_variants.map((v) => v.product_id)
     )
     if (productIds.includes(productId)) verifiedOrderId = orderId
   }
@@ -56,7 +56,7 @@ export async function submitReview(
     .single()
 
   const reviewerDisplayName =
-    (profile?.display_name?.trim()) || user.email?.split('@')[0] || 'Customer'
+    profile?.display_name?.trim() || user.email?.split('@')[0] || 'Customer'
 
   const { error } = await supabase.from('product_reviews').upsert(
     {

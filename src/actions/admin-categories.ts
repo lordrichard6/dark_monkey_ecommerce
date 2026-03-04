@@ -49,7 +49,7 @@ export async function getCategories() {
     return []
   }
 
-  return (data ?? []).map((c: any) => ({
+  return (data ?? []).map((c: { products?: unknown[] } & Omit<Category, 'product_count'>) => ({
     ...c,
     product_count: Array.isArray(c.products) ? c.products.length : 0,
     products: undefined,

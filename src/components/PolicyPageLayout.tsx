@@ -1,15 +1,13 @@
-'use client'
-
 import { Link } from '@/i18n/navigation'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 
 type Props = {
   title: string
   children: React.ReactNode
 }
 
-export function PolicyPageLayout({ title, children }: Props) {
-  const t = useTranslations('common')
+export async function PolicyPageLayout({ title, children }: Props) {
+  const t = await getTranslations('common')
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <nav className="mb-8 text-sm text-zinc-500">
