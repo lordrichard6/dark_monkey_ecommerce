@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import NextImage from 'next/image'
 import { Loader2, X } from 'lucide-react'
 import {
   uploadProductImage,
@@ -216,10 +217,12 @@ export function ProductImageManager({
           onKeyDown={(e) => e.key === 'Enter' && setLightboxUrl(displayImage.url)}
           className="relative aspect-square w-full overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
-          <img
+          <NextImage
             src={displayImage.url}
             alt={displayImage.alt ?? ''}
-            className="h-full w-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 400px"
+            className="object-cover"
           />
         </div>
       ) : (
@@ -245,7 +248,13 @@ export function ProductImageManager({
                     : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
                 }`}
               >
-                <img src={img.url} alt={img.alt ?? ''} className="h-full w-full object-cover" />
+                <NextImage
+                  src={img.url}
+                  alt={img.alt ?? ''}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
 
                 {/* Primary Marker */}
                 {isPrimary && (

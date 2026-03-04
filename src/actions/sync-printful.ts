@@ -90,7 +90,6 @@ async function ensureProductImages(
               .join('\n')
           : '  - No files') +
         '\n'
-      // console.log(logMsg);
       if (logs) logs.push(logMsg)
       try {
         fs.appendFileSync(path.join(process.cwd(), 'sync-debug.log'), logMsg)

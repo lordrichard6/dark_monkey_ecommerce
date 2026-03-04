@@ -2,8 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { updateProduct } from '@/actions/admin-products'
-import { RichTextEditor } from '@/components/admin/RichTextEditor'
+
+const RichTextEditor = dynamic(
+  () => import('@/components/admin/RichTextEditor').then((m) => m.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-32 rounded border border-zinc-700 bg-zinc-800/40 animate-pulse" />
+    ),
+  }
+)
 
 type Props = {
   productId: string

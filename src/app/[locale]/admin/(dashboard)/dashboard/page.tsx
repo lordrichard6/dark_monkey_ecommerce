@@ -4,7 +4,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { StripeTestButton } from '@/components/admin/StripeTestButton'
 import { PrintfulTestButton } from '@/components/admin/PrintfulTestButton'
-import { StatsCharts } from '@/components/admin/StatsCharts'
+import { StatsChartsClient } from '@/components/admin/StatsChartsClient'
 import { ArrowRight, Eye, ShieldCheck } from 'lucide-react'
 
 function formatPrice(cents: number) {
@@ -311,7 +311,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <StatsCharts data={chartData} />
+      <StatsChartsClient data={chartData} />
 
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
