@@ -1,6 +1,7 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getAdminClient } from '@/lib/supabase/admin'
-import { createClient as createServerClient } from '@/lib/supabase/server'
+import { getAdminUser } from '@/lib/auth-admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { StripeTestButton } from '@/components/admin/StripeTestButton'
 import { PrintfulTestButton } from '@/components/admin/PrintfulTestButton'
@@ -49,25 +50,22 @@ export default async function AdminDashboardPage() {
       </div>
     )
 
-  // Fetch current admin profile
-  const serverSupabase = await createServerClient()
-  const {
-    data: { user },
-  } = await serverSupabase.auth.getUser()
+  // Verify caller is an authenticated admin — defense-in-depth behind middleware
+  const adminUser = await getAdminUser()
+  if (!adminUser) redirect('/login')
+
+  // Fetch current admin display name
   let adminName = 'Admin'
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('display_name')
+    .eq('id', adminUser.id)
+    .single()
 
-  if (user) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.display_name) {
-      adminName = profile.display_name
-    } else if (user.email) {
-      adminName = user.email.split('@')[0]
-    }
+  if (profile?.display_name) {
+    adminName = profile.display_name
+  } else if (adminUser.email) {
+    adminName = adminUser.email.split('@')[0]
   }
 
   const thirtyDaysAgo = new Date()

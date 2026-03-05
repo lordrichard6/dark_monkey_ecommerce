@@ -536,9 +536,9 @@ export async function updateProductTags(
 
     revalidatePath(`/admin/products/${productId}`)
     return { ok: true }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Update product tags error:', err)
-    return { ok: false, error: err.message || 'Failed to update tags' }
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to update tags' }
   }
 }
 export async function updateProductImageColor(imageId: string, color: string | null) {
