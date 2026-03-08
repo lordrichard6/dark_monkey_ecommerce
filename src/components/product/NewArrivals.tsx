@@ -185,7 +185,7 @@ export function NewArrivals({ products, categories }: Props) {
         {hasMore && (
           <div className="mt-8 text-center">
             <Link
-              href="/categories"
+              href="/products"
               className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-8 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/10 hover:text-zinc-50"
             >
               {t('seeAllNewArrivals')}

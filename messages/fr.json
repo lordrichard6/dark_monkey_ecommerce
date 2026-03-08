@@ -439,7 +439,11 @@
     "pushSendTest": "Envoyer un test",
     "pushTestSent": "Notification de test envoyée !",
     "pushTestFailed": "Échec de l'envoi de la notification de test",
-    "pushDeviceNote": "Les notifications push sont stockées par appareil. Si vous utilisez plusieurs appareils, activez les notifications sur chacun séparément."
+    "pushDeviceNote": "Les notifications push sont stockées par appareil. Si vous utilisez plusieurs appareils, activez les notifications sur chacun séparément.",
+    "featured": "En vedette",
+    "seasonDrops": "Drops de saison",
+    "creative": "Créatif",
+    "artGallery": "Galerie d'art"
   },
   "gdpr": {
     "pageTitle": "Confidentialité & Données",
@@ -756,5 +760,50 @@
     "prevImage": "Image précédente",
     "nextImage": "Image suivante",
     "imageOf": "Image {current} sur {total}"
+  },
+  "bundles": {
+    "title": "Bundles",
+    "heading": "Offres exclusives",
+    "subheading": "Économisez davantage avec nos bundles de produits soigneusement sélectionnés.",
+    "description": "Découvrez nos offres exclusives et économisez sur chaque achat.",
+    "noResults": "Aucun bundle disponible pour le moment. Revenez bientôt.",
+    "save": "Économisez",
+    "off": "de réduction",
+    "items": "articles",
+    "shopBundle": "Acheter le bundle",
+    "discount": "réduction"
+  },
+  "support": {
+    "title": "Support",
+    "myTickets": "Mes tickets",
+    "newTicket": "Nouveau ticket",
+    "openTicket": "Ouvrir un ticket de support",
+    "subject": "Sujet",
+    "category": "Catégorie",
+    "message": "Message",
+    "submit": "Soumettre le ticket",
+    "reply": "Envoyer la réponse",
+    "status_open": "Ouvert",
+    "status_in_progress": "En cours",
+    "status_resolved": "Résolu",
+    "status_closed": "Fermé",
+    "cat_order_issue": "Problème de commande",
+    "cat_complaint": "Plainte",
+    "cat_suggestion": "Suggestion",
+    "cat_question": "Question",
+    "noTickets": "Aucun ticket de support pour l'instant.",
+    "noTicketsDesc": "Si vous avez une question ou un problème, ouvrez un ticket et nous vous répondrons.",
+    "ticketClosed": "Ce ticket est fermé.",
+    "adminReply": "Équipe support",
+    "you": "Vous",
+    "submitSuccess": "Ticket soumis avec succès.",
+    "replySuccess": "Réponse envoyée.",
+    "errorSubmit": "Échec de la soumission. Veuillez réessayer.",
+    "viewTicket": "Voir le ticket",
+    "backToTickets": "Retour aux tickets",
+    "ticketDetail": "Détails du ticket",
+    "subjectPlaceholder": "ex. Commande non reçue",
+    "messagePlaceholder": "Décrivez votre problème en détail...",
+    "supportDesc": "Suivez vos demandes de support et discutez avec notre équipe."
   }
 }

@@ -33,7 +33,7 @@ export function validatePrintfulConfig() {
   })
 
   if (!result.success) {
-    const errors = result.error.errors.map((e) => `${e.path}: ${e.message}`).join(', ')
+    const errors = result.error.issues.map((e) => `${e.path}: ${e.message}`).join(', ')
     // We log the error but don't crash the entire app module import,
     // instead we throw when accessing the config or let isPrintfulConfigured handle it.
     // However, for strictness, we can return null or throw.

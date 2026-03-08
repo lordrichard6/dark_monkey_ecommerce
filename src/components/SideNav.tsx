@@ -35,6 +35,7 @@ export function SideNav({ isAdmin, categories }: Props) {
         { href: '/admin/products', label: t('products'), icon: BoxIcon },
         { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
         { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon },
+        { href: '/admin/support', label: 'Support', icon: LifeBuoyIcon },
         { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
       ]
     : []
@@ -394,6 +395,29 @@ function MessageSquareIcon({ className }: { className?: string }) {
       className={className}
     >
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function LifeBuoyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="4" />
+      <line x1="4.93" y1="4.93" x2="9.17" y2="9.17" />
+      <line x1="14.83" y1="14.83" x2="19.07" y2="19.07" />
+      <line x1="14.83" y1="9.17" x2="19.07" y2="4.93" />
+      <line x1="14.83" y1="9.17" x2="18.36" y2="5.64" />
+      <line x1="4.93" y1="19.07" x2="9.17" y2="14.83" />
     </svg>
   )
 }

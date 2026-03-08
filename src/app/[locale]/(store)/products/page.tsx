@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { searchProducts, type SearchableProduct } from '@/lib/search'
 import { SearchResults } from '@/components/search/SearchResults'
 import { type FilterableProduct } from '@/lib/product-filtering'
 import { getTranslations } from 'next-intl/server'
@@ -49,7 +48,6 @@ export default async function ProductsPage({ searchParams }: Props) {
   const { category: selectedCategorySlug } = await searchParams
   const t = await getTranslations('search')
   const tCommon = await getTranslations('common')
-  const tStore = await getTranslations('store')
   const supabase = await createClient()
 
   // Fetch all active products
@@ -92,13 +90,17 @@ export default async function ProductsPage({ searchParams }: Props) {
   const categoryMap = new Map<string, { id: string; name: string; count: number; slug: string }>()
 
   for (const p of products) {
-    const variants = p.product_variants as any[]
-    const images = p.product_images as any[]
+    const variants = p.product_variants as {
+      price_cents: number
+      attributes: Record<string, string>
+      product_inventory: { quantity: number } | { quantity: number }[] | null
+    }[]
+    const images = p.product_images as { url: string; alt: string | null; sort_order: number }[]
     const category = Array.isArray(p.categories) ? p.categories[0] : p.categories
 
-    const minPrice = variants?.length ? Math.min(...variants.map((v: any) => v.price_cents)) : 0
+    const minPrice = variants?.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
 
-    const sortedImages = images?.sort((a: any, b: any) => a.sort_order - b.sort_order) || []
+    const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) || []
     const primaryImage = sortedImages[0]
 
     const colors = new Set<string>()
@@ -110,7 +112,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         const inventory = variant.product_inventory
         if (inventory) {
           const qty = Array.isArray(inventory)
-            ? inventory.reduce((sum: number, inv: any) => sum + inv.quantity, 0)
+            ? inventory.reduce((sum: number, inv: { quantity: number }) => sum + inv.quantity, 0)
             : inventory.quantity
           totalStock += qty
         }
@@ -156,61 +158,6 @@ export default async function ProductsPage({ searchParams }: Props) {
   }
 
   const categories = Array.from(categoryMap.values()).sort((a, b) => a.name.localeCompare(b.name))
-
-  // If no category is selected, show the category discovery view
-  if (!selectedCategorySlug) {
-    return (
-      <div className="min-h-[calc(100vh-3.5rem)]">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <div className="mb-12 text-center">
-            <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-white md:text-5xl">
-              {tStore('categoriesTitle')}
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-zinc-400">
-              Selecione uma categoria para começar a explorar a nossa coleção exclusiva.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/products?category=${cat.slug}`}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-8 transition-all duration-300 hover:border-amber-500/30 hover:bg-zinc-900/60 "
-              >
-                <div>
-                  <h2 className="text-2xl font-bold text-zinc-50 transition-colors group-hover:text-amber-400">
-                    {cat.name}
-                  </h2>
-                  <p className="mt-2 text-sm text-zinc-500">
-                    {cat.count} {cat.count === 1 ? 'produto' : 'produtos'}
-                  </p>
-                </div>
-
-                <div className="mt-12 flex items-center gap-2 text-sm font-semibold text-zinc-300 transition-all group-hover:gap-3 group-hover:text-white">
-                  Explorar {cat.name}
-                  <svg
-                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </div>
-                <div className="absolute inset-0 -z-10 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">

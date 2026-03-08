@@ -223,7 +223,11 @@
     "noAccount": "Não tens conta?",
     "goToSignup": "Cria uma",
     "alreadyHaveAccountLink": "Já tens conta?",
-    "goToLogin": "Entrar"
+    "goToLogin": "Entrar",
+    "exclusiveOffers": "Ofertas por tempo limitado",
+    "upsellPitch": "Adicione à sua encomenda por um preço especial",
+    "off": "DESCONTO",
+    "addToOrder": "Adicionar à encomenda"
   },
   "userMenu": {
     "account": "Conta",
@@ -756,5 +760,50 @@
     "prevImage": "Imagem anterior",
     "nextImage": "Próxima imagem",
     "imageOf": "Imagem {current} de {total}"
+  },
+  "bundles": {
+    "title": "Bundles",
+    "heading": "Bundles exclusivos",
+    "subheading": "Poupe mais com os nossos bundles de produtos cuidadosamente selecionados.",
+    "description": "Descubra os nossos bundles exclusivos e poupe em cada compra.",
+    "noResults": "Nenhum bundle disponível no momento. Volte em breve.",
+    "save": "Poupe",
+    "off": "desconto",
+    "items": "artigos",
+    "shopBundle": "Comprar bundle",
+    "discount": "desconto"
+  },
+  "support": {
+    "title": "Suporte",
+    "myTickets": "Meus tickets",
+    "newTicket": "Novo ticket",
+    "openTicket": "Abrir ticket de suporte",
+    "subject": "Assunto",
+    "category": "Categoria",
+    "message": "Mensagem",
+    "submit": "Enviar ticket",
+    "reply": "Enviar resposta",
+    "status_open": "Aberto",
+    "status_in_progress": "Em andamento",
+    "status_resolved": "Resolvido",
+    "status_closed": "Fechado",
+    "cat_order_issue": "Problema com pedido",
+    "cat_complaint": "Reclamação",
+    "cat_suggestion": "Sugestão",
+    "cat_question": "Pergunta",
+    "noTickets": "Nenhum ticket de suporte ainda.",
+    "noTicketsDesc": "Se tiver alguma dúvida ou problema, abra um ticket e responderemos em breve.",
+    "ticketClosed": "Este ticket está fechado.",
+    "adminReply": "Equipa de suporte",
+    "you": "Você",
+    "submitSuccess": "Ticket enviado com sucesso.",
+    "replySuccess": "Resposta enviada.",
+    "errorSubmit": "Falha ao enviar ticket. Tente novamente.",
+    "viewTicket": "Ver ticket",
+    "backToTickets": "Voltar aos tickets",
+    "ticketDetail": "Detalhes do ticket",
+    "subjectPlaceholder": "ex. Pedido não chegou",
+    "messagePlaceholder": "Descreva o seu problema em detalhe...",
+    "supportDesc": "Acompanhe os seus pedidos de suporte e fale com a nossa equipa."
   }
 }

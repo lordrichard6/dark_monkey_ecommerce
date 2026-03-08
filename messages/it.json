@@ -439,7 +439,11 @@
     "pushSendTest": "Invia test",
     "pushTestSent": "Notifica di test inviata!",
     "pushTestFailed": "Invio notifica di test non riuscito",
-    "pushDeviceNote": "Le notifiche push vengono memorizzate per dispositivo. Se utilizzi più dispositivi, attivale su ciascuno separatamente."
+    "pushDeviceNote": "Le notifiche push vengono memorizzate per dispositivo. Se utilizzi più dispositivi, attivale su ciascuno separatamente.",
+    "featured": "In evidenza",
+    "seasonDrops": "Drop stagionali",
+    "creative": "Creativo",
+    "artGallery": "Galleria d'arte"
   },
   "gdpr": {
     "pageTitle": "Privacy & Dati",
@@ -756,5 +760,50 @@
     "prevImage": "Immagine precedente",
     "nextImage": "Immagine successiva",
     "imageOf": "Immagine {current} di {total}"
+  },
+  "bundles": {
+    "title": "Bundle",
+    "heading": "Bundle esclusivi",
+    "subheading": "Risparmia di più con i nostri bundle di prodotti selezionati con cura.",
+    "description": "Scopri i nostri bundle esclusivi e risparmia su ogni acquisto.",
+    "noResults": "Nessun bundle disponibile al momento. Torna presto.",
+    "save": "Risparmia",
+    "off": "di sconto",
+    "items": "articoli",
+    "shopBundle": "Acquista il bundle",
+    "discount": "sconto"
+  },
+  "support": {
+    "title": "Supporto",
+    "myTickets": "I miei ticket",
+    "newTicket": "Nuovo ticket",
+    "openTicket": "Apri un ticket di supporto",
+    "subject": "Oggetto",
+    "category": "Categoria",
+    "message": "Messaggio",
+    "submit": "Invia ticket",
+    "reply": "Invia risposta",
+    "status_open": "Aperto",
+    "status_in_progress": "In elaborazione",
+    "status_resolved": "Risolto",
+    "status_closed": "Chiuso",
+    "cat_order_issue": "Problema ordine",
+    "cat_complaint": "Reclamo",
+    "cat_suggestion": "Suggerimento",
+    "cat_question": "Domanda",
+    "noTickets": "Nessun ticket di supporto ancora.",
+    "noTicketsDesc": "Se hai una domanda o un problema, apri un ticket e ti risponderemo.",
+    "ticketClosed": "Questo ticket è chiuso.",
+    "adminReply": "Team di supporto",
+    "you": "Tu",
+    "submitSuccess": "Ticket inviato con successo.",
+    "replySuccess": "Risposta inviata.",
+    "errorSubmit": "Invio fallito. Riprova.",
+    "viewTicket": "Vedi ticket",
+    "backToTickets": "Torna ai ticket",
+    "ticketDetail": "Dettagli ticket",
+    "subjectPlaceholder": "es. Ordine non arrivato",
+    "messagePlaceholder": "Descrivi il tuo problema in dettaglio...",
+    "supportDesc": "Tieni traccia delle tue richieste di supporto e chatta con il nostro team."
   }
 }

@@ -19,9 +19,16 @@ interface BundleItem {
 interface BundleAddToCartProps {
   items: BundleItem[]
   totalCents: number
+  originalTotalCents?: number
+  discountPercentage?: number
 }
 
-export function BundleAddToCart({ items, totalCents }: BundleAddToCartProps) {
+export function BundleAddToCart({
+  items,
+  totalCents,
+  originalTotalCents,
+  discountPercentage,
+}: BundleAddToCartProps) {
   const t = useTranslations('product')
   const { format } = useCurrency()
   const [isAdding, setIsAdding] = useState(false)
@@ -55,7 +62,17 @@ export function BundleAddToCart({ items, totalCents }: BundleAddToCartProps) {
   return (
     <div className="mt-6 flex flex-1 flex-col justify-center rounded-xl bg-white/5 p-6 md:mt-0">
       <div className="text-sm text-zinc-400">{t('bundleTotal')}</div>
+      {originalTotalCents && originalTotalCents > totalCents && (
+        <div className="mt-0.5 text-sm text-zinc-500 line-through">
+          {format(originalTotalCents)}
+        </div>
+      )}
       <div className="mt-1 text-2xl font-bold text-white">{format(totalCents)}</div>
+      {discountPercentage && discountPercentage > 0 && (
+        <div className="mt-0.5 text-xs font-bold text-amber-500 uppercase tracking-widest">
+          {discountPercentage}% {t('saveAmount')}
+        </div>
+      )}
       <button
         onClick={handleAddAll}
         disabled={isAdding || items.length === 0}

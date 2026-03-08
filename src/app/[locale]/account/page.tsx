@@ -7,7 +7,8 @@ import { ProfileStats } from '@/components/profile/ProfileStats'
 import { PointsDisplay } from '@/components/profile/PointsDisplay'
 import { ReferralCard } from '@/components/profile/ReferralCard'
 import { AchievementGrid } from '@/components/profile/AchievementBadge'
-import { Edit, ShoppingBag, Heart, Shield } from 'lucide-react'
+import { Edit, ShoppingBag, Heart, Shield, Bell, LifeBuoy } from 'lucide-react'
+import { NotificationsBadge } from '@/components/account/NotificationsBadge'
 import md5 from 'md5'
 
 export default async function AccountPage() {
@@ -100,39 +101,77 @@ export default async function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black py-12">
-      <div className="mx-auto max-w-6xl px-4">
-        {/* Header with Avatar */}
-        <div className="mb-8 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            {/* Avatar */}
-            {avatarUrl ? (
-              <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-zinc-800 bg-zinc-900">
-                <Image src={avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
-              </div>
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-zinc-800 bg-gradient-to-br from-amber-500 to-amber-600 text-2xl font-bold text-white">
-                {getInitials()}
-              </div>
-            )}
+    <div className="min-h-screen py-12" style={{ background: 'transparent' }}>
+      {/* ── Hero banner ── */}
+      <div className="relative mb-10 overflow-hidden">
+        {/* Amber glow base */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 80% 120% at 50% 0%, rgba(251,191,36,0.13) 0%, rgba(251,146,60,0.07) 40%, transparent 70%)',
+          }}
+        />
+        {/* Dot-grid texture */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(251,191,36,0.35) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        {/* Top amber line */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+        {/* Bottom fade */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#050508] to-transparent" />
 
-            <div>
-              <h1 className="text-3xl font-bold text-zinc-50">
-                {profile?.display_name || user.email?.split('@')[0] || t('title')}
-              </h1>
-              <p className="text-sm text-zinc-500">{user.email}</p>
+        <div className="relative mx-auto max-w-6xl px-4 pb-10 pt-12">
+          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-5">
+              {/* Avatar — larger, glowing ring */}
+              {avatarUrl ? (
+                <div
+                  className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-amber-500/40 bg-zinc-900"
+                  style={{
+                    boxShadow: '0 0 0 4px rgba(251,191,36,0.08), 0 0 24px rgba(251,191,36,0.15)',
+                  }}
+                >
+                  <Image src={avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
+                </div>
+              ) : (
+                <div
+                  className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-full border-2 border-amber-500/40 bg-gradient-to-br from-amber-500 to-amber-700 text-3xl font-bold text-white"
+                  style={{
+                    boxShadow: '0 0 0 4px rgba(251,191,36,0.08), 0 0 24px rgba(251,191,36,0.2)',
+                  }}
+                >
+                  {getInitials()}
+                </div>
+              )}
+
+              <div>
+                <h1 className="text-3xl font-bold text-zinc-50 drop-shadow-sm">
+                  {profile?.display_name || user.email?.split('@')[0] || t('title')}
+                </h1>
+                <p className="mt-0.5 text-sm text-zinc-400">{user.email}</p>
+                <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-amber-400">
+                  {stats.currentTier} member
+                </p>
+              </div>
             </div>
+
+            <Link
+              href="/account/edit-profile"
+              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-100 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
+            >
+              <Edit className="h-4 w-4" />
+              {t('editProfile')}
+            </Link>
           </div>
-
-          <Link
-            href="/account/edit-profile"
-            className="flex items-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-100 transition hover:bg-zinc-700"
-          >
-            <Edit className="h-4 w-4" />
-            {t('editProfile')}
-          </Link>
         </div>
+      </div>
 
+      <div className="mx-auto max-w-6xl px-4">
         <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
           {/* Main Content */}
           <div className="space-y-8">
@@ -146,7 +185,7 @@ export default async function AccountPage() {
             {achievements && achievements.length > 0 && (
               <section>
                 <h2 className="mb-4 text-xl font-semibold text-zinc-50">{t('achievements')}</h2>
-                <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+                <div className="rounded-xl border border-white/5 bg-white/[0.03] p-6 backdrop-blur-sm">
                   <AchievementGrid
                     achievements={achievements}
                     unlockedIds={unlockedAchievementIds}
@@ -156,50 +195,98 @@ export default async function AccountPage() {
             )}
 
             {/* Quick Links */}
-            <section className="grid gap-4 sm:grid-cols-2">
+            <section className="grid gap-3 sm:grid-cols-2">
+              {/* Orders */}
               <Link
                 href="/account/orders"
-                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
               >
-                <ShoppingBag className="h-5 w-5 text-zinc-400" />
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <ShoppingBag className="h-5 w-5" />
+                </span>
                 <div>
                   <p className="font-medium text-zinc-50">{t('orders')}</p>
                   <p className="text-sm text-zinc-500">{t('viewOrderHistory')}</p>
                 </div>
               </Link>
 
+              {/* Wishlist — with live count badge */}
               <Link
                 href="/account/wishlist"
-                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
               >
-                <Heart className="h-5 w-5 text-zinc-400" />
-                <div>
-                  <p className="font-medium text-zinc-50">{t('wishlist')}</p>
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <Heart className="h-5 w-5" />
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-zinc-50">{t('wishlist')}</p>
+                    {stats.wishlistSize > 0 && (
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/20 px-1.5 text-xs font-bold text-amber-400">
+                        {stats.wishlistSize}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-zinc-500">{t('viewWishlist')}</p>
                 </div>
               </Link>
 
+              {/* Addresses */}
               <Link
                 href="/account/addresses"
-                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
               >
-                <div className="flex h-5 w-5 items-center justify-center">
-                  <span className="text-lg">📍</span>
-                </div>
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <span className="text-lg leading-none">📍</span>
+                </span>
                 <div>
                   <p className="font-medium text-zinc-50">{t('addresses')}</p>
                   <p className="text-sm text-zinc-500">{t('viewAddresses')}</p>
                 </div>
               </Link>
 
+              {/* Privacy */}
               <Link
                 href="/account/privacy"
-                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition hover:border-zinc-700 hover:bg-zinc-800/50"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
               >
-                <Shield className="h-5 w-5 text-zinc-400" />
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <Shield className="h-5 w-5" />
+                </span>
                 <div>
                   <p className="font-medium text-zinc-50">{t('privacy')}</p>
                   <p className="text-sm text-zinc-500">{t('viewPrivacy')}</p>
+                </div>
+              </Link>
+
+              {/* Support */}
+              <Link
+                href="/account/support"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
+              >
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <LifeBuoy className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-medium text-zinc-50">Support</p>
+                  <p className="text-sm text-zinc-500">My support tickets</p>
+                </div>
+              </Link>
+
+              {/* Notifications */}
+              <Link
+                href="/account/notifications"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
+              >
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <Bell className="h-5 w-5" />
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-zinc-50">{t('notifications')}</p>
+                    <NotificationsBadge />
+                  </div>
+                  <p className="text-sm text-zinc-500">{t('viewNotifications')}</p>
                 </div>
               </Link>
             </section>

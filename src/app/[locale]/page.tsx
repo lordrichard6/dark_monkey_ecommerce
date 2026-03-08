@@ -22,9 +22,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await getTranslations('home')
   const description = t('metaDescription')
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
-  const title = 'DarkMonkey — Premium quality e-commerce'
+  const title = t('homeMetaTitle')
 
   return {
+    title,
     description,
     openGraph: {
       type: 'website',
@@ -73,7 +74,7 @@ export default async function HomePage({ params, searchParams }: Props) {
         {!tag && (
           <div className="mt-8 text-center">
             <Link
-              href="/categories"
+              href="/products"
               className="inline-flex items-center gap-2 rounded-lg bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-700"
             >
               {t('seeAllProducts')}

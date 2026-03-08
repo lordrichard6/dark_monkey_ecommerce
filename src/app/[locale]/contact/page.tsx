@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { PolicyPageLayout } from '@/components/PolicyPageLayout'
+import { Link } from '@/i18n/navigation'
 
 const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
 
@@ -55,6 +56,20 @@ export default async function ContactPage() {
           </a>
         </p>
         <p className="leading-relaxed">{t('refundsIntro')}</p>
+      </section>
+
+      <section className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-6">
+        <h2 className="mb-2 text-lg font-semibold text-zinc-50">Support Tickets</h2>
+        <p className="mb-4 text-sm text-zinc-400">
+          For order issues, complaints, or suggestions — open a support ticket and track it in your
+          account.
+        </p>
+        <Link
+          href="/account/support/new"
+          className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
+        >
+          Open a Support Ticket
+        </Link>
       </section>
     </PolicyPageLayout>
   )
