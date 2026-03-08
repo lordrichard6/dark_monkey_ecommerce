@@ -423,6 +423,7 @@ export async function getPrintfulSyncStats(): Promise<{
     .from('products')
     .select('printful_sync_product_id')
     .in('printful_sync_product_id', printfulIds)
+    .is('deleted_at', null) // soft-deleted products must be re-syncable
 
   const existingSet = new Set((existing ?? []).map((p) => p.printful_sync_product_id))
   const newProducts = allProducts.filter((p) => !existingSet.has(p.id))
