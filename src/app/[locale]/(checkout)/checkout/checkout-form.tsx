@@ -1,16 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { createCheckoutSession, validateDiscountCode } from '@/actions/checkout'
+import { getShippingCost } from '@/actions/shipping'
 import type { CartItem } from '@/types/cart'
 import { trackBeginCheckout, trackAddPaymentInfo } from '@/lib/analytics'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { UpsellSection } from '@/components/checkout/UpsellSection'
-import { Sparkles } from 'lucide-react'
+import {
+  COUNTRY_LABELS,
+  ALLOWED_SHIPPING_COUNTRIES,
+  FREE_SHIPPING_THRESHOLD_CENTS,
+} from '@/lib/shipping'
+import { Loader2, Truck } from 'lucide-react'
 
 function formatPrice(cents: number): string {
   return new Intl.NumberFormat('de-CH', {
@@ -40,6 +46,12 @@ export function CheckoutForm({
   const tCart = useTranslations('cart')
   const { currency } = useCurrency()
   const [email, setEmail] = useState(defaultEmail)
+  const [country, setCountry] = useState('')
+  const [shippingCents, setShippingCents] = useState(0)
+  const [isFreeShipping, setIsFreeShipping] = useState(false)
+  const [shippingZoneName, setShippingZoneName] = useState('')
+  const [freeShippingRemaining, setFreeShippingRemaining] = useState(0)
+  const [shippingLoading, setShippingLoading] = useState(false)
   const [discountCode, setDiscountCode] = useState('')
   const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string
@@ -75,6 +87,30 @@ export function CheckoutForm({
     })
   }, [items, totalCents, currency])
 
+  const fetchShipping = useCallback(async (countryCode: string) => {
+    if (!countryCode) {
+      setShippingCents(0)
+      setIsFreeShipping(false)
+      setShippingZoneName('')
+      setFreeShippingRemaining(0)
+      return
+    }
+    setShippingLoading(true)
+    const result = await getShippingCost(countryCode)
+    setShippingLoading(false)
+    if (result.ok) {
+      setShippingCents(result.shippingCents)
+      setIsFreeShipping(result.isFreeShipping)
+      setShippingZoneName(result.zoneName)
+      setFreeShippingRemaining(result.freeShippingRemaining)
+    }
+  }, [])
+
+  function handleCountryChange(value: string) {
+    setCountry(value)
+    fetchShipping(value)
+  }
+
   async function handleApplyDiscount(e: React.FormEvent) {
     e.preventDefault()
     setDiscountError(null)
@@ -89,6 +125,9 @@ export function CheckoutForm({
     }
   }
 
+  const discountCents = appliedDiscount?.discountCents ?? 0
+  const grandTotal = Math.max(0, totalCents + shippingCents - discountCents)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -100,13 +139,19 @@ export function CheckoutForm({
       return
     }
 
+    if (!country) {
+      setError(t('shippingRequired'))
+      setLoading(false)
+      return
+    }
+
     const result = await createCheckoutSession({
       email: email.trim(),
       fullName: '',
       line1: '',
       city: '',
       postalCode: '',
-      country: 'PT',
+      country,
       discountCode: appliedDiscount ? appliedDiscount.code : discountCode.trim() || undefined,
       locale,
     })
@@ -116,7 +161,7 @@ export function CheckoutForm({
     if (result.ok) {
       // Track payment info added
       trackAddPaymentInfo({
-        total: appliedDiscount ? totalCents - appliedDiscount.discountCents : totalCents,
+        total: grandTotal,
         currency,
       })
       window.location.href = result.url
@@ -155,7 +200,51 @@ export function CheckoutForm({
           className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
           placeholder="you@example.com"
         />
-        <p className="mt-2 text-sm text-zinc-500">{t('shippingCollected')}</p>
+      </div>
+
+      <div>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-50">{t('shippingCountry')}</h2>
+        <select
+          id="country"
+          value={country}
+          onChange={(e) => handleCountryChange(e.target.value)}
+          required
+          className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+        >
+          <option value="">{t('selectCountry')}</option>
+          {ALLOWED_SHIPPING_COUNTRIES.map((code) => (
+            <option key={code} value={code}>
+              {COUNTRY_LABELS[code] ?? code}
+            </option>
+          ))}
+        </select>
+
+        {/* Shipping cost preview */}
+        {country && !shippingLoading && (
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <Truck className="h-4 w-4 text-zinc-400" />
+            {isFreeShipping ? (
+              <span className="font-medium text-green-400">{t('freeShippingUnlocked')}</span>
+            ) : (
+              <span className="text-zinc-400">
+                {t('shipping')}: {formatPrice(shippingCents)}
+              </span>
+            )}
+          </div>
+        )}
+        {shippingLoading && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-zinc-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>...</span>
+          </div>
+        )}
+
+        {/* Free shipping nudge */}
+        {country && !isFreeShipping && freeShippingRemaining > 0 && !shippingLoading && (
+          <p className="mt-2 text-sm text-amber-400/80">
+            {t('freeShippingRemaining', { amount: formatPrice(freeShippingRemaining) })}
+          </p>
+        )}
       </div>
 
       <div>
@@ -246,11 +335,42 @@ export function CheckoutForm({
           }}
         />
 
-        <div className="mt-4 flex justify-between text-lg font-semibold text-zinc-50">
-          <span>{t('total')}</span>
-          <span>
-            {formatPrice(appliedDiscount ? totalCents - appliedDiscount.discountCents : totalCents)}
-          </span>
+        {/* Price breakdown */}
+        <div className="mt-4 space-y-2 border-t border-zinc-800 pt-4">
+          <div className="flex justify-between text-sm text-zinc-400">
+            <span>{t('subtotal')}</span>
+            <span>{formatPrice(totalCents)}</span>
+          </div>
+
+          {country && (
+            <div className="flex justify-between text-sm text-zinc-400">
+              <span>
+                {t('shipping')}
+                {shippingZoneName ? ` (${shippingZoneName})` : ''}
+              </span>
+              <span>
+                {shippingLoading ? (
+                  '...'
+                ) : isFreeShipping ? (
+                  <span className="text-green-400">{t('shippingFree')}</span>
+                ) : (
+                  formatPrice(shippingCents)
+                )}
+              </span>
+            </div>
+          )}
+
+          {discountCents > 0 && (
+            <div className="flex justify-between text-sm text-green-400">
+              <span>{t('discountAppliedLabel')}</span>
+              <span>−{formatPrice(discountCents)}</span>
+            </div>
+          )}
+
+          <div className="flex justify-between border-t border-zinc-800 pt-2 text-lg font-semibold text-zinc-50">
+            <span>{t('total')}</span>
+            <span>{formatPrice(grandTotal)}</span>
+          </div>
         </div>
       </div>
 
@@ -269,7 +389,7 @@ export function CheckoutForm({
         </Link>
         <button
           type="submit"
-          disabled={loading || !stripeConfigured}
+          disabled={loading || !stripeConfigured || !country}
           className="flex-1 rounded-lg bg-white py-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading

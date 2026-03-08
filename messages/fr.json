@@ -503,7 +503,15 @@
     "orderWait": "Veuillez patienter un instant pendant que nous traitons votre paiement.",
     "paymentError": "Échec de la vérification du paiement",
     "paymentErrorMessage": "Un problème est survenu lors de la vérification de votre paiement. Si vous avez été débité, veuillez contacter le support.",
-    "upsellPitch": "Offre spéciale rien que pour vous !"
+    "upsellPitch": "Offre spéciale rien que pour vous !",
+    "shippingCountry": "Pays de livraison",
+    "selectCountry": "Sélectionnez votre pays",
+    "subtotal": "Sous-total",
+    "shipping": "Livraison",
+    "shippingFree": "Gratuite",
+    "freeShippingUnlocked": "Livraison gratuite !",
+    "freeShippingRemaining": "Ajoutez {amount} pour la livraison gratuite",
+    "shippingRequired": "Veuillez sélectionner votre pays"
   },
   "forgotPassword": {
     "title": "Mot de passe oublié",

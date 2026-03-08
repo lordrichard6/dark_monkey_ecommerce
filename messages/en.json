@@ -503,7 +503,15 @@
     "exclusiveOffers": "Exclusive Offers",
     "upsellPitch": "Special offer just for you!",
     "off": "OFF",
-    "addToOrder": "Add to Order"
+    "addToOrder": "Add to Order",
+    "shippingCountry": "Shipping country",
+    "selectCountry": "Select your country",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "shippingFree": "Free",
+    "freeShippingUnlocked": "Free shipping!",
+    "freeShippingRemaining": "Add {amount} more for free shipping",
+    "shippingRequired": "Please select your country"
   },
   "forgotPassword": {
     "title": "Forgot password",

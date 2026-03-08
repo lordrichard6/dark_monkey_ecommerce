@@ -503,7 +503,15 @@
     "orderWait": "Attendi un momento mentre elaboriamo il tuo pagamento.",
     "paymentError": "Verifica del pagamento fallita",
     "paymentErrorMessage": "Si è verificato un problema durante la verifica del pagamento. Se sei stato addebitato, contatta il supporto.",
-    "upsellPitch": "Offerta speciale solo per te!"
+    "upsellPitch": "Offerta speciale solo per te!",
+    "shippingCountry": "Paese di spedizione",
+    "selectCountry": "Seleziona il tuo paese",
+    "subtotal": "Subtotale",
+    "shipping": "Spedizione",
+    "shippingFree": "Gratuita",
+    "freeShippingUnlocked": "Spedizione gratuita!",
+    "freeShippingRemaining": "Aggiungi {amount} per la spedizione gratuita",
+    "shippingRequired": "Seleziona il tuo paese"
   },
   "forgotPassword": {
     "title": "Password dimenticata",

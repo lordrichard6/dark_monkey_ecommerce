@@ -15,6 +15,7 @@ export type CheckoutResult =
   | { ok: false; error: string }
 
 import { SUPPORTED_CURRENCIES, SupportedCurrency, convertPrice } from '@/lib/currency'
+import { calculateShipping, ALLOWED_SHIPPING_COUNTRIES } from '@/lib/shipping'
 
 export type GuestCheckoutInput = {
   email: string
@@ -219,7 +220,18 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
       discountCents = result.discountCents
     }
   }
-  const totalCents = Math.max(0, subtotalCents - discountCents)
+  // Calculate shipping server-side (never trust client value)
+  const shippingCountry = input?.country ?? ''
+  let shippingCostCents = 0
+  let shippingZoneName = ''
+  if (shippingCountry && ALLOWED_SHIPPING_COUNTRIES.includes(shippingCountry)) {
+    const itemCount = validatedItems.reduce((s, { item }) => s + item.quantity, 0)
+    const shippingResult = calculateShipping(shippingCountry, itemCount, subtotalCents)
+    shippingCostCents = shippingResult.shippingCents
+    shippingZoneName = shippingResult.zoneName
+  }
+
+  const totalCents = Math.max(0, subtotalCents + shippingCostCents - discountCents)
 
   const getBaseUrl = () => {
     if (process.env.NEXT_PUBLIC_APP_URL)
@@ -280,6 +292,22 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
     }
   })
 
+  // Add shipping line item
+  if (shippingCostCents > 0) {
+    const convertedShipping = convertPrice(shippingCostCents, requestedCurrency)
+    lineItems.push({
+      price_data: {
+        currency: requestedCurrency.toLowerCase(),
+        product_data: {
+          name: 'Shipping',
+          description: shippingZoneName || 'Standard delivery',
+        },
+        unit_amount: convertedShipping,
+      },
+      quantity: 1,
+    })
+  }
+
   // Recalculate discount in target currency
   if (discountCents > 0 && discountId) {
     const convertedDiscount = convertPrice(discountCents, requestedCurrency)
@@ -310,6 +338,12 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
   if (discountId) {
     metadata.discount_id = discountId
     metadata.discount_cents = String(discountCents)
+  }
+  if (shippingCostCents > 0) {
+    metadata.shipping_cost_cents = String(shippingCostCents)
+  }
+  if (shippingCountry) {
+    metadata.shipping_country = shippingCountry
   }
 
   const {

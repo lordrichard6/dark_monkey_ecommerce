@@ -21,8 +21,11 @@ export default function ProductError({
         <AlertTriangle className="h-8 w-8 text-red-400" />
       </div>
       <h2 className="mb-2 text-2xl font-bold text-white">Something went wrong</h2>
-      <p className="mb-8 max-w-sm text-zinc-400">
+      <p className="mb-4 max-w-sm text-zinc-400">
         We couldn&apos;t load this product. Please try again or browse our other products.
+      </p>
+      <p className="mb-8 max-w-lg rounded border border-red-800/50 bg-red-950/30 px-4 py-2 font-mono text-xs text-red-300/80 break-all">
+        {error?.message || 'Unknown error'}
       </p>
       <div className="flex gap-3">
         <button

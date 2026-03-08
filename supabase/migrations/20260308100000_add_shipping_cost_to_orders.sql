@@ -1,0 +1,2 @@
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_cost_cents INTEGER DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_country TEXT;

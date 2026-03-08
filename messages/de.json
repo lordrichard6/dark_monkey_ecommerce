@@ -503,7 +503,15 @@
     "orderWait": "Bitte warte einen Moment, während wir deine Zahlung bearbeiten.",
     "paymentError": "Zahlungsverifizierung fehlgeschlagen",
     "paymentErrorMessage": "Bei der Verifizierung deiner Zahlung ist ein Fehler aufgetreten. Falls du belastet wurdest, wende dich bitte an den Support.",
-    "upsellPitch": "Spezielles Angebot nur für dich!"
+    "upsellPitch": "Spezielles Angebot nur für dich!",
+    "shippingCountry": "Lieferland",
+    "selectCountry": "Wähle dein Land",
+    "subtotal": "Zwischensumme",
+    "shipping": "Versand",
+    "shippingFree": "Kostenlos",
+    "freeShippingUnlocked": "Kostenloser Versand!",
+    "freeShippingRemaining": "Noch {amount} für kostenlosen Versand",
+    "shippingRequired": "Bitte wähle dein Land"
   },
   "forgotPassword": {
     "title": "Passwort vergessen",

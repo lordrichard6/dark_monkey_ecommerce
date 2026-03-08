@@ -203,6 +203,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
       created_at,
       updated_at,
       shipping_address_json,
+      shipping_cost_cents,
+      shipping_country,
       discounts (code, type, value_cents),
       order_items (
         id,
@@ -649,6 +651,21 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                     </span>
                   </div>
                 )}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-zinc-500">
+                    Shipping
+                    {order.shipping_country && (
+                      <span className="rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-zinc-400">
+                        {order.shipping_country}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-zinc-400">
+                    {order.shipping_cost_cents > 0
+                      ? formatPrice(order.shipping_cost_cents)
+                      : 'Free'}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between pt-1.5 border-t border-zinc-800">
                   <span className="text-sm font-semibold text-zinc-200">Total</span>
                   <span className="text-xl font-bold text-zinc-50">

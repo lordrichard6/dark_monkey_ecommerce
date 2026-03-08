@@ -503,7 +503,15 @@
     "exclusiveOffers": "Ofertas Exclusivas",
     "upsellPitch": "Oferta especial apenas para si!",
     "off": "DESC.",
-    "addToOrder": "Adicionar à Encomenda"
+    "addToOrder": "Adicionar à Encomenda",
+    "shippingCountry": "País de envio",
+    "selectCountry": "Selecione o seu país",
+    "subtotal": "Subtotal",
+    "shipping": "Envio",
+    "shippingFree": "Grátis",
+    "freeShippingUnlocked": "Envio grátis!",
+    "freeShippingRemaining": "Adicione {amount} para envio grátis",
+    "shippingRequired": "Por favor selecione o seu país"
   },
   "forgotPassword": {
     "title": "Palavra-passe esquecida",

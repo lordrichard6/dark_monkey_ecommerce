@@ -327,7 +327,11 @@ export default async function OrderDetailsPage({ params }: Props) {
                 )}
                 <div className="flex justify-between text-zinc-400">
                   <span>Shipping</span>
-                  <span>Free</span>
+                  <span suppressHydrationWarning>
+                    {order.shipping_cost_cents > 0
+                      ? formatPrice(order.shipping_cost_cents, order.currency as SupportedCurrency)
+                      : 'Free'}
+                  </span>
                 </div>
                 <div className="mt-4 flex justify-between border-t border-zinc-800 pt-4 text-lg font-bold text-zinc-50">
                   <span>Total</span>
