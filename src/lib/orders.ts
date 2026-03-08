@@ -117,25 +117,30 @@ export async function processSuccessfulCheckout(sessionId: string) {
   // as part of the billing/customer form. We check both.
   const shippingDetails = fullSession.shipping_details || fullSession.customer_details
   const address = shippingDetails?.address
+
+  // Do NOT throw here — if address is missing we still create the order (payment succeeded)
+  // and skip Printful. Throwing before the DB insert means the order is never created and
+  // the customer sees an endless "taking a little longer" screen.
   if (!address) {
-    console.error(
-      `[OrderProcess] CRITICAL: No shipping address in session ${sessionId}. ` +
-        `Throwing so Stripe retries the webhook.`
+    console.warn(
+      `[OrderProcess] WARNING: No shipping address in session ${sessionId}. ` +
+        `Order will be created without address; Printful fulfillment skipped.`
     )
-    throw new Error(`Missing shipping address for session ${sessionId}. Stripe will retry.`)
   }
 
-  const shippingAddressJson = {
-    name: shippingDetails!.name ?? fullSession.customer_details?.name ?? '',
-    address: {
-      line1: address.line1 ?? '',
-      line2: address.line2 ?? '',
-      city: address.city ?? '',
-      postalCode: address.postal_code ?? '',
-      country: address.country ?? '',
-      state: address.state ?? '',
-    },
-  }
+  const shippingAddressJson = address
+    ? {
+        name: shippingDetails?.name ?? fullSession.customer_details?.name ?? '',
+        address: {
+          line1: address.line1 ?? '',
+          line2: address.line2 ?? '',
+          city: address.city ?? '',
+          postalCode: address.postal_code ?? '',
+          country: address.country ?? '',
+          state: address.state ?? '',
+        },
+      }
+    : null
 
   const discountId = fullSession.metadata?.discount_id ?? null
   const discountCents = fullSession.metadata?.discount_cents
@@ -172,7 +177,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
       total_cents: stripeAmountTotal,
       currency: stripeCurrency,
       stripe_session_id: sessionId,
-      shipping_address_json: shippingAddressJson,
+      shipping_address_json: shippingAddressJson ?? undefined,
       discount_id: discountId || null,
       discount_cents: Number.isFinite(discountCents) ? discountCents : 0,
       shipping_cost_cents: Number.isFinite(shippingCostCents) ? shippingCostCents : 0,
@@ -199,7 +204,11 @@ export async function processSuccessfulCheckout(sessionId: string) {
       }
     }
     console.error('[OrderProcess] Order creation failed:', orderError)
-    throw orderError
+    // Wrap Supabase PostgrestError (not instanceof Error) so callers always get a real Error
+    // with a meaningful message instead of "Unknown error".
+    throw new Error(
+      `Order DB insert failed: ${(orderError as { message?: string }).message ?? JSON.stringify(orderError)}`
+    )
   }
 
   console.log(`[OrderProcess] Order created: ${order.id}`)
