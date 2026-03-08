@@ -2,7 +2,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { TagManager } from '@/components/admin/settings/TagManager'
 import { EmailTester } from '@/components/admin/settings/EmailTester'
-import { Settings, Tag, Mail } from 'lucide-react'
+import { Settings, Tag, Mail, Truck } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AdminSettingsPage() {
@@ -51,6 +51,18 @@ export default async function AdminSettingsPage() {
             >
               <h3 className="font-medium text-white">Discounts</h3>
               <p className="mt-1 text-sm text-zinc-400">Manage discount codes.</p>
+            </Link>
+            <Link
+              href="/admin/shipping"
+              className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900"
+            >
+              <div className="flex items-center gap-2">
+                <Truck className="h-4 w-4 text-zinc-400" />
+                <h3 className="font-medium text-white">Shipping Rates</h3>
+              </div>
+              <p className="mt-1 text-sm text-zinc-400">
+                Edit per-zone rates and free shipping threshold.
+              </p>
             </Link>
           </div>
         </section>

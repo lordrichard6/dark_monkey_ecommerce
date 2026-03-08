@@ -16,6 +16,7 @@ export type CheckoutResult =
 
 import { SUPPORTED_CURRENCIES, SupportedCurrency, convertPrice } from '@/lib/currency'
 import { calculateShipping, ALLOWED_SHIPPING_COUNTRIES } from '@/lib/shipping'
+import { getShippingZones, getFreeShippingThreshold } from '@/actions/admin-shipping'
 
 export type GuestCheckoutInput = {
   email: string
@@ -225,13 +226,29 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
       discountCents = result.discountCents
     }
   }
-  // Calculate shipping server-side (never trust client value)
+  // Calculate shipping server-side using DB rates (never trust client value)
   const shippingCountry = input?.country ?? ''
   let shippingCostCents = 0
   let shippingZoneName = ''
   if (shippingCountry && ALLOWED_SHIPPING_COUNTRIES.includes(shippingCountry)) {
     const itemCount = validatedItems.reduce((s, { item }) => s + item.quantity, 0)
-    const shippingResult = calculateShipping(shippingCountry, itemCount, subtotalCents)
+    const [dbZones, dbThreshold] = await Promise.all([
+      getShippingZones(),
+      getFreeShippingThreshold(),
+    ])
+    const mappedZones = dbZones.map((z) => ({
+      name: z.name,
+      countries: z.countries,
+      firstItemCents: z.first_item_cents,
+      additionalItemCents: z.additional_item_cents,
+    }))
+    const shippingResult = calculateShipping(
+      shippingCountry,
+      itemCount,
+      subtotalCents,
+      mappedZones,
+      dbThreshold
+    )
     shippingCostCents = shippingResult.shippingCents
     shippingZoneName = shippingResult.zoneName
   }

@@ -53,21 +53,26 @@ export type ShippingResult = {
 export function calculateShipping(
   countryCode: string,
   itemCount: number,
-  subtotalCents: number
+  subtotalCents: number,
+  /** Override zones — used when rates are loaded from the DB. Falls back to hardcoded SHIPPING_ZONES. */
+  zones: ShippingZone[] = SHIPPING_ZONES,
+  /** Override free shipping threshold in cents. Falls back to FREE_SHIPPING_THRESHOLD_CENTS. */
+  freeShippingThreshold: number = FREE_SHIPPING_THRESHOLD_CENTS
 ): ShippingResult {
-  const zone = SHIPPING_ZONES.find((z) => z.countries.includes(countryCode))
+  const zone = zones.find((z) => z.countries.includes(countryCode))
   if (!zone) {
     return { shippingCents: 0, isFreeShipping: false, zoneName: '', freeShippingRemaining: 0 }
   }
 
   // Free shipping over threshold
-  if (subtotalCents >= FREE_SHIPPING_THRESHOLD_CENTS) {
+  if (freeShippingThreshold > 0 && subtotalCents >= freeShippingThreshold) {
     return { shippingCents: 0, isFreeShipping: true, zoneName: zone.name, freeShippingRemaining: 0 }
   }
 
   const count = Math.max(1, itemCount)
   const shippingCents = zone.firstItemCents + Math.max(0, count - 1) * zone.additionalItemCents
-  const freeShippingRemaining = FREE_SHIPPING_THRESHOLD_CENTS - subtotalCents
+  const freeShippingRemaining =
+    freeShippingThreshold > 0 ? freeShippingThreshold - subtotalCents : 0
 
   return { shippingCents, isFreeShipping: false, zoneName: zone.name, freeShippingRemaining }
 }
