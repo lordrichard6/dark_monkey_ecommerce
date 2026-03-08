@@ -209,13 +209,15 @@ async function upsertProduct(
     return { productId }
   }
 
-  // Secondary check: if Printful re-created this product with a new ID, a record with
-  // the same base slug already exists. Re-use it instead of creating a duplicate with a -N suffix.
+  // Secondary check: if a manually-created (unsynced) product has the same slug, link it.
+  // IMPORTANT: only match products with no Printful ID — if a product already has one,
+  // it's a different Printful product that happens to share the same name.
   const baseSlug = slugify(sync_product.name)
   const { data: existingBySlug } = await supabase
     .from('products')
     .select('id')
     .eq('slug', baseSlug)
+    .is('printful_sync_product_id', null)
     .single()
 
   if (existingBySlug?.id) {
