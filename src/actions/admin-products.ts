@@ -4,6 +4,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser } from '@/lib/auth-admin'
 import { notifyRestockAlerts } from '@/lib/wishlist-notifications'
 import { revalidatePath } from 'next/cache'
+import sharp from 'sharp'
 
 export async function createProduct(input: {
   name: string
@@ -210,39 +211,46 @@ export async function uploadProductImage(
     if (!file) return { ok: false, error: 'No file provided' }
 
     // Validate file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']
     if (!allowedTypes.includes(file.type)) {
-      return { ok: false, error: 'Invalid file type. Allowed: PNG, JPEG, WebP, GIF' }
+      return { ok: false, error: 'Invalid file type. Allowed: PNG, JPEG, WebP, GIF, AVIF' }
     }
 
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      return { ok: false, error: 'File too large. Maximum size: 10MB' }
+    // Validate file size (20MB input limit — sharp will shrink it significantly)
+    if (file.size > 20 * 1024 * 1024) {
+      return { ok: false, error: 'File too large. Maximum input size: 20MB' }
     }
 
-    // Ensure bucket exists (may be missing on cloud if migration didn't run)
+    // Convert to WebP with compression (sharp runs server-side)
+    const inputBuffer = Buffer.from(await file.arrayBuffer())
+    const webpBuffer = await sharp(inputBuffer)
+      .resize(1500, 1500, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer()
+
+    // Ensure bucket exists
     try {
       const { data: buckets } = await supabase.storage.listBuckets()
       if (!buckets?.some((b) => b.name === 'product-images')) {
         await supabase.storage.createBucket('product-images', {
           public: true,
-          fileSizeLimit: '10MB',
-          allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+          fileSizeLimit: '20MB',
+          allowedMimeTypes: ['image/webp'],
         })
       }
     } catch {
-      // Bucket may already exist or listBuckets not allowed; continue with upload
+      // Bucket may already exist or listBuckets not allowed; continue
     }
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop() ?? 'jpg'
-    const filename = `${productId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    // Always store as .webp
+    const filename = `${productId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`
 
-    // Upload to Supabase Storage
+    // Upload converted WebP to Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from('product-images')
-      .upload(filename, file, {
-        cacheControl: '3600',
+      .upload(filename, webpBuffer, {
+        contentType: 'image/webp',
+        cacheControl: '31536000', // 1 year — content-addressed filename
         upsert: false,
       })
 
@@ -272,6 +280,7 @@ export async function uploadProductImage(
         alt: file.name.replace(/\.[^.]+$/, ''),
         sort_order: maxSort + 1,
         color: color || null,
+        source: 'custom',
       })
       .select('id')
       .single()
@@ -301,10 +310,10 @@ export async function deleteProductImage(
   const supabase = getAdminClient()
   if (!supabase) return { ok: false, error: 'Admin not configured' }
 
-  // Get image to find URL and product_id
+  // Get image to find URL, source, and product_id
   const { data: image } = await supabase
     .from('product_images')
-    .select('id, url, product_id')
+    .select('id, url, product_id, source')
     .eq('id', imageId)
     .single()
 
@@ -315,11 +324,11 @@ export async function deleteProductImage(
 
   if (deleteError) return { ok: false, error: deleteError.message }
 
-  // Try to delete from storage if it's our bucket
-  if (image.url.includes('product-images')) {
-    const path = image.url.split('/product-images/')[1]
-    if (path) {
-      await supabase.storage.from('product-images').remove([path])
+  // Only delete from Supabase Storage for custom images — Printful CDN images are not ours to delete
+  if (image.source === 'custom' && image.url.includes('product-images')) {
+    const storagePath = image.url.split('/product-images/')[1]
+    if (storagePath) {
+      await supabase.storage.from('product-images').remove([storagePath])
     }
   }
 

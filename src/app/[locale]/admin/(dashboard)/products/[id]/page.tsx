@@ -50,7 +50,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
         printful_sync_product_id,
         created_at,
         updated_at,
-        product_images (id, url, alt, sort_order, color),
+        product_images (id, url, alt, sort_order, color, source),
         product_variants (
           id,
           sku,

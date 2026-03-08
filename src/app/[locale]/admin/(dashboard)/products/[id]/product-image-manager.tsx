@@ -17,6 +17,7 @@ type Image = {
   alt: string | null
   sort_order?: number
   color?: string | null
+  source?: 'printful' | 'custom' | null
 }
 
 type Props = {
@@ -45,7 +46,7 @@ export function ProductImageManager({
 
   // When color changes, prefer the first image that specifically matches that color
   // Fall back to index 0 (which may be a universal image) if none found
-   
+
   useEffect(() => {
     if (!selectedColor) {
       setSelectedIndex(0)
@@ -275,6 +276,17 @@ export function ProductImageManager({
                     {settingPrimaryId === img.id ? '…' : 'Set #1'}
                   </button>
                 )}
+
+                {/* Source badge */}
+                <span
+                  className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                    img.source === 'custom'
+                      ? 'bg-emerald-500/90 text-white'
+                      : 'bg-zinc-800/80 text-zinc-400'
+                  }`}
+                >
+                  {img.source === 'custom' ? 'Custom' : 'Printful'}
+                </span>
 
                 {/* Delete Button */}
                 <button

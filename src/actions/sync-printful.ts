@@ -143,7 +143,7 @@ async function ensureProductImages(
     .from('product_images')
     .select('id')
     .eq('product_id', productId)
-    .like('url', '%printful.com%')
+    .eq('source', 'printful')
 
   const existingIds = existingImages?.map((img) => img.id) ?? []
 
@@ -163,6 +163,7 @@ async function ensureProductImages(
       sort_order: index,
       color,
       variant_id,
+      source: 'printful',
     }
   })
 
