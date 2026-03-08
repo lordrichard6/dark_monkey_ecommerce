@@ -18,7 +18,9 @@ export function SyncPrintfulModal() {
   const [totalItems, setTotalItems] = useState(0)
   const [existingCount, setExistingCount] = useState(0)
   const [newCount, setNewCount] = useState(0)
+  const [newProducts, setNewProducts] = useState<{ id: number; name: string }[]>([])
   const [progress, setProgress] = useState(0)
+  const [syncedCount, setSyncedCount] = useState(0)
   const [currentProductName, setCurrentProductName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [logs, setLogs] = useState<string[]>([])
@@ -28,7 +30,9 @@ export function SyncPrintfulModal() {
     setTotalItems(0)
     setExistingCount(0)
     setNewCount(0)
+    setNewProducts([])
     setProgress(0)
+    setSyncedCount(0)
     setCurrentProductName('')
     setError(null)
     setLogs([])
@@ -42,6 +46,7 @@ export function SyncPrintfulModal() {
       setTotalItems(res.total)
       setExistingCount(res.existingCount ?? 0)
       setNewCount(res.newCount ?? 0)
+      setNewProducts(res.newProducts ?? [])
       setState('confirming')
     } else {
       setError(res.error || 'Failed to fetch Printful stats')
@@ -49,23 +54,14 @@ export function SyncPrintfulModal() {
     }
   }
 
-  const handleSync = async () => {
+  /** Sync a specific list of products (new-only or all). */
+  const handleSync = async (products: { id: number; name: string }[]) => {
     setState('syncing')
     setError(null)
+    setSyncedCount(products.length)
 
     try {
-      // 1. Get all IDs (taking reasonable limit for now, or we could loop)
-      const listRes = await getPrintfulSyncProductIds(100, 0)
-      if (!listRes.ok || !listRes.products) {
-        throw new Error(listRes.error || 'Failed to fetch product list')
-      }
-
-      const products = listRes.products
-      const count = products.length
-      setTotalItems(count)
-
-      // 2. Sync one by one
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < products.length; i++) {
         const p = products[i]
         setCurrentProductName(p.name)
 
@@ -76,11 +72,30 @@ export function SyncPrintfulModal() {
           setLogs((prev) => [`❌ Error ${p.name}: ${res.error}`, ...prev.slice(0, 9)])
         }
 
-        setProgress(Math.round(((i + 1) / count) * 100))
+        setProgress(Math.round(((i + 1) / products.length) * 100))
       }
 
       setState('complete')
       router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sync failed')
+      setState('error')
+    }
+  }
+
+  /** "Sync New Only" — uses the IDs already returned from getPrintfulSyncStats */
+  const handleSyncNew = () => handleSync(newProducts)
+
+  /** "Sync All" — re-fetches full paginated list so names are up to date */
+  const handleSyncAll = async () => {
+    setState('syncing')
+    setError(null)
+    try {
+      const listRes = await getPrintfulSyncProductIds(100, 0)
+      if (!listRes.ok || !listRes.products) {
+        throw new Error(listRes.error || 'Failed to fetch product list')
+      }
+      await handleSync(listRes.products)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sync failed')
       setState('error')
@@ -144,23 +159,31 @@ export function SyncPrintfulModal() {
                   </span>
                 </div>
               </div>
-              <p className="mt-4 text-xs text-zinc-500 leading-relaxed text-center">
-                {newCount > 0
-                  ? `${newCount} new product${newCount !== 1 ? 's' : ''} will be added. Existing products will be updated.`
-                  : 'No new products. Syncing will update existing product data.'}
-              </p>
-              <div className="mt-6 flex gap-3">
+
+              <div className="mt-6 flex flex-col gap-2">
+                {newCount > 0 && (
+                  <button
+                    onClick={handleSyncNew}
+                    className="w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 shadow-lg shadow-amber-500/10 transition-colors"
+                  >
+                    Sync New Only ({newCount})
+                  </button>
+                )}
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className="flex-1 rounded-xl border border-zinc-700 bg-zinc-800/50 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+                  onClick={handleSyncAll}
+                  className={`w-full rounded-xl py-3 text-sm font-bold transition-colors ${
+                    newCount > 0
+                      ? 'border border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:bg-zinc-800'
+                      : 'bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-lg shadow-amber-500/10'
+                  }`}
                 >
-                  Cancel
+                  Sync All ({totalItems})
                 </button>
                 <button
-                  onClick={handleSync}
-                  className="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 shadow-lg shadow-amber-500/10 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full rounded-xl border border-zinc-700 bg-transparent py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors"
                 >
-                  Sync Now
+                  Cancel
                 </button>
               </div>
             </div>
@@ -208,7 +231,7 @@ export function SyncPrintfulModal() {
               </div>
               <h3 className="text-xl font-bold text-zinc-50">Sync Complete!</h3>
               <p className="mt-2 text-zinc-400 text-sm max-w-[240px]">
-                Catalog successfully updated with {totalItems} items.
+                Catalog successfully updated with {syncedCount} item{syncedCount !== 1 ? 's' : ''}.
               </p>
               <button
                 onClick={() => {

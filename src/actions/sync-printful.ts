@@ -388,13 +388,14 @@ export async function getPrintfulSyncStats(): Promise<{
   total?: number
   existingCount?: number
   newCount?: number
+  newProducts?: { id: number; name: string }[]
   error?: string
 }> {
   if (!isPrintfulConfigured()) return { ok: false, error: 'Printful not configured' }
 
-  // Printful API max limit is 100 — paginate to collect all product IDs
+  // Printful API max limit is 100 — paginate to collect all product IDs + names
   const PAGE_SIZE = 100
-  const allIds: number[] = []
+  const allProducts: { id: number; name: string }[] = []
   let offset = 0
   let total = 0
 
@@ -402,29 +403,31 @@ export async function getPrintfulSyncStats(): Promise<{
     const res = await fetchStoreProducts(offset, PAGE_SIZE)
     if (!res.ok) return { ok: false, error: res.error }
     total = res.total ?? 0
-    const page = (res.products ?? []).map((p) => p.id)
-    allIds.push(...page)
-    if (allIds.length >= total || page.length < PAGE_SIZE) break
+    const page = (res.products ?? []).map((p) => ({ id: p.id, name: p.name }))
+    allProducts.push(...page)
+    if (allProducts.length >= total || page.length < PAGE_SIZE) break
     offset += PAGE_SIZE
   }
 
-  const printfulIds = allIds
+  if (allProducts.length === 0)
+    return { ok: true, total: 0, existingCount: 0, newCount: 0, newProducts: [] }
 
   // Compare with products already in the database
   const supabase = getAdminClient()
-  if (!supabase || printfulIds.length === 0)
-    return { ok: true, total, existingCount: 0, newCount: total }
+  if (!supabase)
+    return { ok: true, total, existingCount: 0, newCount: total, newProducts: allProducts }
 
+  const printfulIds = allProducts.map((p) => p.id)
   const { data: existing } = await supabase
     .from('products')
     .select('printful_sync_product_id')
     .in('printful_sync_product_id', printfulIds)
 
   const existingSet = new Set((existing ?? []).map((p) => p.printful_sync_product_id))
-  const existingCount = printfulIds.filter((id) => existingSet.has(id)).length
-  const newCount = printfulIds.length - existingCount
+  const newProducts = allProducts.filter((p) => !existingSet.has(p.id))
+  const existingCount = allProducts.length - newProducts.length
 
-  return { ok: true, total, existingCount, newCount }
+  return { ok: true, total, existingCount, newCount: newProducts.length, newProducts }
 }
 
 export async function getPrintfulSyncProductIds(
