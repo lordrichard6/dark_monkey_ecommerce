@@ -17,6 +17,7 @@ import {
   isProductInWishlist,
 } from '@/lib/queries'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { Suspense } from 'react'
 import { RelatedProducts } from '@/components/product/RelatedProducts'
 import { FrequentlyBought } from '@/components/product/FrequentlyBought'
 import { RecentlyViewed } from '@/components/product/RecentlyViewed'
@@ -267,11 +268,17 @@ export default async function ProductPage({ params, searchParams }: Props) {
           }
         />
 
-        <FrequentlyBought productId={product.id} locale={locale} />
+        <Suspense>
+          <FrequentlyBought productId={product.id} locale={locale} />
+        </Suspense>
 
-        <RelatedProducts productId={product.id} locale={locale} />
+        <Suspense>
+          <RelatedProducts productId={product.id} locale={locale} />
+        </Suspense>
 
-        <RecentlyViewed userId={user?.id} productId={product.id} />
+        <Suspense>
+          <RecentlyViewed userId={user?.id} productId={product.id} />
+        </Suspense>
       </div>
     </div>
   )

@@ -12,7 +12,12 @@ export async function RelatedProducts({ productId, locale }: RelatedProductsProp
   const supabase = await createClient()
   const t = await getTranslations('product')
 
-  const relatedProducts = await getRelatedProducts(supabase, productId, { limit: 4 })
+  let relatedProducts: Awaited<ReturnType<typeof getRelatedProducts>> = []
+  try {
+    relatedProducts = await getRelatedProducts(supabase, productId, { limit: 4 })
+  } catch {
+    return null
+  }
 
   if (relatedProducts.length === 0) return null
 

@@ -14,7 +14,12 @@ export async function FrequentlyBought({ productId, locale }: FrequentlyBoughtPr
   const supabase = await createClient()
   const t = await getTranslations('product')
 
-  const recommendations = await getFrequentlyBoughtTogether(supabase, productId, 2)
+  let recommendations: Awaited<ReturnType<typeof getFrequentlyBoughtTogether>> = []
+  try {
+    recommendations = await getFrequentlyBoughtTogether(supabase, productId, 2)
+  } catch {
+    return null
+  }
 
   if (recommendations.length === 0) return null
 
