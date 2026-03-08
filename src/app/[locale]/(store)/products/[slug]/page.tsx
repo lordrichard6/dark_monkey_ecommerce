@@ -1,5 +1,6 @@
 import { createClient, getUserSafe } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { getStoreSetting } from '@/actions/admin-shipping'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -132,14 +133,23 @@ export default async function ProductPage({ params, searchParams }: Props) {
   // Fetch related data in parallel with cached queries
   const user = await getUserSafe(supabase)
 
-  const [customizationRule, userIsInWishlist, reviews, userReview, bestsellerIds] =
-    await Promise.all([
-      product.is_customizable ? getProductCustomizationRule(product.id) : Promise.resolve(null),
-      user?.id ? isProductInWishlist(product.id, user.id) : Promise.resolve(false),
-      getProductReviews(product.id),
-      user?.id ? getUserProductReview(product.id, user.id) : Promise.resolve(null),
-      getBestsellerProductIds(),
-    ])
+  const [
+    customizationRule,
+    userIsInWishlist,
+    reviews,
+    userReview,
+    bestsellerIds,
+    shipmentInfo,
+    gpsrInfo,
+  ] = await Promise.all([
+    product.is_customizable ? getProductCustomizationRule(product.id) : Promise.resolve(null),
+    user?.id ? isProductInWishlist(product.id, user.id) : Promise.resolve(false),
+    getProductReviews(product.id),
+    user?.id ? getUserProductReview(product.id, user.id) : Promise.resolve(null),
+    getBestsellerProductIds(),
+    getStoreSetting('shipment_info'),
+    getStoreSetting('gpsr_info'),
+  ])
 
   const isBestseller = bestsellerIds.has(product.id)
 
@@ -257,7 +267,15 @@ export default async function ProductPage({ params, searchParams }: Props) {
             description: sanitizeProductHtml(product.description),
             categories: category,
             images: sortedImages,
+            material_info: (product as Record<string, unknown>).material_info as string | null,
+            care_instructions: (product as Record<string, unknown>).care_instructions as
+              | string
+              | null,
+            print_method: (product as Record<string, unknown>).print_method as string | null,
+            size_guide_url: (product as Record<string, unknown>).size_guide_url as string | null,
           }}
+          shipmentInfo={shipmentInfo}
+          gpsrInfo={gpsrInfo}
           images={sortedImages}
           variants={variantsWithStock}
           reviews={reviews}

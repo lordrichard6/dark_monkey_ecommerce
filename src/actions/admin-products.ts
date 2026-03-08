@@ -394,7 +394,16 @@ export async function setPrimaryProductImage(
 
 export async function updateProduct(
   productId: string,
-  data: { name?: string; slug?: string; description?: string | null; category_id?: string | null }
+  data: {
+    name?: string
+    slug?: string
+    description?: string | null
+    category_id?: string | null
+    material_info?: string | null
+    care_instructions?: string | null
+    print_method?: string | null
+    size_guide_url?: string | null
+  }
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await getAdminUser()
   if (!user) return { ok: false, error: 'Unauthorized' }
@@ -418,6 +427,11 @@ export async function updateProduct(
     updates.slug = slug
   }
   if ('description' in data) updates.description = data.description?.trim() || null
+  if ('material_info' in data) updates.material_info = data.material_info?.trim() || null
+  if ('care_instructions' in data)
+    updates.care_instructions = data.care_instructions?.trim() || null
+  if ('print_method' in data) updates.print_method = data.print_method?.trim() || null
+  if ('size_guide_url' in data) updates.size_guide_url = data.size_guide_url?.trim() || null
 
   if (Object.keys(updates).length === 0) return { ok: true }
 

@@ -29,6 +29,7 @@ import { addToCart } from '@/actions/cart'
 import { colorToHex } from '@/lib/color-swatch'
 import { CustomizationPanel } from '@/components/customization/CustomizationPanel'
 import { StockNotificationButton } from '@/components/product/StockNotificationButton'
+import { ProductInfoTabs } from '@/components/product/ProductInfoTabs'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
 
@@ -46,6 +47,10 @@ type Props = {
       color?: string | null
       variant_id?: string | null
     }>
+    material_info?: string | null
+    care_instructions?: string | null
+    print_method?: string | null
+    size_guide_url?: string | null
   }
   images: Array<{
     url: string
@@ -65,6 +70,8 @@ type Props = {
   customizationRule?: CustomizationRuleDef | null
   userId?: string
   storyContent?: StoryContent | null
+  shipmentInfo?: string | null
+  gpsrInfo?: string | null
 }
 
 export function ProductMain({
@@ -81,6 +88,8 @@ export function ProductMain({
   customizationRule,
   userId,
   storyContent,
+  shipmentInfo,
+  gpsrInfo,
 }: Props) {
   const t = useTranslations('product')
   const { format, currency } = useCurrency()
@@ -358,6 +367,7 @@ export function ProductMain({
               selectedColor={selectedColor}
               customizationRule={customizationRule}
               productCategory={product.categories?.name}
+              sizeGuideUrl={product.size_guide_url}
               externalIsAdding={isAdding}
               onAddToCart={handleAddToCart}
               onBuyNow={handleBuyNow}
@@ -439,6 +449,17 @@ export function ProductMain({
             dangerouslySetInnerHTML={{ __html: product.description || '' }}
           />
         </div>
+      </div>
+
+      {/* ── INFO TABS (Material / Care & Print / Shipment / GPSR) ── */}
+      <div className="mt-10 max-w-4xl">
+        <ProductInfoTabs
+          materialInfo={product.material_info ?? null}
+          careInstructions={product.care_instructions ?? null}
+          printMethod={product.print_method ?? null}
+          shipmentInfo={shipmentInfo ?? null}
+          gpsrInfo={gpsrInfo ?? null}
+        />
       </div>
 
       {/* ── REVIEWS ─────────────────────────────────────────────── */}

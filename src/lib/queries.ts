@@ -34,6 +34,10 @@ export const getProductBySlug = cache(async (slug: string) => {
       category_id,
       story_content,
       printful_sync_product_id,
+      material_info,
+      care_instructions,
+      print_method,
+      size_guide_url,
       categories (name, slug),
       product_images (url, alt, sort_order, color, variant_id),
       product_variants (

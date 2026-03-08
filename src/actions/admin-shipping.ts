@@ -70,6 +70,33 @@ export async function updateShippingZone(
   return { ok: true }
 }
 
+/** Fetch a text value from store_settings by key (public read, no auth required). */
+export async function getStoreSetting(key: string): Promise<string | null> {
+  const supabase = getAdminClient()
+  if (!supabase) return null
+
+  const { data } = await supabase.from('store_settings').select('value').eq('key', key).single()
+  return data?.value ?? null
+}
+
+/** Update a text store_setting. Admin only. */
+export async function updateStoreSetting(
+  key: string,
+  value: string
+): Promise<{ ok: boolean; error?: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { error } = await supabase.from('store_settings').upsert({ key, value })
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/admin/settings')
+  return { ok: true }
+}
+
 /** Update the free shipping threshold. Admin only. */
 export async function updateFreeShippingThreshold(
   cents: number

@@ -9,7 +9,9 @@ import { ProductCategoryField } from './product-category-field'
 import { ProductTagsField } from './product-tags-field'
 import { ProductToggleStatus } from './product-toggle-status'
 import { ProductDangerZone } from './product-danger-zone'
+import { ProductInfoFields } from './product-info-fields'
 import { CopyIdButton } from './copy-id-button'
+import { getStoreSetting } from '@/actions/admin-shipping'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,11 +37,12 @@ export default async function AdminProductDetailPage({ params }: Props) {
       </div>
     )
 
-  const [productRes, tagsRes, productTagsRes, allCategories] = await Promise.all([
-    supabase
-      .from('products')
-      .select(
-        `
+  const [productRes, tagsRes, productTagsRes, allCategories, shipmentInfo, gpsrInfo] =
+    await Promise.all([
+      supabase
+        .from('products')
+        .select(
+          `
         id,
         name,
         slug,
@@ -48,6 +51,10 @@ export default async function AdminProductDetailPage({ params }: Props) {
         is_active,
         is_customizable,
         printful_sync_product_id,
+        material_info,
+        care_instructions,
+        print_method,
+        size_guide_url,
         created_at,
         updated_at,
         product_images (id, url, alt, sort_order, color, source),
@@ -61,13 +68,15 @@ export default async function AdminProductDetailPage({ params }: Props) {
           product_inventory (quantity)
         )
       `
-      )
-      .eq('id', id)
-      .single(),
-    supabase.from('tags').select('id, name').order('name', { ascending: true }),
-    supabase.from('product_tags').select('tag_id').eq('product_id', id),
-    getCategories(),
-  ])
+        )
+        .eq('id', id)
+        .single(),
+      supabase.from('tags').select('id, name').order('name', { ascending: true }),
+      supabase.from('product_tags').select('tag_id').eq('product_id', id),
+      getCategories(),
+      getStoreSetting('shipment_info'),
+      getStoreSetting('gpsr_info'),
+    ])
 
   const { data: product, error } = productRes
 
@@ -227,6 +236,23 @@ export default async function AdminProductDetailPage({ params }: Props) {
           <ProductDescriptionField productId={product.id} description={product.description} />
         }
       />
+
+      {/* ── Product Info Tabs Content ─────────────────────────────────────── */}
+      <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+        <h2 className="mb-1 text-sm font-semibold text-zinc-200">Product Info Tabs</h2>
+        <p className="mb-5 text-xs text-zinc-500">
+          Content shown in the Material, Care & Print, Shipment, and GPSR tabs on the product page.
+        </p>
+        <ProductInfoFields
+          productId={product.id}
+          materialInfo={(product as Record<string, unknown>).material_info as string | null}
+          careInstructions={(product as Record<string, unknown>).care_instructions as string | null}
+          printMethod={(product as Record<string, unknown>).print_method as string | null}
+          sizeGuideUrl={(product as Record<string, unknown>).size_guide_url as string | null}
+          shipmentInfo={shipmentInfo}
+          gpsrInfo={gpsrInfo}
+        />
+      </div>
 
       {/* ── Danger Zone ──────────────────────────────────────────────────── */}
       <div className="mt-8">

@@ -12,6 +12,7 @@ import type { CustomizationRuleDef } from '@/types/customization'
 import { colorToHex } from '@/lib/color-swatch'
 import { ColorOption } from '@/types/product'
 import { StockNotificationButton } from '@/components/product/StockNotificationButton'
+import { SizeGuideModal } from '@/components/product/SizeGuideModal'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { trackAddToCart, trackCustomization } from '@/lib/analytics'
 
@@ -142,6 +143,7 @@ interface AddToCartFormProps {
     sort_order: number
     variant_id?: string | null
   }>
+  sizeGuideUrl?: string | null
   // When provided, the form delegates add-to-cart and buy-now to the parent
   // (ProductMain owns the unified state). If absent, the form handles it internally.
   externalIsAdding?: boolean
@@ -350,9 +352,12 @@ export function AddToCartForm({
       {/* Size Selector */}
       {hasSizes && (
         <div className="flex flex-col gap-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-            {t('size')}
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              {t('size')}
+            </span>
+            <SizeGuideModal productCategory={productCategory} sizeGuideUrl={props.sizeGuideUrl} />
+          </div>
           <div className="flex flex-wrap gap-2">
             {sizedVariants.map((v) => {
               const sizeLabel = (v.attributes?.size as string) || v.name || '—'

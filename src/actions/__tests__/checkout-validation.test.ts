@@ -253,6 +253,7 @@ describe('Checkout Validation', () => {
         discountId: 'discount-1',
         discountCents: 1000, // 10 CHF
         code: 'SAVE10',
+        discountType: 'percentage',
       })
     })
 
@@ -288,6 +289,7 @@ describe('Checkout Validation', () => {
         discountId: 'discount-2',
         discountCents: 2000, // 20 CHF
         code: 'SAVE20',
+        discountType: 'fixed',
       })
     })
 
@@ -323,6 +325,7 @@ describe('Checkout Validation', () => {
         discountId: 'discount-3',
         discountCents: 5000, // Capped at order total
         code: 'HUGE',
+        discountType: 'fixed',
       })
     })
 
@@ -468,6 +471,7 @@ describe('Checkout Validation', () => {
         discountId: 'welcome-10',
         discountCents: 1000,
         code: 'WELCOME10',
+        discountType: 'fixed',
       })
     })
   })
