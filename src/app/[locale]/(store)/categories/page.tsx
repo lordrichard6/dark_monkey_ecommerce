@@ -56,13 +56,15 @@ export default async function CategoriesPage() {
     countByParent[sub.parent_id] = (countByParent[sub.parent_id] ?? 0) + count
   }
 
-  const categoryCards = (rootCategories ?? []).map((cat) => ({
-    title: cat.name,
-    description: cat.description || '',
-    href: `/categories/${cat.slug}` as '/',
-    image: cat.image_url || '/images/hero_bg.webp',
-    productCount: countByParent[cat.id] ?? 0,
-  }))
+  const categoryCards = (rootCategories ?? [])
+    .filter((cat) => (countByParent[cat.id] ?? 0) > 0)
+    .map((cat) => ({
+      title: cat.name,
+      description: cat.description || '',
+      href: `/categories/${cat.slug}` as '/',
+      image: cat.image_url || '/images/hero_bg.webp',
+      productCount: countByParent[cat.id] ?? 0,
+    }))
 
   return (
     <div className="relative min-h-[calc(100vh-3.5rem)] bg-zinc-950">
