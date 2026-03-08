@@ -51,6 +51,8 @@ type Props = {
     care_instructions?: string | null
     print_method?: string | null
     size_guide_url?: string | null
+    origin_country?: string | null
+    avg_fulfillment_time?: string | null
   }
   images: Array<{
     url: string
@@ -457,6 +459,8 @@ export function ProductMain({
           materialInfo={product.material_info ?? null}
           careInstructions={product.care_instructions ?? null}
           printMethod={product.print_method ?? null}
+          originCountry={product.origin_country ?? null}
+          avgFulfillmentTime={product.avg_fulfillment_time ?? null}
           shipmentInfo={shipmentInfo ?? null}
           gpsrInfo={gpsrInfo ?? null}
         />

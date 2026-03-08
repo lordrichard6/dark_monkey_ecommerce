@@ -12,6 +12,12 @@ import {
   PrintfulSyncProduct,
   PrintfulSyncVariant,
 } from '@/lib/printful'
+import {
+  parsePrintfulDescription,
+  extractMaterialInfo,
+  formatTechnique,
+  formatFulfillmentTime,
+} from '@/lib/printful-description'
 import { PRINTFUL_CONFIG } from '@/lib/printful/config'
 import { revalidatePath } from 'next/cache'
 
@@ -242,11 +248,30 @@ async function upsertProduct(
   }
 
   let description: string | null = null
+  let material_info: string | null = null
+  let print_method: string | null = null
+  let origin_country: string | null = null
+  let avg_fulfillment_time: string | null = null
+
   const catalogProductId = sync_variants[0]?.product?.product_id
   if (catalogProductId != null) {
     const catalog = await fetchCatalogProduct(catalogProductId)
-    if (catalog.ok && catalog.description?.trim()) {
-      description = catalog.description.trim()
+    if (catalog.ok) {
+      // Parse raw description: converts bullet text to proper HTML
+      const rawDesc = catalog.description?.trim() ?? null
+      description = parsePrintfulDescription(rawDesc)
+
+      // Extract material/fabric bullets from description
+      material_info = extractMaterialInfo(rawDesc)
+
+      // Print technique from Printful catalog
+      print_method = formatTechnique(catalog.techniques ?? [])
+
+      // Fulfillment time
+      avg_fulfillment_time = formatFulfillmentTime(catalog.avg_fulfillment_time)
+
+      // Origin country
+      origin_country = catalog.origin_country ?? null
     }
   }
 
@@ -257,6 +282,10 @@ async function upsertProduct(
       name: sync_product.name,
       slug,
       description: description ?? undefined,
+      material_info: material_info ?? undefined,
+      print_method: print_method ?? 'DTF (Direct to Film)',
+      origin_country: origin_country ?? undefined,
+      avg_fulfillment_time: avg_fulfillment_time ?? undefined,
       is_customizable: false,
       is_active: true,
       printful_sync_product_id: sync_product.id,

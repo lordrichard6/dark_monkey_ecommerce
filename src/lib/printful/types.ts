@@ -75,6 +75,12 @@ export type PrintfulSyncProductDetail = {
 }
 
 // Catalog Types
+export type PrintfulCatalogTechnique = {
+  key: string
+  display_name: string
+  is_default: boolean
+}
+
 export type PrintfulCatalogProduct = {
   id: number
   main_category_id: number
@@ -91,6 +97,10 @@ export type PrintfulCatalogProduct = {
   is_discontinued: boolean
   avg_fulfillment_time: number | null
   description: string
+  /** Printing techniques available for this product (DTG, DTF, Embroidery, etc.) */
+  techniques?: PrintfulCatalogTechnique[]
+  /** Country where the blank garment is manufactured */
+  origin_country?: string | null
 }
 
 export type PrintfulCatalogOption = {

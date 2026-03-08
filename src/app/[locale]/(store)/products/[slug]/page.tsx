@@ -5,6 +5,7 @@ import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { sanitizeProductHtml } from '@/lib/sanitize-html.server'
+import { parsePrintfulDescription, extractMaterialInfo } from '@/lib/printful-description'
 import { ProductMain } from './product-main'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -264,15 +265,28 @@ export default async function ProductPage({ params, searchParams }: Props) {
             // Sanitize HTML server-side before it reaches the client component.
             // Prevents XSS if product descriptions contain malicious markup
             // from a compromised data source.
-            description: sanitizeProductHtml(product.description),
+            // Parse Printful plain-text descriptions to HTML for existing products
+            // (new syncs already store parsed HTML; this is a backwards-compat pass)
+            description: sanitizeProductHtml(
+              parsePrintfulDescription(product.description) ?? product.description
+            ),
             categories: category,
             images: sortedImages,
-            material_info: (product as Record<string, unknown>).material_info as string | null,
+            // For existing products without material_info, auto-extract from description
+            material_info: (() => {
+              const stored = (product as Record<string, unknown>).material_info as string | null
+              if (stored) return stored
+              return extractMaterialInfo(product.description)
+            })(),
             care_instructions: (product as Record<string, unknown>).care_instructions as
               | string
               | null,
             print_method: (product as Record<string, unknown>).print_method as string | null,
             size_guide_url: (product as Record<string, unknown>).size_guide_url as string | null,
+            origin_country: (product as Record<string, unknown>).origin_country as string | null,
+            avg_fulfillment_time: (product as Record<string, unknown>).avg_fulfillment_time as
+              | string
+              | null,
           }}
           shipmentInfo={shipmentInfo}
           gpsrInfo={gpsrInfo}

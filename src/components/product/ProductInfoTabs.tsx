@@ -9,6 +9,8 @@ type Props = {
   materialInfo: string | null
   careInstructions: string | null
   printMethod: string | null
+  originCountry: string | null
+  avgFulfillmentTime: string | null
   shipmentInfo: string | null
   gpsrInfo: string | null
 }
@@ -20,10 +22,15 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'gpsr', label: 'GPSR', icon: ShieldCheck },
 ]
 
+const RICH_TEXT_CLASSES =
+  'styled-description prose prose-invert prose-sm max-w-none text-zinc-400 font-sans leading-relaxed'
+
 export function ProductInfoTabs({
   materialInfo,
   careInstructions,
   printMethod,
+  originCountry,
+  avgFulfillmentTime,
   shipmentInfo,
   gpsrInfo,
 }: Props) {
@@ -54,9 +61,17 @@ export function ProductInfoTabs({
       <div className="mt-4 rounded-2xl border border-white/5 bg-zinc-900/20 px-6 py-6 md:px-10 md:py-8">
         {activeTab === 'material' && (
           <TabContent>
+            {/* Origin country badge */}
+            {originCountry && (
+              <div className="mb-5 flex items-center gap-2">
+                <span className="rounded-full bg-zinc-800 border border-white/5 px-3 py-1 text-xs font-medium text-zinc-400">
+                  🌍 Made in {originCountry}
+                </span>
+              </div>
+            )}
             {materialInfo ? (
               <div
-                className="styled-description prose prose-invert prose-sm max-w-none text-zinc-400 font-sans leading-relaxed"
+                className={RICH_TEXT_CLASSES}
                 dangerouslySetInnerHTML={{ __html: materialInfo }}
               />
             ) : (
@@ -82,7 +97,7 @@ export function ProductInfoTabs({
             )}
             {careInstructions ? (
               <div
-                className="styled-description prose prose-invert prose-sm max-w-none text-zinc-400 font-sans leading-relaxed"
+                className={RICH_TEXT_CLASSES}
                 dangerouslySetInnerHTML={{ __html: careInstructions }}
               />
             ) : (
@@ -93,9 +108,23 @@ export function ProductInfoTabs({
 
         {activeTab === 'shipment' && (
           <TabContent>
+            {/* Fulfillment time pill from Printful */}
+            {avgFulfillmentTime && (
+              <div className="mb-5 flex items-center gap-2 rounded-xl bg-emerald-500/5 border border-emerald-500/10 px-4 py-3">
+                <span className="text-lg">⚡</span>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                    Production time
+                  </p>
+                  <p className="mt-0.5 text-sm text-zinc-300">
+                    Usually produced in {avgFulfillmentTime} after your order
+                  </p>
+                </div>
+              </div>
+            )}
             {shipmentInfo ? (
               <div
-                className="styled-description prose prose-invert prose-sm max-w-none text-zinc-400 font-sans leading-relaxed"
+                className={RICH_TEXT_CLASSES}
                 dangerouslySetInnerHTML={{ __html: shipmentInfo }}
               />
             ) : (
@@ -107,10 +136,7 @@ export function ProductInfoTabs({
         {activeTab === 'gpsr' && (
           <TabContent>
             {gpsrInfo ? (
-              <div
-                className="styled-description prose prose-invert prose-sm max-w-none text-zinc-400 font-sans leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: gpsrInfo }}
-              />
+              <div className={RICH_TEXT_CLASSES} dangerouslySetInnerHTML={{ __html: gpsrInfo }} />
             ) : (
               <p className="text-sm text-zinc-500 italic">No GPSR information available.</p>
             )}

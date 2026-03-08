@@ -131,26 +131,37 @@ export async function createOrder(
   }
 }
 
-/** Catalog product description - used when syncing from Store API */
-export async function fetchCatalogProduct(
-  productId: number
-): Promise<{ ok: boolean; description?: string; error?: string }> {
+export type CatalogProductInfo = {
+  ok: boolean
+  description?: string
+  techniques?: import('./printful/types').PrintfulCatalogTechnique[]
+  avg_fulfillment_time?: number | null
+  origin_country?: string | null
+  error?: string
+}
+
+/** Catalog product info - used when syncing from Store API */
+export async function fetchCatalogProduct(productId: number): Promise<CatalogProductInfo> {
   if (!isPrintfulConfigured()) {
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
   try {
-    const data = await fetchPrintful<{ product?: { description?: string } }>(
+    const data = await fetchPrintful<{ product?: PrintfulCatalogProduct }>(
       `${API_BASE}/products/${productId}`,
-      {
-        headers: getHeaders(),
-      }
+      { headers: getHeaders() }
     )
 
     if (data.result?.product) {
-      const desc = data.result.product.description
-      return { ok: true, description: typeof desc === 'string' ? desc : undefined }
+      const p = data.result.product
+      return {
+        ok: true,
+        description: typeof p.description === 'string' ? p.description : undefined,
+        techniques: p.techniques ?? [],
+        avg_fulfillment_time: p.avg_fulfillment_time ?? null,
+        origin_country: p.origin_country ?? null,
+      }
     }
-    return { ok: false, error: 'No product description found' }
+    return { ok: false, error: 'No product data found' }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: msg }
