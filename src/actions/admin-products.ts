@@ -24,11 +24,20 @@ export async function createProduct(input: {
   const supabase = getAdminClient()
   if (!supabase) return { ok: false, error: 'Admin not configured' }
 
+  const slug = input.slug.trim().toLowerCase().replace(/\s+/g, '-')
+  const { data: slugConflict } = await supabase
+    .from('products')
+    .select('id')
+    .eq('slug', slug)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (slugConflict) return { ok: false, error: 'Slug already in use by another product' }
+
   const { data: product, error: productError } = await supabase
     .from('products')
     .insert({
       name: input.name.trim(),
-      slug: input.slug.trim().toLowerCase().replace(/\s+/g, '-'),
+      slug,
       description: input.description?.trim() || null,
       category_id: input.categoryId || null,
       is_customizable: input.isCustomizable ?? false,
