@@ -7,7 +7,7 @@ import {
   getPrintfulSyncProductIds,
   syncPrintfulProductById,
 } from '@/actions/sync-printful'
-import { Loader2, CheckCircle2, AlertCircle, RefreshCw, Layers } from 'lucide-react'
+import { Loader2, CheckCircle2, AlertCircle, RefreshCw, Layers, Sparkles } from 'lucide-react'
 
 type SyncState = 'idle' | 'counting' | 'confirming' | 'syncing' | 'complete' | 'error'
 
@@ -16,6 +16,8 @@ export function SyncPrintfulModal() {
   const [isOpen, setIsOpen] = useState(false)
   const [state, setState] = useState<SyncState>('idle')
   const [totalItems, setTotalItems] = useState(0)
+  const [existingCount, setExistingCount] = useState(0)
+  const [newCount, setNewCount] = useState(0)
   const [progress, setProgress] = useState(0)
   const [currentProductName, setCurrentProductName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -24,6 +26,8 @@ export function SyncPrintfulModal() {
   const reset = useCallback(() => {
     setState('idle')
     setTotalItems(0)
+    setExistingCount(0)
+    setNewCount(0)
     setProgress(0)
     setCurrentProductName('')
     setError(null)
@@ -36,6 +40,8 @@ export function SyncPrintfulModal() {
     const res = await getPrintfulSyncStats()
     if (res.ok && res.total !== undefined) {
       setTotalItems(res.total)
+      setExistingCount(res.existingCount ?? 0)
+      setNewCount(res.newCount ?? 0)
       setState('confirming')
     } else {
       setError(res.error || 'Failed to fetch Printful stats')
@@ -117,17 +123,33 @@ export function SyncPrintfulModal() {
 
           {state === 'confirming' && (
             <div className="py-2">
-              <div className="rounded-xl bg-zinc-950/50 p-4 border border-zinc-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-zinc-400 text-sm">Products found</span>
-                  <span className="text-zinc-50 font-bold text-xl">{totalItems}</span>
+              <div className="rounded-xl bg-zinc-950/50 border border-zinc-800 divide-y divide-zinc-800 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-zinc-400 text-sm">Products in Printful</span>
+                  <span className="text-zinc-50 font-bold text-lg">{totalItems}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-zinc-400 text-sm">Already in your store</span>
+                  <span className="text-zinc-300 font-semibold">{existingCount}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3 bg-amber-500/5">
+                  <span className="flex items-center gap-2 text-amber-400 text-sm font-medium">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    New items
+                  </span>
+                  <span
+                    className={`font-bold text-lg ${newCount > 0 ? 'text-amber-400' : 'text-zinc-500'}`}
+                  >
+                    {newCount}
+                  </span>
                 </div>
               </div>
-              <p className="mt-6 text-sm text-zinc-400 leading-relaxed text-center">
-                This will sync images, variants, and variants from your Printful store. Existing
-                products will be updated.
+              <p className="mt-4 text-xs text-zinc-500 leading-relaxed text-center">
+                {newCount > 0
+                  ? `${newCount} new product${newCount !== 1 ? 's' : ''} will be added. Existing products will be updated.`
+                  : 'No new products. Syncing will update existing product data.'}
               </p>
-              <div className="mt-8 flex gap-3">
+              <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => setIsOpen(false)}
                   className="flex-1 rounded-xl border border-zinc-700 bg-zinc-800/50 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"

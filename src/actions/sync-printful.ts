@@ -386,12 +386,34 @@ async function syncVariants(
 export async function getPrintfulSyncStats(): Promise<{
   ok: boolean
   total?: number
+  existingCount?: number
+  newCount?: number
   error?: string
 }> {
   if (!isPrintfulConfigured()) return { ok: false, error: 'Printful not configured' }
-  const res = await fetchStoreProducts(0, 1)
+
+  // Fetch all Printful product IDs (limit 500 to handle large catalogs)
+  const res = await fetchStoreProducts(0, 500)
   if (!res.ok) return { ok: false, error: res.error }
-  return { ok: true, total: res.total }
+
+  const total = res.total ?? 0
+  const printfulIds = (res.products ?? []).map((p) => p.id)
+
+  // Compare with products already in the database
+  const supabase = getAdminClient()
+  if (!supabase || printfulIds.length === 0)
+    return { ok: true, total, existingCount: 0, newCount: total }
+
+  const { data: existing } = await supabase
+    .from('products')
+    .select('printful_sync_product_id')
+    .in('printful_sync_product_id', printfulIds)
+
+  const existingSet = new Set((existing ?? []).map((p) => p.printful_sync_product_id))
+  const existingCount = printfulIds.filter((id) => existingSet.has(id)).length
+  const newCount = printfulIds.length - existingCount
+
+  return { ok: true, total, existingCount, newCount }
 }
 
 export async function getPrintfulSyncProductIds(
