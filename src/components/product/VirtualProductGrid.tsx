@@ -29,6 +29,37 @@ type VirtualProductGridProps = {
   sort?: string
 }
 
+// Below this count, use a plain CSS grid instead of the virtualizer.
+// The virtualizer has an initial-render bug where getVirtualItems() returns []
+// until a scroll/interaction triggers recalculation. For typical catalog sizes
+// a plain grid is fast enough and renders immediately.
+const VIRTUALIZER_THRESHOLD = 100
+
+function ProductGrid({ products }: { products: Product[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+      {products.map((product) => (
+        <ProductCardWithWishlist
+          key={product.slug}
+          productId={product.productId!}
+          slug={product.slug}
+          name={product.name}
+          priceCents={product.priceCents}
+          compareAtPriceCents={product.compareAtPriceCents}
+          imageUrl={product.imageUrl}
+          imageAlt={product.imageAlt}
+          isInWishlist={product.isInWishlist ?? false}
+          isBestseller={product.isBestseller ?? false}
+          isOnSale={product.isOnSale ?? false}
+          isFeatured={product.isFeatured ?? false}
+          createdAt={product.createdAt}
+          showWishlist={!!product.productId}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function VirtualProductGrid({ products, title, sort = 'newest' }: VirtualProductGridProps) {
   const t = useTranslations('home')
   const router = useRouter()
@@ -43,7 +74,6 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
     }
   }, [])
 
-   
   useEffect(() => {
     const updateColumns = () => {
       if (window.innerWidth >= 1024) setColumns(4)
@@ -59,11 +89,22 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
   const rowCount = Math.ceil(products.length / columns)
 
   const virtualizer = useWindowVirtualizer({
-    count: rowCount,
-    estimateSize: () => 500, // Estimate height of a product card + gap
+    count: products.length > VIRTUALIZER_THRESHOLD ? rowCount : 0,
+    estimateSize: () => 500,
     overscan: 5,
     scrollMargin,
   })
+
+  // After scrollMargin is measured on mount, force the virtualizer to
+  // recalculate visible items. Without this, getVirtualItems() stays empty
+  // until the user scrolls.
+  const virtualizerRef = useRef(virtualizer)
+  virtualizerRef.current = virtualizer
+  useEffect(() => {
+    if (products.length > VIRTUALIZER_THRESHOLD) {
+      virtualizerRef.current.measure()
+    }
+  }, [scrollMargin, products.length])
 
   const SORT_OPTIONS = [
     { value: 'newest', label: t('sortNewest') },
@@ -101,41 +142,45 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
       </div>
 
       {products.length > 0 ? (
-        <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const rowStartIndex = virtualRow.index * columns
-            const rowProducts = products.slice(rowStartIndex, rowStartIndex + columns)
+        products.length <= VIRTUALIZER_THRESHOLD ? (
+          <ProductGrid products={products} />
+        ) : (
+          <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const rowStartIndex = virtualRow.index * columns
+              const rowProducts = products.slice(rowStartIndex, rowStartIndex + columns)
 
-            return (
-              <div
-                key={virtualRow.key}
-                className="absolute left-0 top-0 grid w-full grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4"
-                style={{
-                  transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
-                }}
-              >
-                {rowProducts.map((product) => (
-                  <ProductCardWithWishlist
-                    key={product.slug}
-                    productId={product.productId!}
-                    slug={product.slug}
-                    name={product.name}
-                    priceCents={product.priceCents}
-                    compareAtPriceCents={product.compareAtPriceCents}
-                    imageUrl={product.imageUrl}
-                    imageAlt={product.imageAlt}
-                    isInWishlist={product.isInWishlist ?? false}
-                    isBestseller={product.isBestseller ?? false}
-                    isOnSale={product.isOnSale ?? false}
-                    isFeatured={product.isFeatured ?? false}
-                    createdAt={product.createdAt}
-                    showWishlist={!!product.productId}
-                  />
-                ))}
-              </div>
-            )
-          })}
-        </div>
+              return (
+                <div
+                  key={virtualRow.key}
+                  className="absolute left-0 top-0 grid w-full grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4"
+                  style={{
+                    transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
+                  }}
+                >
+                  {rowProducts.map((product) => (
+                    <ProductCardWithWishlist
+                      key={product.slug}
+                      productId={product.productId!}
+                      slug={product.slug}
+                      name={product.name}
+                      priceCents={product.priceCents}
+                      compareAtPriceCents={product.compareAtPriceCents}
+                      imageUrl={product.imageUrl}
+                      imageAlt={product.imageAlt}
+                      isInWishlist={product.isInWishlist ?? false}
+                      isBestseller={product.isBestseller ?? false}
+                      isOnSale={product.isOnSale ?? false}
+                      isFeatured={product.isFeatured ?? false}
+                      createdAt={product.createdAt}
+                      showWishlist={!!product.productId}
+                    />
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )
       ) : (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-zinc-900/30 py-24 text-center">
           <div className="mb-6 rounded-full bg-zinc-900 p-6 ring-1 ring-zinc-800">
