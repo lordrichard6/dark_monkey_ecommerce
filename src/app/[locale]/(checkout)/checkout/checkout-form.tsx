@@ -336,6 +336,7 @@ export function CheckoutForm({
         {/* Upsell Section */}
         <UpsellSection
           upsellItems={upsellItems}
+          loadingId={addingUpsellId}
           onAdd={async (id) => {
             const item = upsellItems.find((u) => u.id === id)
             if (!item || addingUpsellId) return

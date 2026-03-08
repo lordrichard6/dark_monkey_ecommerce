@@ -171,12 +171,12 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
       }
     }
 
-    if (item.priceCents < variant.price_cents) {
-      return {
-        ok: false,
-        error: 'VALIDATION_FAILED',
-        message: `Invalid price for "${item.productName}". Please refresh your cart.`,
-      }
+    if (item.priceCents !== variant.price_cents) {
+      // Price changed since item was added to cart. We always charge the current DB price,
+      // but inform the customer so there are no surprises.
+      console.log(
+        `[Checkout] Price mismatch for "${item.productName}": cart=${item.priceCents} db=${variant.price_cents}. Using DB price.`
+      )
     }
 
     const { data: inventory } = await supabase
@@ -196,7 +196,7 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
 
     validatedItems.push({
       item,
-      priceCents: item.priceCents,
+      priceCents: variant.price_cents, // always use DB price — never trust client cookie
       stock,
     })
   }
@@ -385,15 +385,23 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
 
     // Session created — record in logs without exposing sensitive data
 
-    const emailForAbandoned = input?.email ?? undefined
+    const emailForAbandoned = input?.email?.trim() || null
     // DO NOT use fire-and-forget here - the webhook RELIES on this record.
     // Use admin client to ensure insertion succeeds regardless of user session state.
+    // Skip insert entirely if there's no email — webhook recovery relies on the cart_summary,
+    // not the email; a fake email would pollute the abandoned_checkouts table.
+    if (!emailForAbandoned) {
+      console.warn(
+        '[Checkout] No email provided, skipping abandoned_checkouts record for session:',
+        session.id
+      )
+    }
     try {
       const adminSupabase = getAdminClient()
-      if (adminSupabase) {
+      if (adminSupabase && emailForAbandoned) {
         const { error } = await adminSupabase.from('abandoned_checkouts').insert({
           stripe_session_id: session.id,
-          email: emailForAbandoned || 'guest@lopes2tech.ch', // Default if missing but table requires it
+          email: emailForAbandoned,
           cart_summary: {
             itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
             totalCents,

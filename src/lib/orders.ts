@@ -209,8 +209,13 @@ export async function processSuccessfulCheckout(sessionId: string) {
       p_discount_id: discountId,
     })
     if (discountErr) {
-      // Non-fatal: log and continue. A slightly wrong use_count is better than losing an order.
-      console.error('[OrderProcess] Failed to increment discount use_count:', discountErr.message)
+      // This is fatal: if use_count fails, max_uses limits stop being enforced and codes become
+      // unlimited. Log with full detail for ops alerting; order is already committed so we don't
+      // throw (that would prevent the webhook from completing), but we want high-visibility logging.
+      console.error(
+        '[OrderProcess] CRITICAL: Failed to increment discount use_count — max_uses may be bypassed.',
+        { discountId, orderId: order.id, error: discountErr.message }
+      )
     } else {
       console.log(`[OrderProcess] Discount use_count incremented for: ${discountId}`)
     }

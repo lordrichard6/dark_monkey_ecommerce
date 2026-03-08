@@ -29,6 +29,10 @@ export async function submitReview(
     return { ok: false, error: 'Rating must be between 1 and 5' }
   }
 
+  if (comment && comment.length > 5000) {
+    return { ok: false, error: 'Comment must be 5,000 characters or fewer' }
+  }
+
   let verifiedOrderId: string | null = null
   if (orderId) {
     const { data: order } = await supabase
