@@ -148,11 +148,10 @@ export function checkAchievementQualification(
 // Points earning rules
 export const POINTS_RULES = {
   PURCHASE: 10, // 10 points per CHF 1 spent (1000 cents = 10 points)
-  REVIEW: 50, // Points for writing a review
+  REVIEW: 100, // Points for writing a review
   REFERRAL_SIGNUP: 200, // When referred friend signs up
   REFERRAL_PURCHASE: 500, // When referred friend makes first purchase
   ACHIEVEMENT: 0, // Varies by achievement
-  BIRTHDAY: 500, // Birthday bonus
 } as const
 
 export function calculatePurchasePoints(priceCents: number): number {

@@ -61,25 +61,32 @@ export function AchievementBadge({
         {achievement.name}
       </div>
 
-      {/* Points reward */}
-      {achievement.pointsReward > 0 && unlocked && (
-        <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black shadow">
+      {/* Points reward — shown on both locked and unlocked */}
+      {achievement.pointsReward > 0 && (
+        <div
+          className={`absolute -right-2 -top-2 rounded-full px-2 py-0.5 text-[10px] font-bold shadow ${
+            unlocked ? 'bg-amber-500 text-black' : 'bg-zinc-700 text-zinc-400'
+          }`}
+        >
           +{achievement.pointsReward}
         </div>
       )}
 
       {/* Tooltip on hover */}
-      <div className="pointer-events-none absolute -top-20 left-1/2 z-10 hidden w-48 -translate-x-1/2 rounded-lg bg-zinc-900 p-3 text-xs text-zinc-300 shadow-xl group-hover:block">
+      <div className="pointer-events-none absolute -top-24 left-1/2 z-10 hidden w-52 -translate-x-1/2 rounded-lg bg-zinc-900 p-3 text-xs text-zinc-300 shadow-xl group-hover:block">
         <p className="font-semibold text-zinc-50">{achievement.name}</p>
         <p className="mt-1">{achievement.description}</p>
+        {achievement.pointsReward > 0 && (
+          <p className="mt-2 font-semibold text-amber-400">
+            Reward: +{achievement.pointsReward} points
+          </p>
+        )}
         {unlocked && unlockedAt && (
-          <p className="mt-2 text-[10px] text-zinc-500">
+          <p className="mt-1 text-[10px] text-zinc-500">
             Unlocked: {unlockedAt.toLocaleDateString()}
           </p>
         )}
-        {!unlocked && (
-          <p className="mt-2 text-[10px] text-zinc-500">Not yet unlocked</p>
-        )}
+        {!unlocked && <p className="mt-1 text-[10px] text-zinc-500">Not yet unlocked</p>}
       </div>
     </div>
   )

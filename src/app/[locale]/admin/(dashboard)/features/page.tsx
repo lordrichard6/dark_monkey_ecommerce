@@ -99,7 +99,7 @@ const featureCategories: FeatureCategory[] = [
       {
         icon: Gift,
         title: 'Birthday Rewards',
-        description: '15% automatic discount and 500 bonus points on user birthdays',
+        description: '15% automatic discount on user birthdays',
         status: 'live',
       },
       {
@@ -417,12 +417,8 @@ export default function FeaturesPage() {
                   <Sparkles className="h-6 w-6 text-zinc-950" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-zinc-50 sm:text-3xl">
-                    Platform Features
-                  </h1>
-                  <p className="text-sm text-zinc-400">
-                    Complete feature overview
-                  </p>
+                  <h1 className="text-2xl font-bold text-zinc-50 sm:text-3xl">Platform Features</h1>
+                  <p className="text-sm text-zinc-400">Complete feature overview</p>
                 </div>
               </div>
             </div>
@@ -432,9 +428,7 @@ export default function FeaturesPage() {
                 <div className="text-xs text-zinc-400">Live Features</div>
               </div>
               <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2">
-                <div className="text-2xl font-bold text-zinc-300">
-                  {featureCategories.length}
-                </div>
+                <div className="text-2xl font-bold text-zinc-300">{featureCategories.length}</div>
                 <div className="text-xs text-zinc-400">Categories</div>
               </div>
             </div>
@@ -456,9 +450,7 @@ export default function FeaturesPage() {
                   <category.icon className="h-5 w-5 text-amber-400" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-zinc-50">
-                    {category.name}
-                  </h2>
+                  <h2 className="text-lg font-semibold text-zinc-50">{category.name}</h2>
                   <p className="text-sm text-zinc-500">
                     {category.features.length} feature
                     {category.features.length !== 1 ? 's' : ''}
@@ -483,14 +475,10 @@ export default function FeaturesPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex items-start justify-between gap-2">
-                          <h3 className="font-semibold text-zinc-50">
-                            {feature.title}
-                          </h3>
+                          <h3 className="font-semibold text-zinc-50">{feature.title}</h3>
                           <StatusBadge status={feature.status} />
                         </div>
-                        <p className="text-sm text-zinc-400">
-                          {feature.description}
-                        </p>
+                        <p className="text-sm text-zinc-400">{feature.description}</p>
                       </div>
                     </div>
                   </div>
@@ -509,12 +497,10 @@ export default function FeaturesPage() {
                 Premium E-commerce Platform
               </span>
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-zinc-50">
-              Built for Excellence
-            </h3>
+            <h3 className="mb-2 text-2xl font-bold text-zinc-50">Built for Excellence</h3>
             <p className="text-zinc-400">
-              A comprehensive e-commerce platform with gamification, personalization,
-              and premium user experience. Designed for growth and customer engagement.
+              A comprehensive e-commerce platform with gamification, personalization, and premium
+              user experience. Designed for growth and customer engagement.
             </p>
           </div>
         </div>

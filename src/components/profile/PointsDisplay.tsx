@@ -36,8 +36,8 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
         duration: 10000,
         action: {
           label: 'Copy',
-          onClick: () => navigator.clipboard.writeText(result.code || '')
-        }
+          onClick: () => navigator.clipboard.writeText(result.code || ''),
+        },
       })
       setSelectedRedemption(null)
     } catch (error) {
@@ -80,10 +80,9 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
         </h3>
         <div className="space-y-3">
           <EarnRule icon="🛍️" title="Make a Purchase" points="1 point per CHF 1" />
-          <EarnRule icon="⭐" title="Write a Review" points="50 points" />
+          <EarnRule icon="⭐" title="Write a Review" points="100 points" />
           <EarnRule icon="🤝" title="Refer a Friend (Signup)" points="200 points" />
           <EarnRule icon="💰" title="Refer a Friend (First Purchase)" points="500 points" />
-          <EarnRule icon="🎂" title="Birthday Bonus" points="500 points" />
           <EarnRule icon="🏆" title="Unlock Achievements" points="Varies" />
         </div>
       </div>
@@ -98,18 +97,19 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
           {redemptionOptions.map((option) => (
             <div key={option.points} className="relative">
               <button
-                onClick={() => setSelectedRedemption(selectedRedemption === option.points ? null : option.points)}
+                onClick={() =>
+                  setSelectedRedemption(selectedRedemption === option.points ? null : option.points)
+                }
                 disabled={!option.available || isLoading}
-                className={`flex w-full items-center justify-between rounded-lg border p-4 text-left transition ${option.available
-                  ? 'border-zinc-700 bg-zinc-800 hover:border-zinc-600 hover:bg-zinc-700'
-                  : 'border-zinc-800 bg-zinc-900/50 opacity-50 cursor-not-allowed'
-                  } ${selectedRedemption === option.points ? 'ring-2 ring-amber-500' : ''}`}
+                className={`flex w-full items-center justify-between rounded-lg border p-4 text-left transition ${
+                  option.available
+                    ? 'border-zinc-700 bg-zinc-800 hover:border-zinc-600 hover:bg-zinc-700'
+                    : 'border-zinc-800 bg-zinc-900/50 opacity-50 cursor-not-allowed'
+                } ${selectedRedemption === option.points ? 'ring-2 ring-amber-500' : ''}`}
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-amber-400">
-                      {option.points} points
-                    </span>
+                    <span className="text-lg font-bold text-amber-400">{option.points} points</span>
                     {!option.available && (
                       <span className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500">
                         Locked
@@ -120,13 +120,18 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
                     Get {format(option.discountCents)} discount
                   </p>
                 </div>
-                {option.available && <ChevronRight className={`h-5 w-5 text-zinc-500 transition-transform ${selectedRedemption === option.points ? 'rotate-90' : ''}`} />}
+                {option.available && (
+                  <ChevronRight
+                    className={`h-5 w-5 text-zinc-500 transition-transform ${selectedRedemption === option.points ? 'rotate-90' : ''}`}
+                  />
+                )}
               </button>
 
               {selectedRedemption === option.points && (
                 <div className="mt-2 p-4 rounded-lg bg-zinc-900 border border-zinc-700 animate-in fade-in slide-in-from-top-2">
                   <p className="text-zinc-300 mb-4 text-sm">
-                    Are you sure you want to redeem <strong>{option.points} points</strong> for a <strong>{format(option.discountCents)} discount</strong>?
+                    Are you sure you want to redeem <strong>{option.points} points</strong> for a{' '}
+                    <strong>{format(option.discountCents)} discount</strong>?
                   </p>
                   <div className="flex gap-3">
                     <button
