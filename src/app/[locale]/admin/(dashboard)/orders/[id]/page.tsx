@@ -9,7 +9,6 @@ import { RefundOrderButton } from './refund-order-button'
 import { SyncPrintfulOrderButton } from './sync-printful-order-button'
 import { ConfirmPrintfulOrderButton } from './confirm-printful-order-button'
 import { RetryPrintfulButton } from './retry-printful-button'
-import { fetchStoreOrder } from '@/lib/printful'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatPrice(cents: number) {
@@ -266,16 +265,10 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         value_cents?: number
       } | null)
 
-  // Fetch Printful order status (non-blocking — we don't throw if this fails)
-  // Used to decide whether to show "Confirm with Printful" vs "Sync Printful"
-  let printfulStatus: string | null = null
-  if (order.printful_order_id) {
-    const { ok: pfOk, order: pfOrder } = await fetchStoreOrder(order.printful_order_id)
-    if (pfOk && pfOrder?.status) {
-      printfulStatus = pfOrder.status
-    }
-  }
-  const printfulIsDraft = printfulStatus === 'draft'
+  // Derive draft status from local data — avoids a live Printful API call on every render
+  // (fetchStoreOrder retries up to 3×30 s = ~120 s and blocked router.refresh() loops).
+  // The ConfirmPrintfulOrderButton re-validates the real Printful status before confirming.
+  const printfulIsDraft = Boolean(order.printful_order_id) && order.status === 'paid'
 
   // Determine if updated_at is meaningfully different from created_at (>5s diff)
   const createdMs = new Date(order.created_at).getTime()
@@ -497,31 +490,6 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                   </p>
                   <div className="mt-0.5 flex items-center gap-2">
                     <p className="font-mono text-xs text-zinc-400">#{order.printful_order_id}</p>
-                    {printfulStatus && (
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset capitalize ${
-                          printfulStatus === 'draft'
-                            ? 'bg-zinc-800 text-zinc-400 ring-zinc-700'
-                            : printfulStatus === 'pending'
-                              ? 'bg-blue-500/10 text-blue-400 ring-blue-500/20'
-                              : printfulStatus === 'inprocess'
-                                ? 'bg-amber-500/10 text-amber-400 ring-amber-500/20'
-                                : printfulStatus === 'partial'
-                                  ? 'bg-amber-500/10 text-amber-400 ring-amber-500/20'
-                                  : printfulStatus === 'fulfilled'
-                                    ? 'bg-purple-500/10 text-purple-400 ring-purple-500/20'
-                                    : printfulStatus === 'canceled'
-                                      ? 'bg-red-500/10 text-red-400 ring-red-500/20'
-                                      : printfulStatus === 'failed'
-                                        ? 'bg-red-500/10 text-red-400 ring-red-500/20'
-                                        : printfulStatus === 'onhold'
-                                          ? 'bg-orange-500/10 text-orange-400 ring-orange-500/20'
-                                          : 'bg-zinc-800 text-zinc-400 ring-zinc-700'
-                        }`}
-                      >
-                        {printfulStatus}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

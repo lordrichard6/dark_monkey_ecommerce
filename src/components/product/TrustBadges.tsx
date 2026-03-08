@@ -1,8 +1,10 @@
-import { Truck, RotateCcw, ShieldCheck } from 'lucide-react'
-import { getTranslations } from 'next-intl/server'
+'use client'
 
-export async function TrustBadges() {
-  const t = await getTranslations('product')
+import { Truck, RotateCcw, ShieldCheck } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+
+export function TrustBadges() {
+  const t = useTranslations('product')
 
   const badges = [
     {

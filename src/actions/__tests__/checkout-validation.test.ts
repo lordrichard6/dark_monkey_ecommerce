@@ -210,9 +210,14 @@ describe('Checkout Validation', () => {
       } as unknown as Awaited<ReturnType<typeof createClient>>)
 
       const result = await validateDiscountCode('BIGORDER', 5000) // 50 CHF order
+      const expectedMin = new Intl.NumberFormat('de-CH', {
+        style: 'currency',
+        currency: 'CHF',
+        minimumFractionDigits: 2,
+      }).format(100)
       expect(result).toEqual({
         ok: false,
-        error: 'Minimum order is CHF\u00a0100.00',
+        error: `Minimum order is ${expectedMin}`,
       })
     })
 
