@@ -8,14 +8,14 @@ const messages = { en, pt, fr, de, it }
 
 type Locale = keyof typeof messages
 
-export type EmailType = 'orderConfirmation' | 'abandonedCart' | 'restock' | 'wishlist'
+export type EmailType = 'orderConfirmation' | 'abandonedCart' | 'restock' | 'wishlist' | 'shipment'
 
 export function getEmailStrings(locale: string, type: EmailType) {
   const safeLocale = (locale in messages ? locale : 'en') as Locale
   const emails = messages[safeLocale].email
   return {
     ...emails[type],
-    footer: emails.footer
+    footer: emails.footer,
   }
 }
 
@@ -90,20 +90,32 @@ export function generateEmailHtml(
         <h1 class="h1">${content.title}</h1>
         <p class="p">${content.body}</p>
 
-        ${content.details && content.details.length > 0 ? `
+        ${
+          content.details && content.details.length > 0
+            ? `
           <div class="details">
-            ${content.details.map(d => `
+            ${content.details
+              .map(
+                (d) => `
               <div class="detail-row">
                 <span class="detail-label">${d.label}</span>
                 <span class="detail-value">${d.value}</span>
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
-        ` : ''}
+        `
+            : ''
+        }
 
-        ${content.items && content.items.length > 0 ? `
+        ${
+          content.items && content.items.length > 0
+            ? `
           <div class="items">
-            ${content.items.map(item => `
+            ${content.items
+              .map(
+                (item) => `
               <div class="item-row">
                 <div>
                   <div class="item-name">${item.name}</div>
@@ -111,31 +123,47 @@ export function generateEmailHtml(
                 </div>
                 ${item.price ? `<div class="item-price">${item.price}</div>` : ''}
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
-        ` : ''}
+        `
+            : ''
+        }
 
-        ${content.total ? `
+        ${
+          content.total
+            ? `
           <div class="total-row">
             <span>${strings.total}</span>
             <span>${content.total}</span>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
 
-        ${content.registerUrl ? `
+        ${
+          content.registerUrl
+            ? `
           <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid ${border};">
             <p style="margin-bottom: 16px;">${strings.createAccount || 'Not registered yet?'}</p>
             <a href="${content.registerUrl}" style="color: ${accent}; text-decoration: underline; font-weight: 600;">
               ${strings.createAccountAction || 'Create account to track order'}
             </a>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
 
-        ${content.ctaUrl ? `
+        ${
+          content.ctaUrl
+            ? `
           <div style="text-align: center; margin-top: 32px;">
             <a href="${content.ctaUrl}" class="btn">${content.ctaText || strings.cta}</a>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
 
       <div class="footer">

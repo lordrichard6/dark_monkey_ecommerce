@@ -518,7 +518,9 @@
     "shippingFree": "Grátis",
     "freeShippingUnlocked": "Envio grátis!",
     "freeShippingRemaining": "Adicione {amount} para envio grátis",
-    "shippingRequired": "Por favor selecione o seu país"
+    "shippingRequired": "Por favor selecione o seu país",
+    "giftNote": "Isto é um presente (adicionar mensagem)",
+    "giftNotePlaceholder": "Escreva uma mensagem pessoal para o destinatário…"
   },
   "forgotPassword": {
     "title": "Palavra-passe esquecida",
@@ -745,6 +747,14 @@
       "title": "Guardado para si",
       "body": "Tem {count} artigos na sua lista de desejos. Dê uma vista de olhos antes que desapareçam.",
       "cta": "Ver Lista de Desejos"
+    },
+    "shipment": {
+      "subject": "O seu pedido está a caminho — #{orderId}",
+      "title": "O seu pedido foi enviado!",
+      "body": "Ótimas notícias! O seu pedido foi despachado e está a caminho.",
+      "trackingLabel": "Número de rastreamento",
+      "carrierLabel": "Transportadora",
+      "cta": "Rastrear o seu pacote"
     },
     "footer": {
       "rights": "Todos os direitos reservados.",

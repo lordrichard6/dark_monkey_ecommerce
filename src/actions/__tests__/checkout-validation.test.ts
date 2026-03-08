@@ -212,7 +212,7 @@ describe('Checkout Validation', () => {
       const result = await validateDiscountCode('BIGORDER', 5000) // 50 CHF order
       expect(result).toEqual({
         ok: false,
-        error: 'Minimum order is 100 CHF',
+        error: 'Minimum order is CHF\u00a0100.00',
       })
     })
 

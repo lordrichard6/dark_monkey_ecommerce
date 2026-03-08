@@ -174,6 +174,57 @@ export async function sendRestockAlert(
   }
 }
 
+export type ShipmentPayload = {
+  to: string
+  orderId: string
+  trackingNumber: string
+  trackingUrl: string
+  carrier?: string
+  locale?: string
+}
+
+export async function sendShipmentEmail(
+  payload: ShipmentPayload
+): Promise<{ ok: boolean; error?: string }> {
+  const resend = getResendClient()
+  if (!resend) return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
+
+  const locale = payload.locale || 'en'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strings = getEmailStrings(locale, 'shipment') as any
+
+  const details: { label: string; value: string }[] = [
+    { label: strings.trackingLabel, value: payload.trackingNumber },
+  ]
+  if (payload.carrier) {
+    details.push({ label: strings.carrierLabel, value: payload.carrier })
+  }
+
+  const html = generateEmailHtml(locale, 'shipment', {
+    previewText: strings.title,
+    title: strings.title,
+    body: strings.body,
+    details,
+    ctaText: strings.cta,
+    ctaUrl: payload.trackingUrl,
+  })
+
+  try {
+    const { error } = await resend.emails.send({
+      from: getDefaultFrom(),
+      to: payload.to,
+      subject: strings.subject.replace('#{orderId}', payload.orderId.slice(0, 8).toUpperCase()),
+      html,
+    })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('Resend send error:', err)
+    return { ok: false, error: message }
+  }
+}
+
 export type WishlistReminderPayload = {
   to: string
   wishlistUrl: string

@@ -48,6 +48,16 @@ export function SearchResults({ products, categories, query, title, initialCateg
   const [filters, setFilters] = useState<FilterState>(initialFilters)
   const [sortBy, setSortBy] = useState<SortOption>('newest')
 
+  const activeFilterCount = useMemo(() => {
+    return [
+      filters.categories.length > 0,
+      filters.colors.length > 0,
+      filters.sizes.length > 0,
+      filters.inStockOnly,
+      filters.priceMin !== initialFilters.priceMin || filters.priceMax !== initialFilters.priceMax,
+    ].filter(Boolean).length
+  }, [filters, initialFilters])
+
   // Get available filter options based on the currently selected categories
   // This prevents seeing "iPhone Cases" sizes when "Apparel" is selected
   const availableFilters = useMemo(() => {
@@ -56,7 +66,9 @@ export function SearchResults({ products, categories, query, title, initialCateg
 
     let relevantProducts = products
     if (filters.categories.length > 0) {
-      relevantProducts = products.filter(p => p.categoryId && filters.categories.includes(p.categoryId))
+      relevantProducts = products.filter(
+        (p) => p.categoryId && filters.categories.includes(p.categoryId)
+      )
     }
 
     return getAvailableFilters(relevantProducts)
@@ -89,10 +101,15 @@ export function SearchResults({ products, categories, query, title, initialCateg
         <button
           type="button"
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 transition-colors hover:bg-zinc-800"
+          className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 transition-colors hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
         >
           <SlidersHorizontal className="h-4 w-4" />
           {tFilters('filters')}
+          {activeFilterCount > 0 && (
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-zinc-950">
+              {activeFilterCount}
+            </span>
+          )}
         </button>
         <SortSelector value={sortBy} onChange={setSortBy} />
       </div>
@@ -118,9 +135,7 @@ export function SearchResults({ products, categories, query, title, initialCateg
           {/* Header with sort */}
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="mb-1 text-2xl font-bold text-zinc-50">
-                {displayTitle}
-              </h1>
+              <h1 className="mb-1 text-2xl font-bold text-zinc-50">{displayTitle}</h1>
               <p className="text-sm text-zinc-400">
                 {filteredProducts.length === 0
                   ? t('noResults')
@@ -136,16 +151,10 @@ export function SearchResults({ products, categories, query, title, initialCateg
 
           {/* Results */}
           {filteredProducts.length > 0 ? (
-            <ProductGrid
-              products={gridProducts}
-              title={t('results')}
-              hideHeader={true}
-            />
+            <ProductGrid products={gridProducts} title={t('results')} hideHeader={true} />
           ) : (
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-12 text-center">
-              <h2 className="mb-4 text-xl font-semibold text-zinc-50">
-                {t('noResultsTitle')}
-              </h2>
+              <h2 className="mb-4 text-xl font-semibold text-zinc-50">{t('noResultsTitle')}</h2>
               <p className="mb-6 text-zinc-400">{t('noResultsMessage')}</p>
             </div>
           )}

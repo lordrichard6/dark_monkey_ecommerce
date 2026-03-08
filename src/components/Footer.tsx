@@ -89,9 +89,7 @@ function CurrencySelector() {
 
   return (
     <div className="flex flex-col gap-2" ref={ref}>
-      <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-        Currency
-      </span>
+      <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Currency</span>
       <div className="relative">
         <button
           type="button"
@@ -113,10 +111,11 @@ function CurrencySelector() {
                     setCurrency(c)
                     setOpen(false)
                   }}
-                  className={`block w-full px-4 py-2.5 text-left text-sm transition ${currency === c
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
-                    }`}
+                  className={`block w-full px-4 py-2.5 text-left text-sm transition ${
+                    currency === c
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
+                  }`}
                 >
                   {c}
                 </button>
@@ -132,14 +131,14 @@ function CurrencySelector() {
 export function Footer() {
   const t = useTranslations('footer')
   const [countryOpen, setCountryOpen] = useState(false)
-  const [countryValue, setCountryValue] = useState<(typeof COUNTRY_REGION_OPTIONS)[number]['value']>(COUNTRY_REGION_OPTIONS[0].value)
+  const [countryValue, setCountryValue] = useState<
+    (typeof COUNTRY_REGION_OPTIONS)[number]['value']
+  >(COUNTRY_REGION_OPTIONS[0].value)
   const countryRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const saved = document.cookie
-      .split('; ')
-      .find((r) => r.startsWith(`${COUNTRY_COOKIE}=`))
+    const saved = document.cookie.split('; ').find((r) => r.startsWith(`${COUNTRY_COOKIE}=`))
     const value = saved?.split('=')[1]
     if (value && COUNTRY_REGION_OPTIONS.some((o) => o.value === value)) {
       setCountryValue(value as (typeof COUNTRY_REGION_OPTIONS)[number]['value'])
@@ -167,7 +166,7 @@ export function Footer() {
     document.cookie = `${COUNTRY_COOKIE}=${value};path=/;max-age=${60 * 60 * 24 * 365}`
 
     // Auto-switch currency
-    const opt = COUNTRY_REGION_OPTIONS.find(o => o.value === value)
+    const opt = COUNTRY_REGION_OPTIONS.find((o) => o.value === value)
     if (opt && SUPPORTED_CURRENCIES.includes(opt.currency as SupportedCurrency)) {
       setCurrency(opt.currency as SupportedCurrency)
     }
@@ -198,9 +197,7 @@ export function Footer() {
               <h2 className="text-2xl font-bold text-white md:text-3xl lg:text-4xl">
                 {t('newsletterTitle')}
               </h2>
-              <p className="mt-4 text-zinc-400">
-                {t('newsletterDescription')}
-              </p>
+              <p className="mt-4 text-zinc-400">{t('newsletterDescription')}</p>
             </div>
 
             <div className="w-full max-w-md">
@@ -259,7 +256,10 @@ export function Footer() {
                 </div>
                 <div className="flex items-center gap-3 text-sm text-zinc-400">
                   <Mail className="h-4 w-4 text-zinc-500" />
-                  <a href="mailto:support@dark-monkey.ch" className="hover:text-amber-400 transition-colors">
+                  <a
+                    href="mailto:support@dark-monkey.ch"
+                    className="hover:text-amber-400 transition-colors"
+                  >
                     support@dark-monkey.ch
                   </a>
                 </div>
@@ -295,14 +295,19 @@ export function Footer() {
                       role="listbox"
                     >
                       {COUNTRY_REGION_OPTIONS.map((opt) => (
-                        <li key={opt.value} role="option" aria-selected={countryValue === opt.value}>
+                        <li
+                          key={opt.value}
+                          role="option"
+                          aria-selected={countryValue === opt.value}
+                        >
                           <button
                             type="button"
                             onClick={() => selectCountry(opt.value)}
-                            className={`block w-full px-4 py-2.5 text-left text-sm transition ${countryValue === opt.value
-                              ? 'bg-amber-500/20 text-amber-400'
-                              : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
-                              }`}
+                            className={`block w-full px-4 py-2.5 text-left text-sm transition ${
+                              countryValue === opt.value
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
+                            }`}
                           >
                             <span className="flex items-center gap-3">
                               <span className="text-lg">{COUNTRY_FLAGS[opt.value] || '🌐'}</span>
@@ -363,13 +368,25 @@ export function Footer() {
                 Follow Us
               </span>
               <div className="flex gap-4">
-                <a href="#" className="text-zinc-400 transition hover:text-white" aria-label="Instagram">
+                <a
+                  href="#"
+                  className="rounded text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  aria-label="Instagram"
+                >
                   <Instagram className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-zinc-400 transition hover:text-white" aria-label="Facebook">
+                <a
+                  href="#"
+                  className="rounded text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  aria-label="Facebook"
+                >
                   <Facebook className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-zinc-400 transition hover:text-white" aria-label="Twitter">
+                <a
+                  href="#"
+                  className="rounded text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  aria-label="Twitter"
+                >
                   <Twitter className="h-5 w-5" />
                 </a>
               </div>
@@ -389,7 +406,7 @@ export function Footer() {
               </span>
               <Link
                 href={link.href as '/'}
-                className="text-zinc-500 transition hover:text-amber-400"
+                className="rounded text-zinc-500 transition hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950"
               >
                 {t(link.key)}
               </Link>
@@ -397,6 +414,6 @@ export function Footer() {
           ))}
         </div>
       </div>
-    </footer >
+    </footer>
   )
 }

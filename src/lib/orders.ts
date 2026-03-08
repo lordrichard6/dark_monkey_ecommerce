@@ -145,6 +145,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
     ? parseInt(fullSession.metadata.shipping_cost_cents, 10)
     : 0
   const shippingCountry = fullSession.metadata?.shipping_country ?? null
+  const giftNote = fullSession.metadata?.gift_note ?? null
 
   const userId = fullSession.metadata?.user_id ?? null
   const guestEmail =
@@ -176,6 +177,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
       discount_cents: Number.isFinite(discountCents) ? discountCents : 0,
       shipping_cost_cents: Number.isFinite(shippingCostCents) ? shippingCostCents : 0,
       shipping_country: shippingCountry,
+      gift_note: giftNote,
     })
     .select('id, guest_email')
     .single()

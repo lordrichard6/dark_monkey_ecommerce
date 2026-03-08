@@ -85,6 +85,7 @@ export function ProductMain({
   const t = useTranslations('product')
   const { format, currency } = useCurrency()
   const router = useRouter()
+  const addToCartFormRef = useRef<HTMLDivElement>(null)
 
   // ── Single source of truth for all selection state ──────────────────────
   // BUG FIX: Previously, ProductMain and AddToCartForm each had their own
@@ -342,7 +343,7 @@ export function ProductMain({
           <ProductRatingSummary reviews={reviews} />
 
           {/* Price + stock — aria-live for screen readers */}
-          <div aria-live="polite" aria-atomic="true">
+          <div ref={addToCartFormRef} aria-live="polite" aria-atomic="true">
             <AddToCartForm
               productId={product.id}
               productSlug={product.slug}
@@ -471,6 +472,7 @@ export function ProductMain({
         stock={stock}
         quantity={quantity}
         onAddToCart={handleAddToCart}
+        observeRef={addToCartFormRef}
       />
     </div>
   )

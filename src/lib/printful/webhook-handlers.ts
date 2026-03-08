@@ -6,6 +6,7 @@ import {
   PrintfulOrderFailedPayload,
   PrintfulOrderCanceledPayload,
 } from '@/lib/printful/types-webhooks'
+import { sendShipmentEmail } from '@/lib/resend'
 
 /**
  * Handles the 'package_shipped' event from Printful.
@@ -59,6 +60,42 @@ export async function handlePackageShipped(
   logger.info(`Successfully updated order ${orderId} to 'shipped'`, {
     operation: 'webhook_handler',
   })
+
+  // Send shipment notification email (non-fatal if it fails)
+  try {
+    const { data: orderRow } = await supabase
+      .from('orders')
+      .select('guest_email, user_id')
+      .eq('id', orderId)
+      .single()
+
+    let recipientEmail: string | null = orderRow?.guest_email ?? null
+
+    if (!recipientEmail && orderRow?.user_id) {
+      const { data: userData } = await supabase.auth.admin.getUserById(orderRow.user_id)
+      recipientEmail = userData?.user?.email ?? null
+    }
+
+    if (recipientEmail && shipment.tracking_url) {
+      const emailResult = await sendShipmentEmail({
+        to: recipientEmail,
+        orderId,
+        trackingNumber: shipment.tracking_number ?? '',
+        trackingUrl: shipment.tracking_url,
+        carrier: shipment.carrier ?? undefined,
+      })
+      if (!emailResult.ok) {
+        logger.warn(`Shipment email failed for order ${orderId}: ${emailResult.error}`, {
+          operation: 'webhook_handler',
+        })
+      }
+    }
+  } catch (emailErr) {
+    logger.warn(`Error sending shipment email for order ${orderId}`, {
+      operation: 'webhook_handler',
+      error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+    })
+  }
 }
 
 /**

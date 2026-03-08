@@ -31,6 +31,8 @@ export type GuestCheckoutInput = {
   currency?: string
   /** Active locale (e.g. 'en', 'de') used to build the success/cancel redirect URLs. */
   locale?: string
+  /** Optional gift message to include with the order */
+  giftNote?: string | null
 }
 
 export type ValidateDiscountResult =
@@ -72,7 +74,10 @@ export async function validateDiscountCode(
     return { ok: false, error: 'Code has reached maximum uses' }
   }
   if ((discount.min_order_cents ?? 0) > subtotalCents) {
-    return { ok: false, error: `Minimum order is ${(discount.min_order_cents ?? 0) / 100} CHF` }
+    return {
+      ok: false,
+      error: `Minimum order is ${new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', minimumFractionDigits: 2 }).format((discount.min_order_cents ?? 0) / 100)}`,
+    }
   }
 
   let discountCents: number
@@ -354,6 +359,9 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
   if (input?.email) {
     metadata.guest_email = input.email
     if (input.fullName) metadata.guest_name = input.fullName
+  }
+  if (input?.giftNote?.trim()) {
+    metadata.gift_note = input.giftNote.trim().slice(0, 500)
   }
 
   try {

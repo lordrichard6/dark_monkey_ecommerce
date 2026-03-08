@@ -78,6 +78,8 @@ export function CheckoutForm({
 
   const [upsellItems, setUpsellItems] = useState<CheckoutUpsellItem[]>(initialUpsellItems)
   const [addingUpsellId, setAddingUpsellId] = useState<string | null>(null)
+  const [isGift, setIsGift] = useState(false)
+  const [giftNote, setGiftNote] = useState('')
 
   // Track begin_checkout on mount
   useEffect(() => {
@@ -127,6 +129,7 @@ export function CheckoutForm({
     const result = await validateDiscountCode(code, totalCents)
     if (result.ok) {
       setAppliedDiscount({ code: result.code, discountCents: result.discountCents })
+      setDiscountCode('')
     } else {
       setDiscountError(result.error)
     }
@@ -161,6 +164,7 @@ export function CheckoutForm({
       country,
       discountCode: appliedDiscount ? appliedDiscount.code : discountCode.trim() || undefined,
       locale,
+      giftNote: isGift && giftNote.trim() ? giftNote.trim() : null,
     })
 
     setLoading(false)
@@ -281,6 +285,29 @@ export function CheckoutForm({
           <p className="mt-2 text-sm text-amber-400">
             {t('discountAppliedLabel')}: −{formatPrice(appliedDiscount.discountCents)}
           </p>
+        )}
+      </div>
+
+      {/* Gift note */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={isGift}
+            onChange={(e) => setIsGift(e.target.checked)}
+            className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500"
+          />
+          <span className="text-sm font-medium text-zinc-300">{t('giftNote')}</span>
+        </label>
+        {isGift && (
+          <textarea
+            value={giftNote}
+            onChange={(e) => setGiftNote(e.target.value)}
+            maxLength={500}
+            rows={3}
+            placeholder={t('giftNotePlaceholder')}
+            className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          />
         )}
       </div>
 

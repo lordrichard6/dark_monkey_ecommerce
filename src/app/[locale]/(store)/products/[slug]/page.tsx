@@ -86,6 +86,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+function ProductSectionSkeleton() {
+  return (
+    <div className="mt-12 animate-pulse">
+      <div className="mb-4 h-5 w-40 rounded bg-zinc-800" />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="aspect-square rounded-lg bg-zinc-800" />
+            <div className="h-4 w-3/4 rounded bg-zinc-800" />
+            <div className="h-4 w-1/2 rounded bg-zinc-800" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export const revalidate = 3600
 export const dynamicParams = true
 
@@ -269,15 +286,15 @@ export default async function ProductPage({ params, searchParams }: Props) {
           }
         />
 
-        <Suspense>
+        <Suspense fallback={<ProductSectionSkeleton />}>
           <FrequentlyBought productId={product.id} locale={locale} />
         </Suspense>
 
-        <Suspense>
+        <Suspense fallback={<ProductSectionSkeleton />}>
           <RelatedProducts productId={product.id} locale={locale} />
         </Suspense>
 
-        <Suspense>
+        <Suspense fallback={null}>
           <RecentlyViewed userId={user?.id} productId={product.id} />
         </Suspense>
       </div>

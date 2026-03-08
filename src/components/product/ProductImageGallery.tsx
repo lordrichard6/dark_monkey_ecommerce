@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { ProductImageWithFallback } from './ProductImageWithFallback'
-import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from 'lucide-react'
 
 type ImageItem = {
   url: string
@@ -10,6 +10,7 @@ type ImageItem = {
   sort_order: number
   color?: string | null
   variant_id?: string | null
+  video_url?: string | null
 }
 
 interface ProductImageGalleryProps {
@@ -30,6 +31,57 @@ function isUnoptimized(url: string): boolean {
   )
 }
 
+function getYouTubeId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?#]+)/)
+  return m ? m[1] : null
+}
+
+function getVimeoId(url: string): string | null {
+  const m = url.match(/vimeo\.com\/(\d+)/)
+  return m ? m[1] : null
+}
+
+function isDirectVideo(url: string): boolean {
+  return /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url)
+}
+
+function VideoEmbed({ url, className = '' }: { url: string; className?: string }) {
+  const ytId = getYouTubeId(url)
+  if (ytId) {
+    return (
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0`}
+        className={`w-full h-full ${className}`}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        title="Product video"
+      />
+    )
+  }
+
+  const vimeoId = getVimeoId(url)
+  if (vimeoId) {
+    return (
+      <iframe
+        src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1`}
+        className={`w-full h-full ${className}`}
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+        title="Product video"
+      />
+    )
+  }
+
+  if (isDirectVideo(url)) {
+    return (
+       
+      <video src={url} controls autoPlay className={`w-full h-full object-contain ${className}`} />
+    )
+  }
+
+  return null
+}
+
 export function ProductImageGallery({
   images,
   productName,
@@ -41,6 +93,7 @@ export function ProductImageGallery({
   const [selectedImage, setSelectedImage] = useState<ImageItem>(images[0])
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     if (!selectedColor && !selectedVariantId) return images
@@ -74,15 +127,11 @@ export function ProductImageGallery({
     [filtered, selectedVariantId, selectedColor]
   )
 
-  // When the selected colour changes, jump to the best matching image immediately:
-  // 1. Prefer an image whose colour tag exactly matches selectedColor
-  // 2. Fall back to unique[0] (which is already sorted colour-first)
   useEffect(() => {
     if (unique.length === 0) return
     const colourMatch = selectedColor ? unique.find((img) => img.color === selectedColor) : null
-     
     setSelectedImage(colourMatch ?? unique[0])
-    // selectedColor is the trigger — unique re-derives from it so both deps are correct
+    setPlayingVideo(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedColor, selectedVariantId])
 
@@ -101,7 +150,6 @@ export function ProductImageGallery({
     [unique.length]
   )
 
-  // Keyboard navigation for lightbox
   useEffect(() => {
     if (!isLightboxOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -117,27 +165,51 @@ export function ProductImageGallery({
 
   const selectedIndex = unique.findIndex((img) => img.url === selectedImage?.url)
   const safeIndex = selectedIndex === -1 ? 0 : selectedIndex
+  const currentItem = unique[safeIndex]
+  const hasVideo = Boolean(currentItem?.video_url)
+  const isPlayingCurrent = playingVideo === currentItem?.url
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      {/* Main Image Container */}
-      <div
-        className="relative group overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 backdrop-blur-sm cursor-zoom-in"
-        onClick={() => openLightbox(safeIndex)}
-      >
+      {/* Main Image / Video Container */}
+      <div className="relative group overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 backdrop-blur-sm">
         <div className="relative aspect-square w-full sm:aspect-[4/5]">
-          <ProductImageWithFallback
-            src={selectedImage?.url ?? unique[0].url}
-            alt={selectedImage?.alt ?? productName}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            sizes="(max-width: 640px) 50vw, 40vw"
-            priority
-            unoptimized={isUnoptimized(selectedImage?.url ?? unique[0].url)}
-          />
-        </div>
-        <div className="absolute right-3 top-3 rounded-full bg-black/50 p-2 text-white/70 opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-md border border-white/10 pointer-events-none">
-          <ZoomIn className="h-4 w-4" />
+          {hasVideo && isPlayingCurrent && currentItem.video_url ? (
+            <div className="absolute inset-0">
+              <VideoEmbed url={currentItem.video_url} />
+            </div>
+          ) : (
+            <>
+              <div className="cursor-zoom-in" onClick={() => openLightbox(safeIndex)}>
+                <ProductImageWithFallback
+                  src={currentItem?.url ?? unique[0].url}
+                  alt={currentItem?.alt ?? productName}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, 40vw"
+                  priority
+                  unoptimized={isUnoptimized(currentItem?.url ?? unique[0].url)}
+                />
+              </div>
+              {hasVideo && currentItem.video_url && (
+                <button
+                  type="button"
+                  onClick={() => setPlayingVideo(currentItem.url)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Play video"
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-zinc-950 shadow-xl">
+                    <Play className="h-6 w-6 translate-x-0.5" />
+                  </div>
+                </button>
+              )}
+              {!hasVideo && (
+                <div className="absolute right-3 top-3 rounded-full bg-black/50 p-2 text-white/70 opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-md border border-white/10 pointer-events-none">
+                  <ZoomIn className="h-4 w-4" />
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -148,7 +220,10 @@ export function ProductImageGallery({
             <button
               key={`${img.url}-${i}`}
               type="button"
-              onClick={() => setSelectedImage(img)}
+              onClick={() => {
+                setSelectedImage(img)
+                setPlayingVideo(null)
+              }}
               className={`relative aspect-square w-12 shrink-0 overflow-hidden rounded-lg border-2 transition ${
                 safeIndex === i
                   ? 'border-amber-500 shadow-lg shadow-amber-500/20 scale-105'
@@ -163,6 +238,11 @@ export function ProductImageGallery({
                 sizes="50px"
                 unoptimized={isUnoptimized(img.url)}
               />
+              {img.video_url && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <Play className="h-3.5 w-3.5 text-white" />
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -208,15 +288,21 @@ export function ProductImageGallery({
           )}
 
           <div className="relative h-[85vh] w-[90vw]" onClick={closeLightbox}>
-            <ProductImageWithFallback
-              src={unique[lightboxIndex].url}
-              alt={unique[lightboxIndex].alt ?? productName}
-              fill
-              className="object-contain"
-              unoptimized={isUnoptimized(unique[lightboxIndex].url)}
-              priority
-              sizes="90vw"
-            />
+            {unique[lightboxIndex].video_url ? (
+              <div className="h-full w-full" onClick={(e) => e.stopPropagation()}>
+                <VideoEmbed url={unique[lightboxIndex].video_url!} />
+              </div>
+            ) : (
+              <ProductImageWithFallback
+                src={unique[lightboxIndex].url}
+                alt={unique[lightboxIndex].alt ?? productName}
+                fill
+                className="object-contain"
+                unoptimized={isUnoptimized(unique[lightboxIndex].url)}
+                priority
+                sizes="90vw"
+              />
+            )}
           </div>
 
           {unique.length > 1 && (
@@ -242,6 +328,11 @@ export function ProductImageGallery({
                     unoptimized={isUnoptimized(img.url)}
                     sizes="64px"
                   />
+                  {img.video_url && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <Play className="h-4 w-4 text-white" />
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

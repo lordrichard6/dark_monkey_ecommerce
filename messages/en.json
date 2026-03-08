@@ -518,7 +518,9 @@
     "shippingFree": "Free",
     "freeShippingUnlocked": "Free shipping!",
     "freeShippingRemaining": "Add {amount} more for free shipping",
-    "shippingRequired": "Please select your country"
+    "shippingRequired": "Please select your country",
+    "giftNote": "This is a gift (add a message)",
+    "giftNotePlaceholder": "Write a personal message for the recipient…"
   },
   "forgotPassword": {
     "title": "Forgot password",
@@ -745,6 +747,14 @@
       "title": "Saved for You",
       "body": "You have {count} items in your wishlist. Take a look before they're gone.",
       "cta": "View Wishlist"
+    },
+    "shipment": {
+      "subject": "Your order is on the way — #{orderId}",
+      "title": "Your Order Has Shipped!",
+      "body": "Great news! Your order has been dispatched and is on its way to you.",
+      "trackingLabel": "Tracking Number",
+      "carrierLabel": "Carrier",
+      "cta": "Track Your Package"
     },
     "footer": {
       "rights": "All rights reserved.",

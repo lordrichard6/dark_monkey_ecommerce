@@ -40,7 +40,7 @@ export function SuccessContent({ sessionId, initialOrder }: Props) {
       const status = await checkOrderStatus(sessionId)
 
       if (status.ok && status.order) {
-        setOrder(status.order as unknown as typeof order)
+        setOrder({ id: status.order.id, status: status.order.status })
         setIsPolling(false)
         clearInterval(interval)
       }

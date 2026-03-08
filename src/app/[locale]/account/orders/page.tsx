@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { formatPrice, SupportedCurrency } from '@/lib/currency'
+import { CheckCircle2, Clock, Loader2, Truck, PackageCheck, XCircle, RotateCcw } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
   paid: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
@@ -12,6 +13,27 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-red-500/10    text-red-400     border border-red-500/20',
   refunded: 'bg-purple-500/10 text-purple-400  border border-purple-500/20',
   pending: 'bg-zinc-800      text-zinc-400    border border-zinc-700',
+}
+
+function StatusIcon({ status }: { status: string }) {
+  switch (status) {
+    case 'paid':
+      return <CheckCircle2 className="h-3.5 w-3.5" />
+    case 'processing':
+      return <Loader2 className="h-3.5 w-3.5 animate-spin" />
+    case 'shipped':
+      return <Truck className="h-3.5 w-3.5" />
+    case 'delivered':
+      return <PackageCheck className="h-3.5 w-3.5" />
+    case 'cancelled':
+    case 'fulfillment_failed':
+    case 'fulfillment_canceled':
+      return <XCircle className="h-3.5 w-3.5" />
+    case 'refunded':
+      return <RotateCcw className="h-3.5 w-3.5" />
+    default:
+      return <Clock className="h-3.5 w-3.5" />
+  }
 }
 
 export default async function OrderHistoryPage() {
@@ -67,11 +89,12 @@ export default async function OrderHistoryPage() {
                     </p>
                   </div>
                   <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
                       STATUS_COLORS[order.status] ?? STATUS_COLORS['pending']
                     }`}
                   >
-                    {order.status}
+                    <StatusIcon status={order.status} />
+                    {order.status.replace(/_/g, ' ')}
                   </span>
                 </div>
               </Link>

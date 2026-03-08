@@ -518,7 +518,9 @@
     "shippingFree": "Kostenlos",
     "freeShippingUnlocked": "Kostenloser Versand!",
     "freeShippingRemaining": "Noch {amount} für kostenlosen Versand",
-    "shippingRequired": "Bitte wähle dein Land"
+    "shippingRequired": "Bitte wähle dein Land",
+    "giftNote": "Dies ist ein Geschenk (Nachricht hinzufügen)",
+    "giftNotePlaceholder": "Schreiben Sie eine persönliche Nachricht für den Empfänger…"
   },
   "forgotPassword": {
     "title": "Passwort vergessen",
@@ -745,6 +747,14 @@
       "title": "Für Sie gespeichert",
       "body": "Sie haben {count} Artikel auf Ihrer Wunschliste. Werfen Sie einen Blick darauf, bevor sie weg sind.",
       "cta": "Wunschliste ansehen"
+    },
+    "shipment": {
+      "subject": "Ihre Bestellung ist unterwegs — #{orderId}",
+      "title": "Ihre Bestellung wurde versendet!",
+      "body": "Gute Neuigkeiten! Ihre Bestellung wurde versandt und ist auf dem Weg zu Ihnen.",
+      "trackingLabel": "Sendungsnummer",
+      "carrierLabel": "Spediteur",
+      "cta": "Paket verfolgen"
     },
     "footer": {
       "rights": "Alle Rechte vorbehalten.",
