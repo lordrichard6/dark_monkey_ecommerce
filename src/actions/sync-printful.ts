@@ -392,12 +392,23 @@ export async function getPrintfulSyncStats(): Promise<{
 }> {
   if (!isPrintfulConfigured()) return { ok: false, error: 'Printful not configured' }
 
-  // Fetch all Printful product IDs (limit 500 to handle large catalogs)
-  const res = await fetchStoreProducts(0, 500)
-  if (!res.ok) return { ok: false, error: res.error }
+  // Printful API max limit is 100 — paginate to collect all product IDs
+  const PAGE_SIZE = 100
+  const allIds: number[] = []
+  let offset = 0
+  let total = 0
 
-  const total = res.total ?? 0
-  const printfulIds = (res.products ?? []).map((p) => p.id)
+  while (true) {
+    const res = await fetchStoreProducts(offset, PAGE_SIZE)
+    if (!res.ok) return { ok: false, error: res.error }
+    total = res.total ?? 0
+    const page = (res.products ?? []).map((p) => p.id)
+    allIds.push(...page)
+    if (allIds.length >= total || page.length < PAGE_SIZE) break
+    offset += PAGE_SIZE
+  }
+
+  const printfulIds = allIds
 
   // Compare with products already in the database
   const supabase = getAdminClient()
