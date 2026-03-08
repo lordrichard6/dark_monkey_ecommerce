@@ -24,15 +24,13 @@ export default function StoreError({
           <AlertTriangle className="w-8 h-8 text-red-400" />
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">{t('error')}</h2>
-        <p className="text-zinc-400 mb-8 leading-relaxed">
-          Something went wrong loading this page. This is usually temporary — please try again.
-        </p>
+        <p className="text-zinc-400 mb-8 leading-relaxed">{t('errorPageBody')}</p>
         <button
           onClick={reset}
           className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-amber-500 text-zinc-950 font-semibold hover:bg-amber-400 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
-          Try again
+          {t('tryAgain')}
         </button>
       </div>
     </div>

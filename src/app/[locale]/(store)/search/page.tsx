@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { searchProducts, type SearchableProduct } from '@/lib/search'
 import { SearchResults } from '@/components/search/SearchResults'
 import { type FilterableProduct } from '@/lib/product-filtering'
+import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { getTranslations } from 'next-intl/server'
 import { Metadata } from 'next'
 import Link from 'next/link'
@@ -73,28 +74,33 @@ export default async function SearchPage({ searchParams }: Props) {
   const supabase = await createClient()
 
   // Fetch all active products with their data
-  const { data: products, error } = await supabase
-    .from('products')
-    .select(
-      `
-      id,
-      name,
-      slug,
-      description,
-      category_id,
-      created_at,
-      categories (id, name, slug),
-      product_images (url, alt, sort_order),
-      product_variants (
+  const [{ data: products, error }, bestsellerIds] = await Promise.all([
+    supabase
+      .from('products')
+      .select(
+        `
         id,
-        price_cents,
-        attributes,
-        product_inventory (quantity)
+        name,
+        slug,
+        description,
+        category_id,
+        created_at,
+        categories (id, name, slug),
+        product_images (url, alt, sort_order),
+        product_variants (
+          id,
+          price_cents,
+          attributes,
+          product_inventory (quantity)
+        ),
+        product_tags (tags (name)),
+        product_reviews (rating)
+      `
       )
-    `
-    )
-    .eq('is_active', true)
-    .is('deleted_at', null)
+      .eq('is_active', true)
+      .is('deleted_at', null),
+    getBestsellerProductIds(),
+  ])
 
   if (error || !products) {
     return (
@@ -161,7 +167,10 @@ export default async function SearchPage({ searchParams }: Props) {
       slug: p.slug,
       description: p.description,
       category: category?.name || '',
-      tags: [], // TODO: Add tags when tag system is implemented
+      tags:
+        ((p.product_tags as unknown as { tags: { name: string } | null }[] | null)
+          ?.map((pt) => pt.tags?.name)
+          .filter(Boolean) as string[]) ?? [],
       priceCents: minPrice,
       imageUrl: primaryImage?.url || '/placeholder.png',
       imageAlt: primaryImage?.alt || p.name,
@@ -180,8 +189,12 @@ export default async function SearchPage({ searchParams }: Props) {
       inStock: totalStock > 0,
       imageUrl: primaryImage?.url || null,
       createdAt: p.created_at,
-      isBestseller: false, // TODO: Implement bestseller logic
-      averageRating: undefined, // TODO: Implement ratings
+      isBestseller: bestsellerIds.has(p.id),
+      averageRating: (() => {
+        const reviews = p.product_reviews as { rating: number }[] | null
+        if (!reviews?.length) return undefined
+        return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      })(),
     })
 
     // Track categories

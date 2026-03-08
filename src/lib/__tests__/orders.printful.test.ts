@@ -290,8 +290,8 @@ describe('processSuccessfulCheckout — Printful integration', () => {
     expect(result.ok).toBe(true) // order still created
   })
 
-  // --- Skip: no shipping address ---
-  it('does NOT call createOrder when shipping address is absent', async () => {
+  // --- Throw: no shipping address ---
+  it('throws when shipping address is absent (so Stripe retries)', async () => {
     mockStripe.checkout.sessions.retrieve.mockResolvedValue(SESSION_NO_ADDRESS)
     mockSupabase.from = buildFromMock(
       successTableResponses({
@@ -301,10 +301,10 @@ describe('processSuccessfulCheckout — Printful integration', () => {
       })
     )
 
-    const result = (await processSuccessfulCheckout('sess_7')) as Record<string, unknown>
-
+    await expect(processSuccessfulCheckout('sess_7')).rejects.toThrow(
+      'Missing shipping address for session sess_7'
+    )
     expect(mockCreatePrintfulOrder).not.toHaveBeenCalled()
-    expect(result.ok).toBe(true)
   })
 
   // --- Skip: variant missing Printful IDs ---

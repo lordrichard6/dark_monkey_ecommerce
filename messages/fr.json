@@ -53,7 +53,12 @@
     "seasonDrops": "Drops de saison",
     "settings": "Paramètres",
     "statistics": "Statistiques",
-    "success": "Succès"
+    "success": "Succès",
+    "tryAgain": "Réessayer",
+    "errorPageBody": "Une erreur s'est produite lors du chargement de cette page. C'est généralement temporaire — veuillez réessayer.",
+    "errorProductBody": "Nous n'avons pas pu charger ce produit. Veuillez réessayer ou parcourir nos autres produits.",
+    "errorGalleryBody": "Une erreur s'est produite lors du chargement de la galerie. Veuillez réessayer.",
+    "backToShop": "Retour à la boutique"
   },
   "search": {
     "placeholder": "Rechercher des produits...",
@@ -187,7 +192,7 @@
     "noProducts": "Pas encore de produits. Exécutez",
     "noProductsHint": "pour charger des exemples de produits.",
     "seeAllNewArrivals": "Voir toutes les nouveautés",
-    "seeAllProducts": "Voir tous os produtos en vedette",
+    "seeAllProducts": "Voir tous les produits vedettes",
     "secureCheckout": "Paiement Sécurisé",
     "freeShipping": "Livraison Gratuite dès CHF 100",
     "moneyBackGuarantee": "30 Jours Satisfait ou Remboursé",
@@ -227,7 +232,9 @@
     "tagNoTagsFound": "Aucun tag trouvé",
     "tagFilterActive": "Filtre actif",
     "comingSoonTitle": "Nous préparons notre collection",
-    "comingSoonDescription": "Nous mettons à jour nos produits. Revenez bientôt !"
+    "comingSoonDescription": "Nous mettons à jour nos produits. Revenez bientôt !",
+    "sortBestseller": "Meilleures ventes d'abord",
+    "sortDiscount": "Plus grande réduction"
   },
   "userMenu": {
     "account": "Compte",

@@ -17,6 +17,18 @@ export function ResetPasswordForm() {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
+
+    const strengthCriteria = [
+      /[A-Z]/.test(password),
+      /[0-9]/.test(password),
+      /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    ]
+    if (password.length < 8 || strengthCriteria.filter(Boolean).length < 1) {
+      setMessage({ type: 'error', text: tAuth('passwordTooWeak') })
+      setLoading(false)
+      return
+    }
+
     const result = await updatePassword(password)
     setLoading(false)
     if (result.ok) {
@@ -43,16 +55,14 @@ export function ResetPasswordForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          minLength={6}
+          minLength={8}
           className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
           placeholder="••••••••"
         />
       </div>
       {message && (
         <p
-          className={`text-sm ${
-            message.type === 'success' ? 'text-emerald-400' : 'text-red-400'
-          }`}
+          className={`text-sm ${message.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}
         >
           {message.text}
         </p>

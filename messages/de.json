@@ -53,7 +53,12 @@
     "referralYourLink": "Dein Empfehlungslink",
     "seasonDrops": "Season Drops",
     "statistics": "Statistiken",
-    "success": "Erfolg"
+    "success": "Erfolg",
+    "tryAgain": "Erneut versuchen",
+    "errorPageBody": "Beim Laden dieser Seite ist ein Fehler aufgetreten. Dies ist normalerweise vorübergehend — bitte versuchen Sie es erneut.",
+    "errorProductBody": "Wir konnten dieses Produkt nicht laden. Bitte versuchen Sie es erneut oder stöbern Sie in unseren anderen Produkten.",
+    "errorGalleryBody": "Beim Laden der Galerie ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "backToShop": "Zurück zum Shop"
   },
   "search": {
     "placeholder": "Produkte suchen...",
@@ -149,7 +154,9 @@
     "tagNoTagsFound": "Keine Tags gefunden",
     "tagFilterActive": "Filter aktiv",
     "comingSoonTitle": "Wir bereiten unsere Kollektion vor",
-    "comingSoonDescription": "Wir aktualisieren gerade unsere Produkte. Schaue bald wieder vorbei!"
+    "comingSoonDescription": "Wir aktualisieren gerade unsere Produkte. Schaue bald wieder vorbei!",
+    "sortBestseller": "Bestseller zuerst",
+    "sortDiscount": "Größter Rabatt"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",

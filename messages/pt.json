@@ -53,7 +53,12 @@
     "referralYourLink": "Seu link de indicação",
     "seasonDrops": "Drops da temporada",
     "statistics": "Estatísticas",
-    "success": "Sucesso"
+    "success": "Sucesso",
+    "tryAgain": "Tentar novamente",
+    "errorPageBody": "Ocorreu um erro ao carregar esta página. Geralmente é temporário — tente novamente.",
+    "errorProductBody": "Não conseguimos carregar este produto. Tente novamente ou explore os nossos outros produtos.",
+    "errorGalleryBody": "Ocorreu um erro ao carregar a galeria. Tente novamente.",
+    "backToShop": "Voltar à loja"
   },
   "search": {
     "placeholder": "Pesquisar produtos...",
@@ -149,7 +154,9 @@
     "tagNoTagsFound": "Nenhuma etiqueta encontrada",
     "tagFilterActive": "Filtro ativo",
     "comingSoonTitle": "Estamos a preparar a nossa coleção",
-    "comingSoonDescription": "Estamos a atualizar os nossos produtos. Volta em breve!"
+    "comingSoonDescription": "Estamos a atualizar os nossos produtos. Volta em breve!",
+    "sortBestseller": "Mais vendidos primeiro",
+    "sortDiscount": "Maior desconto"
   },
   "cookie": {
     "message": "Usamos cookies para persistência do carrinho, autenticação e uma melhor experiência de compra.",

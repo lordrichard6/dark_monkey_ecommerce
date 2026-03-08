@@ -110,6 +110,8 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
     { value: 'newest', label: t('sortNewest') },
     { value: 'price-asc', label: t('sortPriceAsc') },
     { value: 'price-desc', label: t('sortPriceDesc') },
+    { value: 'bestseller', label: t('sortBestseller') },
+    { value: 'discount', label: t('sortDiscount') },
   ] as const
 
   function handleSortChange(value: string) {

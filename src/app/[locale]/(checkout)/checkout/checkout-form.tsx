@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { createCheckoutSession, validateDiscountCode } from '@/actions/checkout'
 import { getShippingCost } from '@/actions/shipping'
+import { addToCart } from '@/actions/cart'
 import type { CartItem } from '@/types/cart'
 import { trackBeginCheckout, trackAddPaymentInfo } from '@/lib/analytics'
 import { useCurrency } from '@/components/currency/CurrencyContext'
@@ -26,11 +27,24 @@ function formatPrice(cents: number): string {
   }).format(cents / 100)
 }
 
+export type CheckoutUpsellItem = {
+  id: string
+  variantId: string
+  productId: string
+  productSlug: string
+  name: string
+  variantName: string | null
+  priceCents: number
+  imageUrl: string
+  discountPercentage?: number
+}
+
 type CheckoutFormProps = {
   items: CartItem[]
   totalCents: number
   defaultEmail?: string
   stripeConfigured: boolean
+  initialUpsellItems?: CheckoutUpsellItem[]
 }
 
 export function CheckoutForm({
@@ -38,6 +52,7 @@ export function CheckoutForm({
   totalCents,
   defaultEmail = '',
   stripeConfigured,
+  initialUpsellItems = [],
 }: CheckoutFormProps) {
   const router = useRouter()
   const locale = useLocale()
@@ -61,16 +76,8 @@ export function CheckoutForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Sample upsell items (in production these would come from the database/API)
-  const [upsellItems, setUpsellItems] = useState([
-    {
-      id: 'upsell-hoodie-protection',
-      name: 'Premium Fabric Protector',
-      priceCents: 1500,
-      imageUrl: '/images/protector.png', // Placeholder
-      discountPercentage: 20,
-    },
-  ])
+  const [upsellItems, setUpsellItems] = useState<CheckoutUpsellItem[]>(initialUpsellItems)
+  const [addingUpsellId, setAddingUpsellId] = useState<string | null>(null)
 
   // Track begin_checkout on mount
   useEffect(() => {
@@ -329,9 +336,24 @@ export function CheckoutForm({
         {/* Upsell Section */}
         <UpsellSection
           upsellItems={upsellItems}
-          onAdd={(id) => {
-            console.log('Adding upsell item:', id)
-            // Implementation for adding to cart goes here
+          onAdd={async (id) => {
+            const item = upsellItems.find((u) => u.id === id)
+            if (!item || addingUpsellId) return
+            setAddingUpsellId(id)
+            await addToCart({
+              variantId: item.variantId,
+              productId: item.productId,
+              productSlug: item.productSlug,
+              productName: item.name,
+              variantName: item.variantName,
+              priceCents: item.priceCents,
+              quantity: 1,
+              imageUrl: item.imageUrl,
+            })
+            // Remove upsell from list after adding
+            setUpsellItems((prev) => prev.filter((u) => u.id !== id))
+            setAddingUpsellId(null)
+            router.refresh()
           }}
         />
 

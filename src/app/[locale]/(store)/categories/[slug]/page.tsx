@@ -106,7 +106,23 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       ? [...productsWithPrice].sort((a, b) => a.priceCents - b.priceCents)
       : sort === 'price-desc'
         ? [...productsWithPrice].sort((a, b) => b.priceCents - a.priceCents)
-        : productsWithPrice
+        : sort === 'bestseller'
+          ? [...productsWithPrice].sort(
+              (a, b) => (b.isBestseller ? 1 : 0) - (a.isBestseller ? 1 : 0)
+            )
+          : sort === 'discount'
+            ? [...productsWithPrice].sort((a, b) => {
+                const discountA =
+                  a.compareAtPriceCents && a.compareAtPriceCents > a.priceCents
+                    ? (a.compareAtPriceCents - a.priceCents) / a.compareAtPriceCents
+                    : 0
+                const discountB =
+                  b.compareAtPriceCents && b.compareAtPriceCents > b.priceCents
+                    ? (b.compareAtPriceCents - b.priceCents) / b.compareAtPriceCents
+                    : 0
+                return discountB - discountA
+              })
+            : productsWithPrice
 
   const t = await getTranslations('store')
   const tCommon = await getTranslations('common')

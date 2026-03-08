@@ -27,6 +27,19 @@ export async function requestPasswordReset(email: string) {
  * @param newPassword - The new plain-text password (Supabase enforces minimum length server-side).
  */
 export async function updatePassword(newPassword: string) {
+  const strengthCriteria = [
+    /[A-Z]/.test(newPassword),
+    /[0-9]/.test(newPassword),
+    /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
+  ]
+  if (newPassword.length < 8 || strengthCriteria.filter(Boolean).length < 1) {
+    return {
+      ok: false,
+      error:
+        'Password must be at least 8 characters and include uppercase letters, numbers, or symbols.',
+    }
+  }
+
   const supabase = await createClient()
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) return { ok: false, error: error.message }

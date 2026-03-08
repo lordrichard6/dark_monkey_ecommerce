@@ -85,12 +85,14 @@ export async function processSuccessfulCheckout(sessionId: string) {
   const cartSummaryMissing = !checkoutData?.cart_summary
 
   if (cartSummaryMissing) {
-    // Graceful recovery: don't throw — the webhook must return 200 to prevent infinite Stripe retries.
-    // The order will be created without line items and requires manual fulfillment by an admin.
+    // Throw so the webhook returns 500 and Stripe retries (up to 72 hours).
+    // A missing cart means there is a race condition or session was created outside our flow.
+    // Retrying is safer than creating an order with no items and no Printful fulfillment.
     console.error(
-      `[OrderProcess] WARNING: Missing abandoned_checkout for session ${sessionId}. ` +
-        `Order will be created without items — manual fulfillment required.`
+      `[OrderProcess] CRITICAL: Missing abandoned_checkout for session ${sessionId}. ` +
+        `Throwing so Stripe retries the webhook.`
     )
+    throw new Error(`Missing cart data for session ${sessionId}. Stripe will retry.`)
   } else {
     console.log('[OrderProcess] Checkout data recovered successfully')
   }
@@ -115,19 +117,25 @@ export async function processSuccessfulCheckout(sessionId: string) {
   // as part of the billing/customer form. We check both.
   const shippingDetails = fullSession.shipping_details || fullSession.customer_details
   const address = shippingDetails?.address
-  const shippingAddressJson = address
-    ? {
-        name: shippingDetails.name ?? fullSession.customer_details?.name ?? '',
-        address: {
-          line1: address.line1 ?? '',
-          line2: address.line2 ?? '',
-          city: address.city ?? '',
-          postalCode: address.postal_code ?? '',
-          country: address.country ?? '',
-          state: address.state ?? '',
-        },
-      }
-    : null
+  if (!address) {
+    console.error(
+      `[OrderProcess] CRITICAL: No shipping address in session ${sessionId}. ` +
+        `Throwing so Stripe retries the webhook.`
+    )
+    throw new Error(`Missing shipping address for session ${sessionId}. Stripe will retry.`)
+  }
+
+  const shippingAddressJson = {
+    name: shippingDetails!.name ?? fullSession.customer_details?.name ?? '',
+    address: {
+      line1: address.line1 ?? '',
+      line2: address.line2 ?? '',
+      city: address.city ?? '',
+      postalCode: address.postal_code ?? '',
+      country: address.country ?? '',
+      state: address.state ?? '',
+    },
+  }
 
   const discountId = fullSession.metadata?.discount_id ?? null
   const discountCents = fullSession.metadata?.discount_cents
@@ -173,6 +181,21 @@ export async function processSuccessfulCheckout(sessionId: string) {
     .single()
 
   if (orderError) {
+    // Unique constraint violation on stripe_session_id means a concurrent webhook already
+    // created this order. Fetch the existing one and return success (idempotent).
+    if ((orderError as { code?: string }).code === '23505') {
+      const { data: existingOrder } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('stripe_session_id', sessionId)
+        .single()
+      if (existingOrder) {
+        console.log(
+          `[OrderProcess] Duplicate prevented by unique constraint. Order: ${existingOrder.id}`
+        )
+        return { ok: true, orderId: existingOrder.id, alreadyProcessed: true }
+      }
+    }
     console.error('[OrderProcess] Order creation failed:', orderError)
     throw orderError
   }

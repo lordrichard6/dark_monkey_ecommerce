@@ -333,9 +333,10 @@ export function AddToCartForm({
                 }}
                 className={`h-8 w-8 rounded-full border-2 transition-all ${selectedColor === c.name ? 'border-amber-500 ring-4 ring-amber-500/10 scale-110 shadow-lg shadow-amber-500/10' : 'border-white/10 hover:border-white/30'}`}
                 style={{
-                  background: c.hex2
-                    ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
-                    : c.hex,
+                  background:
+                    c.hex2 && c.hex
+                      ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
+                      : c.hex || '#71717a',
                 }}
                 title={c.name}
                 aria-label={c.name}

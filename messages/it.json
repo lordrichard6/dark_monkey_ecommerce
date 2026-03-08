@@ -53,7 +53,12 @@
     "seasonDrops": "Drop stagionali",
     "settings": "Impostazioni",
     "statistics": "Statistiche",
-    "success": "Successo"
+    "success": "Successo",
+    "tryAgain": "Riprova",
+    "errorPageBody": "Si è verificato un errore durante il caricamento di questa pagina. Di solito è temporaneo — riprova.",
+    "errorProductBody": "Non siamo riusciti a caricare questo prodotto. Riprova o sfoglia gli altri prodotti.",
+    "errorGalleryBody": "Si è verificato un errore durante il caricamento della galleria. Riprova.",
+    "backToShop": "Torna al negozio"
   },
   "search": {
     "placeholder": "Cerca prodotti...",
@@ -227,7 +232,9 @@
     "tagNoTagsFound": "Nessun tag trovato",
     "tagFilterActive": "Filtro attivo",
     "comingSoonTitle": "Stiamo preparando la nostra collezione",
-    "comingSoonDescription": "Stiamo aggiornando i nostri prodotti. Torna presto!"
+    "comingSoonDescription": "Stiamo aggiornando i nostri prodotti. Torna presto!",
+    "sortBestseller": "Bestseller prima",
+    "sortDiscount": "Sconto maggiore"
   },
   "userMenu": {
     "account": "Account",

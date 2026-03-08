@@ -53,7 +53,12 @@
     "featured": "Featured",
     "seasonDrops": "Season Drops",
     "creative": "Creative",
-    "artGallery": "Art Gallery"
+    "artGallery": "Art Gallery",
+    "tryAgain": "Try again",
+    "errorPageBody": "Something went wrong loading this page. This is usually temporary — please try again.",
+    "errorProductBody": "We couldn't load this product. Please try again or browse our other products.",
+    "errorGalleryBody": "Something went wrong while loading the gallery. Please try again.",
+    "backToShop": "Back to shop"
   },
   "search": {
     "placeholder": "Search products...",
@@ -227,7 +232,9 @@
     "tagNoTagsFound": "No tags found",
     "tagFilterActive": "Filter active",
     "comingSoonTitle": "We're preparing our collection",
-    "comingSoonDescription": "We're currently updating our products. Check back soon!"
+    "comingSoonDescription": "We're currently updating our products. Check back soon!",
+    "sortBestseller": "Bestsellers first",
+    "sortDiscount": "Biggest discount"
   },
   "userMenu": {
     "account": "Account",

@@ -403,7 +403,8 @@ export async function updateProduct(
       .select('id')
       .eq('slug', slug)
       .neq('id', productId)
-      .single()
+      .is('deleted_at', null)
+      .maybeSingle()
     if (conflict) return { ok: false, error: 'Slug already in use' }
     updates.slug = slug
   }

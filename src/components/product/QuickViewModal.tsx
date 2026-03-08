@@ -123,17 +123,11 @@ export function QuickViewModal({ slug, isOpen, onClose }: QuickViewModalProps) {
                 </h2>
 
                 <div className="mt-4 flex flex-col gap-4">
-                  {product.description &&
-                  product.description.includes('<') &&
-                  product.description.includes('>') ? (
+                  {product.description && (
                     <div
                       dangerouslySetInnerHTML={{ __html: product.description }}
                       className="text-zinc-400 line-clamp-4 leading-relaxed prose prose-sm prose-invert max-w-none"
                     />
-                  ) : (
-                    <p className="text-zinc-400 line-clamp-4 leading-relaxed">
-                      {product.description}
-                    </p>
                   )}
 
                   <AddToCartForm

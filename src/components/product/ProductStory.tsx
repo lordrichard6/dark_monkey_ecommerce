@@ -46,7 +46,7 @@ export function ProductStory({ story }: ProductStoryProps) {
 
       {isExpanded && (
         <div className="mt-6 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-          {/* Story Body */}
+          {/* Story Body — callers must sanitize story.body before passing (page.tsx uses sanitizeProductHtml) */}
           {story?.body && (
             <div
               className="prose prose-invert prose-neutral max-w-none"

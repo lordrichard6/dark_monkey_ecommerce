@@ -14,8 +14,7 @@ import {
 } from '@/lib/printful'
 import { PRINTFUL_CONFIG } from '@/lib/printful/config'
 import { revalidatePath } from 'next/cache'
-import * as fs from 'fs'
-import * as path from 'path'
+
 import { printfulCache } from '@/lib/printful/cache'
 import { logger } from '@/lib/printful/logger'
 import { printfulAnalytics } from '@/lib/printful/analytics'
@@ -81,23 +80,6 @@ async function ensureProductImages(
   // B. Get mockups from ALL variants
   for (const sv of sync_variants) {
     const color = sv.color || null
-
-    if (sv.name.includes('Carolina Blue')) {
-      const logMsg =
-        `[ensureProductImages] Processing Carolina Blue files (Variant ID: ${sv.id}):\n` +
-        (sv.files
-          ? sv.files
-              .map((f) => `  - Type: ${f.type}, URL: ${f.preview_url || f.thumbnail_url}`)
-              .join('\n')
-          : '  - No files') +
-        '\n'
-      if (logs) logs.push(logMsg)
-      try {
-        fs.appendFileSync(path.join(process.cwd(), 'sync-debug.log'), logMsg)
-      } catch (e) {
-        console.error('Failed to write to log file', e)
-      }
-    }
 
     const allFiles = sv.files || []
     const previewFiles = allFiles.filter(

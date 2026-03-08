@@ -8,6 +8,7 @@ import { UpdateOrderStatusForm } from './update-order-status-form'
 import { RefundOrderButton } from './refund-order-button'
 import { SyncPrintfulOrderButton } from './sync-printful-order-button'
 import { ConfirmPrintfulOrderButton } from './confirm-printful-order-button'
+import { RetryPrintfulButton } from './retry-printful-button'
 import { fetchStoreOrder } from '@/lib/printful'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -405,6 +406,9 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
                 <UpdateOrderStatusForm orderId={order.id} currentStatus={order.status} />
                 <div className="flex flex-wrap items-center gap-2">
+                  {!order.printful_order_id && ['paid', 'processing'].includes(order.status) && (
+                    <RetryPrintfulButton orderId={order.id} />
+                  )}
                   {order.printful_order_id && printfulIsDraft && (
                     <ConfirmPrintfulOrderButton orderId={order.id} />
                   )}

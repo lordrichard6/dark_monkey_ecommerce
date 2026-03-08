@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { getTranslations, getLocale } from 'next-intl/server'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -104,6 +105,50 @@ export default async function OrderDetailsPage({ params }: Props) {
     .single()
 
   if (!order) {
+    // Fallback: check if this is a guest order matching the user's email — auto-claim it
+    if (user.email) {
+      const adminClient = getAdminClient()
+      if (adminClient) {
+        const { data: guestOrder } = await adminClient
+          .from('orders')
+          .select('id, guest_email')
+          .eq('id', id)
+          .is('user_id', null)
+          .ilike('guest_email', user.email)
+          .maybeSingle()
+
+        if (guestOrder) {
+          await adminClient.from('orders').update({ user_id: user.id }).eq('id', guestOrder.id)
+
+          // Fetch the full order now that it's claimed
+          const { data: claimedOrder } = await supabase
+            .from('orders')
+            .select(
+              `
+              *,
+              order_items (
+                *,
+                variant:product_variants (
+                  *,
+                  product:products (
+                    name,
+                    slug,
+                    product_images (url)
+                  )
+                )
+              )
+            `
+            )
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .single()
+
+          if (claimedOrder) {
+            redirect(`/account/orders/${id}`)
+          }
+        }
+      }
+    }
     notFound()
   }
 

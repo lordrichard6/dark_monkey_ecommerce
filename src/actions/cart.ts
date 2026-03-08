@@ -12,7 +12,13 @@ import type { CartItem } from '@/types/cart'
  */
 function configKey(c: Record<string, unknown> | undefined): string {
   if (!c || Object.keys(c).length === 0) return ''
-  return JSON.stringify(c)
+  const sorted = Object.keys(c)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, k) => {
+      acc[k] = c[k]
+      return acc
+    }, {})
+  return JSON.stringify(sorted)
 }
 
 /**

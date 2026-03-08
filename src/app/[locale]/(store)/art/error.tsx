@@ -23,14 +23,12 @@ export default function ArtGalleryError({
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>
       <h2 className="text-2xl font-bold text-white mb-2">{t('error')}</h2>
-      <p className="text-zinc-400 mb-6 max-w-sm">
-        Something went wrong while loading the gallery. Please try again.
-      </p>
+      <p className="text-zinc-400 mb-6 max-w-sm">{t('errorGalleryBody')}</p>
       <button
         onClick={reset}
         className="px-6 py-2.5 rounded-full bg-amber-500 text-zinc-950 font-semibold hover:bg-amber-400 transition"
       >
-        Try again
+        {t('tryAgain')}
       </button>
     </div>
   )
