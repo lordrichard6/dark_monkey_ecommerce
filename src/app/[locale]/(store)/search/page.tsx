@@ -113,9 +113,15 @@ export default async function SearchPage({ searchParams }: Props) {
   const categoryMap = new Map<string, { id: string; name: string; count: number }>()
 
   for (const p of products) {
-    const variants = p.product_variants as any[]
-    const images = p.product_images as any[]
-    const category = Array.isArray(p.categories) ? p.categories[0] : (p.categories as any)
+    const variants = p.product_variants as {
+      price_cents: number
+      attributes: Record<string, string>
+      product_inventory: { quantity: number } | { quantity: number }[] | null
+    }[]
+    const images = p.product_images as { url: string; alt: string | null; sort_order: number }[]
+    const category = Array.isArray(p.categories)
+      ? p.categories[0]
+      : (p.categories as { id: string; name: string; slug: string })
 
     const minPrice = variants?.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
 
@@ -133,7 +139,7 @@ export default async function SearchPage({ searchParams }: Props) {
         const inventory = variant.product_inventory
         if (inventory) {
           const qty = Array.isArray(inventory)
-            ? inventory.reduce((sum: number, inv: any) => sum + inv.quantity, 0)
+            ? inventory.reduce((sum: number, inv: { quantity: number }) => sum + inv.quantity, 0)
             : inventory.quantity
           totalStock += qty
         }

@@ -22,9 +22,9 @@ export function ProductImageWithFallback({
   priority,
   className,
 }: ProductImageWithFallbackProps) {
-  const [error, setError] = useState(false)
+  const [error, setError] = useState(!src)
 
-  if (error) {
+  if (error || !src) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 text-center text-zinc-500">
         <span className="px-2 text-xs">No image</span>

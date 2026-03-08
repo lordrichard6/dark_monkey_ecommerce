@@ -7,10 +7,23 @@ import { ProductEditableFields } from './product-editable-fields'
 import { ProductDescriptionField } from './product-description-field'
 import { ProductCategoryField } from './product-category-field'
 import { ProductTagsField } from './product-tags-field'
+import { ProductToggleStatus } from './product-toggle-status'
+import { ProductDangerZone } from './product-danger-zone'
+import { CopyIdButton } from './copy-id-button'
 
 export const dynamic = 'force-dynamic'
 
 type Props = { params: Promise<{ id: string }> }
+
+function formatDateTime(dateString: string) {
+  return new Date(dateString).toLocaleDateString('de-CH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 export default async function AdminProductDetailPage({ params }: Props) {
   const { id } = await params
@@ -35,6 +48,8 @@ export default async function AdminProductDetailPage({ params }: Props) {
         is_active,
         is_customizable,
         printful_sync_product_id,
+        created_at,
+        updated_at,
         product_images (id, url, alt, sort_order, color),
         product_variants (
           id,
@@ -65,7 +80,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
   }
 
   const availableTags = (tagsRes.data ?? []) as { id: string; name: string }[]
-  const currentTagIds = (productTagsRes.data ?? []).map((pt: any) => pt.tag_id)
+  const currentTagIds = (productTagsRes.data ?? []).map((pt: { tag_id: string }) => pt.tag_id)
 
   const variants = (product.product_variants ?? []) as Array<{
     id: string
@@ -74,7 +89,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
     price_cents: number
     compare_at_price_cents: number | null
     attributes: Record<string, unknown>
-    product_inventory: any
+    product_inventory: { quantity: number } | { quantity: number }[] | null
   }>
 
   const images = (
@@ -89,22 +104,38 @@ export default async function AdminProductDetailPage({ params }: Props) {
 
   return (
     <div className="min-h-screen p-4 pb-24 md:p-8">
-      {/* Back Button */}
-      <Link
-        href="/admin/products"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-zinc-300"
-      >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
+      {/* ── Page Header ─────────────────────────────────────────────────── */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        {/* Back button */}
+        <Link
+          href="/admin/products"
+          className="inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-zinc-300"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to products
-      </Link>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to products
+        </Link>
+
+        {/* Right side: timestamps + copy ID */}
+        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+          <span>Created {formatDateTime(product.created_at)}</span>
+          {product.updated_at !== product.created_at && (
+            <>
+              <span className="text-zinc-700">·</span>
+              <span>Updated {formatDateTime(product.updated_at)}</span>
+            </>
+          )}
+          <span className="text-zinc-700">·</span>
+          <CopyIdButton id={product.id} />
+        </div>
+      </div>
 
       <ProductEditor
         productId={product.id}
@@ -168,22 +199,11 @@ export default async function AdminProductDetailPage({ params }: Props) {
 
             <div className="border-t border-zinc-800" />
 
-            {/* Status badges */}
-            <div className="flex flex-wrap gap-2">
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
-                  product.is_active
-                    ? 'bg-emerald-900/40 text-emerald-400'
-                    : 'bg-zinc-800 text-zinc-500'
-                }`}
-              >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${product.is_active ? 'bg-emerald-400' : 'bg-zinc-500'}`}
-                />
-                {product.is_active ? 'Active' : 'Inactive'}
-              </span>
+            {/* Status — now interactive toggle + static Customizable badge */}
+            <div className="flex flex-wrap items-center gap-2">
+              <ProductToggleStatus productId={product.id} initialIsActive={product.is_active} />
               {product.is_customizable && (
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-900/40 px-3 py-1.5 text-xs font-medium text-amber-400">
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-900/40 px-3 py-1.5 text-xs font-medium text-amber-400 ring-1 ring-amber-500/20">
                   <svg
                     className="h-3.5 w-3.5"
                     fill="none"
@@ -207,6 +227,11 @@ export default async function AdminProductDetailPage({ params }: Props) {
           <ProductDescriptionField productId={product.id} description={product.description} />
         }
       />
+
+      {/* ── Danger Zone ──────────────────────────────────────────────────── */}
+      <div className="mt-8">
+        <ProductDangerZone productId={product.id} productName={product.name} />
+      </div>
     </div>
   )
 }

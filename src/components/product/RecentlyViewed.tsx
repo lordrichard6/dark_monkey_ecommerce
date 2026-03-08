@@ -71,7 +71,7 @@ export function RecentlyViewed({ userId, productId }: RecentlyViewedProps) {
             priceCents={product.price_cents || 0}
             imageUrl={
               (Array.isArray(product.product_images)
-                ? (product.product_images[0] as any)?.url
+                ? (product.product_images[0] as { url: string })?.url
                 : undefined) || ''
             }
             imageAlt={product.name}

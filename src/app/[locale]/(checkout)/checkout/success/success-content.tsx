@@ -40,7 +40,7 @@ export function SuccessContent({ sessionId, initialOrder }: Props) {
       const status = await checkOrderStatus(sessionId)
 
       if (status.ok && status.order) {
-        setOrder(status.order as any)
+        setOrder(status.order as unknown as typeof order)
         setIsPolling(false)
         clearInterval(interval)
       }
@@ -118,8 +118,8 @@ export function SuccessContent({ sessionId, initialOrder }: Props) {
         Taking a little longer than expected...
       </h1>
       <p className="mb-8 text-zinc-400">
-        We've confirmed your payment, but our synchronization is taking extra time. You can wait,
-        refresh, or try a manual synchronization below.
+        We&apos;ve confirmed your payment, but our synchronization is taking extra time. You can
+        wait, refresh, or try a manual synchronization below.
       </p>
       <div className="flex flex-col items-center gap-4">
         <button

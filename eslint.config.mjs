@@ -15,17 +15,22 @@ const eslintConfig = defineConfig([
     // Diagnostic/dev scripts — not production code
     "scripts/**",
   ]),
-  // Downgrade pre-existing widespread violations to warnings
-  // so CI can pass while the codebase is incrementally cleaned up.
+  // Rules restored to error — all violations have been resolved.
+  {
+    rules: {
+      "prefer-const": "error",
+      "react/no-unescaped-entities": "error",
+    },
+  },
+  // Rules kept as warnings — violations are too widespread to fix in a single session.
+  // Incrementally promote to error as the codebase is cleaned up.
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-require-imports": "warn",
-      "prefer-const": "warn",
       "react-hooks/exhaustive-deps": "warn",
       "@next/next/no-html-link-for-pages": "warn",
-      "react/no-unescaped-entities": "warn",
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/refs": "warn",
       "react-hooks/purity": "warn",

@@ -230,8 +230,8 @@ describe('processSuccessfulCheckout', () => {
     }
   })
 
-  // --- Missing cart → throws ---
-  it('throws when abandoned_checkout record is missing', async () => {
+  // --- Missing cart → graceful recovery (creates order without items) ---
+  it('succeeds with empty items when abandoned_checkout record is missing', async () => {
     mockStripe.checkout.sessions.retrieve.mockResolvedValue(buildSession())
 
     let callIndex = 0
@@ -239,13 +239,14 @@ describe('processSuccessfulCheckout', () => {
       callIndex++
       if (callIndex === 1) return makeQuery({ data: null, error: null }) // no existing order
       if (callIndex === 2) return makeQuery({ data: null, error: null }) // no cart_summary
-      // fallback for the debug query
+      // fallback for remaining queries (order insert, items, etc.)
       return makeQuery({ data: [], error: null })
     })
 
-    await expect(processSuccessfulCheckout('sess_no_cart')).rejects.toThrow(
-      'Missing abandoned_checkout record'
-    )
+    // The function now gracefully recovers instead of throwing — it logs a warning
+    // and creates an order without line items for manual admin fulfillment.
+    const result = await processSuccessfulCheckout('sess_no_cart')
+    expect(result).toMatchObject({ ok: true })
   })
 
   // --- Session not complete → throws ---

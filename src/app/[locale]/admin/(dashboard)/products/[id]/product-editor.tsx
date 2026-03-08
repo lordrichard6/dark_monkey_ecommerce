@@ -24,7 +24,7 @@ type Props = {
     price_cents: number
     compare_at_price_cents: number | null
     attributes: Record<string, unknown>
-    product_inventory: unknown
+    product_inventory: { quantity: number } | { quantity: number }[] | null
   }>
   /** Slot rendered at the top of the right column (name, slug, category, tags, status) */
   metaSlot?: React.ReactNode

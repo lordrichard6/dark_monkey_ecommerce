@@ -125,7 +125,7 @@ export default async function AdminDashboardPage() {
   const productQuantityMap = new Map<string, { name: string; quantity: number }>()
 
   if (allSuccessfulOrders) {
-    allSuccessfulOrders.forEach((order: any) => {
+    allSuccessfulOrders.forEach((order) => {
       // Top Customers
       const customerId = order.user_id || order.guest_email || 'Unknown'
       const existingCustomer = customerRevenueMap.get(customerId) || {
@@ -138,8 +138,11 @@ export default async function AdminDashboardPage() {
       })
 
       // Top Items
-      order.order_items?.forEach((item: any) => {
-        const productName = item.product_variants?.products?.name || 'Unknown Product'
+      order.order_items?.forEach((item) => {
+        const productVariants = item.product_variants as unknown as {
+          products: { name: string } | null
+        } | null
+        const productName = productVariants?.products?.name || 'Unknown Product'
         const existingProduct = productQuantityMap.get(productName) || {
           name: productName,
           quantity: 0,
@@ -187,7 +190,7 @@ export default async function AdminDashboardPage() {
 
   // Populate actual data
   if (historicalOrders) {
-    historicalOrders.forEach((order: any) => {
+    historicalOrders.forEach((order) => {
       const dateKey = new Date(order.created_at).toISOString().split('T')[0]
       if (chartDataMap.has(dateKey)) {
         const entry = chartDataMap.get(dateKey)!
@@ -200,26 +203,35 @@ export default async function AdminDashboardPage() {
   const chartData = Array.from(chartDataMap.values())
 
   // Manually fetch related data to avoid foreign key ambiguity
-  let enrichedOrders: any[] = []
+  type EnrichedOrder = {
+    id: string
+    status: string
+    total_cents: number
+    created_at: string
+    guest_email: string | null
+    user_id: string | null
+    shipping_address_id: string | null
+    shippingName: string | undefined
+    userName: string
+  }
+  let enrichedOrders: EnrichedOrder[] = []
   if (recentOrders && recentOrders.length > 0) {
-    const shippingIds = recentOrders
-      .map((o: any) => o.shipping_address_id)
-      .filter(Boolean) as string[]
-    const userIds = recentOrders.map((o: any) => o.user_id).filter(Boolean) as string[]
+    const shippingIds = recentOrders.map((o) => o.shipping_address_id).filter(Boolean) as string[]
+    const userIds = recentOrders.map((o) => o.user_id).filter(Boolean) as string[]
 
     const [addressesResult, profilesResult] = await Promise.all([
       shippingIds.length > 0
         ? supabase.from('addresses').select('id, full_name').in('id', shippingIds)
-        : { data: [] as any[] },
+        : { data: [] as { id: string; full_name: string | null }[] },
       userIds.length > 0
         ? supabase.from('user_profiles').select('id, display_name').in('id', userIds)
-        : { data: [] as any[] },
+        : { data: [] as { id: string; display_name: string | null }[] },
     ])
 
-    const addressMap = new Map(addressesResult.data?.map((a: any) => [a.id, a.full_name]) ?? [])
-    const profileMap = new Map(profilesResult.data?.map((p: any) => [p.id, p.display_name]) ?? [])
+    const addressMap = new Map(addressesResult.data?.map((a) => [a.id, a.full_name]) ?? [])
+    const profileMap = new Map(profilesResult.data?.map((p) => [p.id, p.display_name]) ?? [])
 
-    enrichedOrders = recentOrders.map((order: any) => ({
+    enrichedOrders = recentOrders.map((order) => ({
       ...order,
       shippingName: order.shipping_address_id ? addressMap.get(order.shipping_address_id) : '-',
       userName: order.user_id ? profileMap.get(order.user_id) : order.guest_email || 'Guest',
@@ -231,10 +243,7 @@ export default async function AdminDashboardPage() {
     .select('total_cents')
     .in('status', ['paid', 'processing', 'shipped', 'delivered'])
 
-  const totalRevenue = (revenueData ?? []).reduce(
-    (s: number, o: any) => s + (o.total_cents ?? 0),
-    0
-  )
+  const totalRevenue = (revenueData ?? []).reduce((s: number, o) => s + (o.total_cents ?? 0), 0)
 
   return (
     <div className="p-8">

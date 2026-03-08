@@ -47,8 +47,8 @@ jobs:
             total.statements.pct;
           ")
           echo "Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 25" | bc -l) )); then
-            echo "Coverage is below 25%"
+          if (( $(echo "$COVERAGE < 65" | bc -l) )); then
+            echo "Coverage is below 65% (got $COVERAGE%)"
             exit 1
           fi
 
@@ -140,6 +140,25 @@ jobs:
 
       - name: Check i18n completeness
         run: npm run check:i18n
+
+  # ── Lighthouse CI (performance + a11y + best-practices) ─────────────────
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    # Runs in parallel with E2E; doesn't block test-summary
+    needs: unit-and-integration-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit production with Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            https://dark-monkey.ch
+            https://dark-monkey.ch/en/products
+          runs: 3
+          uploadArtifacts: true
+          temporaryPublicStorage: true
 
   test-summary:
     name: Test Summary

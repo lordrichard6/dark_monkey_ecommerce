@@ -2,6 +2,7 @@ import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
+import NextImage from 'next/image'
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -84,10 +85,12 @@ export default async function CategoriesPage() {
             >
               {/* Background Image */}
               <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-110">
-                <img
+                <NextImage
                   src={card.image}
                   alt={card.title}
-                  className="h-full w-full object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-80"
+                  fill
+                  className="object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-80"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
                 {/* Gradient Overlays */}
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent" />

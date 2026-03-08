@@ -1,19 +1,15 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
 import { Footer } from '@/components/Footer'
 import { BackToTop } from '@/components/BackToTop'
 import { SupportWidget } from '@/components/SupportWidget'
 import { CompareBar } from '@/components/product/CompareBar'
+import { useIsMounted } from '@/hooks/useIsMounted'
 
 export function StorefrontShell() {
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useIsMounted()
 
   // Don't render anything until client-side hydration — prevents any server-side flash
   if (!mounted) return null

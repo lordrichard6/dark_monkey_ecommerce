@@ -107,7 +107,9 @@ export const getProductReviews = cache(async (productId: string) => {
     created_at: review.created_at,
     photos: review.photos,
     user_id: review.user_id,
-    avatar_url: (review as any).user_profiles?.avatar_url || null,
+    avatar_url:
+      (review as unknown as { user_profiles: { avatar_url: string | null } | null }).user_profiles
+        ?.avatar_url || null,
   }))
 
   return transformedData as ReviewRow[]
@@ -151,7 +153,9 @@ export const getUserProductReview = cache(async (productId: string, userId: stri
     created_at: userReviewRow.created_at,
     photos: userReviewRow.photos,
     user_id: userReviewRow.user_id,
-    avatar_url: (userReviewRow as any).user_profiles?.avatar_url || null,
+    avatar_url:
+      (userReviewRow as unknown as { user_profiles: { avatar_url: string | null } | null })
+        .user_profiles?.avatar_url || null,
   }
 
   return transformedReview as ReviewRow

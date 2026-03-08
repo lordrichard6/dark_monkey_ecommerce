@@ -13,14 +13,16 @@ export function SearchBar() {
   const t = useTranslations('search')
   const [query, setQuery] = useState('')
   const [isPending, startTransition] = useTransition()
-  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [suggestions, setSuggestions] = useState<
+    { name: string; slug: string; imageUrl: string | null }[]
+  >([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const trendingSearches = [
     t('trendingHoodies') || 'Premium Hoodies',
     t('trendingArt') || 'Exclusive Art',
-    t('trendingAccessories') || 'Luxury Accessories'
+    t('trendingAccessories') || 'Luxury Accessories',
   ]
 
   useEffect(() => {
@@ -140,7 +142,7 @@ export function SearchBar() {
             </div>
           ) : (
             <div className="p-4 text-center text-sm text-zinc-500">
-              No results found for "{query}"
+              No results found for &quot;{query}&quot;
             </div>
           )}
         </div>
@@ -148,9 +150,7 @@ export function SearchBar() {
 
       {/* Loading indicator */}
       {isPending && (
-        <div className="absolute left-0 top-full mt-2 text-xs text-zinc-500">
-          Searching...
-        </div>
+        <div className="absolute left-0 top-full mt-2 text-xs text-zinc-500">Searching...</div>
       )}
     </form>
   )

@@ -8,6 +8,7 @@ import {
   POINTS_RULES,
   type Achievement,
 } from '../gamification'
+import { type SupabaseClient } from '@supabase/supabase-js'
 
 // ─── Pure function tests (no mocks needed) ────────────────────────────────
 
@@ -174,7 +175,9 @@ function makeSupabaseMock(overrides?: {
     return { select: vi.fn().mockReturnValue({ eq }), insert, update }
   })
 
-  return { from } as any
+  const client = { from } as unknown as SupabaseClient
+  // Expose the mock's `from` spy so tests can inspect calls without losing the typed client
+  return Object.assign(client, { _from: from })
 }
 
 describe('processXpForPurchase', () => {
@@ -288,8 +291,8 @@ describe('checkAndAwardAchievements', () => {
     // Insert should NOT be called since it's already unlocked
     await checkAndAwardAchievements(supabase, 'user-1')
     // from('user_achievements').insert should not have been called
-    const insertCalls = supabase.from.mock.calls.filter(
-      ([t]: [string]) => t === 'user_achievements'
+    const insertCalls = supabase._from.mock.calls.filter(
+      (args: unknown[]) => args[0] === 'user_achievements'
     )
     // The insert mock tracks calls; if only select calls were made, insert shouldn't fire
     expect(insertCalls.length).toBeGreaterThan(0) // select was called

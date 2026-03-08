@@ -147,8 +147,8 @@ export function SignupForm({ initialEmail = '' }: Props) {
     }
   }
 
-  const parseAuthError = (err: any): AuthMessage => {
-    const errorMsg = err.message || t('somethingWrong')
+  const parseAuthError = (err: unknown): AuthMessage => {
+    const errorMsg = err instanceof Error ? err.message : String(err || '') || t('somethingWrong')
     const lowerMsg = errorMsg.toLowerCase()
 
     if (lowerMsg.includes('already registered')) {
@@ -253,14 +253,14 @@ export function SignupForm({ initialEmail = '' }: Props) {
       if (error) throw error
       setSignupSuccess(true)
       sessionStorage.removeItem('auth_failed_attempts')
-    } catch (err: any) {
+    } catch (err) {
       const parsed = parseAuthError(err)
+      const errMsg = err instanceof Error ? err.message : ''
       if (
-        err.message &&
-        (err.message.toLowerCase().includes('security') ||
-          err.message.toLowerCase().includes('blocked'))
+        errMsg &&
+        (errMsg.toLowerCase().includes('security') || errMsg.toLowerCase().includes('blocked'))
       ) {
-        parsed.text = err.message
+        parsed.text = errMsg
       }
       setMessage(parsed)
       const newAttempts = failedAttempts + 1

@@ -1,12 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import { LoginForm } from './login-form'
 import { Link } from '@/i18n/navigation'
+import NextLink from 'next/link'
 
 type Props = {
   params: Promise<{ locale: string }>
   searchParams: Promise<{ redirectTo?: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('auth')
+  return { title: t('loginPageTitle') }
 }
 
 export default async function LoginPage({ params, searchParams }: Props) {
@@ -46,12 +53,12 @@ export default async function LoginPage({ params, searchParams }: Props) {
           {process.env.NODE_ENV === 'development' && (
             <div className="mt-2 space-y-1 text-xs text-zinc-600">
               <p>Supabase: {process.env.NEXT_PUBLIC_SUPABASE_URL || 'not set'}</p>
-              <a
+              <NextLink
                 href="/auth/clear"
                 className="text-zinc-500 hover:text-amber-400 hover:underline"
               >
                 Clear session (fixes Refresh Token errors)
-              </a>
+              </NextLink>
             </div>
           )}
         </div>

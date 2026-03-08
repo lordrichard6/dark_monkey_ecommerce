@@ -11,6 +11,7 @@ export function CookieConsent() {
   const tCommon = useTranslations('common')
   const [visible, setVisible] = useState(false)
 
+   
   useEffect(() => {
     if (typeof window === 'undefined') return
     const consented = localStorage.getItem(CONSENT_KEY)
@@ -30,10 +31,7 @@ export function CookieConsent() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-sm text-zinc-300 md:text-base">
             {t('message')}{' '}
-            <Link
-              href="/privacy"
-              className="underline underline-offset-2 hover:text-amber-400"
-            >
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-amber-400">
               {t('privacyCookies')}
             </Link>
           </p>

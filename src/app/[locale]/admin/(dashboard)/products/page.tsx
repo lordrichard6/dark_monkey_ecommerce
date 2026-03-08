@@ -5,10 +5,21 @@ import { FetchLatestProductButton } from './fetch-latest-button'
 import { SyncPrintfulModal } from '@/components/admin/SyncPrintfulModal'
 import { ProductListTable } from '@/components/admin/ProductListTable'
 
+const VALID_SORT_COLS = ['created_at', 'name', 'is_active'] as const
+type SortCol = (typeof VALID_SORT_COLS)[number]
+
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{
+    page?: string
+    limit?: string
+    search?: string
+    status?: string
+    category?: string
+    sort?: string
+    dir?: string
+  }>
 }) {
   const supabase = getAdminClient()
   if (!supabase)
@@ -18,33 +29,77 @@ export default async function AdminProductsPage({
       </div>
     )
 
-  const { page: pageParam } = await searchParams
+  const {
+    page: pageParam,
+    limit: limitParam,
+    search,
+    status,
+    category,
+    sort,
+    dir,
+  } = await searchParams
+
+  const limit = Math.min(Math.max(parseInt(limitParam || '20', 10) || 20, 10), 100)
   const page = parseInt(pageParam || '1', 10) || 1
-  const limit = 20
   const start = (page - 1) * limit
   const end = start + limit - 1
 
-  const [{ data: products, count, error }, { data: allCategories }] = await Promise.all([
-    supabase
-      .from('products')
-      .select(
-        `
-        id,
-        name,
-        slug,
-        is_active,
-        is_customizable,
-        category_id,
-        categories (name),
-        product_images (id, url, sort_order),
-        product_variants (id, price_cents),
-        created_at
-      `,
-        { count: 'exact' }
-      )
-      .is('deleted_at', null)
+  const sortCol: SortCol = VALID_SORT_COLS.includes(sort as SortCol)
+    ? (sort as SortCol)
+    : 'created_at'
+  const sortAsc = dir === 'asc'
+
+  // Build base query
+  let query = supabase
+    .from('products')
+    .select(
+      `
+      id,
+      name,
+      slug,
+      is_active,
+      is_customizable,
+      category_id,
+      categories (id, name),
+      product_images (id, url, sort_order),
+      product_variants (id, price_cents),
+      product_tags (tag_id, tags (id, name)),
+      created_at
+    `,
+      { count: 'exact' }
+    )
+    .is('deleted_at', null)
+
+  // --- Filters ---
+  if (search?.trim()) {
+    query = query.ilike('name', `%${search.trim()}%`)
+  }
+  if (status === 'active') {
+    query = query.eq('is_active', true)
+  } else if (status === 'inactive') {
+    query = query.eq('is_active', false)
+  }
+  if (category) {
+    query = query.eq('category_id', category)
+  }
+
+  // --- Sort ---
+  // Price sorting isn't a native column, so we fall back to created_at for it
+  // (handled client-side for the current page)
+  if (sortCol === 'name') {
+    query = query.order('name', { ascending: sortAsc })
+  } else if (sortCol === 'is_active') {
+    query = query
+      .order('is_active', { ascending: sortAsc })
       .order('created_at', { ascending: false })
-      .range(start, end),
+  } else {
+    query = query.order('created_at', { ascending: sortAsc })
+  }
+
+  query = query.range(start, end)
+
+  const [{ data: products, count, error }, { data: allCategories }] = await Promise.all([
+    query,
     supabase
       .from('categories')
       .select('id, name, parent_id')
@@ -80,12 +135,22 @@ export default async function AdminProductsPage({
             (products || []).map((p) => ({
               ...p,
               categories: Array.isArray(p.categories) ? p.categories[0] : p.categories,
+              product_tags: (p.product_tags ?? [])
+                .map((pt) => (pt.tags ? (Array.isArray(pt.tags) ? pt.tags[0] : pt.tags) : null))
+                .filter(Boolean),
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             })) as any
           }
           currentPage={page}
           totalPages={totalPages}
+          totalCount={count ?? 0}
+          limit={limit}
           categories={allCategories ?? []}
+          search={search ?? ''}
+          statusFilter={status ?? ''}
+          categoryFilter={category ?? ''}
+          sortBy={sortCol}
+          sortDir={sortAsc ? 'asc' : 'desc'}
         />
       </div>
     </div>

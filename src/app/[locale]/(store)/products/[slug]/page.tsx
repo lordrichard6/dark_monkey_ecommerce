@@ -171,6 +171,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const avgRating =
     reviewCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : null
 
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
+
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -179,6 +181,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
       ? product.description.replace(/<[^>]+>/g, '').trim()
       : undefined,
     image: sortedImages.map((img) => img.url),
+    url: `${siteUrl}/${locale}/products/${product.slug}`,
+    sku: product.id,
     brand: {
       '@type': 'Brand',
       name: 'Dark Monkey',
@@ -188,6 +192,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
       price: minPrice / 100,
       priceCurrency: 'CHF',
       availability,
+      url: `${siteUrl}/${locale}/products/${product.slug}`,
     },
   }
 

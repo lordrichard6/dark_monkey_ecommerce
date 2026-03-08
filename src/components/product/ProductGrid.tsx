@@ -25,7 +25,12 @@ type ProductGridProps = {
   hideHeader?: boolean
 }
 
-export function ProductGrid({ products, title, sort = 'newest', hideHeader = false }: ProductGridProps) {
+export function ProductGrid({
+  products,
+  title,
+  sort = 'newest',
+  hideHeader = false,
+}: ProductGridProps) {
   const t = useTranslations('home')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -90,12 +95,8 @@ export function ProductGrid({ products, title, sort = 'newest', hideHeader = fal
           <div className="mb-6 rounded-full bg-zinc-900 p-6 ring-1 ring-zinc-800">
             <PackageOpen className="h-10 w-10 text-amber-500" />
           </div>
-          <h3 className="text-xl font-medium text-zinc-200">
-            {t.has('comingSoonTitle') ? t('comingSoonTitle') : 'We are preparing our products'}
-          </h3>
-          <p className="mt-2 max-w-sm text-zinc-400">
-            {t.has('comingSoonDescription') ? t('comingSoonDescription') : 'We are currently updating our collection. Please check back soon!'}
-          </p>
+          <h3 className="text-xl font-medium text-zinc-200">{t('comingSoonTitle')}</h3>
+          <p className="mt-2 max-w-sm text-zinc-400">{t('comingSoonDescription')}</p>
         </div>
       )}
     </section>

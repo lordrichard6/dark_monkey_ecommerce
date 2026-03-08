@@ -28,7 +28,7 @@ export async function getRelatedProducts(
   if (!currentProduct) return []
 
   // 2. Fetch products in same category or with matching tags
-  const { data: products } = await supabase
+  let query = supabase
     .from('products')
     .select('*')
     .or(
@@ -37,6 +37,10 @@ export async function getRelatedProducts(
     .neq('id', productId)
     .eq('is_active', true)
     .limit(limit * 2)
+
+  if (excludeId) query = query.neq('id', excludeId)
+
+  const { data: products } = await query
 
   if (!products) return []
 
@@ -135,8 +139,8 @@ export async function getRecentlyViewed(
   const products: Product[] = []
 
   for (const view of views) {
-    if (view.products && !seen.has((view.products as any).id)) {
-      seen.add((view.products as any).id)
+    if (view.products && !seen.has((view.products as { id: string }).id)) {
+      seen.add((view.products as { id: string }).id)
       products.push(view.products as unknown as Product)
     }
     if (products.length >= limit) break

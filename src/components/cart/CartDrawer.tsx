@@ -1,11 +1,13 @@
 'use client'
 
+import { useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useCart } from './CartProvider'
 import { updateCartItem, removeFromCart } from '@/actions/cart'
 import { useRouter } from 'next/navigation'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 function formatPrice(cents: number): string {
   return new Intl.NumberFormat('de-CH', {
@@ -20,8 +22,11 @@ export function CartDrawer() {
   const tCommon = useTranslations('common')
   const { cart, isOpen, closeCart } = useCart()
   const router = useRouter()
+  const drawerRef = useRef<HTMLElement>(null)
   const totalCents = cart.items.reduce((s, i) => s + i.priceCents * i.quantity, 0)
   const itemCount = cart.items.reduce((s, i) => s + i.quantity, 0)
+
+  useFocusTrap(drawerRef, isOpen)
 
   async function handleUpdate(
     variantId: string,
@@ -43,13 +48,20 @@ export function CartDrawer() {
         <div className="fixed inset-0 z-50 bg-black/50" onClick={closeCart} aria-hidden="true" />
       )}
       <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-drawer-title"
         className={`fixed top-0 right-0 z-50 h-full w-full max-w-md transform border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl shadow-2xl transition-transform duration-200 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-4">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-50">
+            <h2
+              id="cart-drawer-title"
+              className="flex items-center gap-2 text-lg font-semibold text-zinc-50"
+            >
               <Image
                 src="/logo.webp"
                 alt=""

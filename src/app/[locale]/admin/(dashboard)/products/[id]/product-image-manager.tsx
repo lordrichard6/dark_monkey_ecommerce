@@ -45,6 +45,7 @@ export function ProductImageManager({
 
   // When color changes, prefer the first image that specifically matches that color
   // Fall back to index 0 (which may be a universal image) if none found
+   
   useEffect(() => {
     if (!selectedColor) {
       setSelectedIndex(0)
@@ -327,6 +328,7 @@ export function ProductImageManager({
           tabIndex={0}
           aria-label="Close"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element -- lightbox uses unconstrained fill dimensions */}
           <img
             src={lightboxUrl}
             alt=""

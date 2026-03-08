@@ -10,9 +10,7 @@ function localizedUrls(path: string, lastModified?: Date): MetadataRoute.Sitemap
     url: `${BASE_URL}/${locale}${path}`,
     lastModified: lastModified ?? new Date(),
     alternates: {
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${BASE_URL}/${l}${path}`])
-      ),
+      languages: Object.fromEntries(locales.map((l) => [l, `${BASE_URL}/${l}${path}`])),
     },
   }))
 }
@@ -25,6 +23,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localizedUrls('/'),
     ...localizedUrls('/products'),
     ...localizedUrls('/categories'),
+    ...localizedUrls('/art'),
+    ...localizedUrls('/search'),
+    ...localizedUrls('/bundles'),
     ...localizedUrls('/contact'),
     ...localizedUrls('/privacy'),
     ...localizedUrls('/terms'),
@@ -48,9 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   )
 
   // Dynamic category pages
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('slug, updated_at')
+  const { data: categories } = await supabase.from('categories').select('slug, updated_at')
 
   const categoryPages: MetadataRoute.Sitemap = (categories ?? []).flatMap((category) =>
     localizedUrls(`/categories/${category.slug}`, new Date(category.updated_at))

@@ -107,26 +107,26 @@ describe('currency utils (extended coverage)', () => {
     })
 
     it('returns CHF when no cookie is set', () => {
-      vi.mocked(Cookies.get).mockReturnValue(undefined as any)
+      vi.mocked(Cookies.get).mockReturnValue(undefined as unknown as ReturnType<typeof Cookies.get>)
       const result = getCurrencyFromCookie()
       expect(result).toBe('CHF')
     })
 
     it('returns the stored currency if valid', () => {
-      vi.mocked(Cookies.get).mockReturnValue('EUR' as any)
+      vi.mocked(Cookies.get).mockReturnValue('EUR' as unknown as ReturnType<typeof Cookies.get>)
       const result = getCurrencyFromCookie()
       expect(result).toBe('EUR')
     })
 
     it('returns CHF for an invalid stored value', () => {
-      vi.mocked(Cookies.get).mockReturnValue('INVALID' as any)
+      vi.mocked(Cookies.get).mockReturnValue('INVALID' as unknown as ReturnType<typeof Cookies.get>)
       const result = getCurrencyFromCookie()
       expect(result).toBe('CHF')
     })
 
     it('accepts all supported currencies from cookie', () => {
       for (const code of SUPPORTED_CURRENCIES) {
-        vi.mocked(Cookies.get).mockReturnValue(code as any)
+        vi.mocked(Cookies.get).mockReturnValue(code as unknown as ReturnType<typeof Cookies.get>)
         expect(getCurrencyFromCookie()).toBe(code)
       }
     })

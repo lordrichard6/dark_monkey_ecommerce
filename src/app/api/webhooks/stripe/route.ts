@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
   }
 
-  let eventBytes: any
+  let eventBytes: ReturnType<typeof stripe.webhooks.constructEvent>
   try {
     eventBytes = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err) {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  const session = eventBytes.data.object as any
+  const session = eventBytes.data.object as { id: string; status: string; payment_status: string }
   // Log only non-PII fields — never log shipping_details (customer name/address)
   console.log(
     `[Stripe Webhook] checkout.session.completed — session: ${session.id}, status: ${session.status}, payment: ${session.payment_status}`
@@ -50,9 +50,10 @@ export async function POST(request: NextRequest) {
       orderId: result.orderId,
       alreadyProcessed: result.alreadyProcessed,
     })
-  } catch (err: any) {
-    console.error('[Stripe Webhook] Processing failed:', err.message)
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[Stripe Webhook] Processing failed:', errMsg)
     // Return 500 so Stripe retries the webhook
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: errMsg }, { status: 500 })
   }
 }

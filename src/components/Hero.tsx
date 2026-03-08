@@ -1,46 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Link } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { HeroLogo } from './HeroLogo'
-import { CheckCircle2, Truck, ShieldCheck, Star, ArrowRight, TrendingUp } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { ArrowRight, TrendingUp } from 'lucide-react'
 
 export function Hero() {
   const t = useTranslations('home')
-  const [stats, setStats] = useState({ count: 2000, rating: 4.8 })
-
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const supabase = createClient()
-        const [reviewsCount, reviewsAvg] = await Promise.all([
-          supabase.from('product_reviews').select('*', { count: 'exact', head: true }),
-          supabase.from('product_reviews').select('rating'),
-        ])
-
-        if (reviewsCount.count !== null) {
-          const count = reviewsCount.count > 2000 ? reviewsCount.count : 2000
-          const avg =
-            reviewsAvg.data && reviewsAvg.data.length > 0
-              ? (
-                  reviewsAvg.data.reduce((sum, r) => sum + r.rating, 0) / reviewsAvg.data.length
-                ).toFixed(1)
-              : '4.8'
-
-          setStats({
-            count: Number(count),
-            rating: Number(avg),
-          })
-        }
-      } catch (error) {
-        console.error('Error fetching hero stats:', error)
-      }
-    }
-    fetchStats()
-  }, [])
 
   function scrollToProducts() {
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })

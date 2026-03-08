@@ -21,10 +21,12 @@ type Variant = {
   price_cents: number
   compare_at_price_cents: number | null
   attributes: Record<string, unknown>
-  product_inventory: any
+  product_inventory: { quantity: number } | { quantity: number }[] | null
 }
 
-function getQuantity(v: any): number {
+function getQuantity(v: {
+  product_inventory: { quantity: number } | { quantity: number }[] | null
+}): number {
   const inv = v.product_inventory
   if (!inv) return 0
   if (Array.isArray(inv)) return inv[0]?.quantity ?? 0
@@ -160,10 +162,49 @@ export function ProductDetailAdmin({
     setSelectedVariantId(variant.id)
   }
 
+  // ── Inventory summary (all variants) ──────────────────────────────────────
+  const totalVariants = variants.length
+  const oosVariants = variants.filter((v) => getQuantity(v) === 0).length
+  const totalStock = variants.reduce((sum, v) => sum + getQuantity(v), 0)
+
   return (
     <div className="space-y-6">
       {/* Price Management Section */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-6">
+        {/* Variant summary header */}
+        {totalVariants > 0 && (
+          <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-zinc-800">
+            <span className="text-xs text-zinc-500">
+              <span className="font-semibold text-zinc-300">{totalVariants}</span> variant
+              {totalVariants !== 1 ? 's' : ''}
+            </span>
+            <span className="text-zinc-700">·</span>
+            <span className="text-xs text-zinc-500">
+              <span className="font-semibold text-zinc-300">{totalStock}</span> in stock
+            </span>
+            {oosVariants > 0 && (
+              <>
+                <span className="text-zinc-700">·</span>
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-400">
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                    />
+                  </svg>
+                  {oosVariants} out of stock
+                </span>
+              </>
+            )}
+          </div>
+        )}
         <form onSubmit={handleUpdatePrice} className="space-y-6">
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
@@ -383,6 +424,65 @@ export function ProductDetailAdmin({
               </button>
             </div>
           </form>
+        )}
+
+        {/* ── Stock Overview Table ─────────────────────────────────────── */}
+        {variantsForColor.length > 0 && (
+          <div className="mt-5 border-t border-zinc-800 pt-4">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+              Stock overview — {selectedColor}
+            </p>
+            <div className="overflow-hidden rounded-lg border border-zinc-800">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-zinc-800 bg-zinc-900/80">
+                    <th className="px-3 py-2 text-left font-medium text-zinc-500">Size</th>
+                    <th className="px-3 py-2 text-left font-medium text-zinc-500">SKU</th>
+                    <th className="px-3 py-2 text-right font-medium text-zinc-500">Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {variantsForColor.map((v) => {
+                    const qty = getQuantity(v)
+                    const isOos = qty === 0
+                    const isSelected = v.id === selectedVariantId
+                    return (
+                      <tr
+                        key={v.id}
+                        onClick={() => selectVariant(v)}
+                        className={`cursor-pointer border-b border-zinc-800/50 transition-colors last:border-0 ${
+                          isSelected ? 'bg-amber-500/10' : 'hover:bg-zinc-800/60'
+                        }`}
+                      >
+                        <td
+                          className={`px-3 py-2 font-medium ${isSelected ? 'text-amber-400' : 'text-zinc-200'}`}
+                        >
+                          {getSize(v)}
+                        </td>
+                        <td className="px-3 py-2 font-mono text-zinc-500">{v.sku ?? '—'}</td>
+                        <td className="px-3 py-2 text-right">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold ${
+                              isOos
+                                ? 'bg-red-950/40 text-red-400'
+                                : qty <= 3
+                                  ? 'bg-amber-950/40 text-amber-400'
+                                  : 'bg-emerald-950/40 text-emerald-400'
+                            }`}
+                          >
+                            {qty}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-1.5 text-[10px] text-zinc-600">
+              Click a row to select that variant for editing.
+            </p>
+          </div>
         )}
       </div>
     </div>

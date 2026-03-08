@@ -1,7 +1,7 @@
 'use client'
 
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
 import { PackageOpen } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -35,7 +35,15 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
   const searchParams = useSearchParams()
   const listRef = useRef<HTMLDivElement>(null)
   const [columns, setColumns] = useState(4)
+  const [scrollMargin, setScrollMargin] = useState(0)
 
+  useLayoutEffect(() => {
+    if (listRef.current) {
+      setScrollMargin(listRef.current.offsetTop)
+    }
+  }, [])
+
+   
   useEffect(() => {
     const updateColumns = () => {
       if (window.innerWidth >= 1024) setColumns(4)
@@ -54,7 +62,7 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
     count: rowCount,
     estimateSize: () => 500, // Estimate height of a product card + gap
     overscan: 5,
-    scrollMargin: listRef.current?.offsetTop ?? 0,
+    scrollMargin,
   })
 
   const SORT_OPTIONS = [

@@ -1,19 +1,24 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getLocale } from 'next-intl/server'
+import { formatPrice, SupportedCurrency } from '@/lib/currency'
 
-function formatPrice(cents: number) {
-  return new Intl.NumberFormat('de-CH', {
-    style: 'currency',
-    currency: 'CHF',
-    minimumFractionDigits: 2,
-  }).format(cents / 100)
+const STATUS_COLORS: Record<string, string> = {
+  paid: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+  processing: 'bg-amber-500/10  text-amber-400   border border-amber-500/20',
+  shipped: 'bg-blue-500/10   text-blue-400    border border-blue-500/20',
+  delivered: 'bg-green-500/10  text-green-400   border border-green-500/20',
+  cancelled: 'bg-red-500/10    text-red-400     border border-red-500/20',
+  refunded: 'bg-purple-500/10 text-purple-400  border border-purple-500/20',
+  pending: 'bg-zinc-800      text-zinc-400    border border-zinc-700',
 }
 
 export default async function OrderHistoryPage() {
   const t = await getTranslations('account')
+  const locale = await getLocale()
   const supabase = await createClient()
+
   let user = null
   try {
     const { data } = await supabase.auth.getUser()
@@ -37,9 +42,9 @@ export default async function OrderHistoryPage() {
           href="/account"
           className="mb-6 inline-block text-sm text-zinc-400 hover:text-zinc-300"
         >
-          ← Back to account
+          {t('backToAccount')}
         </Link>
-        <h1 className="text-2xl font-bold text-zinc-50">Order history</h1>
+        <h1 className="text-2xl font-bold text-zinc-50">{t('orderHistory')}</h1>
 
         {orders && orders.length > 0 ? (
           <div className="mt-6 space-y-4">
@@ -51,12 +56,10 @@ export default async function OrderHistoryPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-zinc-50">
-                      Order #{order.id.slice(0, 8)}
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-400">
-                      {formatPrice(order.total_cents)} ·{' '}
-                      {new Date(order.created_at).toLocaleDateString('en-GB', {
+                    <p className="font-medium text-zinc-50">Order #{order.id.slice(0, 8)}</p>
+                    <p className="mt-1 text-sm text-zinc-400" suppressHydrationWarning>
+                      {formatPrice(order.total_cents, order.currency as SupportedCurrency)} &middot;{' '}
+                      {new Date(order.created_at).toLocaleDateString(locale, {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
@@ -64,12 +67,8 @@ export default async function OrderHistoryPage() {
                     </p>
                   </div>
                   <span
-                    className={`rounded px-2 py-1 text-xs font-medium capitalize ${
-                      order.status === 'paid' || order.status === 'processing'
-                        ? 'bg-emerald-900/50 text-emerald-400'
-                        : order.status === 'shipped' || order.status === 'delivered'
-                          ? 'bg-blue-900/50 text-blue-400'
-                          : 'bg-zinc-800 text-zinc-400'
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                      STATUS_COLORS[order.status] ?? STATUS_COLORS['pending']
                     }`}
                   >
                     {order.status}

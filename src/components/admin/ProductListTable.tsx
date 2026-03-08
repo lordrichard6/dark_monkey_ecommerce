@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
@@ -22,6 +22,7 @@ import {
   updateProductStatus,
 } from '@/actions/admin-products'
 import { CategoryPickerDialog, type PickerCategory } from './CategoryPickerDialog'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 type Tag = { id: string; name: string }
 
@@ -154,6 +155,19 @@ export function ProductListTable({
   const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+
+  // Focus trap + Escape key for the bulk-delete confirmation dialog
+  const bulkDeleteRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(bulkDeleteRef, bulkDeleteOpen)
+
+  useEffect(() => {
+    if (!bulkDeleteOpen) return
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setBulkDeleteOpen(false)
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [bulkDeleteOpen])
 
   // Local controlled search input (push to URL on submit/debounce)
   const [searchInput, setSearchInput] = useState(search)
@@ -798,7 +812,10 @@ export function ProductListTable({
           aria-modal="true"
           aria-labelledby="bulk-delete-title"
         >
-          <div className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
+          <div
+            ref={bulkDeleteRef}
+            className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl"
+          >
             <h2 id="bulk-delete-title" className="text-lg font-semibold text-zinc-50">
               Delete {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''}
             </h2>

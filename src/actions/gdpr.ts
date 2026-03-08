@@ -3,14 +3,25 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 
+export type ExportSummary = {
+  orders: number
+  orderItems: number
+  addresses: number
+  wishlistItems: number
+  reviews: number
+  xpEvents: number
+  achievements: number
+  pushSubscriptions: number
+}
+
 /**
- * Export all personal data for the authenticated user.
- * Returns a structured JSON object containing every table row that
- * references the user — suitable for a GDPR data portability request.
+ * Export all personal data for the authenticated user (GDPR Art. 20 portability).
+ * Also stamps last_data_export_at on user_profiles.
  */
 export async function exportUserData(): Promise<{
   success: boolean
   data?: Record<string, unknown>
+  summary?: ExportSummary
   error?: string
 }> {
   const supabase = await createClient()
@@ -18,6 +29,10 @@ export async function exportUserData(): Promise<{
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Fetch order IDs first so we can fetch items in the same parallel batch
+  const { data: orderRows } = await supabase.from('orders').select('id').eq('user_id', user.id)
+  const orderIds = (orderRows ?? []).map((o) => o.id)
 
   const [
     { data: profile },
@@ -30,18 +45,13 @@ export async function exportUserData(): Promise<{
     { data: xpEvents },
     { data: achievements },
     { data: deletionRequests },
+    { data: pushSubscriptions },
   ] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).single(),
     supabase.from('orders').select('*').eq('user_id', user.id).order('created_at'),
-    supabase
-      .from('order_items')
-      .select('*')
-      .in(
-        'order_id',
-        (await supabase.from('orders').select('id').eq('user_id', user.id)).data?.map(
-          (o) => o.id
-        ) ?? []
-      ),
+    orderIds.length > 0
+      ? supabase.from('order_items').select('*').in('order_id', orderIds)
+      : Promise.resolve({ data: [] }),
     supabase.from('addresses').select('*').eq('user_id', user.id),
     supabase.from('user_wishlist').select('*').eq('user_id', user.id),
     supabase.from('product_reviews').select('*').eq('user_id', user.id),
@@ -49,10 +59,30 @@ export async function exportUserData(): Promise<{
     supabase.from('xp_events').select('*').eq('user_id', user.id).order('created_at'),
     supabase.from('user_achievements').select('*, achievements(*)').eq('user_id', user.id),
     supabase.from('data_deletion_requests').select('*').eq('user_id', user.id),
+    supabase.from('push_subscriptions').select('created_at, is_active').eq('user_id', user.id),
   ])
+
+  // Stamp the export timestamp (non-blocking — fire and forget)
+  supabase
+    .from('user_profiles')
+    .update({ last_data_export_at: new Date().toISOString() })
+    .eq('id', user.id)
+    .then(() => {})
+
+  const summary: ExportSummary = {
+    orders: (orders ?? []).length,
+    orderItems: (orderItems ?? []).length,
+    addresses: (addresses ?? []).length,
+    wishlistItems: (wishlist ?? []).length,
+    reviews: (reviews ?? []).length,
+    xpEvents: (xpEvents ?? []).length,
+    achievements: (achievements ?? []).length,
+    pushSubscriptions: (pushSubscriptions ?? []).length,
+  }
 
   return {
     success: true,
+    summary,
     data: {
       exportDate: new Date().toISOString(),
       userId: user.id,
@@ -67,15 +97,14 @@ export async function exportUserData(): Promise<{
       referrals: referrals ?? [],
       xpEvents: xpEvents ?? [],
       achievements: achievements ?? [],
+      pushSubscriptions: pushSubscriptions ?? [],
       deletionRequests: deletionRequests ?? [],
     },
   }
 }
 
 /**
- * Submit a data deletion request (Right to be Forgotten).
- * Creates a pending request — an admin will process it within 30 days.
- * Orders are anonymised (kept for accounting); personal data is deleted.
+ * Submit a data deletion request (GDPR Art. 17 right to erasure).
  */
 export async function requestAccountDeletion(reason?: string): Promise<{
   success: boolean
@@ -87,7 +116,6 @@ export async function requestAccountDeletion(reason?: string): Promise<{
   } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  // Check if a pending/processing request already exists
   const { data: existing } = await supabase
     .from('data_deletion_requests')
     .select('id, status')
@@ -108,6 +136,29 @@ export async function requestAccountDeletion(reason?: string): Promise<{
     reason: reason ?? null,
     status: 'pending',
   })
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+/**
+ * Cancel a pending deletion request (only allowed while status = 'pending').
+ */
+export async function cancelAccountDeletion(): Promise<{
+  success: boolean
+  error?: string
+}> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('data_deletion_requests')
+    .update({ status: 'cancelled' })
+    .eq('user_id', user.id)
+    .eq('status', 'pending')
 
   if (error) return { success: false, error: error.message }
   return { success: true }

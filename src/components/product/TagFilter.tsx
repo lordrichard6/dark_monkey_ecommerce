@@ -4,6 +4,7 @@ import { useRouter } from '@/i18n/navigation'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Search, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type Tag = {
   id: string
@@ -20,6 +21,7 @@ type TagFilterProps = {
 const VISIBLE_COUNT = 8
 
 export function TagFilter({ tags, selectedTag }: TagFilterProps) {
+  const t = useTranslations('home')
   const router = useRouter()
   const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)
@@ -76,7 +78,7 @@ export function TagFilter({ tags, selectedTag }: TagFilterProps) {
               : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300'
           }`}
         >
-          All Products
+          {t('tagAllProducts')}
         </button>
 
         {/* Visible tags */}
@@ -116,7 +118,7 @@ export function TagFilter({ tags, selectedTag }: TagFilterProps) {
                   : 'border border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
               }`}
             >
-              {selectedInHidden ? 'Filter active' : `+${remainingCount} more`}
+              {selectedInHidden ? t('tagFilterActive') : `+${remainingCount} more`}
               <ChevronDown
                 className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
               />
@@ -133,7 +135,7 @@ export function TagFilter({ tags, selectedTag }: TagFilterProps) {
                       autoFocus
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search tags..."
+                      placeholder={t('tagSearchPlaceholder')}
                       className="flex-1 bg-transparent text-sm text-zinc-300 placeholder-zinc-600 outline-none"
                     />
                     {search && (
@@ -147,7 +149,7 @@ export function TagFilter({ tags, selectedTag }: TagFilterProps) {
                 {/* Tag list */}
                 <div className="max-h-64 overflow-y-auto p-2">
                   {filteredHidden.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-zinc-600">No tags found</p>
+                    <p className="py-4 text-center text-xs text-zinc-600">{t('tagNoTagsFound')}</p>
                   ) : (
                     <div className="flex flex-wrap gap-1.5 p-1">
                       {filteredHidden.map((tag) => (

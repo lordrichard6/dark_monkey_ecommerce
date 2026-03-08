@@ -5,16 +5,20 @@ import { getAdminUser } from '@/lib/auth-admin'
 import { AdminFooter } from '@/components/admin/AdminFooter'
 
 export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
+  // Check if the user is authenticated at all
   const supabase = await createClient()
-  let user = null
+  let sessionUser = null
   try {
     const { data } = await supabase.auth.getUser()
-    user = data.user
+    sessionUser = data.user
   } catch {
     //
   }
-  if (!user) redirect('/admin/login')
 
+  // Not logged in → redirect to the normal storefront login page
+  if (!sessionUser) redirect('/login')
+
+  // Logged in but not an admin → show access denied
   const adminUser = await getAdminUser()
   if (!adminUser) {
     return (

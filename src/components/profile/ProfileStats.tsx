@@ -3,6 +3,7 @@
 import { TierBadge } from './TierBadge'
 import { getTierInfo, getTierProgress, getSpendToNextTier } from '@/lib/gamification'
 import { useCurrency } from '@/components/currency/CurrencyContext'
+import { useLocale } from 'next-intl'
 import { Package, Star, Heart, Calendar, TrendingUp, Award } from 'lucide-react'
 
 type Props = {
@@ -19,13 +20,18 @@ type Props = {
 
 export function ProfileStats({ stats }: Props) {
   const { format } = useCurrency()
+  const locale = useLocale()
   const tierInfo = getTierInfo(stats.totalSpentCents)
   const progress = getTierProgress(stats.totalSpentCents)
   const spendToNext = getSpendToNextTier(stats.totalSpentCents)
 
-  const memberDays = Math.floor(
-    (Date.now() - new Date(stats.memberSince).getTime()) / (1000 * 60 * 60 * 24)
-  )
+  const memberDate = new Date(stats.memberSince)
+  const memberDays = Math.floor((Date.now() - memberDate.getTime()) / (1000 * 60 * 60 * 24))
+  const memberSinceFormatted = memberDate.toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 
   return (
     <div className="space-y-6">
@@ -58,7 +64,7 @@ export function ProfileStats({ stats }: Props) {
         {tierInfo.tier === 'platinum' && (
           <div className="rounded-lg bg-purple-500/10 p-3 text-center">
             <p className="text-sm font-medium text-purple-400">
-              🎉 You've reached the highest tier!
+              🎉 You&apos;ve reached the highest tier!
             </p>
           </div>
         )}
@@ -103,6 +109,7 @@ export function ProfileStats({ stats }: Props) {
           icon={<Calendar className="h-5 w-5" />}
           label="Member For"
           value={`${memberDays} days`}
+          subtitle={memberSinceFormatted}
           color="text-purple-400"
         />
 
@@ -122,11 +129,13 @@ function StatCard({
   icon,
   label,
   value,
+  subtitle,
   color,
 }: {
   icon: React.ReactNode
   label: string
   value: string
+  subtitle?: string
   color: string
 }) {
   return (
@@ -138,6 +147,11 @@ function StatCard({
       <div className="text-2xl font-bold text-zinc-50" suppressHydrationWarning>
         {value}
       </div>
+      {subtitle && (
+        <p className="mt-0.5 text-xs text-zinc-600" suppressHydrationWarning>
+          {subtitle}
+        </p>
+      )}
     </div>
   )
 }

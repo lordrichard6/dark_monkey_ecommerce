@@ -50,7 +50,8 @@ async function fetchPrintful<T>(url: string, options?: RequestInit): Promise<Pri
     const response = await rateLimiter.execute(() => fetchWithRetry(url, options))
 
     // Parse JSON
-    let data: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: PrintfulResponse<any>
     try {
       data = await response.json()
     } catch (e) {
@@ -320,7 +321,7 @@ export async function confirmPrintfulOrder(
 
 export async function fetchStoreOrder(
   orderId: number
-): Promise<{ ok: boolean; order?: any; error?: string }> {
+): Promise<{ ok: boolean; order?: import('./printful/types').PrintfulOrder; error?: string }> {
   if (!isPrintfulConfigured()) {
     return { ok: false, error: 'PRINTFUL_NOT_CONFIGURED' }
   }
@@ -328,9 +329,12 @@ export async function fetchStoreOrder(
   try {
     // GET https://api.printful.com/orders/{id}
     // Note: The /orders endpoint returns order details including shipments
-    const data = await fetchPrintful<any>(`${API_BASE}/orders/${orderId}`, {
-      headers: getHeaders(),
-    })
+    const data = await fetchPrintful<import('./printful/types').PrintfulOrder>(
+      `${API_BASE}/orders/${orderId}`,
+      {
+        headers: getHeaders(),
+      }
+    )
 
     if (data.result) {
       return { ok: true, order: data.result }

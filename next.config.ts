@@ -1,9 +1,9 @@
-import type { NextConfig } from "next";
-import path from "path";
-import createNextIntlPlugin from "next-intl/plugin";
-import { withSentryConfig } from '@sentry/nextjs';
+import type { NextConfig } from 'next'
+import path from 'path'
+import createNextIntlPlugin from 'next-intl/plugin'
+import { withSentryConfig } from '@sentry/nextjs'
 
-const withNextIntl = createNextIntlPlugin();
+const withNextIntl = createNextIntlPlugin()
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -73,7 +73,8 @@ const nextConfig: NextConfig = {
           // Restrict browser feature access
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com")',
+            value:
+              'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com")',
           },
           // Content Security Policy
           // Notes:
@@ -92,8 +93,8 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https://ehkwnyiktjsmegzxbpph.supabase.co https://files.cdn.printful.com https://picsum.photos https://images.unsplash.com https://placehold.co https://www.google-analytics.com",
               // Fonts: self only (using system/Tailwind fonts)
               "font-src 'self'",
-              // Connect: self + Supabase + Stripe + GA + Vercel + Sentry
-              "connect-src 'self' https://ehkwnyiktjsmegzxbpph.supabase.co wss://ehkwnyiktjsmegzxbpph.supabase.co https://api.stripe.com https://www.google-analytics.com https://analytics.google.com https://vitals.vercel-insights.com https://o4510900578680832.ingest.de.sentry.io",
+              // Connect: self + Supabase + Stripe + GA (GA4 uses region1 endpoint) + Vercel + Sentry
+              "connect-src 'self' https://ehkwnyiktjsmegzxbpph.supabase.co wss://ehkwnyiktjsmegzxbpph.supabase.co https://api.stripe.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://vitals.vercel-insights.com https://o4510900578680832.ingest.de.sentry.io",
               // Frames: Stripe checkout iframes only
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               // Workers: self (service worker)
@@ -115,13 +116,13 @@ const nextConfig: NextConfig = {
   // Production optimizations
   poweredByHeader: false,
   compress: true,
-};
+}
 
 // Bundle analyzer (run with: ANALYZE=true npm run build)
-import bundleAnalyzer from '@next/bundle-analyzer';
+import bundleAnalyzer from '@next/bundle-analyzer'
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
-});
+})
 
 const sentryOptions = {
   // Suppress Sentry build output unless SENTRY_DEBUG=true
@@ -137,7 +138,4 @@ const sentryOptions = {
   tunnelRoute: undefined,
 }
 
-export default withSentryConfig(
-  withBundleAnalyzer(withNextIntl(nextConfig)),
-  sentryOptions
-);
+export default withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), sentryOptions)

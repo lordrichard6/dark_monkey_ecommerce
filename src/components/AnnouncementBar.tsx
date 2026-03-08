@@ -22,6 +22,7 @@ export function AnnouncementBar({ announcements = [] }: Props) {
   const hasAnnouncements = announcements.length > 0
 
   // Persistent dismiss via localStorage fingerprint
+   
   useEffect(() => {
     if (!hasAnnouncements) return
     const fingerprint = JSON.stringify(announcements.map((a) => a.id).sort())

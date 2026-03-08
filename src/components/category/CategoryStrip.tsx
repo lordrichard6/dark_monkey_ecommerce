@@ -19,6 +19,8 @@ export async function CategoryStrip() {
       categories={categories}
       title={t('shopByCategory')}
       viewAllLabel={t('viewAllCategories')}
+      collectionsLabel={t('categoryStripLabel')}
+      exploreLabel={t('categoryExplore')}
     />
   )
 }

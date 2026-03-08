@@ -15,16 +15,24 @@ type Props = {
   categories: Category[]
   title: string
   viewAllLabel: string
+  collectionsLabel: string
+  exploreLabel: string
 }
 
-export function CategoryStripClient({ categories, title, viewAllLabel }: Props) {
+export function CategoryStripClient({
+  categories,
+  title,
+  viewAllLabel,
+  collectionsLabel,
+  exploreLabel,
+}: Props) {
   return (
     <section className="relative mx-auto max-w-7xl px-4 py-12 md:py-16">
       {/* Section header */}
       <div className="mb-8 flex items-end justify-between">
         <div>
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.3em] text-amber-500/80">
-            Collections
+            {collectionsLabel}
           </p>
           <h2 className="text-2xl font-black tracking-tight text-zinc-50 md:text-3xl">{title}</h2>
         </div>
@@ -87,7 +95,7 @@ export function CategoryStripClient({ categories, title, viewAllLabel }: Props) 
                 {/* "Explore" label — slides up on hover */}
                 <div className="flex items-center gap-1 overflow-hidden">
                   <span className="translate-y-4 text-[11px] font-medium text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    Explore
+                    {exploreLabel}
                   </span>
                   <ArrowRight className="h-3 w-3 translate-y-4 text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100" />
                 </div>

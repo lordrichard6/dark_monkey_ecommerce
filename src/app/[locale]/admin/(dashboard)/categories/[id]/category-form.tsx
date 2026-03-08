@@ -218,6 +218,7 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
             {previewUrl ? (
               <div className="relative overflow-hidden rounded-lg border border-white/10 sm:max-w-xs">
                 <div className="aspect-square w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- previewUrl may be a blob: URL from file picker */}
                   <img
                     src={previewUrl}
                     alt="Category preview"
