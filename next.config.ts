@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 2592000, // 30 days — product images are static Printful CDN assets
     remotePatterns: [
       {
         protocol: 'http',
