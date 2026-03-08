@@ -280,6 +280,18 @@ async function syncVariants(
   sync_product: PrintfulSyncProduct,
   sync_variants: PrintfulSyncVariant[]
 ): Promise<{ variantIdMap?: Map<number, string>; error?: string }> {
+  // Clean up orphaned variants from OTHER products that hold the same Printful IDs.
+  // This happens when a product was deleted but its variants were not, causing
+  // unique constraint violations on printful_sync_variant_id when re-syncing.
+  const pfSyncIds = sync_variants.map((sv) => sv.id)
+  if (pfSyncIds.length > 0) {
+    await supabase
+      .from('product_variants')
+      .delete()
+      .in('printful_sync_variant_id', pfSyncIds)
+      .neq('product_id', productId)
+  }
+
   const { data: existingVariants } = await supabase
     .from('product_variants')
     .select('id, printful_sync_variant_id, printful_variant_id, price_cents, sku')
