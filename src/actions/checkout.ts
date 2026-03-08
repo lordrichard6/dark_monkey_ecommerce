@@ -37,7 +37,7 @@ export type GuestCheckoutInput = {
 }
 
 export type ValidateDiscountResult =
-  | { ok: true; discountId: string; discountCents: number; code: string }
+  | { ok: true; discountId: string; discountCents: number; code: string; discountType: string }
   | { ok: false; error: string }
 
 /**
@@ -82,18 +82,23 @@ export async function validateDiscountCode(
   }
 
   let discountCents: number
-  if (discount.type === 'percentage') {
+  if (discount.type === 'free_shipping') {
+    // Shipping amount is not known yet — resolved in createCheckoutSession after shipping calc
+    discountCents = 0
+  } else if (discount.type === 'percentage') {
     // value_cents stored as percentage * 100 (e.g. 1000 = 10%)
     discountCents = Math.round((subtotalCents * (discount.value_cents ?? 0)) / 10000)
   } else {
     discountCents = Math.min(discount.value_cents ?? 0, subtotalCents)
   }
-  if (discountCents <= 0) return { ok: false, error: 'Invalid discount value' }
+  if (discount.type !== 'free_shipping' && discountCents <= 0)
+    return { ok: false, error: 'Invalid discount value' }
 
   return {
     ok: true,
     discountId: discount.id,
     discountCents,
+    discountType: discount.type,
     code: discount.code,
   }
 }
@@ -219,11 +224,13 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
 
   let discountId: string | null = null
   let discountCents = 0
+  let isFreeShippingDiscount = false
   if (input?.discountCode?.trim()) {
     const result = await validateDiscountCode(input.discountCode.trim(), subtotalCents)
     if (result.ok) {
       discountId = result.discountId
       discountCents = result.discountCents
+      isFreeShippingDiscount = result.discountType === 'free_shipping'
     }
   }
   // Calculate shipping server-side using DB rates (never trust client value)
@@ -251,6 +258,11 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
     )
     shippingCostCents = shippingResult.shippingCents
     shippingZoneName = shippingResult.zoneName
+  }
+
+  // Free shipping discount: the discount amount equals the shipping cost (zeroes it out)
+  if (isFreeShippingDiscount) {
+    discountCents = shippingCostCents
   }
 
   const totalCents = Math.max(0, subtotalCents + shippingCostCents - discountCents)
@@ -337,8 +349,10 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
       price_data: {
         currency: requestedCurrency.toLowerCase(),
         product_data: {
-          name: 'Discount',
-          description: `Discount applied`,
+          name: isFreeShippingDiscount ? 'Free Shipping' : 'Discount',
+          description: isFreeShippingDiscount
+            ? 'Shipping waived by discount code'
+            : 'Discount applied',
         },
         unit_amount: -convertedDiscount,
       },
