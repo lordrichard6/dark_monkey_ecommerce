@@ -227,8 +227,25 @@ async function upsertProduct(
     return { productId }
   }
 
-  // Create New
-  let slug = slugify(sync_product.name)
+  // Secondary check: if Printful re-created this product with a new ID, a record with
+  // the same base slug already exists. Re-use it instead of creating a duplicate with a -N suffix.
+  const baseSlug = slugify(sync_product.name)
+  const { data: existingBySlug } = await supabase
+    .from('products')
+    .select('id')
+    .eq('slug', baseSlug)
+    .single()
+
+  if (existingBySlug?.id) {
+    await supabase
+      .from('products')
+      .update({ printful_sync_product_id: sync_product.id, deleted_at: null, is_active: true })
+      .eq('id', existingBySlug.id)
+    return { productId: existingBySlug.id }
+  }
+
+  // Create New — slug must be unique; append -N if taken by an unrelated product
+  let slug = baseSlug
   let n = 0
   while (true) {
     const { data: slugTaken } = await supabase
@@ -237,7 +254,7 @@ async function upsertProduct(
       .eq('slug', slug)
       .single()
     if (!slugTaken) break
-    slug = `${slugify(sync_product.name)}-${++n}`
+    slug = `${baseSlug}-${++n}`
   }
 
   let description: string | null = null
