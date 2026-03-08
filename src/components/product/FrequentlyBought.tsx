@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getFrequentlyBoughtTogether } from '@/lib/recommendations'
 import { ProductCard } from './ProductCard'
 import { BundleAddToCart } from './BundleAddToCart'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 
 interface FrequentlyBoughtProps {
@@ -11,6 +11,7 @@ interface FrequentlyBoughtProps {
 }
 
 export async function FrequentlyBought({ productId, locale }: FrequentlyBoughtProps) {
+  setRequestLocale(locale)
   const supabase = await createClient()
   const t = await getTranslations('product')
 

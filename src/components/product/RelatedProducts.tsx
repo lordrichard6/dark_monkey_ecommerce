@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getRelatedProducts } from '@/lib/recommendations'
 import { ProductCard } from './ProductCard'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 interface RelatedProductsProps {
   productId: string
@@ -9,6 +9,7 @@ interface RelatedProductsProps {
 }
 
 export async function RelatedProducts({ productId, locale }: RelatedProductsProps) {
+  setRequestLocale(locale)
   const supabase = await createClient()
   const t = await getTranslations('product')
 

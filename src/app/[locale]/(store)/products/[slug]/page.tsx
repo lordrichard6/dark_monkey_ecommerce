@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { sanitizeProductHtml } from '@/lib/sanitize-html.server'
 import { ProductMain } from './product-main'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
 import {
   getProductMetadata,
@@ -103,6 +103,7 @@ export async function generateStaticParams() {
 
 export default async function ProductPage({ params, searchParams }: Props) {
   const { slug, locale } = await params
+  setRequestLocale(locale)
   const { order_id: orderIdFromQuery } = (await searchParams) ?? {}
   const supabase = await createClient()
 
