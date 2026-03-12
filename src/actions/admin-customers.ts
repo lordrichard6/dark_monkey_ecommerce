@@ -28,3 +28,46 @@ export async function overrideCustomerTier(
   revalidatePath('/admin/customers')
   return { ok: true }
 }
+
+export async function confirmUserEmail(userId: string): Promise<{ ok: boolean; error?: string }> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin client not configured' }
+
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    email_confirm: true,
+  })
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/admin/customers/${userId}`)
+  revalidatePath('/admin/customers')
+  return { ok: true }
+}
+
+export async function updateUserDisplayName(
+  userId: string,
+  displayName: string
+): Promise<{ ok: boolean; error?: string }> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
+
+  const trimmed = displayName.trim()
+  if (!trimmed) return { ok: false, error: 'Display name cannot be empty' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin client not configured' }
+
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({ display_name: trimmed, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/admin/customers/${userId}`)
+  revalidatePath('/admin/customers')
+  return { ok: true }
+}

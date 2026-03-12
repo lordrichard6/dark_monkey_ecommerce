@@ -2,7 +2,11 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { overrideCustomerTier } from '@/actions/admin-customers'
+import {
+  overrideCustomerTier,
+  confirmUserEmail,
+  updateUserDisplayName,
+} from '@/actions/admin-customers'
 
 type Order = {
   id: string
@@ -36,6 +40,9 @@ type XpEvent = {
 type Props = {
   userId: string
   currentTier: string
+  email: string
+  emailConfirmedAt: string | null
+  displayName: string | null
   orders: Order[]
   reviews: Review[]
   wishlist: WishlistItem[]
@@ -75,50 +82,149 @@ type Tab = (typeof TABS)[number]
 export function CustomerDetailTabs({
   userId,
   currentTier,
+  email,
+  emailConfirmedAt,
+  displayName: initialDisplayName,
   orders,
   reviews,
   wishlist,
   xpEvents,
 }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('Orders')
+
+  // Tier override
   const [tier, setTier] = useState(currentTier)
   const [tierSaved, setTierSaved] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [isTierPending, startTierTransition] = useTransition()
+
+  // Email confirmation
+  const [emailConfirmed, setEmailConfirmed] = useState(!!emailConfirmedAt)
+  const [isConfirmPending, startConfirmTransition] = useTransition()
+  const [confirmError, setConfirmError] = useState<string | null>(null)
+
+  // Display name edit
+  const [displayName, setDisplayName] = useState(initialDisplayName ?? '')
+  const [nameSaved, setNameSaved] = useState(false)
+  const [isNamePending, startNameTransition] = useTransition()
+  const [nameError, setNameError] = useState<string | null>(null)
 
   function handleTierSave() {
-    startTransition(async () => {
+    startTierTransition(async () => {
       const result = await overrideCustomerTier(userId, tier)
       if (result.ok) setTierSaved(true)
     })
   }
 
+  function handleConfirmEmail() {
+    startConfirmTransition(async () => {
+      setConfirmError(null)
+      const result = await confirmUserEmail(userId)
+      if (result.ok) {
+        setEmailConfirmed(true)
+      } else {
+        setConfirmError(result.error ?? 'Failed to confirm email')
+      }
+    })
+  }
+
+  function handleNameSave() {
+    startNameTransition(async () => {
+      setNameError(null)
+      setNameSaved(false)
+      const result = await updateUserDisplayName(userId, displayName)
+      if (result.ok) {
+        setNameSaved(true)
+      } else {
+        setNameError(result.error ?? 'Failed to update name')
+      }
+    })
+  }
+
   return (
     <div className="mt-6 space-y-6">
-      {/* Tier override */}
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <p className="mb-3 text-sm font-medium text-zinc-300">Manual Tier Override</p>
-        <div className="flex items-center gap-3">
-          <select
-            value={tier}
-            onChange={(e) => {
-              setTier(e.target.value)
-              setTierSaved(false)
-            }}
-            className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
-          >
-            <option value="bronze">Bronze</option>
-            <option value="silver">Silver</option>
-            <option value="gold">Gold</option>
-            <option value="platinum">Platinum</option>
-          </select>
-          <button
-            onClick={handleTierSave}
-            disabled={isPending || tier === currentTier}
-            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50 transition-colors"
-          >
-            {isPending ? 'Saving…' : 'Save'}
-          </button>
-          {tierSaved && <span className="text-sm text-emerald-400">✓ Saved</span>}
+      {/* User info editing */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 space-y-4">
+        <p className="text-sm font-semibold text-zinc-200">User Management</p>
+
+        {/* Email + confirmation */}
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider">Email</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-zinc-300">{email}</span>
+            {emailConfirmed ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                ✓ Verified
+              </span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-400 ring-1 ring-inset ring-red-500/20">
+                  ✗ Unverified
+                </span>
+                <button
+                  onClick={handleConfirmEmail}
+                  disabled={isConfirmPending}
+                  className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                >
+                  {isConfirmPending ? 'Confirming…' : 'Confirm Email'}
+                </button>
+                {confirmError && <span className="text-xs text-red-400">{confirmError}</span>}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Display name */}
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider">Display Name</p>
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => {
+                setDisplayName(e.target.value)
+                setNameSaved(false)
+              }}
+              placeholder="Enter display name…"
+              className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-amber-500 focus:outline-none w-56"
+            />
+            <button
+              onClick={handleNameSave}
+              disabled={isNamePending || displayName.trim() === (initialDisplayName ?? '').trim()}
+              className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50 transition-colors"
+            >
+              {isNamePending ? 'Saving…' : 'Save'}
+            </button>
+            {nameSaved && <span className="text-sm text-emerald-400">✓ Saved</span>}
+            {nameError && <span className="text-sm text-red-400">{nameError}</span>}
+          </div>
+        </div>
+
+        {/* Tier override */}
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider">Loyalty Tier</p>
+          <div className="flex items-center gap-3">
+            <select
+              value={tier}
+              onChange={(e) => {
+                setTier(e.target.value)
+                setTierSaved(false)
+              }}
+              className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+            >
+              <option value="bronze">Bronze</option>
+              <option value="silver">Silver</option>
+              <option value="gold">Gold</option>
+              <option value="platinum">Platinum</option>
+            </select>
+            <button
+              onClick={handleTierSave}
+              disabled={isTierPending || tier === currentTier}
+              className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50 transition-colors"
+            >
+              {isTierPending ? 'Saving…' : 'Save'}
+            </button>
+            {tierSaved && <span className="text-sm text-emerald-400">✓ Saved</span>}
+          </div>
         </div>
       </div>
 

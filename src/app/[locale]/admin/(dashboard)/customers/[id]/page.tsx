@@ -171,6 +171,9 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
       <CustomerDetailTabs
         userId={id}
         currentTier={tier}
+        email={authUser.email ?? ''}
+        emailConfirmedAt={authUser.email_confirmed_at ?? null}
+        displayName={profile?.display_name ?? null}
         orders={orders.map((o) => ({
           id: o.id,
           status: o.status,

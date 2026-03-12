@@ -66,6 +66,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
   const customers = authUsers.map((u) => ({
     id: u.id,
     email: u.email ?? '—',
+    emailConfirmed: !!u.email_confirmed_at,
     createdAt: u.created_at,
     profile: profileMap.get(u.id) ?? null,
   }))
@@ -99,7 +100,14 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                   <p className="text-xs text-zinc-400">{c.email}</p>
                 </div>
               </div>
-              <TierBadge tier={c.profile?.current_tier ?? null} />
+              <div className="flex flex-col items-end gap-1">
+                <TierBadge tier={c.profile?.current_tier ?? null} />
+                <span
+                  className={`text-[10px] font-medium ${c.emailConfirmed ? 'text-emerald-400' : 'text-red-400'}`}
+                >
+                  {c.emailConfirmed ? '✓ Verified' : '✗ Unverified'}
+                </span>
+              </div>
             </div>
             <div className="mt-3 flex items-center justify-between text-sm text-zinc-400">
               <span>{c.profile?.total_orders ?? 0} orders</span>
@@ -131,6 +139,9 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                   Spent
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  Email Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   Joined
                 </th>
               </tr>
@@ -157,6 +168,17 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-zinc-100">
                     {formatPrice(c.profile?.total_spent_cents ?? 0)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                        c.emailConfirmed
+                          ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 ring-red-500/20'
+                      }`}
+                    >
+                      {c.emailConfirmed ? '✓ Verified' : '✗ Unverified'}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
                     {new Date(c.createdAt).toLocaleDateString('en-GB', {
