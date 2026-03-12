@@ -42,7 +42,7 @@ const SIZE_ORDER: Record<string, number> = {
   '5XL': 9,
 }
 
-function getSizeOrder(size: string): number {
+export function getSizeOrder(size: string): number {
   const normalized = size.toUpperCase().trim()
   return SIZE_ORDER[normalized] ?? 99
 }
