@@ -7,7 +7,9 @@ import {
   ProductQuantitySelector,
   ProductActionButtons,
   Variant,
+  getSizeOrder,
 } from './add-to-cart-form'
+import { SizeGuideModal } from '@/components/product/SizeGuideModal'
 import { WishlistButton } from '@/components/wishlist/WishlistButton'
 import { ShareButton } from '@/components/product/ShareButton'
 import { StickyAddToCart } from '@/components/product/StickyAddToCart'
@@ -117,6 +119,15 @@ export function ProductMain({
   const variantsForColor = variants.filter(
     (v) => (v.attributes?.color || 'Default') === selectedColor
   )
+
+  const hasSizes = variantsForColor.some(
+    (v) => v.attributes?.size || (v.name && v.name !== selectedColor)
+  )
+  const sizedVariants = [...variantsForColor].sort((a, b) => {
+    const sizeA = (a.attributes?.size as string) || a.name || ''
+    const sizeB = (b.attributes?.size as string) || b.name || ''
+    return getSizeOrder(sizeA) - getSizeOrder(sizeB)
+  })
 
   // Auto-select best variant when color changes
   useEffect(() => {
@@ -264,49 +275,6 @@ export function ProductMain({
                   : t('outOfStock')}
               </span>
             </div>
-
-            {/* Color swatches — with OOS indicator */}
-            {colorItems.length > 1 && (
-              <div className="flex flex-col gap-1 mt-1">
-                {selectedColor && (
-                  <span className="text-[9px] font-semibold text-zinc-400">{selectedColor}</span>
-                )}
-                <div className="flex flex-wrap gap-1.5">
-                  {colorItems.map((c) => {
-                    const hasStock = colorStockMap.get(c.name) ?? false
-                    return (
-                      <button
-                        key={c.name}
-                        type="button"
-                        onClick={() => setSelectedColor(c.name)}
-                        aria-label={`${c.name}${!hasStock ? ' (out of stock)' : ''}`}
-                        aria-pressed={selectedColor === c.name}
-                        className={`relative h-6 w-6 rounded-full border-2 transition-all ${
-                          selectedColor === c.name
-                            ? 'border-amber-500 ring-2 ring-amber-500/10'
-                            : 'border-white/10'
-                        } ${!hasStock ? 'opacity-40' : ''}`}
-                        style={{
-                          background: c.hex2
-                            ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
-                            : c.hex,
-                        }}
-                      >
-                        {/* OOS diagonal strike */}
-                        {!hasStock && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute inset-0 flex items-center justify-center"
-                          >
-                            <span className="absolute h-px w-[110%] rotate-45 bg-zinc-400/60" />
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Desktop thumbnails gallery */}
@@ -354,7 +322,7 @@ export function ProductMain({
           <ProductRatingSummary reviews={reviews} />
 
           {/* Price + stock — aria-live for screen readers */}
-          <div ref={addToCartFormRef} aria-live="polite" aria-atomic="true">
+          <div aria-live="polite" aria-atomic="true">
             <AddToCartForm
               productId={product.id}
               productSlug={product.slug}
@@ -378,8 +346,104 @@ export function ProductMain({
         </div>
       </div>
 
-      {/* ── MOBILE MIDDLE: Quantity ──────────────────────────────── */}
-      <div className="mt-8 md:hidden">
+      {/* ── MOBILE MIDDLE: Color + Size + Quantity ───────────────── */}
+      <div ref={addToCartFormRef} className="mt-6 md:hidden">
+        {/* Colors — full width, large tap targets */}
+        {colorItems.length > 1 && (
+          <div className="flex flex-col gap-2 mb-5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                {t('color')}
+              </span>
+              {selectedColor && (
+                <span className="text-[10px] font-semibold text-zinc-300">{selectedColor}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {colorItems.map((c) => {
+                const hasStock = colorStockMap.get(c.name) ?? false
+                return (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => setSelectedColor(c.name)}
+                    aria-label={`${c.name}${!hasStock ? ' (out of stock)' : ''}`}
+                    aria-pressed={selectedColor === c.name}
+                    className={`relative h-10 w-10 rounded-full border-2 transition-all ${
+                      selectedColor === c.name
+                        ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-lg shadow-amber-500/10'
+                        : 'border-white/10 hover:border-white/30'
+                    } ${!hasStock ? 'opacity-40' : ''}`}
+                    style={{
+                      background: c.hex2
+                        ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
+                        : c.hex,
+                    }}
+                  >
+                    {!hasStock && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <span className="absolute h-px w-[110%] rotate-45 bg-zinc-400/60" />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile size selector */}
+        {hasSizes && (
+          <div className="flex flex-col gap-2 mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                {t('size')}
+              </span>
+              <SizeGuideModal
+                productCategory={product.categories?.name}
+                sizeGuideUrl={product.size_guide_url}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {sizedVariants.map((v) => {
+                const sizeLabel = (v.attributes?.size as string) || v.name || '—'
+                const isSelected = v.id === selectedVariantId
+                const outOfStock = v.stock === 0
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelectedVariantId(v.id)}
+                    disabled={outOfStock}
+                    aria-pressed={isSelected}
+                    aria-label={`Size ${sizeLabel}${outOfStock ? ' (out of stock)' : ''}`}
+                    className={`relative h-11 min-w-[3rem] px-4 rounded-lg border text-sm font-bold transition-all ${
+                      isSelected
+                        ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                        : outOfStock
+                          ? 'border-white/5 text-zinc-600 cursor-not-allowed'
+                          : 'border-white/10 text-zinc-300 hover:border-white/30 hover:text-white'
+                    }`}
+                  >
+                    {sizeLabel}
+                    {outOfStock && (
+                      <span
+                        className="absolute inset-0 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <span className="absolute left-1/2 top-1/2 h-px w-[80%] -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] bg-zinc-600" />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {stock > 0 && (
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
