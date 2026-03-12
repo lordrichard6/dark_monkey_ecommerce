@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { ProductImageGallery } from '@/components/product/ProductImageGallery'
 import {
   AddToCartForm,
@@ -229,6 +229,12 @@ export function ProductMain({
     if (success) router.push('/checkout')
   }
 
+  // Stable reference — prevents AddToCartForm's onVariantChange useEffect from firing
+  // on every ProductMain re-render and overwriting the mobile size selection.
+  const handleVariantChange = useCallback((v: Variant | null) => {
+    setSelectedVariantId(v?.id ?? null)
+  }, [])
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-0 md:py-8 md:px-8">
       {/* ── TOP SECTION ─────────────────────────────────────────── */}
@@ -331,7 +337,7 @@ export function ProductMain({
               images={images}
               primaryImageUrl={primaryImageUrl}
               onColorChange={setSelectedColor}
-              onVariantChange={(v) => setSelectedVariantId(v?.id ?? null)}
+              onVariantChange={handleVariantChange}
               onConfigChange={setConfig}
               onQuantityChange={setQuantity}
               selectedColor={selectedColor}
