@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import NextImage from 'next/image'
-import { Loader2, X, Upload, ImagePlus } from 'lucide-react'
+import { Loader2, X, Upload, ImagePlus, ZoomIn, GripVertical } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -38,6 +38,39 @@ type Props = {
   images: Image[]
   selectedColor?: string | null
   availableColors?: string[]
+}
+
+// ── Color dot helper ─────────────────────────────────────────────────────────
+
+const COLOR_MAP: Record<string, string> = {
+  black: '#18181b',
+  white: '#f4f4f5',
+  red: '#ef4444',
+  blue: '#3b82f6',
+  green: '#22c55e',
+  yellow: '#eab308',
+  orange: '#f97316',
+  purple: '#a855f7',
+  pink: '#ec4899',
+  gray: '#71717a',
+  grey: '#71717a',
+  brown: '#92400e',
+  navy: '#1e3a5f',
+  beige: '#d4b896',
+  cream: '#fffdd0',
+  gold: '#d4af37',
+  silver: '#c0c0c0',
+}
+
+function ColorDot({ name }: { name: string }) {
+  const css = COLOR_MAP[name.toLowerCase()] ?? null
+  if (!css) return null
+  return (
+    <span
+      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-zinc-500"
+      style={{ background: css }}
+    />
+  )
 }
 
 // ── Sortable thumbnail item ──────────────────────────────────────────────────
@@ -86,9 +119,9 @@ function SortableThumbnail({
         onKeyDown={(e) => e.key === 'Enter' && onSelect()}
         {...attributes}
         {...listeners}
-        className={`relative h-20 w-20 shrink-0 cursor-grab active:cursor-grabbing overflow-hidden rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+        className={`relative h-28 w-28 shrink-0 cursor-grab active:cursor-grabbing overflow-hidden rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
           isSelected
-            ? 'border-amber-500 ring-2 ring-amber-500/20'
+            ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/30'
             : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
         }`}
       >
@@ -96,19 +129,23 @@ function SortableThumbnail({
           src={img.url}
           alt={img.alt ?? ''}
           fill
-          sizes="80px"
+          sizes="112px"
           className="object-cover pointer-events-none"
         />
 
-        {/* Primary marker */}
-        {isPrimary && (
-          <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">
-            #1
-          </span>
-        )}
+        {/* Drag handle — visible on hover */}
+        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 opacity-0 transition group-hover:opacity-100 pointer-events-none">
+          <div className="flex items-center justify-center rounded bg-zinc-950/70 px-1 py-0.5">
+            <GripVertical className="h-3 w-3 text-zinc-300" />
+          </div>
+        </div>
 
-        {/* Set Primary button */}
-        {!isPrimary && (
+        {/* Cover / Primary marker */}
+        {isPrimary ? (
+          <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">
+            Cover
+          </span>
+        ) : (
           <button
             type="button"
             onClick={(e) => {
@@ -118,16 +155,16 @@ function SortableThumbnail({
             disabled={isSettingPrimary}
             className="absolute left-1 top-1 rounded bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-200 opacity-0 transition hover:bg-amber-500 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
           >
-            {isSettingPrimary ? '…' : 'Set #1'}
+            {isSettingPrimary ? '…' : 'Set cover'}
           </button>
         )}
 
-        {/* Source badge */}
+        {/* Source badge — on hover only */}
         <span
-          className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+          className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide opacity-0 transition group-hover:opacity-100 ${
             img.source === 'custom'
               ? 'bg-emerald-500/90 text-white'
-              : 'bg-zinc-800/80 text-zinc-400'
+              : 'bg-zinc-800/90 text-zinc-400'
           }`}
         >
           {img.source === 'custom' ? 'Custom' : 'Printful'}
@@ -147,13 +184,14 @@ function SortableThumbnail({
         </button>
       </div>
 
-      {/* Color selector */}
-      <div className="mt-1.5">
+      {/* Color selector with dot */}
+      <div className="mt-1.5 flex items-center gap-1">
+        {img.color && <ColorDot name={img.color} />}
         <select
           value={img.color || ''}
           onChange={(e) => onUpdateColor(e.target.value || null)}
           disabled={isUpdatingColor}
-          className="w-20 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+          className="w-28 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
         >
           <option value="">Universal</option>
           {availableColors
@@ -187,7 +225,6 @@ function UploadDialog({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
 
-  // Close on Escape (unless uploading)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !uploading) onClose()
@@ -207,7 +244,6 @@ function UploadDialog({
   }
 
   function handleDragLeave(e: React.DragEvent) {
-    // Only fire if leaving the drop zone entirely
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDraggingOver(false)
     }
@@ -247,7 +283,7 @@ function UploadDialog({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4">
+        <div className="space-y-4 p-5">
           {/* Drop zone */}
           <div
             onDragOver={handleDragOver}
@@ -355,12 +391,10 @@ export function ProductImageManager({
   const [error, setError] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
-  // Sync local state when server data changes (after router.refresh())
   useEffect(() => {
     setLocalImages(imagesProp)
   }, [imagesProp])
 
-  // When selected color changes, jump to first image of that color
   useEffect(() => {
     if (!selectedColor) {
       setSelectedId(localImages[0]?.id ?? null)
@@ -370,7 +404,6 @@ export function ProductImageManager({
     setSelectedId(colorSpecific?.id ?? localImages[0]?.id ?? null)
   }, [selectedColor]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Esc closes lightbox
   useEffect(() => {
     if (!lightboxUrl) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setLightboxUrl(null)
@@ -403,11 +436,11 @@ export function ProductImageManager({
     if (oldIndex === -1 || newIndex === -1) return
 
     const newOrder = arrayMove(localImages, oldIndex, newIndex)
-    setLocalImages(newOrder) // optimistic
+    setLocalImages(newOrder)
 
     const result = await reorderProductImages(newOrder.map((img) => img.id))
     if (!result.ok) {
-      setLocalImages(localImages) // revert
+      setLocalImages(localImages)
       setError(result.error || 'Reorder failed')
     } else {
       router.refresh()
@@ -500,8 +533,17 @@ export function ProductImageManager({
 
   return (
     <div className="space-y-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-zinc-400">Images</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-zinc-400">Images</span>
+          {localImages.length > 0 && (
+            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
+              {filteredImages.length}
+              {filteredImages.length !== localImages.length && ` / ${localImages.length}`}
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => {
@@ -524,15 +566,21 @@ export function ProductImageManager({
           tabIndex={0}
           onClick={() => setLightboxUrl(displayImage.url)}
           onKeyDown={(e) => e.key === 'Enter' && setLightboxUrl(displayImage.url)}
-          className="relative aspect-square w-full overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="group relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <NextImage
             src={displayImage.url}
             alt={displayImage.alt ?? ''}
             fill
             sizes="(max-width: 768px) 100vw, 400px"
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
+          {/* Hover overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/0 opacity-0 backdrop-blur-sm transition-all group-hover:bg-white/15 group-hover:opacity-100">
+              <ZoomIn className="h-5 w-5 text-white" />
+            </div>
+          </div>
         </div>
       ) : (
         <button
@@ -582,12 +630,12 @@ export function ProductImageManager({
         {/* Drag overlay — ghost image while dragging */}
         <DragOverlay>
           {activeImage && (
-            <div className="h-20 w-20 overflow-hidden rounded-lg border-2 border-amber-500 shadow-xl ring-4 ring-amber-500/20">
+            <div className="h-28 w-28 overflow-hidden rounded-lg border-2 border-amber-500 shadow-xl ring-4 ring-amber-500/20">
               <NextImage
                 src={activeImage.url}
                 alt={activeImage.alt ?? ''}
-                width={80}
-                height={80}
+                width={112}
+                height={112}
                 className="object-cover"
               />
             </div>
