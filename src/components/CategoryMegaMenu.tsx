@@ -89,7 +89,8 @@ export function CategoryMegaMenu({ categories }: Props) {
                   </div>
                   <div className="absolute inset-0 -z-10 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
-                <Link
+                {/* FUTURE FEATURE: Art gallery page — not launched yet, re-enable when ready */}
+                {/* <Link
                   href="/art"
                   className="group relative h-32 overflow-hidden rounded-xl bg-zinc-900 border border-white/5 p-6 transition-all hover:border-purple-500/30"
                 >
@@ -101,7 +102,7 @@ export function CategoryMegaMenu({ categories }: Props) {
                     <p className="mt-1 text-xs text-zinc-400">Digital art and collectibles</p>
                   </div>
                   <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                </Link>
+                </Link> */}
               </div>
             </div>
           </div>

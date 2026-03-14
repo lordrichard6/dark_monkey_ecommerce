@@ -25,13 +25,15 @@ export function SideNav({ isAdmin, categories }: Props) {
 
   const commonItems = [
     { href: '/', label: t('shop'), icon: HomeIcon },
-    { href: '/art', label: 'Art', icon: ImageIcon },
+    // FUTURE FEATURE: Art gallery page — not launched yet, re-enable when ready
+    // { href: '/art', label: 'Art', icon: ImageIcon },
     { href: '/account/wishlist', label: t('wishlist'), icon: HeartIcon },
   ]
 
   const adminItems = isAdmin
     ? [
         { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutDashboardIcon },
+        { href: '/admin/activity', label: 'Activity', icon: ActivityIcon },
         { href: '/admin/products', label: t('products'), icon: BoxIcon },
         { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
         { href: '/admin/customers', label: 'Users', icon: UsersIcon },
@@ -416,6 +418,23 @@ function UsersIcon({ className }: { className?: string }) {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}
+
+function ActivityIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   )
 }

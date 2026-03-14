@@ -153,7 +153,8 @@ export function MobileHeader({ user, displayName, isAdmin, categories }: Props) 
                 {t('shop')}
               </Link>
 
-              <Link
+              {/* FUTURE FEATURE: Art gallery page — not launched yet, re-enable when ready */}
+              {/* <Link
                 href="/art"
                 onClick={closeMenu}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
@@ -164,7 +165,7 @@ export function MobileHeader({ user, displayName, isAdmin, categories }: Props) 
               >
                 <ImageIcon className="h-5 w-5 shrink-0" />
                 Art
-              </Link>
+              </Link> */}
 
               <Link
                 href="/account/wishlist"

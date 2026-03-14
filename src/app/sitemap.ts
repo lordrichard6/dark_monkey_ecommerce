@@ -23,7 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localizedUrls('/'),
     ...localizedUrls('/products'),
     ...localizedUrls('/categories'),
-    ...localizedUrls('/art'),
+    // FUTURE FEATURE: Art gallery page — not launched yet
+    // ...localizedUrls('/art'),
     ...localizedUrls('/search'),
     ...localizedUrls('/bundles'),
     ...localizedUrls('/contact'),
