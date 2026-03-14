@@ -392,6 +392,39 @@ export async function setPrimaryProductImage(
   return { ok: true }
 }
 
+export async function reorderProductImages(
+  imageIds: string[]
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  if (!imageIds.length) return { ok: true }
+
+  // Verify all images belong to the same product (security check)
+  const { data: images } = await supabase
+    .from('product_images')
+    .select('id, product_id')
+    .in('id', imageIds)
+
+  if (!images?.length) return { ok: false, error: 'Images not found' }
+
+  const productIds = new Set(images.map((img) => img.product_id))
+  if (productIds.size > 1) return { ok: false, error: 'Images must belong to the same product' }
+
+  for (let i = 0; i < imageIds.length; i++) {
+    await supabase.from('product_images').update({ sort_order: i }).eq('id', imageIds[i])
+  }
+
+  const productId = images[0].product_id
+  revalidatePath('/admin/products')
+  revalidatePath(`/admin/products/${productId}`)
+  revalidatePath('/')
+  return { ok: true }
+}
+
 export async function updateProduct(
   productId: string,
   data: {
