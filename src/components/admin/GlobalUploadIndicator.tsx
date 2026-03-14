@@ -1,10 +1,10 @@
 'use client'
 
-import { CheckCircle2, X, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle2, X, AlertCircle, Loader2, Ban } from 'lucide-react'
 import { useUpload } from '@/contexts/upload-context'
 
 export function GlobalUploadIndicator() {
-  const { job, dismiss } = useUpload()
+  const { job, cancel, dismiss } = useUpload()
 
   if (!job) return null
 
@@ -12,6 +12,7 @@ export function GlobalUploadIndicator() {
   const isUploading = job.status === 'uploading'
   const isDone = job.status === 'done'
   const isError = job.status === 'error'
+  const isCancelled = job.status === 'cancelled'
 
   return (
     <div className="fixed bottom-6 right-6 z-[300] w-72 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/60">
@@ -19,9 +20,15 @@ export function GlobalUploadIndicator() {
       <div className="h-1 w-full bg-zinc-800">
         <div
           className={`h-full transition-all duration-300 ease-out ${
-            isError ? 'bg-red-500' : isDone ? 'bg-emerald-500' : 'bg-amber-500'
+            isError
+              ? 'bg-red-500'
+              : isDone
+                ? 'bg-emerald-500'
+                : isCancelled
+                  ? 'bg-zinc-500'
+                  : 'bg-amber-500'
           }`}
-          style={{ width: `${isDone || isError ? 100 : pct}%` }}
+          style={{ width: `${isDone || isError || isCancelled ? 100 : pct}%` }}
         />
       </div>
 
@@ -31,6 +38,7 @@ export function GlobalUploadIndicator() {
           {isUploading && <Loader2 className="h-4 w-4 animate-spin text-amber-400" />}
           {isDone && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
           {isError && <AlertCircle className="h-4 w-4 text-red-400" />}
+          {isCancelled && <Ban className="h-4 w-4 text-zinc-500" />}
         </div>
 
         {/* Text */}
@@ -56,19 +64,36 @@ export function GlobalUploadIndicator() {
               <p className="mt-0.5 truncate text-[11px] text-red-400">{job.errors[0]}</p>
             </>
           )}
+          {isCancelled && (
+            <p className="text-xs font-medium text-zinc-400">
+              Upload cancelled · {job.done} of {job.total} done
+            </p>
+          )}
         </div>
 
-        {/* Dismiss (only when not actively uploading) */}
-        {!isUploading && (
-          <button
-            type="button"
-            onClick={dismiss}
-            className="shrink-0 rounded p-0.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
-            aria-label="Dismiss"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
+        {/* Actions */}
+        <div className="flex shrink-0 items-center gap-1">
+          {isUploading && (
+            <button
+              type="button"
+              onClick={cancel}
+              className="rounded px-2 py-0.5 text-[11px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-red-400"
+              aria-label="Cancel upload"
+            >
+              Cancel
+            </button>
+          )}
+          {!isUploading && (
+            <button
+              type="button"
+              onClick={dismiss}
+              className="rounded p-0.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
+              aria-label="Dismiss"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
