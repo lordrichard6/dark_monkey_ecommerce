@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import NextImage from 'next/image'
 import { Loader2, X, Upload, ImagePlus, ZoomIn, GripVertical } from 'lucide-react'
 import {
@@ -101,6 +102,7 @@ function SortableThumbnail({
   onSetPrimary: (e: React.MouseEvent) => void
   onUpdateColor: (color: string | null) => void
 }) {
+  const t = useTranslations('admin')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: img.id,
   })
@@ -144,7 +146,7 @@ function SortableThumbnail({
         {/* Cover / Primary marker */}
         {isPrimary ? (
           <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">
-            Cover
+            {t('images.cover')}
           </span>
         ) : (
           <button
@@ -156,7 +158,7 @@ function SortableThumbnail({
             disabled={isSettingPrimary}
             className="absolute left-1 top-1 rounded bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-200 opacity-0 transition hover:bg-amber-500 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
           >
-            {isSettingPrimary ? '…' : 'Set cover'}
+            {isSettingPrimary ? '…' : t('images.setCover')}
           </button>
         )}
 
@@ -168,7 +170,7 @@ function SortableThumbnail({
               : 'bg-zinc-800/90 text-zinc-400'
           }`}
         >
-          {img.source === 'custom' ? 'Custom' : 'Printful'}
+          {img.source === 'custom' ? t('images.custom') : 'Printful'}
         </span>
 
         {/* Delete button */}
@@ -194,7 +196,7 @@ function SortableThumbnail({
           disabled={isUpdatingColor}
           className="w-28 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
         >
-          <option value="">Universal</option>
+          <option value="">{t('images.universal')}</option>
           {availableColors
             .filter((c) => c !== 'Default')
             .map((color) => (
@@ -219,6 +221,7 @@ function UploadDialog({
   onUpload: (files: File[]) => void
   error: string | null
 }) {
+  const t = useTranslations('admin')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
 
@@ -262,7 +265,7 @@ function UploadDialog({
         <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
           <div className="flex items-center gap-2">
             <ImagePlus className="h-4 w-4 text-amber-400" />
-            <span className="text-sm font-semibold text-zinc-100">Upload Photos</span>
+            <span className="text-sm font-semibold text-zinc-100">{t('images.uploadPhotos')}</span>
           </div>
           <button
             type="button"
@@ -299,11 +302,11 @@ function UploadDialog({
             </div>
 
             {isDraggingOver ? (
-              <p className="text-sm font-semibold text-amber-400">Drop to upload</p>
+              <p className="text-sm font-semibold text-amber-400">{t('images.dropToUpload')}</p>
             ) : (
               <div className="space-y-1">
-                <p className="text-sm font-medium text-zinc-300">Drag & drop photos here</p>
-                <p className="text-xs text-zinc-500">or click to browse files</p>
+                <p className="text-sm font-medium text-zinc-300">{t('images.dragDropPhotos')}</p>
+                <p className="text-xs text-zinc-500">{t('images.clickToBrowse')}</p>
               </div>
             )}
           </div>
@@ -315,9 +318,7 @@ function UploadDialog({
             </p>
           )}
 
-          <p className="text-center text-[11px] text-zinc-600">
-            PNG, JPEG, WebP, GIF · Max 20 MB per file · Up to 5 images at once
-          </p>
+          <p className="text-center text-[11px] text-zinc-600">{t('images.fileTypes')}</p>
         </div>
 
         {/* Hidden file input */}
@@ -343,6 +344,7 @@ export function ProductImageManager({
   availableColors = [],
 }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const { startUpload } = useUpload()
 
   const [localImages, setLocalImages] = useState(imagesProp)
@@ -407,7 +409,7 @@ export function ProductImageManager({
     const result = await reorderProductImages(newOrder.map((img) => img.id))
     if (!result.ok) {
       setLocalImages(localImages)
-      setError(result.error || 'Reorder failed')
+      setError(result.error || t('images.reorderFailed'))
     } else {
       router.refresh()
     }
@@ -422,7 +424,7 @@ export function ProductImageManager({
       if (!files.length) return
 
       if (files.length > 5) {
-        setUploadError('You can upload a maximum of 5 images at a time.')
+        setUploadError(t('images.maxUploadError'))
         return
       }
 
@@ -446,12 +448,12 @@ export function ProductImageManager({
     if (result.ok) {
       router.refresh()
     } else {
-      setError(result.error || 'Update failed')
+      setError(result.error || t('images.updateFailed'))
     }
   }
 
   async function handleDelete(imageId: string) {
-    if (!confirm('Delete this image?')) return
+    if (!confirm(t('images.deleteImage'))) return
     setDeletingId(imageId)
     setError(null)
     const result = await deleteProductImage(imageId)
@@ -460,7 +462,7 @@ export function ProductImageManager({
       setLightboxUrl(null)
       router.refresh()
     } else {
-      setError(result.error || 'Delete failed')
+      setError(result.error || t('images.deleteFailed'))
     }
   }
 
@@ -474,7 +476,7 @@ export function ProductImageManager({
       setSelectedId(imageId)
       router.refresh()
     } else {
-      setError(result.error || 'Set primary failed')
+      setError(result.error || t('images.setPrimaryFailed'))
     }
   }
 
@@ -485,7 +487,7 @@ export function ProductImageManager({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-zinc-400">Images</span>
+          <span className="text-sm font-medium text-zinc-400">{t('images.title')}</span>
           {localImages.length > 0 && (
             <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
               {filteredImages.length}
@@ -507,7 +509,7 @@ export function ProductImageManager({
             className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 shadow-sm transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-400"
           >
             <Upload className="h-3.5 w-3.5" />
-            Upload Photos
+            {t('images.uploadPhotos')}
           </button>
         </Tooltip>
       </div>
@@ -547,7 +549,7 @@ export function ProductImageManager({
           className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 text-zinc-500 transition hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <ImagePlus className="h-8 w-8" />
-          <span className="text-xs">Upload first photo</span>
+          <span className="text-xs">{t('images.uploadFirstPhoto')}</span>
         </button>
       )}
 
@@ -577,7 +579,7 @@ export function ProductImageManager({
               />
             ))}
             {filteredImages.length === 0 && localImages.length > 0 && (
-              <p className="py-4 text-xs text-zinc-500">No images for this color.</p>
+              <p className="py-4 text-xs text-zinc-500">{t('images.noImagesForColor')}</p>
             )}
           </div>
         </SortableContext>

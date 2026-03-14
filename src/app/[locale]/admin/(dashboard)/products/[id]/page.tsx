@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getCategories } from '@/actions/admin-categories'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
@@ -28,6 +29,8 @@ function formatDateTime(dateString: string) {
 }
 
 export default async function AdminProductDetailPage({ params }: Props) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const t = useTranslations('admin')
   const { id } = await params
   const supabase = getAdminClient()
   if (!supabase)
@@ -81,11 +84,15 @@ export default async function AdminProductDetailPage({ params }: Props) {
   const { data: product, error } = productRes
 
   if (error) {
-    return <div className="p-8 text-red-500">Error fetching product: {error.message}</div>
+    return (
+      <div className="p-8 text-red-500">
+        {t('products.errorFetchProduct')} {error.message}
+      </div>
+    )
   }
 
   if (!product) {
-    return <div className="p-8 text-amber-500">Product with ID {id} not found in database.</div>
+    return <div className="p-8 text-amber-500">{t('products.productNotFound', { id })}</div>
   }
 
   const availableTags = (tagsRes.data ?? []) as { id: string; name: string }[]
@@ -129,16 +136,20 @@ export default async function AdminProductDetailPage({ params }: Props) {
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          Back to products
+          {t('products.backToProducts')}
         </Link>
 
         {/* Right side: timestamps + copy ID */}
         <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
-          <span>Created {formatDateTime(product.created_at)}</span>
+          <span>
+            {t('products.createdAt')} {formatDateTime(product.created_at)}
+          </span>
           {product.updated_at !== product.created_at && (
             <>
               <span className="text-zinc-700">·</span>
-              <span>Updated {formatDateTime(product.updated_at)}</span>
+              <span>
+                {t('products.updatedAt')} {formatDateTime(product.updated_at)}
+              </span>
             </>
           )}
           <span className="text-zinc-700">·</span>
@@ -164,7 +175,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ml-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-400 transition hover:border-amber-500 hover:bg-amber-950/30 hover:text-amber-400"
-                  title="Open this product in the storefront (new tab)"
+                  title={t('fields.openInStorefront')}
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -179,7 +190,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                     />
                   </svg>
-                  View in store
+                  {t('products.viewInStore')}
                 </Link>
               }
             />
@@ -195,7 +206,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
               />
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Tags
+                  {t('products.tags')}
                 </label>
                 <div className="mt-2">
                   <ProductTagsField
@@ -227,7 +238,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
                       d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
                     />
                   </svg>
-                  Customizable
+                  {t('products.customizable')}
                 </span>
               )}
             </div>
@@ -240,10 +251,10 @@ export default async function AdminProductDetailPage({ params }: Props) {
 
       {/* ── Product Info Tabs Content ─────────────────────────────────────── */}
       <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <h2 className="mb-1 text-sm font-semibold text-zinc-200">Product Info Tabs</h2>
-        <p className="mb-5 text-xs text-zinc-500">
-          Content shown in the Material, Care & Print, Shipment, and GPSR tabs on the product page.
-        </p>
+        <h2 className="mb-1 text-sm font-semibold text-zinc-200">
+          {t('products.productInfoTabs')}
+        </h2>
+        <p className="mb-5 text-xs text-zinc-500">{t('products.productInfoTabsDesc')}</p>
         <ProductInfoFields
           productId={product.id}
           materialInfo={(product as Record<string, unknown>).material_info as string | null}

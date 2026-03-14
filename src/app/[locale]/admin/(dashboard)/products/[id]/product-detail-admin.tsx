@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { updateStock, updateProductPrice } from '@/actions/admin-products'
 import { colorToHex } from '@/lib/color-swatch'
 import { ColorOption } from '@/types/product'
@@ -78,6 +79,7 @@ export function ProductDetailAdmin({
   availableColors = [],
 }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   // Internal color state removed - controlled by parent
 
   // Determine which variant is selected (store ID only to handle refreshes)
@@ -175,12 +177,12 @@ export function ProductDetailAdmin({
         {totalVariants > 0 && (
           <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-zinc-800">
             <span className="text-xs text-zinc-500">
-              <span className="font-semibold text-zinc-300">{totalVariants}</span> variant
-              {totalVariants !== 1 ? 's' : ''}
+              <span className="font-semibold text-zinc-300">{totalVariants}</span>{' '}
+              {t('stock.variants', { count: totalVariants })}
             </span>
             <span className="text-zinc-700">·</span>
             <span className="text-xs text-zinc-500">
-              <span className="font-semibold text-zinc-300">{totalStock}</span> in stock
+              <span className="font-semibold text-zinc-300">{totalStock}</span> {t('stock.inStock')}
             </span>
             {oosVariants > 0 && (
               <>
@@ -199,7 +201,7 @@ export function ProductDetailAdmin({
                       d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
                     />
                   </svg>
-                  {oosVariants} out of stock
+                  {t('stock.outOfStock', { count: oosVariants })}
                 </span>
               </>
             )}
@@ -209,10 +211,10 @@ export function ProductDetailAdmin({
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
               <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                Final Price (CHF)
+                {t('pricing.finalPrice')}
               </label>
               <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-                The price customers pay at checkout. Applied to all sizes and colors.
+                {t('pricing.finalPriceDesc')}
               </p>
               <input
                 type="number"
@@ -224,12 +226,10 @@ export function ProductDetailAdmin({
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                Promo Price (Strikethrough)
+                {t('pricing.promoPrice')}
               </label>
               <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-                Optional. If set, this appears crossed out next to the Final Price in the store —
-                showing customers the original value (e.g.{' '}
-                <span className="line-through">CHF 45.00</span> → CHF 35.00).
+                {t('pricing.promoPriceDesc')}
               </p>
               <input
                 type="number"
@@ -244,7 +244,9 @@ export function ProductDetailAdmin({
 
           <div className="flex items-center justify-between gap-4 border-t border-zinc-800 pt-6">
             <div className="flex-1">
-              <span className="text-[10px] uppercase font-bold text-zinc-600">Preview</span>
+              <span className="text-[10px] uppercase font-bold text-zinc-600">
+                {t('pricing.preview')}
+              </span>
               <div className="mt-1 flex items-baseline gap-2">
                 {promoPrice > 0 && (
                   <span className="text-sm font-medium text-zinc-500 line-through">
@@ -261,7 +263,7 @@ export function ProductDetailAdmin({
               disabled={priceLoading}
               className="rounded-lg bg-zinc-50 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
             >
-              {priceLoading ? 'Updating...' : 'Save All Prices'}
+              {priceLoading ? t('pricing.updatingPrices') : t('pricing.saveAllPrices')}
             </button>
           </div>
         </form>
@@ -269,20 +271,18 @@ export function ProductDetailAdmin({
         {/* Info Box: MSRP */}
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">
-            Manufacturer&apos;s Suggested Retail Price (MSRP)
+            {t('pricing.msrpTitle')}
           </span>
           <p className="mt-1 text-base font-semibold text-zinc-400">{adviceRange ?? '—'}</p>
-          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
-            This is the price range Printful recommends for this product based on production and
-            fulfillment costs. It covers your base cost plus a reasonable margin. Use it as a
-            reference — your Final Price above can be set higher or lower as you see fit.
-          </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">{t('pricing.msrpDesc')}</p>
         </div>
       </div>
 
       {/* Colors Section */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Colors</span>
+        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+          {t('stock.colors')}
+        </span>
         <div className="mt-3 flex flex-wrap gap-3">
           {availableColors.map((colorObj) => {
             const colorName = colorObj.name
@@ -337,7 +337,7 @@ export function ProductDetailAdmin({
           htmlFor="variant-select"
           className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
         >
-          Size / Variant for {selectedColor}
+          {t('stock.sizeVariant', { color: selectedColor })}
         </label>
 
         <div className="mt-3">
@@ -351,7 +351,7 @@ export function ProductDetailAdmin({
             className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
             <option value="" disabled>
-              Select a size...
+              {t('stock.selectSize')}
             </option>
             {variantsForColor.map((v) => {
               const size = getSize(v)
@@ -360,7 +360,9 @@ export function ProductDetailAdmin({
               return (
                 <option key={v.id} value={v.id}>
                   {size} — {formatPrice(v.price_cents)}{' '}
-                  {isOutOfStock ? '(Out of Stock)' : `(${qty} in stock)`}
+                  {isOutOfStock
+                    ? t('stock.outOfStockLabel')
+                    : t('stock.inStockLabel', { count: qty })}
                 </option>
               )
             })}
@@ -375,16 +377,17 @@ export function ProductDetailAdmin({
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-amber-400">Update Stock</p>
+                <p className="text-sm font-medium text-amber-400">{t('stock.updateStock')}</p>
                 <p className="mt-0.5 text-xs text-zinc-400">
-                  Size: {getSize(selectedVariant)} · {formatPrice(selectedVariant.price_cents)}
+                  {t('stock.sizeLabel')} {getSize(selectedVariant)} ·{' '}
+                  {formatPrice(selectedVariant.price_cents)}
                 </p>
               </div>
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
                 <label htmlFor="stock-input" className="sr-only">
-                  Stock quantity
+                  {t('stock.stockQuantity')}
                 </label>
                 <input
                   id="stock-input"
@@ -418,7 +421,7 @@ export function ProductDetailAdmin({
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    Saving...
+                    {t('stock.saving')}
                   </>
                 ) : (
                   <>
@@ -431,7 +434,7 @@ export function ProductDetailAdmin({
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    Update
+                    {t('stock.update')}
                   </>
                 )}
               </button>
@@ -443,15 +446,21 @@ export function ProductDetailAdmin({
         {variantsForColor.length > 0 && (
           <div className="mt-5 border-t border-zinc-800 pt-4">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-              Stock overview — {selectedColor}
+              {t('stock.stockOverview', { color: selectedColor })}
             </p>
             <div className="overflow-hidden rounded-lg border border-zinc-800">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-zinc-800 bg-zinc-900/80">
-                    <th className="px-3 py-2 text-left font-medium text-zinc-500">Size</th>
-                    <th className="px-3 py-2 text-left font-medium text-zinc-500">SKU</th>
-                    <th className="px-3 py-2 text-right font-medium text-zinc-500">Stock</th>
+                    <th className="px-3 py-2 text-left font-medium text-zinc-500">
+                      {t('stock.size')}
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-zinc-500">
+                      {t('stock.sku')}
+                    </th>
+                    <th className="px-3 py-2 text-right font-medium text-zinc-500">
+                      {t('stock.title')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -492,9 +501,7 @@ export function ProductDetailAdmin({
                 </tbody>
               </table>
             </div>
-            <p className="mt-1.5 text-[10px] text-zinc-600">
-              Click a row to select that variant for editing.
-            </p>
+            <p className="mt-1.5 text-[10px] text-zinc-600">{t('stock.clickToSelect')}</p>
           </div>
         )}
       </div>

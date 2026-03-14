@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ProductImageManager } from './product-image-manager'
 import { ProductDetailAdmin } from './product-detail-admin'
 import { ColorOption } from '@/types/product'
@@ -43,6 +44,7 @@ export function ProductEditor({
   descriptionSlot,
 }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [generating, setGenerating] = useState(false)
   const [generateResult, setGenerateResult] = useState<{
     success: boolean
@@ -93,10 +95,10 @@ export function ProductEditor({
     try {
       const result = await syncPrintfulProductById(printfulSyncProductId)
       if (result.ok) {
-        setResyncResult({ success: true, message: 'Product re-synced from Printful' })
+        setResyncResult({ success: true, message: t('printful.resyncSuccess') })
         router.refresh()
       } else {
-        setResyncResult({ success: false, message: result.error ?? 'Re-sync failed' })
+        setResyncResult({ success: false, message: result.error ?? t('printful.resyncFailed') })
       }
     } catch (err) {
       setResyncResult({ success: false, message: String(err) })
@@ -120,7 +122,7 @@ export function ProductEditor({
       } else {
         setGenerateResult({
           success: false,
-          message: result.error ?? result.message ?? 'Generation failed',
+          message: result.error ?? result.message ?? t('printful.generationFailed'),
         })
       }
     } catch (err) {
@@ -139,17 +141,13 @@ export function ProductEditor({
           <div className="sticky top-4 z-30 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                Product Images
+                {t('products.productImages')}
               </h3>
 
               {/* Printful action buttons — only shown for Printful-linked products */}
               {printfulSyncProductId && (
                 <div className="flex items-center gap-2">
-                  <Tooltip
-                    content="Re-fetches all product data, variants, and images directly from Printful. Use this after updating your product in the Printful dashboard."
-                    align="right"
-                    width={240}
-                  >
+                  <Tooltip content={t('printful.resyncTooltip')} align="right" width={240}>
                     <button
                       type="button"
                       onClick={handleResync}
@@ -174,7 +172,7 @@ export function ProductEditor({
                               strokeLinecap="round"
                             />
                           </svg>
-                          Syncing…
+                          {t('printful.syncing')}
                         </>
                       ) : (
                         <>
@@ -191,16 +189,12 @@ export function ProductEditor({
                               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                             />
                           </svg>
-                          Re-sync Printful
+                          {t('printful.resyncPrintful')}
                         </>
                       )}
                     </button>
                   </Tooltip>
-                  <Tooltip
-                    content="Generates product mockup photos from Printful's design files and saves them as product images. This may take a few seconds per color."
-                    align="right"
-                    width={240}
-                  >
+                  <Tooltip content={t('printful.generateTooltip')} align="right" width={240}>
                     <button
                       type="button"
                       onClick={handleGenerateMockups}
@@ -225,7 +219,7 @@ export function ProductEditor({
                               strokeLinecap="round"
                             />
                           </svg>
-                          Generating…
+                          {t('printful.generating')}
                         </>
                       ) : (
                         <>
@@ -242,7 +236,7 @@ export function ProductEditor({
                               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                           </svg>
-                          Generate Mockups
+                          {t('printful.generateMockups')}
                         </>
                       )}
                     </button>

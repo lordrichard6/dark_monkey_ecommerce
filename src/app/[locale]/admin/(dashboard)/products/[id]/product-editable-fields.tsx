@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { updateProduct } from '@/actions/admin-products'
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 
 export function ProductEditableFields({ productId, name, slug, nameAction }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [editing, setEditing] = useState<'name' | 'slug' | null>(null)
   const [value, setValue] = useState('')
   const [loading, setLoading] = useState(false)
@@ -52,7 +54,7 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
       {/* Name */}
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <label className="text-sm font-medium text-zinc-400">Name</label>
+          <label className="text-sm font-medium text-zinc-400">{t('fields.name')}</label>
           {editing === 'name' ? (
             <div className="mt-1 flex items-center gap-2">
               <input
@@ -72,7 +74,7 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
                 disabled={loading}
                 className="rounded bg-amber-500 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
               >
-                {loading ? 'Saving…' : 'Save'}
+                {loading ? t('fields.saving') : t('fields.save')}
               </button>
               <button
                 type="button"
@@ -80,14 +82,14 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
                 disabled={loading}
                 className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
               >
-                Cancel
+                {t('fields.cancel')}
               </button>
             </div>
           ) : (
             <p
               onClick={() => startEdit('name')}
               className="mt-1 cursor-pointer rounded px-2 py-1 text-xl font-bold text-zinc-50 hover:bg-zinc-800/80"
-              title="Click to edit"
+              title={t('fields.clickToEdit')}
             >
               {name}
             </p>
@@ -98,7 +100,7 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
 
       {/* Slug */}
       <div>
-        <label className="text-sm font-medium text-zinc-400">Slug (URL)</label>
+        <label className="text-sm font-medium text-zinc-400">{t('fields.slug')}</label>
         {editing === 'slug' ? (
           <div className="mt-1 flex items-center gap-2">
             <input
@@ -117,7 +119,7 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
               disabled={loading}
               className="rounded bg-amber-500 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
             >
-              {loading ? 'Saving…' : 'Save'}
+              {loading ? t('fields.saving') : t('fields.save')}
             </button>
             <button
               type="button"
@@ -125,14 +127,14 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
               disabled={loading}
               className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
             >
-              Cancel
+              {t('fields.cancel')}
             </button>
           </div>
         ) : (
           <p
             onClick={() => startEdit('slug')}
             className="mt-1 cursor-pointer rounded px-2 py-1 font-mono text-sm text-zinc-400 hover:bg-zinc-800/80"
-            title="Click to edit"
+            title={t('fields.clickToEdit')}
           >
             {slug}
           </p>

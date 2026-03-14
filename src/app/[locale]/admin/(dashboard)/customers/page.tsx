@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { Users } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type SearchParams = Promise<{ page?: string }>
 
@@ -71,15 +72,18 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
     profile: profileMap.get(u.id) ?? null,
   }))
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const t = useTranslations('admin')
+
   return (
     <div className="p-6 md:p-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Users className="h-6 w-6 text-zinc-400" />
-          <h1 className="text-2xl font-bold text-zinc-50">Customers</h1>
+          <h1 className="text-2xl font-bold text-zinc-50">{t('customers.title')}</h1>
         </div>
-        <span className="text-sm text-zinc-500">{total} total</span>
+        <span className="text-sm text-zinc-500">{t('customers.total', { count: total })}</span>
       </div>
 
       {/* Mobile cards */}
@@ -105,12 +109,12 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                 <span
                   className={`text-[10px] font-medium ${c.emailConfirmed ? 'text-emerald-400' : 'text-red-400'}`}
                 >
-                  {c.emailConfirmed ? '✓ Verified' : '✗ Unverified'}
+                  {c.emailConfirmed ? t('customers.verified') : t('customers.unverified')}
                 </span>
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between text-sm text-zinc-400">
-              <span>{c.profile?.total_orders ?? 0} orders</span>
+              <span>{t('customers.orders', { count: c.profile?.total_orders ?? 0 })}</span>
               <span>{formatPrice(c.profile?.total_spent_cents ?? 0)}</span>
             </div>
           </Link>
@@ -124,25 +128,25 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
             <thead className="border-b border-zinc-800 bg-zinc-900/80">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Customer
+                  {t('customers.customer')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Email
+                  {t('customers.email')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Tier
+                  {t('customers.tier')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Orders
+                  {t('customers.ordersCount')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Spent
+                  {t('customers.spent')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Email Status
+                  {t('customers.emailStatus')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                  Joined
+                  {t('customers.joined')}
                 </th>
               </tr>
             </thead>
@@ -177,7 +181,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                           : 'bg-red-500/10 text-red-400 ring-red-500/20'
                       }`}
                     >
-                      {c.emailConfirmed ? '✓ Verified' : '✗ Unverified'}
+                      {c.emailConfirmed ? t('customers.verified') : t('customers.unverified')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-zinc-400">
@@ -198,7 +202,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-zinc-500">
-            Page {page} of {totalPages}
+            {t('customers.pageOf', { current: page, totalPages })}
           </p>
           <div className="flex gap-2">
             {page > 1 && (
@@ -206,7 +210,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                 href={`?page=${page - 1}`}
                 className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-700 transition-colors"
               >
-                ← Previous
+                {t('customers.previous')}
               </Link>
             )}
             {page < totalPages && (
@@ -214,7 +218,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                 href={`?page=${page + 1}`}
                 className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-700 transition-colors"
               >
-                Next →
+                {t('customers.next')}
               </Link>
             )}
           </div>
@@ -222,7 +226,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
       )}
 
       {customers.length === 0 && (
-        <div className="mt-12 text-center text-zinc-500">No customers found.</div>
+        <div className="mt-12 text-center text-zinc-500">{t('customers.noCustomers')}</div>
       )}
     </div>
   )

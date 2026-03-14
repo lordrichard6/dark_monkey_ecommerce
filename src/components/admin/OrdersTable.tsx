@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Order = {
@@ -85,6 +86,7 @@ export function OrdersTable({
   sortDir,
 }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
 
   const pushParams = useCallback(
     (updates: Record<string, string | number | undefined>) => {
@@ -133,14 +135,14 @@ export function OrdersTable({
               name="search"
               type="text"
               defaultValue={search}
-              placeholder="Search by email…"
+              placeholder={t('orders.searchByEmail')}
               className="w-56 rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-amber-500/60 focus:outline-none"
             />
             <button
               type="submit"
               className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700"
             >
-              Search
+              {t('orders.search')}
             </button>
           </form>
 
@@ -150,7 +152,7 @@ export function OrdersTable({
             onChange={(e) => pushParams({ status: e.target.value })}
             className="rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-1.5 text-sm text-zinc-300 focus:border-amber-500/60 focus:outline-none"
           >
-            <option value="all">All statuses</option>
+            <option value="all">{t('orders.allStatuses')}</option>
             {ALL_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -165,7 +167,7 @@ export function OrdersTable({
               onClick={() => pushParams({ search: '', status: 'all', page: '1' })}
               className="inline-flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
             >
-              ✕ Clear filters
+              {t('orders.clearFilters')}
             </button>
           )}
         </div>
@@ -173,7 +175,7 @@ export function OrdersTable({
         {/* Count + per-page */}
         <div className="flex items-center gap-3 text-xs text-zinc-500">
           <span>
-            {pageStart}–{pageEnd} of {totalCount} orders
+            {t('orders.ordersCount', { start: pageStart, end: pageEnd, total: totalCount })}
           </span>
           <select
             value={limit}
@@ -216,7 +218,7 @@ export function OrdersTable({
         ))}
         {orders.length === 0 && (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center text-sm text-zinc-500">
-            {hasFilters ? 'No orders match your filters.' : 'No orders yet.'}
+            {hasFilters ? t('orders.noOrdersFiltered') : t('orders.noOrdersYet')}
           </div>
         )}
       </div>
@@ -228,17 +230,17 @@ export function OrdersTable({
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900/80">
                 <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                  Order
+                  {t('orders.order')}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                  Customer
+                  {t('orders.customer')}
                 </th>
                 {/* Sortable: Status */}
                 <th
                   className="cursor-pointer select-none whitespace-nowrap px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-300"
                   onClick={() => handleSort('status')}
                 >
-                  Status
+                  {t('orders.status')}
                   <SortIcon active={sortBy === 'status'} dir={sortDir} />
                 </th>
                 {/* Sortable: Total */}
@@ -246,7 +248,7 @@ export function OrdersTable({
                   className="cursor-pointer select-none whitespace-nowrap px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-300"
                   onClick={() => handleSort('total_cents')}
                 >
-                  Total
+                  {t('orders.total')}
                   <SortIcon active={sortBy === 'total_cents'} dir={sortDir} />
                 </th>
                 {/* Sortable: Date */}
@@ -254,7 +256,7 @@ export function OrdersTable({
                   className="cursor-pointer select-none whitespace-nowrap px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-300"
                   onClick={() => handleSort('created_at')}
                 >
-                  Date
+                  {t('orders.date')}
                   <SortIcon active={sortBy === 'created_at'} dir={sortDir} />
                 </th>
               </tr>
@@ -288,7 +290,7 @@ export function OrdersTable({
               {orders.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-sm text-zinc-500">
-                    {hasFilters ? 'No orders match your filters.' : 'No orders yet.'}
+                    {hasFilters ? t('orders.noOrdersFiltered') : t('orders.noOrdersYet')}
                   </td>
                 </tr>
               )}
@@ -305,17 +307,17 @@ export function OrdersTable({
             onClick={() => pushParams({ page: currentPage - 1 })}
             className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700 disabled:opacity-40"
           >
-            ← Prev
+            {t('orders.prev')}
           </button>
           <span className="text-xs text-zinc-500">
-            Page {currentPage} of {totalPages}
+            {t('orders.pageOf', { current: currentPage, total: totalPages })}
           </span>
           <button
             disabled={currentPage >= totalPages}
             onClick={() => pushParams({ page: currentPage + 1 })}
             className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700 disabled:opacity-40"
           >
-            Next →
+            {t('orders.next')}
           </button>
         </div>
       )}

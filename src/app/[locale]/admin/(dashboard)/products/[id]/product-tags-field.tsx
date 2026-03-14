@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { updateProductTags } from '@/actions/admin-products'
 import { Tag as TagIcon, X, Plus } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,6 +17,7 @@ type Props = {
 
 export function ProductTagsField({ productId, initialTagIds, availableTags }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [selectedIds, setSelectedIds] = useState<string[]>(initialTagIds)
   const [loading, setLoading] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -37,7 +39,7 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
         setSelectedIds(previousIds) // revert to pre-optimistic state
       }
     } catch (err) {
-      toast.error('Failed to update tags')
+      toast.error(t('products.tags'))
       setSelectedIds(previousIds) // revert to pre-optimistic state
     } finally {
       setLoading(false)
@@ -78,7 +80,7 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
             className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300 transition-colors border border-zinc-700 disabled:opacity-50"
           >
             <Plus className="h-3 w-3" />
-            Add tag
+            {t('products.addTag')}
           </button>
 
           {isDropdownOpen && (
@@ -100,7 +102,9 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
                       </button>
                     ))
                   ) : (
-                    <p className="px-3 py-2 text-xs text-zinc-500 italic">No more tags available</p>
+                    <p className="px-3 py-2 text-xs text-zinc-500 italic">
+                      {t('products.noMoreTags')}
+                    </p>
                   )}
                 </div>
               </div>

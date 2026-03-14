@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { updateProductStatus } from '@/actions/admin-products'
 import { toast } from 'sonner'
 
@@ -12,6 +13,7 @@ type Props = {
 
 export function ProductToggleStatus({ productId, initialIsActive }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [isActive, setIsActive] = useState(initialIsActive)
   const [loading, setLoading] = useState(false)
 
@@ -23,9 +25,9 @@ export function ProductToggleStatus({ productId, initialIsActive }: Props) {
     setLoading(false)
     if (!result.ok) {
       setIsActive(!next) // revert
-      toast.error(result.error ?? 'Failed to update status')
+      toast.error(result.error ?? t('status.failedToUpdate'))
     } else {
-      toast.success(next ? 'Product activated' : 'Product deactivated')
+      toast.success(next ? t('status.productActivated') : t('status.productDeactivated'))
       router.refresh()
     }
   }
@@ -34,7 +36,7 @@ export function ProductToggleStatus({ productId, initialIsActive }: Props) {
     <button
       onClick={handleToggle}
       disabled={loading}
-      title={isActive ? 'Click to deactivate' : 'Click to activate'}
+      title={isActive ? t('status.clickToDeactivate') : t('status.clickToActivate')}
       className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${
         isActive
           ? 'bg-emerald-900/40 text-emerald-400 hover:bg-emerald-900/70 ring-1 ring-emerald-500/20'
@@ -52,10 +54,10 @@ export function ProductToggleStatus({ productId, initialIsActive }: Props) {
           }`}
         />
       </span>
-      {loading ? 'Saving…' : isActive ? 'Active' : 'Inactive'}
+      {loading ? t('status.saving') : isActive ? t('status.active') : t('status.inactive')}
       {/* Toggle hint */}
       <span className={`text-[10px] ${isActive ? 'text-emerald-600' : 'text-zinc-600'}`}>
-        {isActive ? '→ deactivate' : '→ activate'}
+        {isActive ? t('status.deactivate') : t('status.activate')}
       </span>
     </button>
   )

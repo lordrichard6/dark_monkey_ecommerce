@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import dynamic from 'next/dynamic'
 import { updateProduct } from '@/actions/admin-products'
 
@@ -22,6 +23,7 @@ type Props = {
 
 export function ProductDescriptionField({ productId, description }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(description ?? '')
   const [loading, setLoading] = useState(false)
@@ -43,14 +45,16 @@ export function ProductDescriptionField({ productId, description }: Props) {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-zinc-500">Description</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+          {t('fields.description')}
+        </h3>
         {!editing && (
           <button
             type="button"
             onClick={() => setEditing(true)}
             className="text-xs text-zinc-500 hover:text-zinc-300 transition"
           >
-            Edit
+            {t('fields.edit')}
           </button>
         )}
       </div>
@@ -64,7 +68,7 @@ export function ProductDescriptionField({ productId, description }: Props) {
               disabled={loading}
               className="rounded bg-amber-500 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
             >
-              {loading ? 'Saving…' : 'Save'}
+              {loading ? t('fields.saving') : t('fields.save')}
             </button>
             <button
               type="button"
@@ -76,7 +80,7 @@ export function ProductDescriptionField({ productId, description }: Props) {
               disabled={loading}
               className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
             >
-              Cancel
+              {t('fields.cancel')}
             </button>
           </div>
         </div>
@@ -84,12 +88,12 @@ export function ProductDescriptionField({ productId, description }: Props) {
         <div
           onClick={() => setEditing(true)}
           className="cursor-pointer rounded px-2 py-1 hover:bg-zinc-800/80"
-          title="Click to edit"
+          title={t('fields.clickToEdit')}
         >
           {description ? (
             <div dangerouslySetInnerHTML={{ __html: description }} className="admin-rich-text" />
           ) : (
-            <span className="italic text-zinc-500 text-sm">No description. Click to add.</span>
+            <span className="italic text-zinc-500 text-sm">{t('fields.noDescription')}</span>
           )}
         </div>
       )}

@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type Props = { id: string }
 
 export function CopyIdButton({ id }: Props) {
   const [copied, setCopied] = useState(false)
+  const t = useTranslations('admin')
 
   async function handleCopy() {
     try {
@@ -21,7 +23,7 @@ export function CopyIdButton({ id }: Props) {
   return (
     <button
       onClick={handleCopy}
-      title="Copy product ID"
+      title={t('copyId.copy')}
       className="group inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono text-xs text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
     >
       {copied ? (
@@ -30,7 +32,7 @@ export function CopyIdButton({ id }: Props) {
         <Copy className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
       )}
       <span className={copied ? 'text-emerald-400' : ''}>
-        {copied ? 'Copied!' : id.slice(0, 8) + '…'}
+        {copied ? t('copyId.copied') : id.slice(0, 8) + '…'}
       </span>
     </button>
   )

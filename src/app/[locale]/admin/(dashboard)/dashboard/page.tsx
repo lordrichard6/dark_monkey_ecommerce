@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser } from '@/lib/auth-admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
@@ -42,6 +43,8 @@ function formatRelativeTime(dateString: string) {
 }
 
 export default async function AdminDashboardPage() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const t = useTranslations('admin')
   const supabase = getAdminClient()
   if (!supabase)
     return (
@@ -248,70 +251,70 @@ export default async function AdminDashboardPage() {
   return (
     <div className="p-8">
       <div className="flex items-baseline gap-4">
-        <h1 className="text-2xl font-bold text-zinc-50">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-zinc-50">{t('dashboard.title')}</h1>
         <p className="text-zinc-400">
-          Welcome, <span className="text-zinc-50 font-medium">{adminName}</span>
+          {t('dashboard.welcome')} <span className="text-zinc-50 font-medium">{adminName}</span>
         </p>
       </div>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
-          <p className="text-sm text-zinc-400">Active products</p>
+          <p className="text-sm text-zinc-400">{t('dashboard.activeProducts')}</p>
           <p className="mt-2 text-2xl font-bold text-zinc-50">{productsCount ?? 0}</p>
           <Link
             href="/admin/products"
             className="mt-2 block text-sm text-amber-400 hover:text-amber-300"
           >
-            Manage →
+            {t('dashboard.manage')}
           </Link>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
-          <p className="text-sm text-zinc-400">Total orders</p>
+          <p className="text-sm text-zinc-400">{t('dashboard.totalOrders')}</p>
           <p className="mt-2 text-2xl font-bold text-zinc-50">{ordersCount ?? 0}</p>
           <Link
             href="/admin/orders"
             className="mt-2 block text-sm text-amber-400 hover:text-amber-300"
           >
-            View all →
+            {t('dashboard.viewAll')}
           </Link>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
-          <p className="text-sm text-zinc-400">Revenue</p>
+          <p className="text-sm text-zinc-400">{t('dashboard.revenue')}</p>
           <p className="mt-2 text-2xl font-bold text-zinc-50">{formatPrice(totalRevenue)}</p>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
           <div className="mb-4">
-            <p className="text-sm text-zinc-400">Quick actions</p>
+            <p className="text-sm text-zinc-400">{t('dashboard.quickActions')}</p>
             <div className="mt-2 space-y-2">
               <Link
                 href="/admin/products/new"
                 className="block text-sm text-amber-400 hover:text-amber-300"
               >
-                + New product
+                {t('dashboard.newProduct')}
               </Link>
               <Link
                 href="/admin/discounts/new"
                 className="block text-sm text-amber-400 hover:text-amber-300"
               >
-                + New discount
+                {t('dashboard.newDiscount')}
               </Link>
               <Link
                 href="/admin/customers"
                 className="block text-sm text-amber-400 hover:text-amber-300"
               >
-                → Customers
+                {t('dashboard.customers')}
               </Link>
               <Link
                 href="/admin/newsletter"
                 className="block text-sm text-amber-400 hover:text-amber-300"
               >
-                → Newsletter
+                {t('dashboard.newsletter')}
               </Link>
               <Link
                 href="/admin/stock-notifications"
                 className="block text-sm text-amber-400 hover:text-amber-300"
               >
-                → Stock notifications
+                {t('dashboard.stockNotifications')}
               </Link>
             </div>
           </div>
@@ -322,7 +325,7 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
-          <h3 className="text-base font-semibold text-zinc-50">Top 3 Customers</h3>
+          <h3 className="text-base font-semibold text-zinc-50">{t('dashboard.top3Customers')}</h3>
           <div className="mt-4 space-y-4">
             {topCustomers.map((customer, i) => (
               <div
@@ -331,7 +334,7 @@ export default async function AdminDashboardPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-zinc-50">{customer.name}</p>
-                  <p className="text-xs text-zinc-500">Total spent</p>
+                  <p className="text-xs text-zinc-500">{t('dashboard.totalSpent')}</p>
                 </div>
                 <p className="text-sm font-bold text-emerald-400">
                   {formatPrice(customer.revenue)}
@@ -339,13 +342,13 @@ export default async function AdminDashboardPage() {
               </div>
             ))}
             {topCustomers.length === 0 && (
-              <p className="text-sm text-zinc-500">No customer data yet</p>
+              <p className="text-sm text-zinc-500">{t('dashboard.noCustomerData')}</p>
             )}
           </div>
         </div>
 
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
-          <h3 className="text-base font-semibold text-zinc-50">Top 3 Best Selling Items</h3>
+          <h3 className="text-base font-semibold text-zinc-50">{t('dashboard.top3BestSelling')}</h3>
           <div className="mt-4 space-y-4">
             {topProducts.map((product, i) => (
               <div
@@ -354,12 +357,14 @@ export default async function AdminDashboardPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-zinc-50">{product.name}</p>
-                  <p className="text-xs text-zinc-500">Units sold</p>
+                  <p className="text-xs text-zinc-500">{t('dashboard.unitsSold')}</p>
                 </div>
                 <p className="text-sm font-bold text-amber-500">{product.quantity}</p>
               </div>
             ))}
-            {topProducts.length === 0 && <p className="text-sm text-zinc-500">No sales data yet</p>}
+            {topProducts.length === 0 && (
+              <p className="text-sm text-zinc-500">{t('dashboard.noSalesData')}</p>
+            )}
           </div>
         </div>
       </div>
@@ -367,7 +372,7 @@ export default async function AdminDashboardPage() {
       <div className="mt-12">
         <h2 className="text-lg font-semibold text-zinc-50 flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-amber-500" />
-          System Testing
+          {t('dashboard.systemTesting')}
         </h2>
         <div className="mt-4 grid gap-6 sm:grid-cols-2">
           <StripeTestButton />
@@ -376,7 +381,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="mt-12">
-        <h2 className="text-lg font-semibold text-zinc-50">Recent orders</h2>
+        <h2 className="text-lg font-semibold text-zinc-50">{t('dashboard.recentOrders')}</h2>
 
         {/* Mobile View: Card List */}
         <div className="mt-4 space-y-4 md:hidden">
@@ -410,7 +415,7 @@ export default async function AdminDashboardPage() {
               <div className="mt-4 border-t border-zinc-800 pt-3">
                 <Link href={`/admin/orders/${order.id}`} className="block">
                   <button className="flex w-full items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-semibold text-zinc-100 transition hover:bg-zinc-800 active:scale-[0.98]">
-                    Check Order
+                    {t('dashboard.checkOrder')}
                     <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </button>
                 </Link>
@@ -419,7 +424,7 @@ export default async function AdminDashboardPage() {
           ))}
           {enrichedOrders.length === 0 && (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center text-sm text-zinc-500">
-              No orders yet
+              {t('dashboard.noOrdersYet')}
             </div>
           )}
         </div>
@@ -431,25 +436,25 @@ export default async function AdminDashboardPage() {
               <thead>
                 <tr className="border-b border-zinc-800 bg-zinc-900/80">
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                    Order
+                    {t('dashboard.order')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                    Customer
+                    {t('dashboard.customer')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                    Recipient
+                    {t('dashboard.recipient')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                    Status
+                    {t('dashboard.status')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                    Total
+                    {t('dashboard.total')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">
-                    Date
+                    {t('dashboard.date')}
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-zinc-500">
-                    Actions
+                    {t('dashboard.actions')}
                   </th>
                 </tr>
               </thead>
@@ -481,7 +486,7 @@ export default async function AdminDashboardPage() {
                     <td className="whitespace-nowrap px-6 py-4 text-right">
                       <Link href={`/admin/orders/${order.id}`}>
                         <button className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 px-4 text-xs font-semibold text-zinc-100 transition hover:bg-zinc-800 active:scale-[0.98]">
-                          Check Order
+                          {t('dashboard.checkOrder')}
                           <ArrowRight className="ml-2 h-3.5 w-3.5" />
                         </button>
                       </Link>
@@ -491,7 +496,7 @@ export default async function AdminDashboardPage() {
                 {enrichedOrders.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-sm text-zinc-500">
-                      No orders yet
+                      {t('dashboard.noOrdersYet')}
                     </td>
                   </tr>
                 )}

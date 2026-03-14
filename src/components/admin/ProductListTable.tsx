@@ -14,6 +14,7 @@ import {
   ChevronsUpDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { ProductActionsDropdown } from '@/app/[locale]/admin/(dashboard)/products/product-actions-dropdown'
 import { SyncPrintfulButton } from '@/app/[locale]/admin/(dashboard)/products/sync-printful-button'
 import {
@@ -75,6 +76,7 @@ function formatDate(dateString: string) {
 // ─── Inline Status Toggle ────────────────────────────────────────────────────
 function ToggleStatusButton({ productId, isActive }: { productId: string; isActive: boolean }) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [optimistic, setOptimistic] = useState(isActive)
   const [loading, setLoading] = useState(false)
 
@@ -86,7 +88,7 @@ function ToggleStatusButton({ productId, isActive }: { productId: string; isActi
     setLoading(false)
     if (!result.ok) {
       setOptimistic(!next)
-      toast.error(result.error ?? 'Failed to update status')
+      toast.error(result.error ?? t('status.failedToUpdate'))
     } else {
       router.refresh()
     }
@@ -96,7 +98,7 @@ function ToggleStatusButton({ productId, isActive }: { productId: string; isActi
     <button
       onClick={handleToggle}
       disabled={loading}
-      title={optimistic ? 'Click to deactivate' : 'Click to activate'}
+      title={optimistic ? t('status.clickToDeactivate') : t('status.clickToActivate')}
       className={`group inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium transition-all disabled:opacity-50 ${
         optimistic
           ? 'bg-emerald-900/40 text-emerald-400 hover:bg-emerald-900/70'
@@ -108,7 +110,7 @@ function ToggleStatusButton({ productId, isActive }: { productId: string; isActi
           optimistic ? 'bg-emerald-400' : 'bg-zinc-500 group-hover:bg-zinc-400'
         }`}
       />
-      {optimistic ? 'Active' : 'Inactive'}
+      {optimistic ? t('status.active') : t('status.inactive')}
     </button>
   )
 }
@@ -150,6 +152,7 @@ export function ProductListTable({
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations('admin')
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
@@ -238,7 +241,7 @@ export function ProductListTable({
       setSelectedIds(new Set())
       router.refresh()
     } else {
-      toast.error(result.error ?? 'Failed to delete products')
+      toast.error(result.error ?? t('dangerZone.failedToDelete'))
     }
   }
 
@@ -250,7 +253,7 @@ export function ProductListTable({
       setSelectedIds(new Set())
       router.refresh()
     } else {
-      toast.error(result.error ?? 'Failed to update status')
+      toast.error(result.error ?? t('status.failedToUpdate'))
     }
   }
 
@@ -278,7 +281,7 @@ export function ProductListTable({
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search products…"
+              placeholder={t('products.searchProducts')}
               className="h-8 w-48 rounded-lg border border-zinc-700 bg-zinc-900 pl-8 pr-8 text-sm text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30 sm:w-56"
             />
             {searchInput && (
@@ -298,9 +301,9 @@ export function ProductListTable({
             onChange={(e) => pushParams({ status: e.target.value || null })}
             className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
           >
-            <option value="">All status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="">{t('products.allStatus')}</option>
+            <option value="active">{t('products.active')}</option>
+            <option value="inactive">{t('products.inactive')}</option>
           </select>
 
           {/* Category filter */}
@@ -309,7 +312,7 @@ export function ProductListTable({
             onChange={(e) => pushParams({ category: e.target.value || null })}
             className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
           >
-            <option value="">All categories</option>
+            <option value="">{t('products.allCategories')}</option>
             {parentCategories.map((cat) => {
               const subs = categories.filter((c) => c.parent_id === cat.id)
               if (subs.length === 0) {
@@ -321,7 +324,7 @@ export function ProductListTable({
               }
               return (
                 <optgroup key={cat.id} label={cat.name}>
-                  <option value={cat.id}>All {cat.name}</option>
+                  <option value={cat.id}>{t('fields.allOf', { name: cat.name })}</option>
                   {subs.map((sub) => (
                     <option key={sub.id} value={sub.id}>
                       {sub.name}
@@ -342,7 +345,7 @@ export function ProductListTable({
               className="flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
             >
               <X className="h-3 w-3" />
-              Clear filters
+              {t('products.clearFilters')}
             </button>
           )}
         </div>
@@ -350,7 +353,9 @@ export function ProductListTable({
         {/* Right: per-page + count */}
         <div className="flex items-center gap-3 text-sm text-zinc-500">
           <span className="whitespace-nowrap">
-            {totalCount === 0 ? 'No products' : `${pageStart}–${pageEnd} of ${totalCount}`}
+            {totalCount === 0
+              ? t('products.noProducts')
+              : `${pageStart}–${pageEnd} of ${totalCount}`}
           </span>
           <select
             value={limit}
@@ -367,21 +372,23 @@ export function ProductListTable({
       {/* ── Bulk Actions Toolbar ─────────────────────────────────────────────── */}
       {selectedIds.size > 0 && (
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 shadow-lg">
-          <span className="text-sm text-zinc-300 font-medium">{selectedIds.size} selected</span>
+          <span className="text-sm text-zinc-300 font-medium">
+            {t('products.selected', { count: selectedIds.size })}
+          </span>
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => handleBulkStatus(true)}
               disabled={loading !== null}
               className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
-              Set Active
+              {t('products.setActive')}
             </button>
             <button
               onClick={() => handleBulkStatus(false)}
               disabled={loading !== null}
               className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
-              Set Inactive
+              {t('products.setInactive')}
             </button>
             <div className="mx-2 hidden h-4 w-px bg-zinc-600 sm:block" />
             <button
@@ -389,7 +396,7 @@ export function ProductListTable({
               disabled={loading !== null}
               className="rounded bg-red-900/30 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-900/50 disabled:opacity-50"
             >
-              Delete Selected
+              {t('products.deleteSelected')}
             </button>
           </div>
         </div>
@@ -407,7 +414,7 @@ export function ProductListTable({
             }}
             onChange={toggleSelectAll}
           />
-          Select All
+          {t('products.selectAll')}
         </label>
       </div>
 
@@ -435,23 +442,31 @@ export function ProductListTable({
                   onClick={() => handleSortClick('name')}
                   className="flex items-center whitespace-nowrap hover:text-zinc-200"
                 >
-                  Product
+                  {t('products.product')}
                   <SortIcon col="name" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Category</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Tags</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                {t('products.category')}
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                {t('products.tags')}
+              </th>
               {/* Images count */}
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Images</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                {t('products.images')}
+              </th>
               {/* Price range — sortable (client-side note) */}
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Price range</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                {t('products.priceRange')}
+              </th>
               {/* Date — sortable */}
               <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
                 <button
                   onClick={() => handleSortClick('created_at')}
                   className="flex items-center whitespace-nowrap hover:text-zinc-200"
                 >
-                  Date
+                  {t('orders.date')}
                   <SortIcon col="created_at" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
@@ -461,11 +476,13 @@ export function ProductListTable({
                   onClick={() => handleSortClick('is_active')}
                   className="flex items-center whitespace-nowrap hover:text-zinc-200"
                 >
-                  Status
+                  {t('dashboard.status')}
                   <SortIcon col="is_active" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Actions</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                {t('dashboard.actions')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -550,7 +567,9 @@ export function ProductListTable({
                       ) : (
                         <>
                           <AlertTriangle className="h-4 w-4 text-amber-500" />
-                          <span className="text-xs font-medium text-amber-500">Missing</span>
+                          <span className="text-xs font-medium text-amber-500">
+                            {t('products.missingCategory')}
+                          </span>
                           <Pencil className="h-3 w-3 text-amber-600 opacity-0 transition-opacity group-hover/cat:opacity-100" />
                         </>
                       )}
@@ -679,7 +698,9 @@ export function ProductListTable({
                         ) : (
                           <>
                             <AlertTriangle className="h-3 w-3 text-amber-500" />
-                            <span className="text-amber-500">Missing Category</span>
+                            <span className="text-amber-500">
+                              {t('products.missingCategoryFull')}
+                            </span>
                             <Pencil className="h-2.5 w-2.5 text-amber-600" />
                           </>
                         )}
@@ -712,14 +733,14 @@ export function ProductListTable({
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
                       {images.length === 0 && <AlertTriangle className="h-3 w-3 text-amber-500" />}
                       {images.length === 0 ? (
-                        <span className="text-amber-500">No images</span>
+                        <span className="text-amber-500">{t('products.noImages')}</span>
                       ) : (
-                        <span>
-                          {images.length} image{images.length !== 1 ? 's' : ''}
-                        </span>
+                        <span>{t('products.imagesCount', { count: images.length })}</span>
                       )}
                       <span>·</span>
-                      <span>Added: {formatDate(p.created_at)}</span>
+                      <span>
+                        {t('products.addedDate')} {formatDate(p.created_at)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -769,10 +790,8 @@ export function ProductListTable({
           </div>
           {search || statusFilter || categoryFilter ? (
             <>
-              <h3 className="text-lg font-medium text-zinc-200">No products match your filters</h3>
-              <p className="mt-1 max-w-sm text-sm text-zinc-500">
-                Try adjusting your search or filters.
-              </p>
+              <h3 className="text-lg font-medium text-zinc-200">{t('products.noProductsMatch')}</h3>
+              <p className="mt-1 max-w-sm text-sm text-zinc-500">{t('products.adjustFilters')}</p>
               <button
                 onClick={() => {
                   setSearchInput('')
@@ -780,15 +799,13 @@ export function ProductListTable({
                 }}
                 className="mt-4 rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
               >
-                Clear all filters
+                {t('products.clearAllFilters')}
               </button>
             </>
           ) : (
             <>
-              <h3 className="text-lg font-medium text-zinc-200">No products found</h3>
-              <p className="mt-1 max-w-sm text-sm text-zinc-500">
-                Get started by syncing your products from Printful or adding a new product manually.
-              </p>
+              <h3 className="text-lg font-medium text-zinc-200">{t('products.noProductsFound')}</h3>
+              <p className="mt-1 max-w-sm text-sm text-zinc-500">{t('products.noProductsDesc')}</p>
               <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row">
                 <SyncPrintfulButton />
                 <span className="text-xs text-zinc-600 sm:hidden">- OR -</span>
@@ -796,7 +813,7 @@ export function ProductListTable({
                   href="/admin/products/new"
                   className="w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-400 sm:w-auto"
                 >
-                  + New product
+                  {t('products.newProduct')}
                 </Link>
               </div>
             </>
@@ -817,11 +834,10 @@ export function ProductListTable({
             className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl"
           >
             <h2 id="bulk-delete-title" className="text-lg font-semibold text-zinc-50">
-              Delete {selectedIds.size} product{selectedIds.size !== 1 ? 's' : ''}
+              {t('products.deleteProductsTitle', { count: selectedIds.size })}
             </h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Are you sure you want to delete {selectedIds.size} selected product
-              {selectedIds.size !== 1 ? 's' : ''}? This action cannot be undone.
+              {t('products.deleteProductsDesc', { count: selectedIds.size })}
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -830,7 +846,7 @@ export function ProductListTable({
                 disabled={loading !== null}
                 className="rounded-lg border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800"
               >
-                Cancel
+                {t('dangerZone.cancelDelete')}
               </button>
               <button
                 type="button"
@@ -838,7 +854,9 @@ export function ProductListTable({
                 disabled={loading !== null}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:opacity-50"
               >
-                {loading === 'delete' ? 'Deleting…' : 'Delete'}
+                {loading === 'delete'
+                  ? t('dangerZone.deleting')
+                  : t('dangerZone.deletePermanently')}
               </button>
             </div>
           </div>
@@ -859,23 +877,21 @@ export function ProductListTable({
       {/* ── Pagination Controls ───────────────────────────────────────────────── */}
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between text-sm text-zinc-400">
-          <div>
-            Page {currentPage} of {totalPages}
-          </div>
+          <div>{t('orders.pageOf', { current: currentPage, total: totalPages })}</div>
           <div className="flex gap-2">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage <= 1}
               className="rounded bg-zinc-800 px-3 py-1 hover:bg-zinc-700 disabled:opacity-50"
             >
-              Previous
+              {t('customers.previous')}
             </button>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages}
               className="rounded bg-zinc-800 px-3 py-1 hover:bg-zinc-700 disabled:opacity-50"
             >
-              Next
+              {t('customers.next')}
             </button>
           </div>
         </div>

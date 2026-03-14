@@ -1,43 +1,47 @@
 import Link from 'next/link'
-
-const adminLinks = [
-  {
-    label: 'Content',
-    links: [
-      { href: '/admin/dashboard', label: 'Dashboard' },
-      { href: '/admin/products', label: 'Products' },
-      { href: '/admin/categories', label: 'Categories' },
-      { href: '/admin/gallery', label: 'Gallery' },
-    ],
-  },
-  {
-    label: 'Commerce',
-    links: [
-      { href: '/admin/orders', label: 'Orders' },
-      { href: '/admin/customers', label: 'Customers' },
-      { href: '/admin/discounts', label: 'Discounts' },
-      { href: '/admin/stock-notifications', label: 'Stock Alerts' },
-    ],
-  },
-  {
-    label: 'Engagement',
-    links: [
-      { href: '/admin/reviews', label: 'Reviews' },
-      { href: '/admin/newsletter', label: 'Newsletter' },
-      { href: '/admin/messages', label: 'Announcements' },
-      { href: '/admin/features', label: 'Features' },
-    ],
-  },
-  {
-    label: 'System',
-    links: [
-      { href: '/admin/settings', label: 'Settings' },
-      { href: '/', label: 'View Store ↗' },
-    ],
-  },
-]
+import { useTranslations } from 'next-intl'
 
 export function AdminFooter() {
+   
+  const t = useTranslations('admin')
+
+  const adminLinks = [
+    {
+      label: t('nav.content'),
+      links: [
+        { href: '/admin/dashboard', label: t('nav.dashboard') },
+        { href: '/admin/products', label: t('nav.products') },
+        { href: '/admin/categories', label: t('nav.categories') },
+        { href: '/admin/gallery', label: t('nav.gallery') },
+      ],
+    },
+    {
+      label: t('nav.commerce'),
+      links: [
+        { href: '/admin/orders', label: t('nav.orders') },
+        { href: '/admin/customers', label: t('nav.customers') },
+        { href: '/admin/discounts', label: t('nav.discounts') },
+        { href: '/admin/stock-notifications', label: t('nav.stockAlerts') },
+      ],
+    },
+    {
+      label: t('nav.engagement'),
+      links: [
+        { href: '/admin/reviews', label: t('nav.reviews') },
+        { href: '/admin/newsletter', label: t('nav.newsletter') },
+        { href: '/admin/messages', label: t('nav.announcements') },
+        { href: '/admin/features', label: t('nav.features') },
+      ],
+    },
+    {
+      label: t('nav.system'),
+      links: [
+        { href: '/admin/settings', label: t('nav.settings') },
+        { href: '/', label: t('nav.viewStore') },
+      ],
+    },
+  ]
+
   return (
     <footer className="mt-16 border-t border-white/5 bg-black/20 px-4 py-8 md:px-8">
       <div className="mx-auto max-w-6xl">
@@ -63,9 +67,9 @@ export function AdminFooter() {
           ))}
         </div>
         <div className="mt-8 border-t border-white/5 pt-6 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-[11px] text-zinc-700">DARKMONKEY Admin Panel</p>
+          <p className="text-[11px] text-zinc-700">{t('footer.adminPanel')}</p>
           <p className="text-[11px] text-zinc-700">
-            &copy; {new Date().getFullYear()} All rights reserved
+            {t('footer.allRightsReserved', { year: new Date().getFullYear() })}
           </p>
         </div>
       </div>

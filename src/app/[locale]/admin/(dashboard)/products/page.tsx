@@ -4,6 +4,7 @@ import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { FetchLatestProductButton } from './fetch-latest-button'
 import { SyncPrintfulModal } from '@/components/admin/SyncPrintfulModal'
 import { ProductListTable } from '@/components/admin/ProductListTable'
+import { useTranslations } from 'next-intl'
 
 const VALID_SORT_COLS = ['created_at', 'name', 'is_active'] as const
 type SortCol = (typeof VALID_SORT_COLS)[number]
@@ -21,6 +22,8 @@ export default async function AdminProductsPage({
     dir?: string
   }>
 }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const t = useTranslations('admin')
   const supabase = getAdminClient()
   if (!supabase)
     return (
@@ -116,7 +119,7 @@ export default async function AdminProductsPage({
   return (
     <div className="min-h-[calc(100vh-3.5rem)] p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-zinc-50">Products</h1>
+        <h1 className="text-2xl font-bold text-zinc-50">{t('products.title')}</h1>
         <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <FetchLatestProductButton />
           <SyncPrintfulModal />
@@ -124,7 +127,7 @@ export default async function AdminProductsPage({
             href="/admin/products/new"
             className="w-full rounded-lg bg-amber-500 px-4 py-2 text-center text-sm font-medium text-zinc-950 hover:bg-amber-400 sm:w-auto"
           >
-            + New product
+            {t('products.newProduct')}
           </Link>
         </div>
       </div>

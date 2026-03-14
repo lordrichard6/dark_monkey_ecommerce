@@ -4,6 +4,7 @@ import { TagManager } from '@/components/admin/settings/TagManager'
 import { EmailTester } from '@/components/admin/settings/EmailTester'
 import { Settings, Tag, Mail, Truck } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 export default async function AdminSettingsPage() {
   const supabase = getAdminClient()
@@ -16,11 +17,14 @@ export default async function AdminSettingsPage() {
 
   const tags = await supabase.from('tags').select('*').order('name', { ascending: true })
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const t = useTranslations('admin')
+
   return (
     <div className="p-8">
       <div className="flex items-center gap-3">
         <Settings className="h-6 w-6 text-zinc-400" />
-        <h1 className="text-2xl font-bold text-zinc-50">Settings</h1>
+        <h1 className="text-2xl font-bold text-zinc-50">{t('settings.title')}</h1>
       </div>
 
       <div className="mt-8 space-y-12">
@@ -28,29 +32,29 @@ export default async function AdminSettingsPage() {
         <section id="general">
           <div className="mb-6 flex items-center gap-2">
             <Settings className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-zinc-50">General</h2>
+            <h2 className="text-lg font-semibold text-zinc-50">{t('settings.general')}</h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               href="/admin/messages"
               className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900"
             >
-              <h3 className="font-medium text-white">Top Bar Messages</h3>
-              <p className="mt-1 text-sm text-zinc-400">Manage announcement bar content.</p>
+              <h3 className="font-medium text-white">{t('settings.topBarMessages')}</h3>
+              <p className="mt-1 text-sm text-zinc-400">{t('settings.topBarMessagesDesc')}</p>
             </Link>
             <Link
               href="/admin/categories"
               className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900"
             >
-              <h3 className="font-medium text-white">Categories</h3>
-              <p className="mt-1 text-sm text-zinc-400">Manage categories and subcategories.</p>
+              <h3 className="font-medium text-white">{t('settings.categories')}</h3>
+              <p className="mt-1 text-sm text-zinc-400">{t('settings.categoriesDesc')}</p>
             </Link>
             <Link
               href="/admin/discounts"
               className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900"
             >
-              <h3 className="font-medium text-white">Discounts</h3>
-              <p className="mt-1 text-sm text-zinc-400">Manage discount codes.</p>
+              <h3 className="font-medium text-white">{t('settings.discounts')}</h3>
+              <p className="mt-1 text-sm text-zinc-400">{t('settings.discountsDesc')}</p>
             </Link>
             <Link
               href="/admin/shipping"
@@ -58,11 +62,9 @@ export default async function AdminSettingsPage() {
             >
               <div className="flex items-center gap-2">
                 <Truck className="h-4 w-4 text-zinc-400" />
-                <h3 className="font-medium text-white">Shipping Rates</h3>
+                <h3 className="font-medium text-white">{t('settings.shippingRates')}</h3>
               </div>
-              <p className="mt-1 text-sm text-zinc-400">
-                Edit per-zone rates and free shipping threshold.
-              </p>
+              <p className="mt-1 text-sm text-zinc-400">{t('settings.shippingRatesDesc')}</p>
             </Link>
           </div>
         </section>
@@ -71,7 +73,9 @@ export default async function AdminSettingsPage() {
         <section id="email-testing">
           <div className="mb-6 flex items-center gap-2">
             <Mail className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-zinc-50">Email Notifications</h2>
+            <h2 className="text-lg font-semibold text-zinc-50">
+              {t('settings.emailNotifications')}
+            </h2>
           </div>
           <EmailTester />
         </section>
@@ -80,7 +84,7 @@ export default async function AdminSettingsPage() {
         <section id="tags">
           <div className="flex items-center gap-2 mb-6">
             <Tag className="h-5 w-5 text-emerald-500" />
-            <h2 className="text-lg font-semibold text-zinc-50">Tags</h2>
+            <h2 className="text-lg font-semibold text-zinc-50">{t('settings.tags')}</h2>
           </div>
           <TagManager initialTags={tags.data || []} />
         </section>

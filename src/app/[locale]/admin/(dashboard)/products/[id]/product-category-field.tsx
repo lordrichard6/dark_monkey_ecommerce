@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { updateProduct } from '@/actions/admin-products'
 import type { Category } from '@/actions/admin-categories'
 
@@ -13,6 +14,7 @@ type Props = {
 
 export function ProductCategoryField({ productId, categoryId, categories }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
 
   const roots = categories.filter((c) => !c.parent_id)
   const subsOf = (rootId: string) => categories.filter((c) => c.parent_id === rootId)
@@ -65,7 +67,7 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
       {/* Parent Categories */}
       <div className="space-y-2">
         <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Category
+          {t('fields.category')}
         </label>
         <select
           value={parentId}
@@ -73,7 +75,7 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
           disabled={loading}
           className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
         >
-          <option value="">Select a category</option>
+          <option value="">{t('fields.selectCategory')}</option>
           {roots.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -91,7 +93,7 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
         <div className="overflow-hidden">
           <div className="space-y-2 pt-2">
             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Subcategory
+              {t('fields.subcategory')}
             </label>
             <select
               value={subId}
@@ -99,7 +101,7 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
               disabled={loading}
               className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
             >
-              <option value="">All {activeParent?.name}</option>
+              <option value="">{t('fields.allOf', { name: activeParent?.name ?? '' })}</option>
               {activeSubs.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
