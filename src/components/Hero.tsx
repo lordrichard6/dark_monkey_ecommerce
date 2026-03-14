@@ -23,7 +23,7 @@ export function Hero() {
           src="/images/hero_bg.webp"
           alt="Dark Monkey Hero"
           fill
-          className="object-[35%_center] object-cover md:object-center"
+          className="object-cover object-center"
           priority
           quality={90}
           sizes="100vw"
