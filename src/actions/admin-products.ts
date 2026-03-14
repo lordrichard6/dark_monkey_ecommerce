@@ -656,3 +656,118 @@ export async function updateProductPrice(
     return { ok: false, error: err instanceof Error ? err.message : 'Update failed' }
   }
 }
+
+export async function updateProductImageAlt(
+  imageId: string,
+  alt: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+  const { error } = await supabase
+    .from('product_images')
+    .update({ alt: alt.trim() || null })
+    .eq('id', imageId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true }
+}
+
+export async function duplicateProduct(
+  productId: string
+): Promise<{ ok: true; newProductId: string } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { data: product, error: fetchError } = await supabase
+    .from('products')
+    .select(
+      `
+      name, slug, description, category_id, is_customizable,
+      material_info, care_instructions, print_method, size_guide_url,
+      product_variants (id, sku, name, price_cents, compare_at_price_cents, attributes, sort_order),
+      product_tags (tag_id)
+    `
+    )
+    .eq('id', productId)
+    .single()
+
+  if (fetchError || !product)
+    return { ok: false, error: fetchError?.message ?? 'Product not found' }
+
+  // Find a unique slug
+  const baseSlug = `${(product as Record<string, unknown>).slug}-copy`
+  let slug = baseSlug
+  let counter = 1
+  for (;;) {
+    const { data: conflict } = await supabase
+      .from('products')
+      .select('id')
+      .eq('slug', slug)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (!conflict) break
+    slug = `${baseSlug}-${counter++}`
+  }
+
+  const p = product as Record<string, unknown>
+  const { data: newProduct, error: insertError } = await supabase
+    .from('products')
+    .insert({
+      name: `${p.name} (Copy)`,
+      slug,
+      description: p.description as string | null,
+      category_id: p.category_id as string | null,
+      is_customizable: p.is_customizable as boolean,
+      material_info: p.material_info as string | null,
+      care_instructions: p.care_instructions as string | null,
+      print_method: p.print_method as string | null,
+      size_guide_url: p.size_guide_url as string | null,
+      is_active: false,
+    })
+    .select('id')
+    .single()
+
+  if (insertError || !newProduct)
+    return { ok: false, error: insertError?.message ?? 'Failed to duplicate' }
+
+  const variants = (product as Record<string, unknown>).product_variants as Array<{
+    sku: string | null
+    name: string | null
+    price_cents: number
+    compare_at_price_cents: number | null
+    attributes: Record<string, unknown>
+    sort_order: number
+  }>
+
+  for (const v of variants) {
+    const { data: newVariant } = await supabase
+      .from('product_variants')
+      .insert({
+        product_id: newProduct.id,
+        sku: v.sku ? `${v.sku}-copy` : null,
+        name: v.name,
+        price_cents: v.price_cents,
+        compare_at_price_cents: v.compare_at_price_cents,
+        attributes: v.attributes,
+        sort_order: v.sort_order,
+      })
+      .select('id')
+      .single()
+    if (newVariant) {
+      await supabase.from('product_inventory').insert({ variant_id: newVariant.id, quantity: 0 })
+    }
+  }
+
+  const tags = (product as Record<string, unknown>).product_tags as Array<{ tag_id: string }>
+  if (tags.length > 0) {
+    await supabase
+      .from('product_tags')
+      .insert(tags.map((tag) => ({ product_id: newProduct.id, tag_id: tag.tag_id })))
+  }
+
+  revalidatePath('/admin/products')
+  return { ok: true, newProductId: newProduct.id }
+}

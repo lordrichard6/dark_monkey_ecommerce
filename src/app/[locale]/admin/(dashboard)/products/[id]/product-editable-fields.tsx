@@ -30,6 +30,22 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
     if (!editing) return
     setLoading(true)
     setError(null)
+
+    if (editing === 'name' && !value.trim()) {
+      setError(t('fields.nameRequired'))
+      setLoading(false)
+      return
+    }
+    if (editing === 'slug') {
+      const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+      const cleaned = value.trim().toLowerCase().replace(/\s+/g, '-')
+      if (!slugRegex.test(cleaned)) {
+        setError(t('fields.slugInvalid'))
+        setLoading(false)
+        return
+      }
+    }
+
     const updates: { name?: string; slug?: string } = {}
     if (editing === 'name') updates.name = value.trim()
     else if (editing === 'slug') updates.slug = value.trim()
@@ -102,42 +118,72 @@ export function ProductEditableFields({ productId, name, slug, nameAction }: Pro
       <div>
         <label className="text-sm font-medium text-zinc-400">{t('fields.slug')}</label>
         {editing === 'slug' ? (
-          <div className="mt-1 flex items-center gap-2">
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave()
-                if (e.key === 'Escape') handleCancel()
-              }}
-              className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
-            />
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={loading}
-              className="rounded bg-amber-500 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
-            >
-              {loading ? t('fields.saving') : t('fields.save')}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              disabled={loading}
-              className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
-            >
-              {t('fields.cancel')}
-            </button>
+          <div className="mt-1">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSave()
+                  if (e.key === 'Escape') handleCancel()
+                }}
+                className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-zinc-100"
+              />
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={loading}
+                className="rounded bg-amber-500 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
+              >
+                {loading ? t('fields.saving') : t('fields.save')}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={loading}
+                className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800"
+              >
+                {t('fields.cancel')}
+              </button>
+            </div>
+            <p className="mt-1 text-[10px] text-zinc-700 font-mono truncate">
+              {t('fields.slugPreview')}
+              <span className="text-zinc-500">/products/{value}</span>
+            </p>
           </div>
         ) : (
-          <p
-            onClick={() => startEdit('slug')}
-            className="mt-1 cursor-pointer rounded px-2 py-1 font-mono text-sm text-zinc-400 hover:bg-zinc-800/80"
-            title={t('fields.clickToEdit')}
-          >
-            {slug}
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <p
+                onClick={() => startEdit('slug')}
+                className="mt-1 cursor-pointer rounded px-2 py-1 font-mono text-sm text-zinc-400 hover:bg-zinc-800/80"
+                title={t('fields.clickToEdit')}
+              >
+                {slug}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const generated = name
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-|-$/g, '')
+                  startEdit('slug')
+                  setValue(generated)
+                }}
+                className="shrink-0 text-[10px] text-zinc-600 hover:text-amber-400 transition"
+                title={t('fields.generateSlug')}
+              >
+                ↺ {t('fields.generateSlug')}
+              </button>
+            </div>
+            <p className="mt-1 text-[10px] text-zinc-700 font-mono truncate">
+              {t('fields.slugPreview')}
+              <span className="text-zinc-500">/products/{slug}</span>
+            </p>
+          </div>
         )}
       </div>
 

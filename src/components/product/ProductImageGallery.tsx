@@ -204,7 +204,7 @@ export function ProductImageGallery({
                   src={currentItem?.url ?? unique[0].url}
                   alt={currentItem?.alt ?? productName}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="object-contain transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 640px) 50vw, 40vw"
                   priority
                   unoptimized={isUnoptimized(currentItem?.url ?? unique[0].url)}
@@ -254,7 +254,7 @@ export function ProductImageGallery({
                 src={img.url}
                 alt={img.alt ?? productName}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="50px"
                 unoptimized={isUnoptimized(img.url)}
               />

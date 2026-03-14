@@ -943,7 +943,12 @@
       "fetchLatestPublished": "Fetch Latest Published",
       "fetching": "Fetching...",
       "errorFetchProduct": "Error fetching product:",
-      "productNotFound": "Product with ID {id} not found in database."
+      "productNotFound": "Product with ID {id} not found in database.",
+      "duplicate": "Duplicate",
+      "duplicating": "Duplicating...",
+      "duplicated": "Product duplicated — now editing the copy",
+      "duplicateFailed": "Failed to duplicate product",
+      "duplicateTooltip": "Create an inactive copy of this product with the same variants and tags but no images"
     },
     "images": {
       "title": "Images",
@@ -963,7 +968,9 @@
       "deleteFailed": "Delete failed",
       "setPrimaryFailed": "Set primary failed",
       "updateFailed": "Update failed",
-      "maxUploadError": "You can upload a maximum of 5 images at a time."
+      "maxUploadError": "You can upload a maximum of 5 images at a time.",
+      "altText": "Alt text",
+      "altTextPlaceholder": "Describe the image..."
     },
     "pricing": {
       "finalPrice": "Final Price (CHF)",
@@ -974,7 +981,10 @@
       "saveAllPrices": "Save All Prices",
       "updatingPrices": "Updating...",
       "msrpTitle": "Manufacturer's Suggested Retail Price (MSRP)",
-      "msrpDesc": "This is the price range Printful recommends for this product based on production and fulfillment costs. It covers your base cost plus a reasonable margin. Use it as a reference — your Final Price above can be set higher or lower as you see fit."
+      "msrpDesc": "This is the price range Printful recommends for this product based on production and fulfillment costs. It covers your base cost plus a reasonable margin. Use it as a reference — your Final Price above can be set higher or lower as you see fit.",
+      "saved": "Prices saved",
+      "saveFailed": "Failed to save prices",
+      "unsavedChanges": "Unsaved changes"
     },
     "stock": {
       "title": "Stock",
@@ -994,7 +1004,15 @@
       "sku": "SKU",
       "clickToSelect": "Click a row to select that variant for editing.",
       "outOfStockLabel": "(Out of Stock)",
-      "inStockLabel": "({count} in stock)"
+      "inStockLabel": "({count} in stock)",
+      "saved": "Stock updated",
+      "saveFailed": "Failed to update stock",
+      "setAll": "Set all sizes to",
+      "setAllApply": "Apply",
+      "bulkSaved": "All sizes updated",
+      "showAllColors": "Show all variants",
+      "hideAllColors": "Hide all variants",
+      "color": "Color"
     },
     "fields": {
       "name": "Name",
@@ -1026,7 +1044,11 @@
       "cancel": "Cancel",
       "saved": "{label} saved",
       "saveFailed": "Save failed",
-      "openInStorefront": "Open this product in the storefront (new tab)"
+      "openInStorefront": "Open this product in the storefront (new tab)",
+      "slugInvalid": "Slug may only contain lowercase letters, numbers, and hyphens",
+      "nameRequired": "Product name cannot be empty",
+      "generateSlug": "Generate from name",
+      "slugPreview": "URL: "
     },
     "status": {
       "active": "Active",

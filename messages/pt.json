@@ -943,7 +943,12 @@
       "fetchLatestPublished": "Obter Último Publicado",
       "fetching": "A obter...",
       "errorFetchProduct": "Erro ao obter produto:",
-      "productNotFound": "Produto com ID {id} não encontrado na base de dados."
+      "productNotFound": "Produto com ID {id} não encontrado na base de dados.",
+      "duplicate": "Duplicar",
+      "duplicating": "A duplicar...",
+      "duplicated": "Produto duplicado — a editar a cópia",
+      "duplicateFailed": "Erro ao duplicar o produto",
+      "duplicateTooltip": "Criar uma cópia inativa deste produto com as mesmas variantes e etiquetas, mas sem imagens"
     },
     "images": {
       "title": "Imagens",
@@ -963,7 +968,9 @@
       "deleteFailed": "Falha ao eliminar",
       "setPrimaryFailed": "Falha ao definir como principal",
       "updateFailed": "Falha ao atualizar",
-      "maxUploadError": "Pode carregar no máximo 5 imagens de cada vez."
+      "maxUploadError": "Pode carregar no máximo 5 imagens de cada vez.",
+      "altText": "Texto alternativo",
+      "altTextPlaceholder": "Descreva a imagem..."
     },
     "pricing": {
       "finalPrice": "Preço Final (CHF)",
@@ -974,7 +981,10 @@
       "saveAllPrices": "Guardar Todos os Preços",
       "updatingPrices": "A atualizar...",
       "msrpTitle": "Preço Sugerido pelo Fabricante (PSVF)",
-      "msrpDesc": "Este é o intervalo de preços que o Printful recomenda para este produto com base nos custos de produção e expedição. Cobre o seu custo base mais uma margem razoável. Use-o como referência — o seu Preço Final acima pode ser definido mais alto ou mais baixo conforme achar melhor."
+      "msrpDesc": "Este é o intervalo de preços que o Printful recomenda para este produto com base nos custos de produção e expedição. Cobre o seu custo base mais uma margem razoável. Use-o como referência — o seu Preço Final acima pode ser definido mais alto ou mais baixo conforme achar melhor.",
+      "saved": "Preços guardados",
+      "saveFailed": "Erro ao guardar preços",
+      "unsavedChanges": "Alterações não guardadas"
     },
     "stock": {
       "title": "Stock",
@@ -994,7 +1004,15 @@
       "sku": "SKU",
       "clickToSelect": "Clique numa linha para selecionar essa variante para edição.",
       "outOfStockLabel": "(Esgotado)",
-      "inStockLabel": "({count} em stock)"
+      "inStockLabel": "({count} em stock)",
+      "saved": "Stock atualizado",
+      "saveFailed": "Erro ao atualizar stock",
+      "setAll": "Definir todos os tamanhos para",
+      "setAllApply": "Aplicar",
+      "bulkSaved": "Todos os tamanhos atualizados",
+      "showAllColors": "Mostrar todas as variantes",
+      "hideAllColors": "Ocultar todas as variantes",
+      "color": "Cor"
     },
     "fields": {
       "name": "Nome",
@@ -1026,7 +1044,11 @@
       "cancel": "Cancelar",
       "saved": "{label} guardado",
       "saveFailed": "Falha ao guardar",
-      "openInStorefront": "Abrir este produto na loja (novo separador)"
+      "openInStorefront": "Abrir este produto na loja (novo separador)",
+      "slugInvalid": "O slug só pode conter letras minúsculas, números e hífens",
+      "nameRequired": "O nome do produto não pode estar vazio",
+      "generateSlug": "Gerar a partir do nome",
+      "slugPreview": "URL: "
     },
     "status": {
       "active": "Ativo",

@@ -22,6 +22,7 @@ import {
   setPrimaryProductImage,
   updateProductImageColor,
   reorderProductImages,
+  updateProductImageAlt,
 } from '@/actions/admin-products'
 import { useUpload } from '@/contexts/upload-context'
 import { Tooltip } from '@/components/admin/Tooltip'
@@ -93,6 +94,61 @@ function ColorDot({ name }: { name: string }) {
   )
 }
 
+// ── Alt text inline editor ────────────────────────────────────────────────────
+
+function AltTextField({ imageId, initialAlt }: { imageId: string; initialAlt: string }) {
+  const t = useTranslations('admin')
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(initialAlt)
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    await updateProductImageAlt(imageId, value)
+    setSaving(false)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="mt-1 flex w-28 gap-1">
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSave()
+            if (e.key === 'Escape') {
+              setValue(initialAlt)
+              setEditing(false)
+            }
+          }}
+          className="min-w-0 flex-1 rounded border border-zinc-600 bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-200 focus:border-amber-500 focus:outline-none"
+          placeholder={t('images.altTextPlaceholder')}
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded bg-amber-500 px-1 py-0.5 text-[9px] font-bold text-zinc-950 disabled:opacity-50"
+        >
+          ✓
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <p
+      onClick={() => setEditing(true)}
+      className="mt-0.5 w-28 cursor-pointer truncate text-[10px] text-zinc-600 hover:text-zinc-400 transition"
+      title={value || t('images.altText')}
+    >
+      {value || <span className="italic">{t('images.altText')}</span>}
+    </p>
+  )
+}
+
 // ── Sortable thumbnail item ──────────────────────────────────────────────────
 
 function SortableThumbnail({
@@ -154,7 +210,7 @@ function SortableThumbnail({
           alt={img.alt ?? ''}
           fill
           sizes="112px"
-          className="object-cover pointer-events-none"
+          className="object-contain pointer-events-none"
         />
 
         {/* Drag handle — visible on hover */}
@@ -227,6 +283,8 @@ function SortableThumbnail({
             ))}
         </select>
       </div>
+      {/* Alt text inline edit */}
+      <AltTextField imageId={img.id} initialAlt={img.alt ?? ''} />
     </div>
   )
 }
@@ -552,7 +610,7 @@ export function ProductImageManager({
             alt={displayImage.alt ?? ''}
             fill
             sizes="(max-width: 768px) 100vw, 400px"
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className="object-contain transition-transform duration-300 group-hover:scale-[1.02]"
           />
           {/* Hover overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
@@ -619,7 +677,7 @@ export function ProductImageManager({
                 alt={activeImage.alt ?? ''}
                 width={112}
                 height={112}
-                className="object-cover"
+                className="object-contain"
               />
             </div>
           )}

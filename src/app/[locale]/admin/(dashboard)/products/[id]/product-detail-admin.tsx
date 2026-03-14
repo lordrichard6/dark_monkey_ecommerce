@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import { updateStock, updateProductPrice } from '@/actions/admin-products'
 import { colorToHex } from '@/lib/color-swatch'
 import { ColorOption } from '@/types/product'
@@ -91,6 +92,9 @@ export function ProductDetailAdmin({
   const [editQuantity, setEditQuantity] = useState(0)
   const [loading, setLoading] = useState(false)
   const [priceLoading, setPriceLoading] = useState(false)
+  const [showAllVariants, setShowAllVariants] = useState(false)
+  const [bulkQty, setBulkQty] = useState(0)
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   // Pricing state
   const minPriceCents = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
@@ -98,6 +102,8 @@ export function ProductDetailAdmin({
 
   const [globalPrice, setGlobalPrice] = useState(minPriceCents / 100)
   const [promoPrice, setPromoPrice] = useState(initialCompareAt ? initialCompareAt / 100 : 0)
+  const [savedPrice, setSavedPrice] = useState(minPriceCents)
+  const [savedPromo, setSavedPromo] = useState(initialCompareAt)
 
   // Sync price state when props update (e.g. after router.refresh())
   const prevMinPriceCents = useRef(minPriceCents)
@@ -133,6 +139,18 @@ export function ProductDetailAdmin({
     }
   }, [selectedVariant])
 
+  // Unsaved pricing changes warning
+  const priceIsDirty =
+    Math.round(globalPrice * 100) !== savedPrice || Math.round(promoPrice * 100) !== savedPromo
+  useEffect(() => {
+    if (!priceIsDirty) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [priceIsDirty])
+
   async function handleUpdateStock(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedVariant) return
@@ -140,8 +158,11 @@ export function ProductDetailAdmin({
     const result = await updateStock(selectedVariant.id, editQuantity)
     setLoading(false)
     if (result.ok) {
+      toast.success(t('stock.saved'))
       router.refresh()
       onRefresh?.()
+    } else {
+      toast.error(result.error || t('stock.saveFailed'))
     }
   }
 
@@ -155,13 +176,27 @@ export function ProductDetailAdmin({
     )
     setPriceLoading(false)
     if (result.ok) {
+      toast.success(t('pricing.saved'))
+      setSavedPrice(Math.round(globalPrice * 100))
+      setSavedPromo(Math.round(promoPrice * 100))
       router.refresh()
       onRefresh?.()
+    } else {
+      toast.error(result.error || t('pricing.saveFailed'))
     }
   }
 
   function selectVariant(variant: Variant) {
     setSelectedVariantId(variant.id)
+  }
+
+  async function handleBulkStock(e: React.FormEvent) {
+    e.preventDefault()
+    setBulkLoading(true)
+    await Promise.all(variantsForColor.map((v) => updateStock(v.id, bulkQty)))
+    setBulkLoading(false)
+    toast.success(t('stock.bulkSaved'))
+    router.refresh()
   }
 
   // ── Inventory summary (all variants) ──────────────────────────────────────
@@ -258,13 +293,18 @@ export function ProductDetailAdmin({
                 </span>
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={priceLoading}
-              className="rounded-lg bg-zinc-50 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
-            >
-              {priceLoading ? t('pricing.updatingPrices') : t('pricing.saveAllPrices')}
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              {priceIsDirty && (
+                <span className="text-[10px] text-amber-400">{t('pricing.unsavedChanges')}</span>
+              )}
+              <button
+                type="submit"
+                disabled={priceLoading}
+                className="rounded-lg bg-zinc-50 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
+              >
+                {priceLoading ? t('pricing.updatingPrices') : t('pricing.saveAllPrices')}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -296,36 +336,42 @@ export function ProductDetailAdmin({
             const background = hex2 ? `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)` : hex
 
             return (
-              <button
-                key={colorName}
-                type="button"
-                onClick={() => onColorChange(colorName)}
-                title={colorName}
-                className={`group relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-2 transition-all ${
-                  isSelected
-                    ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110'
-                    : isLight
-                      ? 'border-zinc-600 hover:border-zinc-500 hover:scale-105'
-                      : 'border-zinc-700 hover:border-zinc-600 hover:scale-105'
-                }`}
-              >
-                <div className="h-full w-full rounded-md" style={{ background }} />
-                {isSelected && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg
-                      className="h-5 w-5 text-white drop-shadow-lg"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </button>
+              <div key={colorName} className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onColorChange(colorName)}
+                  title={colorName}
+                  className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 transition-all ${
+                    isSelected
+                      ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110'
+                      : isLight
+                        ? 'border-zinc-600 hover:border-zinc-500 hover:scale-105'
+                        : 'border-zinc-700 hover:border-zinc-600 hover:scale-105'
+                  }`}
+                >
+                  <div className="h-full w-full rounded-md" style={{ background }} />
+                  {isSelected && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg
+                        className="h-5 w-5 text-white drop-shadow-lg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+                <span
+                  className={`text-[9px] font-medium leading-tight text-center max-w-[48px] truncate ${isSelected ? 'text-amber-400' : 'text-zinc-500'}`}
+                >
+                  {colorName}
+                </span>
+              </div>
             )
           })}
         </div>
@@ -368,6 +414,27 @@ export function ProductDetailAdmin({
             })}
           </select>
         </div>
+
+        {/* Bulk stock set */}
+        {variantsForColor.length > 0 && (
+          <form onSubmit={handleBulkStock} className="mt-3 flex items-center gap-2">
+            <label className="text-[10px] text-zinc-600 shrink-0">{t('stock.setAll')}</label>
+            <input
+              type="number"
+              min={0}
+              value={bulkQty}
+              onChange={(e) => setBulkQty(Math.max(0, parseInt(e.target.value, 10) || 0))}
+              className="w-20 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-center text-zinc-100 focus:border-amber-500 focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={bulkLoading}
+              className="rounded bg-zinc-700 px-3 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+            >
+              {bulkLoading ? '…' : t('stock.setAllApply')}
+            </button>
+          </form>
+        )}
 
         {/* Stock Update Form */}
         {selectedVariant && (
@@ -502,6 +569,84 @@ export function ProductDetailAdmin({
               </table>
             </div>
             <p className="mt-1.5 text-[10px] text-zinc-600">{t('stock.clickToSelect')}</p>
+          </div>
+        )}
+
+        {/* All variants overview */}
+        {variants.length > 0 && (
+          <div className="mt-4 border-t border-zinc-800 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowAllVariants((prev) => !prev)}
+              className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition flex items-center gap-1"
+            >
+              {showAllVariants ? t('stock.hideAllColors') : t('stock.showAllColors')}
+              <svg
+                className={`h-3 w-3 transition-transform ${showAllVariants ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showAllVariants && (
+              <div className="mt-3 overflow-hidden rounded-lg border border-zinc-800">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-800 bg-zinc-900/80">
+                      <th className="px-3 py-2 text-left font-medium text-zinc-500">
+                        {t('stock.color')}
+                      </th>
+                      <th className="px-3 py-2 text-left font-medium text-zinc-500">
+                        {t('stock.size')}
+                      </th>
+                      <th className="px-3 py-2 text-left font-medium text-zinc-500">
+                        {t('stock.sku')}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-500">
+                        {t('stock.title')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortVariantsBySize(variants).map((v) => {
+                      const qty = getQuantity(v)
+                      const isOos = qty === 0
+                      const color = (v.attributes?.color as string) || 'Default'
+                      return (
+                        <tr
+                          key={v.id}
+                          onClick={() => {
+                            onColorChange(color)
+                            selectVariant(v)
+                          }}
+                          className="cursor-pointer border-b border-zinc-800/50 transition-colors last:border-0 hover:bg-zinc-800/60"
+                        >
+                          <td className="px-3 py-2 text-zinc-400">{color}</td>
+                          <td className="px-3 py-2 font-medium text-zinc-200">{getSize(v)}</td>
+                          <td className="px-3 py-2 font-mono text-zinc-500">{v.sku ?? '—'}</td>
+                          <td className="px-3 py-2 text-right">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold ${
+                                isOos
+                                  ? 'bg-red-950/40 text-red-400'
+                                  : qty <= 3
+                                    ? 'bg-amber-950/40 text-amber-400'
+                                    : 'bg-emerald-950/40 text-emerald-400'
+                              }`}
+                            >
+                              {qty}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

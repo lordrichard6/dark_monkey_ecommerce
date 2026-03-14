@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { deleteProduct } from '@/actions/admin-products'
+import { deleteProduct, duplicateProduct } from '@/actions/admin-products'
 import { toast } from 'sonner'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Copy } from 'lucide-react'
 
 type Props = {
   productId: string
@@ -17,10 +17,23 @@ export function ProductDangerZone({ productId, productName }: Props) {
   const t = useTranslations('admin')
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
   // Require the user to type the product name to confirm
   const [confirmInput, setConfirmInput] = useState('')
 
   const confirmed = confirmInput.trim() === productName.trim()
+
+  async function handleDuplicate() {
+    setDuplicating(true)
+    const result = await duplicateProduct(productId)
+    setDuplicating(false)
+    if (result.ok) {
+      toast.success(t('products.duplicated'))
+      router.push(`/admin/products/${result.newProductId}`)
+    } else {
+      toast.error(result.error ?? t('products.duplicateFailed'))
+    }
+  }
 
   async function handleDelete() {
     if (!confirmed) return
@@ -47,13 +60,23 @@ export function ProductDangerZone({ productId, productName }: Props) {
             </h3>
             <p className="mt-0.5 text-xs text-zinc-500">{t('dangerZone.description')}</p>
           </div>
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-2 rounded-lg border border-red-800/50 bg-red-950/30 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-950/60 hover:text-red-300"
-          >
-            <Trash2 className="h-4 w-4" />
-            {t('dangerZone.deleteProduct')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDuplicate}
+              disabled={duplicating}
+              className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm font-medium text-zinc-400 transition hover:border-zinc-500 hover:bg-zinc-700/50 hover:text-zinc-200 disabled:opacity-50"
+            >
+              <Copy className="h-4 w-4" />
+              {duplicating ? t('products.duplicating') : t('products.duplicate')}
+            </button>
+            <button
+              onClick={() => setOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-red-800/50 bg-red-950/30 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-950/60 hover:text-red-300"
+            >
+              <Trash2 className="h-4 w-4" />
+              {t('dangerZone.deleteProduct')}
+            </button>
+          </div>
         </div>
       </div>
 
