@@ -1,8 +1,8 @@
-import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
-import NextImage from 'next/image'
+import { CategoriesPageClient } from '@/components/category/CategoriesPageClient'
+import type { CategoryItem } from '@/components/category/FeaturedCategoryCard'
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -41,7 +41,7 @@ export default async function CategoriesPage() {
   const [{ data: rootCategories }, { data: subCatCounts }] = await Promise.all([
     supabase
       .from('categories')
-      .select('id, name, slug, description, image_url')
+      .select('id, name, slug, description, image_url, is_featured, subtitle')
       .is('parent_id', null)
       .order('sort_order', { ascending: true })
       .order('name', { ascending: true }),
@@ -56,14 +56,31 @@ export default async function CategoriesPage() {
     countByParent[sub.parent_id] = (countByParent[sub.parent_id] ?? 0) + count
   }
 
-  const categoryCards = (rootCategories ?? [])
-    .filter((cat) => (countByParent[cat.id] ?? 0) > 0)
+  const allCategories = (rootCategories ?? []).filter((cat) => (countByParent[cat.id] ?? 0) > 0)
+
+  // Featured categories for the gold shimmer card
+  const featuredCategories: CategoryItem[] = allCategories
+    .filter((cat) => cat.is_featured)
     .map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      image_url: cat.image_url,
+      is_featured: cat.is_featured ?? false,
+      subtitle: cat.subtitle ?? null,
+    }))
+
+  // Regular (non-featured) category cards
+  const regularCards = allCategories
+    .filter((cat) => !cat.is_featured)
+    .map((cat) => ({
+      id: cat.id,
       title: cat.name,
       description: cat.description || '',
       href: `/categories/${cat.slug}` as '/',
       image: cat.image_url || '/images/hero_bg.webp',
       productCount: countByParent[cat.id] ?? 0,
+      productCountLabel: t('productCount', { count: countByParent[cat.id] ?? 0 }),
     }))
 
   return (
@@ -78,68 +95,11 @@ export default async function CategoriesPage() {
           <p className="mx-auto mt-4 max-w-2xl text-zinc-400">{t('categoriesMetaDescription')}</p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {categoryCards.map((card) => (
-            <Link
-              key={card.title}
-              href={card.href}
-              className="group relative h-[400px] overflow-hidden rounded-3xl border border-white/10 bg-zinc-900 transition-all duration-300 hover:border-amber-500/50 hover:shadow-[0_0_40px_rgba(251,191,36,0.15)] active:scale-[0.98] active:brightness-95 active:duration-75"
-            >
-              {/* Background Image */}
-              <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-110">
-                <NextImage
-                  src={card.image}
-                  alt={card.title}
-                  fill
-                  className="object-cover opacity-60 transition-opacity duration-500 group-hover:opacity-80"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-                {/* Gradient Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-zinc-950 to-transparent" />
-              </div>
-
-              {/* Content Overlay */}
-              <div className="absolute inset-0 z-10 flex flex-col justify-end p-8">
-                <div className="translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
-                  <h2 className="text-3xl font-black uppercase tracking-tight text-white drop-shadow-lg">
-                    {card.title}
-                  </h2>
-                  {card.productCount > 0 && (
-                    <p className="mt-1 text-xs font-medium text-zinc-400">
-                      {t('productCount', { count: card.productCount })}
-                    </p>
-                  )}
-                  {card.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-zinc-300 md:opacity-0 md:transition-all md:duration-500 md:group-hover:opacity-100">
-                      {card.description}
-                    </p>
-                  )}
-                  <div className="mt-6 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-400">
-                    <span>{t('exploreCollection')}</span>
-                    <svg
-                      className="h-4 w-4 transition-transform group-hover:translate-x-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Top Accent Decoration */}
-              <div className="absolute right-6 top-6 h-px w-0 bg-amber-500/50 transition-all duration-500 group-hover:w-16" />
-              <div className="absolute right-6 top-6 h-0 w-px bg-amber-500/50 transition-all duration-500 group-hover:h-16" />
-            </Link>
-          ))}
-        </div>
+        <CategoriesPageClient
+          featuredCategories={featuredCategories}
+          regularCards={regularCards}
+          exploreLabel={t('exploreCollection')}
+        />
       </div>
     </div>
   )
