@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { Users } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 
 type SearchParams = Promise<{ page?: string }>
 
@@ -72,8 +72,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
     profile: profileMap.get(u.id) ?? null,
   }))
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const t = useTranslations('admin')
+  const t = await getTranslations('admin')
 
   return (
     <div className="p-6 md:p-8">

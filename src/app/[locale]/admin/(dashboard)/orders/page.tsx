@@ -1,7 +1,7 @@
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { OrdersTable } from '@/components/admin/OrdersTable'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 
 const VALID_SORT_COLS = ['created_at', 'total_cents', 'status'] as const
 type SortCol = (typeof VALID_SORT_COLS)[number]
@@ -63,8 +63,7 @@ export default async function AdminOrdersPage({
 
   const totalPages = count ? Math.ceil(count / limit) : 1
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const t = useTranslations('admin')
+  const t = await getTranslations('admin')
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] p-8">

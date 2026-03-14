@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser } from '@/lib/auth-admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
@@ -43,8 +43,7 @@ function formatRelativeTime(dateString: string) {
 }
 
 export default async function AdminDashboardPage() {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const t = useTranslations('admin')
+  const t = await getTranslations('admin')
   const supabase = getAdminClient()
   if (!supabase)
     return (

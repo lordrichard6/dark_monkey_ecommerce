@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getCategories } from '@/actions/admin-categories'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
@@ -29,8 +29,7 @@ function formatDateTime(dateString: string) {
 }
 
 export default async function AdminProductDetailPage({ params }: Props) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const t = useTranslations('admin')
+  const t = await getTranslations('admin')
   const { id } = await params
   const supabase = getAdminClient()
   if (!supabase)

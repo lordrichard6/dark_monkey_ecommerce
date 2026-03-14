@@ -4,7 +4,7 @@ import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { FetchLatestProductButton } from './fetch-latest-button'
 import { SyncPrintfulModal } from '@/components/admin/SyncPrintfulModal'
 import { ProductListTable } from '@/components/admin/ProductListTable'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 
 const VALID_SORT_COLS = ['created_at', 'name', 'is_active'] as const
 type SortCol = (typeof VALID_SORT_COLS)[number]
@@ -22,8 +22,7 @@ export default async function AdminProductsPage({
     dir?: string
   }>
 }) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const t = useTranslations('admin')
+  const t = await getTranslations('admin')
   const supabase = getAdminClient()
   if (!supabase)
     return (

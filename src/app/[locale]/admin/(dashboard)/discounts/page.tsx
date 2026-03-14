@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('de-CH', {
@@ -25,8 +25,7 @@ export default async function AdminDiscountsPage() {
     .select('*')
     .order('created_at', { ascending: false })
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const t = useTranslations('admin')
+  const t = await getTranslations('admin')
 
   return (
     <div className="p-8">

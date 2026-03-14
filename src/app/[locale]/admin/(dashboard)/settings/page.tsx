@@ -4,7 +4,7 @@ import { TagManager } from '@/components/admin/settings/TagManager'
 import { EmailTester } from '@/components/admin/settings/EmailTester'
 import { Settings, Tag, Mail, Truck } from 'lucide-react'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 
 export default async function AdminSettingsPage() {
   const supabase = getAdminClient()
@@ -17,8 +17,7 @@ export default async function AdminSettingsPage() {
 
   const tags = await supabase.from('tags').select('*').order('name', { ascending: true })
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const t = useTranslations('admin')
+  const t = await getTranslations('admin')
 
   return (
     <div className="p-8">
