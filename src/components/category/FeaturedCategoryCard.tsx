@@ -15,7 +15,7 @@ export function FeaturedCategoryCard({ category }: { category: CategoryItem }) {
   return (
     <Link
       href={`/categories/${category.slug}`}
-      className="featured-card group relative col-span-2 overflow-hidden rounded-2xl border border-amber-500/30 bg-zinc-950 shadow-lg shadow-amber-900/20 transition-all duration-300 hover:border-amber-400/60 hover:shadow-amber-800/30"
+      className="featured-card group relative overflow-hidden rounded-2xl border border-amber-500/30 bg-zinc-950 shadow-lg shadow-amber-900/20 transition-all duration-300 hover:border-amber-400/60 hover:shadow-amber-800/30"
       style={{ minHeight: '220px' }}
     >
       {/* Shimmer sweep overlay */}

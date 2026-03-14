@@ -23,9 +23,11 @@ type Props = {
 export function CategoriesPageClient({ featuredCategories, regularCards, exploreLabel }: Props) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {/* Featured gold cards — span 2 cols, pinned to top */}
+      {/* Featured gold cards — full width, pinned to top */}
       {featuredCategories.map((cat) => (
-        <FeaturedCategoryCard key={cat.id} category={cat} />
+        <div key={cat.id} className="col-span-full" style={{ minHeight: '260px' }}>
+          <FeaturedCategoryCard category={cat} />
+        </div>
       ))}
 
       {/* Regular category cards */}

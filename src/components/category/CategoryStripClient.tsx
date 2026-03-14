@@ -45,7 +45,9 @@ export function CategoryStripClient({
       {/* Category grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 lg:gap-5">
         {featured.map((cat) => (
-          <FeaturedCategoryCard key={cat.id} category={cat} />
+          <div key={cat.id} className="col-span-2">
+            <FeaturedCategoryCard category={cat} />
+          </div>
         ))}
         {regular.map((cat, index) => (
           <Link
