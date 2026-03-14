@@ -45,17 +45,23 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       })
 
       const errors: string[] = []
-      for (let i = 0; i < files.length; i++) {
-        if (cancelledRef.current) {
-          setJob((prev) => (prev ? { ...prev, status: 'cancelled' } : prev))
-          dismissTimer.current = setTimeout(() => setJob(null), 3000)
-          return
-        }
-        const formData = new FormData()
-        formData.append('file', files[i])
-        const result = await uploadProductImage(productId, formData, color ?? undefined)
-        if (!result.ok) errors.push(`${files[i].name}: ${result.error}`)
-        setJob((prev) => (prev ? { ...prev, done: i + 1, errors: [...errors] } : prev))
+
+      // Upload all files in parallel — each completes independently and updates the counter
+      await Promise.all(
+        files.map(async (file) => {
+          if (cancelledRef.current) return
+          const formData = new FormData()
+          formData.append('file', file)
+          const result = await uploadProductImage(productId, formData, color ?? undefined)
+          if (!result.ok) errors.push(`${file.name}: ${result.error}`)
+          setJob((prev) => (prev ? { ...prev, done: prev.done + 1, errors: [...errors] } : prev))
+        })
+      )
+
+      if (cancelledRef.current) {
+        setJob((prev) => (prev ? { ...prev, status: 'cancelled' } : prev))
+        dismissTimer.current = setTimeout(() => setJob(null), 3000)
+        return
       }
 
       const finalStatus: UploadStatus = errors.length ? 'error' : 'done'
