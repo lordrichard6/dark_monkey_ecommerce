@@ -65,7 +65,14 @@ function SortableRootRow({
             <GripVertical className="h-4 w-4" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-zinc-50">{category.name}</p>
+            <p className="truncate font-medium text-zinc-50">
+              {category.name}
+              {category.is_featured && (
+                <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400">
+                  ✦ Featured
+                </span>
+              )}
+            </p>
             <p className="truncate text-xs text-zinc-500 font-mono">{category.slug}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -94,6 +101,11 @@ function SortableRootRow({
                 <GripVertical className="h-4 w-4" />
               </button>
               {category.name}
+              {category.is_featured && (
+                <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400">
+                  ✦ Featured
+                </span>
+              )}
             </div>
           </div>
           <div className="px-4 py-3 text-sm text-zinc-400 font-mono">{category.slug}</div>

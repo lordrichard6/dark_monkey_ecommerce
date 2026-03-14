@@ -323,3 +323,24 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
 }
+
+/* Featured category card shimmer */
+.shimmer-sweep {
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(251, 191, 36, 0.06) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-move 3s ease-in-out infinite;
+}
+
+@keyframes shimmer-move {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

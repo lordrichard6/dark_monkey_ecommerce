@@ -25,6 +25,8 @@ export type Category = {
   image_url: string | null
   parent_id: string | null
   sort_order: number
+  is_featured: boolean
+  subtitle: string | null
   created_at: string
   updated_at: string
   product_count?: number
@@ -58,7 +60,11 @@ export async function getCategories() {
 
 export async function getCategory(id: string) {
   const supabase = await createClient()
-  const { data, error } = await supabase.from('categories').select('*').eq('id', id).single()
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*, is_featured, subtitle')
+    .eq('id', id)
+    .single()
 
   if (error) return null
   return data as Category
@@ -70,6 +76,9 @@ export async function upsertCategory(
 ): Promise<ActionState> {
   const admin = await getAdminUser()
   if (!admin) return { ok: false, error: 'Not authorized' }
+
+  const is_featured = formData.get('is_featured') === 'on'
+  const subtitle = (formData.get('subtitle') as string | null)?.trim() || null
 
   const rawData = {
     id: formData.get('id') as string,
@@ -105,15 +114,21 @@ export async function upsertCategory(
 
   const { id, ...payload } = validated.data
 
+  const payloadWithExtras = {
+    ...payload,
+    is_featured: is_featured as boolean,
+    subtitle: subtitle as string | null,
+  }
+
   let error
   if (id) {
     const { error: updateError } = await adminClient
       .from('categories')
-      .update({ ...payload, updated_at: new Date().toISOString() })
+      .update({ ...payloadWithExtras, updated_at: new Date().toISOString() })
       .eq('id', id)
     error = updateError
   } else {
-    const { error: insertError } = await adminClient.from('categories').insert(payload)
+    const { error: insertError } = await adminClient.from('categories').insert(payloadWithExtras)
     error = insertError
   }
 

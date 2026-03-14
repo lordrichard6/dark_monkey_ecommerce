@@ -8,10 +8,12 @@ export async function CategoryStrip() {
 
   const { data: categories } = await supabase
     .from('categories')
-    .select('id, name, slug, image_url')
+    .select('id, name, slug, image_url, is_featured, subtitle')
     .is('parent_id', null)
     .not('image_url', 'is', null)
-    .order('name')
+    .order('is_featured', { ascending: false })
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true })
 
   if (!categories || categories.length === 0) return null
 

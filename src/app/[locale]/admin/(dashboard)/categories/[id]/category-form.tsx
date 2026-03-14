@@ -31,6 +31,7 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
   const [imageUrl, setImageUrl] = useState(category?.image_url ?? '')
   const [previewUrl, setPreviewUrl] = useState(category?.image_url ?? '')
   const [loading, setLoading] = useState(false)
+  const [isFeatured, setIsFeatured] = useState(category?.is_featured ?? false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
 
@@ -184,6 +185,47 @@ export function CategoryForm({ category, categories }: CategoryFormProps) {
               required
               className="flex h-11 w-28 rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             />
+          </div>
+
+          {/* Featured category */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <label className="text-sm font-medium text-zinc-200">Featured category</label>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  Displays as a prominent gold card on the homepage. Use sparingly — one featured
+                  category has the most impact.
+                </p>
+              </div>
+              <label className="relative mt-0.5 inline-flex cursor-pointer items-center">
+                <input
+                  type="checkbox"
+                  name="is_featured"
+                  defaultChecked={category?.is_featured ?? false}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="peer h-6 w-11 rounded-full bg-zinc-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-amber-500 peer-checked:after:translate-x-full" />
+              </label>
+            </div>
+
+            {/* Subtitle — only shown when featured */}
+            {isFeatured && (
+              <div className="mt-4 border-t border-zinc-800 pt-4">
+                <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+                  Subtitle{' '}
+                  <span className="text-zinc-600">(optional tagline shown on the gold card)</span>
+                </label>
+                <input
+                  type="text"
+                  name="subtitle"
+                  defaultValue={category?.subtitle ?? ''}
+                  maxLength={60}
+                  placeholder="e.g. Our original brand line"
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+            )}
           </div>
 
           {/* Description */}
