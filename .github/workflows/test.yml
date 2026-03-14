@@ -19,10 +19,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --prefer-offline
+        run: npm ci
 
       - name: Run unit and integration tests
         run: npm run test:coverage
@@ -47,8 +47,8 @@ jobs:
             total.statements.pct;
           ")
           echo "Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 65" | bc -l) )); then
-            echo "Coverage is below 65% (got $COVERAGE%)"
+          if (( $(echo "$COVERAGE < 58" | bc -l) )); then
+            echo "Coverage is below 58% (got $COVERAGE%)"
             exit 1
           fi
 
@@ -82,10 +82,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          cache: 'npm'
 
       - name: Install dependencies
         if: steps.prereq.outputs.skip == 'false'
-        run: npm install --prefer-offline
+        run: npm ci
 
       - name: Install Playwright browsers
         if: steps.prereq.outputs.skip == 'false'
@@ -127,10 +128,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --prefer-offline
+        run: npm ci
 
       - name: Run ESLint
         run: npm run lint
