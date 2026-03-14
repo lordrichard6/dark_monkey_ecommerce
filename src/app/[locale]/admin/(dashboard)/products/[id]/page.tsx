@@ -163,11 +163,11 @@ export default async function AdminProductDetailPage({ params }: Props) {
                   href={`/products/${product.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800 text-zinc-400 transition hover:border-amber-500 hover:bg-amber-950/30 hover:text-amber-400"
-                  title="View on store"
+                  className="ml-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-400 transition hover:border-amber-500 hover:bg-amber-950/30 hover:text-amber-400"
+                  title="Open this product in the storefront (new tab)"
                 >
                   <svg
-                    className="h-4 w-4"
+                    className="h-3.5 w-3.5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -179,6 +179,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                     />
                   </svg>
+                  View in store
                 </Link>
               }
             />

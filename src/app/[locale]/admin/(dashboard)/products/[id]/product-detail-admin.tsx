@@ -211,6 +211,9 @@ export function ProductDetailAdmin({
               <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
                 Final Price (CHF)
               </label>
+              <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
+                The price customers pay at checkout. Applied to all sizes and colors.
+              </p>
               <input
                 type="number"
                 step="0.01"
@@ -221,8 +224,13 @@ export function ProductDetailAdmin({
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                Promotion Price (Strikethrough)
+                Promo Price (Strikethrough)
               </label>
+              <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
+                Optional. If set, this appears crossed out next to the Final Price in the store —
+                showing customers the original value (e.g.{' '}
+                <span className="line-through">CHF 45.00</span> → CHF 35.00).
+              </p>
               <input
                 type="number"
                 step="0.01"
@@ -258,12 +266,17 @@ export function ProductDetailAdmin({
           </div>
         </form>
 
-        {/* Info Box: Renamed Price Range */}
+        {/* Info Box: MSRP */}
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">
             Manufacturer&apos;s Suggested Retail Price (MSRP)
           </span>
           <p className="mt-1 text-base font-semibold text-zinc-400">{adviceRange ?? '—'}</p>
+          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
+            This is the price range Printful recommends for this product based on production and
+            fulfillment costs. It covers your base cost plus a reasonable margin. Use it as a
+            reference — your Final Price above can be set higher or lower as you see fit.
+          </p>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import { ProductDetailAdmin } from './product-detail-admin'
 import { ColorOption } from '@/types/product'
 import { generateMockupsForProduct } from '@/actions/generate-mockups'
 import { syncPrintfulProductById } from '@/actions/sync-printful'
+import { Tooltip } from '@/components/admin/Tooltip'
 
 type Props = {
   productId: string
@@ -144,98 +145,108 @@ export function ProductEditor({
               {/* Printful action buttons — only shown for Printful-linked products */}
               {printfulSyncProductId && (
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleResync}
-                    disabled={resyncing}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-blue-500/50 hover:bg-blue-950/20 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
-                    title="Re-fetch product data and images from Printful"
+                  <Tooltip
+                    content="Re-fetches all product data, variants, and images directly from Printful. Use this after updating your product in the Printful dashboard."
+                    align="right"
+                    width={240}
                   >
-                    {resyncing ? (
-                      <>
-                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
+                    <button
+                      type="button"
+                      onClick={handleResync}
+                      disabled={resyncing}
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-blue-500/50 hover:bg-blue-950/20 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {resyncing ? (
+                        <>
+                          <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              opacity="0.25"
+                            />
+                            <path
+                              d="M12 2a10 10 0 0 1 10 10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          Syncing…
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
                             stroke="currentColor"
-                            strokeWidth="2"
-                            opacity="0.25"
-                          />
-                          <path
-                            d="M12 2a10 10 0 0 1 10 10"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        Syncing…
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                          />
-                        </svg>
-                        Re-sync Printful
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleGenerateMockups}
-                    disabled={generating}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50 hover:bg-amber-950/20 hover:text-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
-                    title="Generate mockups from Printful design files"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                          Re-sync Printful
+                        </>
+                      )}
+                    </button>
+                  </Tooltip>
+                  <Tooltip
+                    content="Generates product mockup photos from Printful's design files and saves them as product images. This may take a few seconds per color."
+                    align="right"
+                    width={240}
                   >
-                    {generating ? (
-                      <>
-                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
+                    <button
+                      type="button"
+                      onClick={handleGenerateMockups}
+                      disabled={generating}
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50 hover:bg-amber-950/20 hover:text-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {generating ? (
+                        <>
+                          <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              opacity="0.25"
+                            />
+                            <path
+                              d="M12 2a10 10 0 0 1 10 10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
                             stroke="currentColor"
-                            strokeWidth="2"
-                            opacity="0.25"
-                          />
-                          <path
-                            d="M12 2a10 10 0 0 1 10 10"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        Generating…
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        Generate Mockups
-                      </>
-                    )}
-                  </button>
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          Generate Mockups
+                        </>
+                      )}
+                    </button>
+                  </Tooltip>
                 </div>
               )}
             </div>

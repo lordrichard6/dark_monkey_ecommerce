@@ -23,6 +23,7 @@ import {
   reorderProductImages,
 } from '@/actions/admin-products'
 import { useUpload } from '@/contexts/upload-context'
+import { Tooltip } from '@/components/admin/Tooltip'
 
 type Image = {
   id: string
@@ -492,17 +493,23 @@ export function ProductImageManager({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setUploadError(null)
-            setShowUploadDialog(true)
-          }}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 shadow-sm transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-400"
+        <Tooltip
+          content="Upload up to 5 product photos at once. Images are automatically converted to WebP for faster loading. You can drag to reorder after uploading."
+          align="right"
+          width={230}
         >
-          <Upload className="h-3.5 w-3.5" />
-          Upload Photos
-        </button>
+          <button
+            type="button"
+            onClick={() => {
+              setUploadError(null)
+              setShowUploadDialog(true)
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 shadow-sm transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-400"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Upload Photos
+          </button>
+        </Tooltip>
       </div>
 
       {error && <p className="text-xs text-red-400">{error}</p>}
