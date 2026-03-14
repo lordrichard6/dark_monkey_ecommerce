@@ -1,14 +1,27 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import NextImage from 'next/image'
-import { Loader2, X } from 'lucide-react'
+import { Loader2, X, Upload, ImagePlus } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   uploadProductImage,
   deleteProductImage,
   setPrimaryProductImage,
   updateProductImageColor,
+  reorderProductImages,
 } from '@/actions/admin-products'
 
 type Image = {
@@ -27,53 +40,337 @@ type Props = {
   availableColors?: string[]
 }
 
+// ── Sortable thumbnail item ──────────────────────────────────────────────────
+
+function SortableThumbnail({
+  img,
+  isSelected,
+  isPrimary,
+  isDeleting,
+  isSettingPrimary,
+  isUpdatingColor,
+  availableColors,
+  onSelect,
+  onDelete,
+  onSetPrimary,
+  onUpdateColor,
+}: {
+  img: Image
+  isSelected: boolean
+  isPrimary: boolean
+  isDeleting: boolean
+  isSettingPrimary: boolean
+  isUpdatingColor: boolean
+  availableColors: string[]
+  onSelect: () => void
+  onDelete: (e: React.MouseEvent) => void
+  onSetPrimary: (e: React.MouseEvent) => void
+  onUpdateColor: (color: string | null) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: img.id,
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.35 : 1,
+      }}
+      className="group relative"
+    >
+      <div
+        onClick={onSelect}
+        onKeyDown={(e) => e.key === 'Enter' && onSelect()}
+        {...attributes}
+        {...listeners}
+        className={`relative h-20 w-20 shrink-0 cursor-grab active:cursor-grabbing overflow-hidden rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+          isSelected
+            ? 'border-amber-500 ring-2 ring-amber-500/20'
+            : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
+        }`}
+      >
+        <NextImage
+          src={img.url}
+          alt={img.alt ?? ''}
+          fill
+          sizes="80px"
+          className="object-cover pointer-events-none"
+        />
+
+        {/* Primary marker */}
+        {isPrimary && (
+          <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">
+            #1
+          </span>
+        )}
+
+        {/* Set Primary button */}
+        {!isPrimary && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onSetPrimary(e)
+            }}
+            disabled={isSettingPrimary}
+            className="absolute left-1 top-1 rounded bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-200 opacity-0 transition hover:bg-amber-500 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
+          >
+            {isSettingPrimary ? '…' : 'Set #1'}
+          </button>
+        )}
+
+        {/* Source badge */}
+        <span
+          className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+            img.source === 'custom'
+              ? 'bg-emerald-500/90 text-white'
+              : 'bg-zinc-800/80 text-zinc-400'
+          }`}
+        >
+          {img.source === 'custom' ? 'Custom' : 'Printful'}
+        </span>
+
+        {/* Delete button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete(e)
+          }}
+          disabled={isDeleting}
+          className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600/90 text-white opacity-0 transition hover:bg-red-500 group-hover:opacity-100 disabled:opacity-50"
+        >
+          {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+        </button>
+      </div>
+
+      {/* Color selector */}
+      <div className="mt-1.5">
+        <select
+          value={img.color || ''}
+          onChange={(e) => onUpdateColor(e.target.value || null)}
+          disabled={isUpdatingColor}
+          className="w-20 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+        >
+          <option value="">Universal</option>
+          {availableColors
+            .filter((c) => c !== 'Default')
+            .map((color) => (
+              <option key={color} value={color}>
+                {color}
+              </option>
+            ))}
+        </select>
+      </div>
+    </div>
+  )
+}
+
+// ── Upload Dialog ─────────────────────────────────────────────────────────────
+
+function UploadDialog({
+  onClose,
+  onUpload,
+  uploading,
+  uploadProgress,
+  error,
+}: {
+  onClose: () => void
+  onUpload: (files: File[]) => void
+  uploading: boolean
+  uploadProgress: { done: number; total: number } | null
+  error: string | null
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+
+  // Close on Escape (unless uploading)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !uploading) onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [uploading, onClose])
+
+  function pickFiles(files: FileList | null) {
+    if (!files || files.length === 0) return
+    onUpload(Array.from(files))
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDraggingOver(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    // Only fire if leaving the drop zone entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDraggingOver(false)
+    }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDraggingOver(false)
+    pickFiles(e.dataTransfer.files)
+  }
+
+  const pct = uploadProgress ? Math.round((uploadProgress.done / uploadProgress.total) * 100) : 0
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !uploading) onClose()
+      }}
+    >
+      <div className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <ImagePlus className="h-4 w-4 text-amber-400" />
+            <span className="text-sm font-semibold text-zinc-100">Upload Photos</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={uploading}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-40"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          {/* Drop zone */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => !uploading && fileInputRef.current?.click()}
+            className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-all ${
+              isDraggingOver
+                ? 'border-amber-500 bg-amber-500/10'
+                : uploading
+                  ? 'cursor-not-allowed border-zinc-700 bg-zinc-800/30'
+                  : 'border-zinc-700 bg-zinc-800/30 hover:border-amber-500/60 hover:bg-amber-500/5'
+            }`}
+          >
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
+                isDraggingOver ? 'bg-amber-500/20' : 'bg-zinc-800'
+              }`}
+            >
+              <Upload
+                className={`h-5 w-5 transition-colors ${isDraggingOver ? 'text-amber-400' : 'text-zinc-400'}`}
+              />
+            </div>
+
+            {uploading ? (
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-zinc-300">
+                  Uploading {uploadProgress?.done} of {uploadProgress?.total}…
+                </p>
+                <p className="text-xs text-zinc-500">Converting to WebP and saving…</p>
+              </div>
+            ) : isDraggingOver ? (
+              <p className="text-sm font-semibold text-amber-400">Drop to upload</p>
+            ) : (
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-zinc-300">Drag & drop photos here</p>
+                <p className="text-xs text-zinc-500">or click to browse files</p>
+              </div>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          {uploadProgress && (
+            <div className="space-y-1.5">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-700">
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-all duration-300 ease-out"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <p className="text-right text-[11px] text-zinc-500">{pct}%</p>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+              {error}
+            </p>
+          )}
+
+          {/* Helper text */}
+          {!uploading && (
+            <p className="text-center text-[11px] text-zinc-600">
+              PNG, JPEG, WebP, GIF · Max 20 MB per file · Up to 5 images at once
+            </p>
+          )}
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          multiple
+          onChange={(e) => pickFiles(e.target.files)}
+          className="hidden"
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+
 export function ProductImageManager({
   productId,
-  images,
+  images: imagesProp,
   selectedColor,
   availableColors = [],
 }: Props) {
   const router = useRouter()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [localImages, setLocalImages] = useState(imagesProp)
+  const [selectedId, setSelectedId] = useState<string | null>(imagesProp[0]?.id ?? null)
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
   const [updatingColorId, setUpdatingColorId] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
-  const [selectedIndex, setSelectedIndex] = useState(0)
 
-  // When color changes, prefer the first image that specifically matches that color
-  // Fall back to index 0 (which may be a universal image) if none found
+  // Sync local state when server data changes (after router.refresh())
+  useEffect(() => {
+    setLocalImages(imagesProp)
+  }, [imagesProp])
 
+  // When selected color changes, jump to first image of that color
   useEffect(() => {
     if (!selectedColor) {
-      setSelectedIndex(0)
+      setSelectedId(localImages[0]?.id ?? null)
       return
     }
-    const colorSpecificIndex = images.findIndex((img) => img.color === selectedColor)
-    if (colorSpecificIndex !== -1) {
-      // Convert global index to filtered index
-      const filtered = images.filter((img) => !img.color || img.color === selectedColor)
-      const colorSpecificImg = images[colorSpecificIndex]
-      const filteredIdx = filtered.findIndex((img) => img.id === colorSpecificImg.id)
-      setSelectedIndex(filteredIdx !== -1 ? filteredIdx : 0)
-    } else {
-      setSelectedIndex(0)
-    }
-  }, [selectedColor])
+    const colorSpecific = localImages.find((img) => img.color === selectedColor)
+    setSelectedId(colorSpecific?.id ?? localImages[0]?.id ?? null)
+  }, [selectedColor]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filter images based on selected color (or no color)
-  // Show images with matching color OR null (universal)
-  // If no specific color selected, show all
-  const filteredImages = selectedColor
-    ? images.filter((img) => !img.color || img.color === selectedColor)
-    : images
-
-  const displayImage = filteredImages[selectedIndex] ?? filteredImages[0]
-  const primaryImageId = images.length ? images[0]?.id : null // Primary is global, not filtered
-
+  // Esc closes lightbox
   useEffect(() => {
     if (!lightboxUrl) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setLightboxUrl(null)
@@ -81,31 +378,83 @@ export function ProductImageManager({
     return () => window.removeEventListener('keydown', onKey)
   }, [lightboxUrl])
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    if (!files.length) return
+  const filteredImages = selectedColor
+    ? localImages.filter((img) => !img.color || img.color === selectedColor)
+    : localImages
 
-    setError(null)
-    setUploading(true)
+  const displayImage = filteredImages.find((img) => img.id === selectedId) ?? filteredImages[0]
+  const primaryImageId = localImages[0]?.id ?? null
 
-    const errors: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      setUploadProgress(files.length > 1 ? `Uploading ${i + 1} / ${files.length}…` : null)
-      const formData = new FormData()
-      formData.append('file', files[i])
-      const result = await uploadProductImage(productId, formData, selectedColor)
-      if (!result.ok) errors.push(`${files[i].name}: ${result.error}`)
-    }
+  // ── DnD ──────────────────────────────────────────────────────────────────
 
-    setUploading(false)
-    setUploadProgress(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
-    if (errors.length) {
-      setError(errors.join(' · '))
-    }
-    router.refresh()
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string)
   }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setActiveId(null)
+    if (!over || active.id === over.id) return
+
+    const oldIndex = localImages.findIndex((img) => img.id === active.id)
+    const newIndex = localImages.findIndex((img) => img.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const newOrder = arrayMove(localImages, oldIndex, newIndex)
+    setLocalImages(newOrder) // optimistic
+
+    const result = await reorderProductImages(newOrder.map((img) => img.id))
+    if (!result.ok) {
+      setLocalImages(localImages) // revert
+      setError(result.error || 'Reorder failed')
+    } else {
+      router.refresh()
+    }
+  }
+
+  const activeImage = activeId ? localImages.find((img) => img.id === activeId) : null
+
+  // ── Upload ────────────────────────────────────────────────────────────────
+
+  const handleUpload = useCallback(
+    async (files: File[]) => {
+      if (!files.length) return
+
+      if (files.length > 5) {
+        setUploadError('You can upload a maximum of 5 images at a time.')
+        return
+      }
+
+      setUploadError(null)
+      setUploading(true)
+
+      const errors: string[] = []
+      setUploadProgress({ done: 0, total: files.length })
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData()
+        formData.append('file', files[i])
+        const result = await uploadProductImage(productId, formData, selectedColor)
+        if (!result.ok) errors.push(`${files[i].name}: ${result.error}`)
+        setUploadProgress({ done: i + 1, total: files.length })
+      }
+
+      setUploading(false)
+      setUploadProgress(null)
+
+      if (errors.length) {
+        setUploadError(errors.join(' · '))
+      } else {
+        setShowUploadDialog(false)
+      }
+
+      router.refresh()
+    },
+    [productId, selectedColor, router]
+  )
+
+  // ── Delete / Primary / Color ──────────────────────────────────────────────
 
   async function handleUpdateColor(imageId: string, color: string | null) {
     setUpdatingColorId(imageId)
@@ -119,16 +468,12 @@ export function ProductImageManager({
     }
   }
 
-  async function handleDelete(e: React.MouseEvent, imageId: string) {
-    e.stopPropagation()
+  async function handleDelete(imageId: string) {
     if (!confirm('Delete this image?')) return
-
     setDeletingId(imageId)
     setError(null)
-
     const result = await deleteProductImage(imageId)
     setDeletingId(null)
-
     if (result.ok) {
       setLightboxUrl(null)
       router.refresh()
@@ -137,80 +482,42 @@ export function ProductImageManager({
     }
   }
 
-  async function handleSetPrimary(e: React.MouseEvent, imageId: string) {
-    e.stopPropagation()
+  async function handleSetPrimary(imageId: string) {
     if (imageId === primaryImageId) return
-
     setSettingPrimaryId(imageId)
     setError(null)
-
     const result = await setPrimaryProductImage(imageId)
     setSettingPrimaryId(null)
-
     if (result.ok) {
-      setSelectedIndex(0)
+      setSelectedId(imageId)
       router.refresh()
     } else {
       setError(result.error || 'Set primary failed')
     }
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-zinc-400">Images</span>
-        <label className="cursor-pointer">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            multiple
-            onChange={handleUpload}
-            disabled={uploading}
-            className="hidden"
-          />
-          <span
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 shadow-sm ring-1 ring-zinc-700/50 transition hover:bg-amber-500/20 hover:text-amber-400 hover:ring-amber-500/30 disabled:opacity-50"
-            title="Add images (select multiple)"
-          >
-            {uploading ? (
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  opacity="0.25"
-                />
-                <path
-                  d="M12 2a10 10 0 0 1 10 10"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            )}
-          </span>
-        </label>
+        <button
+          type="button"
+          onClick={() => {
+            setUploadError(null)
+            setShowUploadDialog(true)
+          }}
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 shadow-sm transition hover:border-amber-500/60 hover:bg-amber-500/10 hover:text-amber-400"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Upload Photos
+        </button>
       </div>
 
-      {uploadProgress && <p className="text-xs text-amber-400">{uploadProgress}</p>}
       {error && <p className="text-xs text-red-400">{error}</p>}
 
-      {/* Main image above - click to expand */}
+      {/* Main image preview */}
       {displayImage ? (
         <div
           role="button"
@@ -228,110 +535,78 @@ export function ProductImageManager({
           />
         </div>
       ) : (
-        <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 text-xs text-zinc-500">
-          No image
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setUploadError(null)
+            setShowUploadDialog(true)
+          }}
+          className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 text-zinc-500 transition hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+        >
+          <ImagePlus className="h-8 w-8" />
+          <span className="text-xs">Upload first photo</span>
+        </button>
       )}
 
-      {/* Small thumbnails below */}
-      <div className="flex flex-wrap gap-3">
-        {filteredImages.map((img, i) => {
-          const isPrimary = img.id === primaryImageId
-          return (
-            <div key={img.id} className="group relative">
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedIndex(i)}
-                onKeyDown={(e) => e.key === 'Enter' && setSelectedIndex(i)}
-                className={`relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                  selectedIndex === i
-                    ? 'border-amber-500 ring-2 ring-amber-500/20'
-                    : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
-                }`}
-              >
-                <NextImage
-                  src={img.url}
-                  alt={img.alt ?? ''}
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
+      {/* Sortable thumbnail grid */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={filteredImages.map((img) => img.id)} strategy={rectSortingStrategy}>
+          <div className="flex flex-wrap gap-3">
+            {filteredImages.map((img) => (
+              <SortableThumbnail
+                key={img.id}
+                img={img}
+                isSelected={img.id === selectedId}
+                isPrimary={img.id === primaryImageId}
+                isDeleting={deletingId === img.id}
+                isSettingPrimary={settingPrimaryId === img.id}
+                isUpdatingColor={updatingColorId === img.id}
+                availableColors={availableColors}
+                onSelect={() => setSelectedId(img.id)}
+                onDelete={() => handleDelete(img.id)}
+                onSetPrimary={() => handleSetPrimary(img.id)}
+                onUpdateColor={(color) => handleUpdateColor(img.id, color)}
+              />
+            ))}
+            {filteredImages.length === 0 && localImages.length > 0 && (
+              <p className="py-4 text-xs text-zinc-500">No images for this color.</p>
+            )}
+          </div>
+        </SortableContext>
 
-                {/* Primary Marker */}
-                {isPrimary && (
-                  <span className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-zinc-950 shadow-sm">
-                    #1
-                  </span>
-                )}
-
-                {/* Set Primary Button */}
-                {!isPrimary && (
-                  <button
-                    type="button"
-                    onClick={(e) => handleSetPrimary(e, img.id)}
-                    disabled={settingPrimaryId === img.id}
-                    className="absolute left-1 top-1 rounded bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-200 opacity-0 transition hover:bg-amber-500 hover:text-zinc-950 group-hover:opacity-100 disabled:opacity-50"
-                  >
-                    {settingPrimaryId === img.id ? '…' : 'Set #1'}
-                  </button>
-                )}
-
-                {/* Source badge */}
-                <span
-                  className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                    img.source === 'custom'
-                      ? 'bg-emerald-500/90 text-white'
-                      : 'bg-zinc-800/80 text-zinc-400'
-                  }`}
-                >
-                  {img.source === 'custom' ? 'Custom' : 'Printful'}
-                </span>
-
-                {/* Delete Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleDelete(e, img.id)}
-                  disabled={deletingId === img.id}
-                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600/90 text-white opacity-0 transition hover:bg-red-500 group-hover:opacity-100 disabled:opacity-50"
-                >
-                  {deletingId === img.id ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <X className="h-3 w-3" />
-                  )}
-                </button>
-              </div>
-
-              {/* Color Selector */}
-              <div className="mt-1.5">
-                <select
-                  value={img.color || ''}
-                  onChange={(e) => handleUpdateColor(img.id, e.target.value || null)}
-                  disabled={updatingColorId === img.id}
-                  className="w-20 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                >
-                  <option value="">Universal</option>
-                  {availableColors
-                    .filter((c) => c !== 'Default')
-                    .map((color) => (
-                      <option key={color} value={color}>
-                        {color}
-                      </option>
-                    ))}
-                </select>
-              </div>
+        {/* Drag overlay — ghost image while dragging */}
+        <DragOverlay>
+          {activeImage && (
+            <div className="h-20 w-20 overflow-hidden rounded-lg border-2 border-amber-500 shadow-xl ring-4 ring-amber-500/20">
+              <NextImage
+                src={activeImage.url}
+                alt={activeImage.alt ?? ''}
+                width={80}
+                height={80}
+                className="object-cover"
+              />
             </div>
-          )
-        })}
-        {filteredImages.length === 0 && images.length === 0 && (
-          <p className="py-4 text-xs text-zinc-500">No images. Click + to upload.</p>
-        )}
-        {filteredImages.length === 0 && images.length > 0 && (
-          <p className="py-4 text-xs text-zinc-500">No images for this color.</p>
-        )}
-      </div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
+      {/* Upload Dialog */}
+      {showUploadDialog && (
+        <UploadDialog
+          onClose={() => !uploading && setShowUploadDialog(false)}
+          onUpload={handleUpload}
+          uploading={uploading}
+          uploadProgress={uploadProgress}
+          error={uploadError}
+        />
+      )}
+
+      {/* Lightbox */}
       {lightboxUrl && (
         <div
           className="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center bg-black/80 p-4"
