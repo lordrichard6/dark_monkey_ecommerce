@@ -106,7 +106,7 @@ export function Hero() {
           </div>
         </div>
         <HeroLogo />
-        <h1 className="text-4xl font-bold tracking-tight text-zinc-50 md:text-5xl lg:text-6xl">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl lg:text-6xl">
           {locale === 'pt' ? (
             <>
               {t('quality')}{' '}
@@ -134,14 +134,14 @@ export function Hero() {
             {t('you')}
           </span>
         </h1>
-        <p className="mt-6 text-lg text-zinc-400 md:text-xl">{t('heroSubtitle')}</p>
+        <p className="mt-6 text-base text-zinc-400 sm:text-lg md:text-xl">{t('heroSubtitle')}</p>
 
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 px-4">
           <button
             type="button"
             onClick={scrollToProducts}
             aria-label={t('shopPremiumCollection')}
-            className="group relative flex w-full sm:w-auto items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 px-10 py-5 text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-[0.98] md:px-12"
+            className="group relative flex w-full sm:w-auto items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 px-6 py-3 text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-[0.98] md:px-10 md:py-5"
           >
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
             <span className="relative text-xl font-black uppercase tracking-tight">
@@ -152,7 +152,7 @@ export function Hero() {
           <Link
             href="/categories"
             aria-label={t('exploreByCategory')}
-            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/20 bg-black/20 px-8 py-4 text-zinc-200 transition-all hover:border-white/40 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/20 bg-black/20 px-5 py-3 text-zinc-200 transition-all hover:border-white/40 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm md:px-8 md:py-4"
           >
             <span className="text-lg font-medium">{t('exploreByCategory')}</span>
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />

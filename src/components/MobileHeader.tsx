@@ -347,7 +347,7 @@ export function MobileHeader({ user, displayName, isAdmin, categories }: Props) 
                       >
                         <div className="overflow-hidden">
                           {cat.subcategories && (
-                            <div className="space-y-1 bg-black/20 px-2 py-1 ml-4 rounded-lg">
+                            <div className="space-y-1 bg-black/20 px-2 py-1 ml-2 sm:ml-4 rounded-lg">
                               {cat.subcategories.map((sub) => (
                                 <Link
                                   key={sub.id}

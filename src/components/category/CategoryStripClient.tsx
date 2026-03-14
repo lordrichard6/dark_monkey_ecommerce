@@ -43,9 +43,9 @@ export function CategoryStripClient({
       </div>
 
       {/* Category grid */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 lg:gap-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4 lg:gap-5">
         {featured.map((cat) => (
-          <div key={cat.id} className="col-span-2">
+          <div key={cat.id} className="sm:col-span-2">
             <FeaturedCategoryCard category={cat} />
           </div>
         ))}
@@ -65,7 +65,7 @@ export function CategoryStripClient({
                   alt={cat.name}
                   fill
                   className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-110"
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 25vw, 20vw"
                   unoptimized={cat.image_url.includes('/storage/')}
                 />
               ) : (

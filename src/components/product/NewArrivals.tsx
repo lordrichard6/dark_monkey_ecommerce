@@ -80,14 +80,14 @@ export function NewArrivals({ products, categories }: Props) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
           <div className="w-full overflow-hidden">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 font-serif lowercase italic">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 font-serif lowercase italic">
               {t('newArrivals')}
             </h2>
             {/* Scrollable Tabs for Mobile */}
             <div className="mt-4 md:mt-6 flex gap-6 md:gap-8 items-center border-b border-white/5 pb-2 md:pb-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [ms-overflow-style:none] [scrollbar-width:none]">
               <button
                 onClick={() => setActiveCategory('all')}
-                className={`text-xs md:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 white-nowrap flex-shrink-0 ${
+                className={`text-xs sm:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 white-nowrap flex-shrink-0 ${
                   activeCategory === 'all' ? 'text-zinc-50' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
@@ -116,7 +116,7 @@ export function NewArrivals({ products, categories }: Props) {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
-                    className={`text-xs md:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 whitespace-nowrap flex-shrink-0 ${
+                    className={`text-xs sm:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 whitespace-nowrap flex-shrink-0 ${
                       activeCategory === cat.id
                         ? 'text-zinc-50'
                         : 'text-zinc-500 hover:text-zinc-300'
@@ -154,7 +154,7 @@ export function NewArrivals({ products, categories }: Props) {
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
-          className={`grid grid-cols-2 gap-4 md:flex md:gap-6 overflow-x-auto pb-8 md:pb-12 md:[&::-webkit-scrollbar]:hidden md:[ms-overflow-style:none] md:[scrollbar-width:none] md:cursor-grab md:active:cursor-grabbing md:select-none md:scroll-smooth ${isDragging ? 'md:scroll-auto' : ''}`}
+          className={`grid grid-cols-2 gap-3 sm:gap-4 md:flex md:gap-6 overflow-x-auto pb-8 md:pb-12 md:[&::-webkit-scrollbar]:hidden md:[ms-overflow-style:none] md:[scrollbar-width:none] md:cursor-grab md:active:cursor-grabbing md:select-none md:scroll-smooth ${isDragging ? 'md:scroll-auto' : ''}`}
         >
           {displayedProducts.length > 0 ? (
             displayedProducts.map((product) => (

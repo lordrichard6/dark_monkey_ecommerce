@@ -79,7 +79,7 @@ export function ProductCard({
             {/* Compare Button */}
             <button
               onClick={toggleCompare}
-              className={`absolute top-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${
+              className={`absolute top-3 right-3 z-30 flex h-9 w-9 md:h-8 md:w-8 items-center justify-center rounded-full transition-all duration-300 ${
                 isComparing
                   ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/40'
                   : 'bg-black/40 text-white backdrop-blur-md hover:bg-black/60 opacity-0 group-hover:opacity-100'
@@ -104,17 +104,17 @@ export function ProductCard({
             </div>
           </div>
           <div className="p-4">
-            <h3 className="line-clamp-2 h-12 font-medium text-zinc-50 group-hover:text-white">
+            <h3 className="line-clamp-2 min-h-[2.5rem] md:min-h-[3rem] font-medium text-zinc-50 group-hover:text-white">
               {name}
             </h3>
-            <div className="mt-2 flex items-baseline gap-2">
+            <div className="mt-2 flex flex-wrap items-baseline gap-1">
               {compareAtPriceCents && compareAtPriceCents > priceCents && (
-                <span className="text-sm text-zinc-500 line-through decoration-zinc-500/50">
+                <span className="text-xs text-zinc-500 line-through decoration-zinc-500/50 md:text-sm">
                   {format(compareAtPriceCents)}
                 </span>
               )}
               <span
-                className={`text-lg font-bold ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}
+                className={`text-sm font-bold md:text-base ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}
               >
                 {format(priceCents || 0)}
               </span>

@@ -113,14 +113,14 @@ export function ProductCardWithWishlist({
           </div>
           <div className="p-4 flex flex-col flex-1">
             <ProductName name={name} />
-            <div className="mt-auto pt-2 flex items-baseline gap-2">
+            <div className="mt-auto pt-2 flex flex-wrap items-baseline gap-1">
               {compareAtPriceCents && compareAtPriceCents > priceCents && (
-                <span className="text-sm text-zinc-500 line-through decoration-zinc-500/50">
+                <span className="text-xs text-zinc-500 line-through decoration-zinc-500/50 md:text-sm">
                   {format(compareAtPriceCents)}
                 </span>
               )}
               <span
-                className={`text-lg font-bold ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}
+                className={`text-sm font-bold md:text-base ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}
               >
                 {format(priceCents || 0)}
               </span>

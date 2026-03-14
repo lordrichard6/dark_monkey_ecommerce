@@ -15,8 +15,7 @@ export function FeaturedCategoryCard({ category }: { category: CategoryItem }) {
   return (
     <Link
       href={`/categories/${category.slug}`}
-      className="featured-card group relative overflow-hidden rounded-2xl border border-amber-500/30 bg-zinc-950 shadow-lg shadow-amber-900/20 transition-all duration-300 hover:border-amber-400/60 hover:shadow-amber-800/30"
-      style={{ minHeight: '220px' }}
+      className="featured-card group relative overflow-hidden rounded-2xl border border-amber-500/30 bg-zinc-950 shadow-lg shadow-amber-900/20 transition-all duration-300 hover:border-amber-400/60 hover:shadow-amber-800/30 min-h-[180px] md:min-h-[220px]"
     >
       {/* Shimmer sweep overlay */}
       <div className="shimmer-sweep pointer-events-none absolute inset-0 z-10" />
@@ -46,7 +45,7 @@ export function FeaturedCategoryCard({ category }: { category: CategoryItem }) {
       />
 
       {/* Content */}
-      <div className="relative z-20 flex h-full flex-col justify-between p-6">
+      <div className="relative z-20 flex h-full flex-col justify-between p-4 sm:p-6">
         {/* Badge */}
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-amber-400">
@@ -59,7 +58,7 @@ export function FeaturedCategoryCard({ category }: { category: CategoryItem }) {
 
         {/* Name + subtitle */}
         <div>
-          <h3 className="text-2xl font-black uppercase tracking-tight text-amber-300 drop-shadow-sm transition-colors duration-200 group-hover:text-amber-200 sm:text-3xl">
+          <h3 className="text-xl font-black uppercase tracking-tight text-amber-300 drop-shadow-sm transition-colors duration-200 group-hover:text-amber-200 sm:text-2xl md:text-3xl">
             {category.name}
           </h3>
           {category.subtitle && (
