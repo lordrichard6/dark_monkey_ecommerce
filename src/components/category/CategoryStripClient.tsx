@@ -38,7 +38,7 @@ function FeaturedCategoryCard({ category }: { category: CategoryItem }) {
           <img
             src={category.image_url}
             alt={category.name}
-            className="h-full w-full object-cover opacity-55 transition-opacity duration-500 group-hover:opacity-70"
+            className="h-full w-full object-contain opacity-55 transition-opacity duration-500 group-hover:opacity-70"
           />
         </div>
       )}
