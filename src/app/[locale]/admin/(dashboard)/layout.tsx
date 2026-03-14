@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminUser } from '@/lib/auth-admin'
 import { AdminFooter } from '@/components/admin/AdminFooter'
+import { AdminProviders } from './admin-providers'
 
 export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   // Check if the user is authenticated at all
@@ -64,9 +65,9 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
   }
 
   return (
-    <>
+    <AdminProviders>
       {children}
       <AdminFooter />
-    </>
+    </AdminProviders>
   )
 }

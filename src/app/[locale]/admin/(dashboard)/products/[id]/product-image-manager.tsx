@@ -17,12 +17,12 @@ import {
 import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  uploadProductImage,
   deleteProductImage,
   setPrimaryProductImage,
   updateProductImageColor,
   reorderProductImages,
 } from '@/actions/admin-products'
+import { useUpload } from '@/contexts/upload-context'
 
 type Image = {
   id: string
@@ -212,14 +212,10 @@ function SortableThumbnail({
 function UploadDialog({
   onClose,
   onUpload,
-  uploading,
-  uploadProgress,
   error,
 }: {
   onClose: () => void
   onUpload: (files: File[]) => void
-  uploading: boolean
-  uploadProgress: { done: number; total: number } | null
   error: string | null
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -227,11 +223,11 @@ function UploadDialog({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !uploading) onClose()
+      if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [uploading, onClose])
+  }, [onClose])
 
   function pickFiles(files: FileList | null) {
     if (!files || files.length === 0) return
@@ -255,14 +251,10 @@ function UploadDialog({
     pickFiles(e.dataTransfer.files)
   }
 
-  const pct = uploadProgress ? Math.round((uploadProgress.done / uploadProgress.total) * 100) : 0
-
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !uploading) onClose()
-      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl">
         {/* Header */}
@@ -274,8 +266,7 @@ function UploadDialog({
           <button
             type="button"
             onClick={onClose}
-            disabled={uploading}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-40"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -289,13 +280,11 @@ function UploadDialog({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() => !uploading && fileInputRef.current?.click()}
+            onClick={() => fileInputRef.current?.click()}
             className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-all ${
               isDraggingOver
                 ? 'border-amber-500 bg-amber-500/10'
-                : uploading
-                  ? 'cursor-not-allowed border-zinc-700 bg-zinc-800/30'
-                  : 'border-zinc-700 bg-zinc-800/30 hover:border-amber-500/60 hover:bg-amber-500/5'
+                : 'border-zinc-700 bg-zinc-800/30 hover:border-amber-500/60 hover:bg-amber-500/5'
             }`}
           >
             <div
@@ -308,14 +297,7 @@ function UploadDialog({
               />
             </div>
 
-            {uploading ? (
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-zinc-300">
-                  Uploading {uploadProgress?.done} of {uploadProgress?.total}…
-                </p>
-                <p className="text-xs text-zinc-500">Converting to WebP and saving…</p>
-              </div>
-            ) : isDraggingOver ? (
+            {isDraggingOver ? (
               <p className="text-sm font-semibold text-amber-400">Drop to upload</p>
             ) : (
               <div className="space-y-1">
@@ -325,19 +307,6 @@ function UploadDialog({
             )}
           </div>
 
-          {/* Progress bar */}
-          {uploadProgress && (
-            <div className="space-y-1.5">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-700">
-                <div
-                  className="h-full rounded-full bg-amber-500 transition-all duration-300 ease-out"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <p className="text-right text-[11px] text-zinc-500">{pct}%</p>
-            </div>
-          )}
-
           {/* Error */}
           {error && (
             <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
@@ -345,12 +314,9 @@ function UploadDialog({
             </p>
           )}
 
-          {/* Helper text */}
-          {!uploading && (
-            <p className="text-center text-[11px] text-zinc-600">
-              PNG, JPEG, WebP, GIF · Max 20 MB per file · Up to 5 images at once
-            </p>
-          )}
+          <p className="text-center text-[11px] text-zinc-600">
+            PNG, JPEG, WebP, GIF · Max 20 MB per file · Up to 5 images at once
+          </p>
         </div>
 
         {/* Hidden file input */}
@@ -376,18 +342,17 @@ export function ProductImageManager({
   availableColors = [],
 }: Props) {
   const router = useRouter()
+  const { startUpload } = useUpload()
 
   const [localImages, setLocalImages] = useState(imagesProp)
   const [selectedId, setSelectedId] = useState<string | null>(imagesProp[0]?.id ?? null)
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const [showUploadDialog, setShowUploadDialog] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
   const [updatingColorId, setUpdatingColorId] = useState<string | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
@@ -452,7 +417,7 @@ export function ProductImageManager({
   // ── Upload ────────────────────────────────────────────────────────────────
 
   const handleUpload = useCallback(
-    async (files: File[]) => {
+    (files: File[]) => {
       if (!files.length) return
 
       if (files.length > 5) {
@@ -460,31 +425,14 @@ export function ProductImageManager({
         return
       }
 
+      // Close the dialog immediately — progress is shown in the global indicator
+      setShowUploadDialog(false)
       setUploadError(null)
-      setUploading(true)
 
-      const errors: string[] = []
-      setUploadProgress({ done: 0, total: files.length })
-      for (let i = 0; i < files.length; i++) {
-        const formData = new FormData()
-        formData.append('file', files[i])
-        const result = await uploadProductImage(productId, formData, selectedColor)
-        if (!result.ok) errors.push(`${files[i].name}: ${result.error}`)
-        setUploadProgress({ done: i + 1, total: files.length })
-      }
-
-      setUploading(false)
-      setUploadProgress(null)
-
-      if (errors.length) {
-        setUploadError(errors.join(' · '))
-      } else {
-        setShowUploadDialog(false)
-      }
-
-      router.refresh()
+      // Fire and forget — context handles progress and keeps it visible across navigation
+      startUpload(productId, files, selectedColor).then(() => router.refresh())
     },
-    [productId, selectedColor, router]
+    [productId, selectedColor, router, startUpload]
   )
 
   // ── Delete / Primary / Color ──────────────────────────────────────────────
@@ -646,10 +594,8 @@ export function ProductImageManager({
       {/* Upload Dialog */}
       {showUploadDialog && (
         <UploadDialog
-          onClose={() => !uploading && setShowUploadDialog(false)}
+          onClose={() => setShowUploadDialog(false)}
           onUpload={handleUpload}
-          uploading={uploading}
-          uploadProgress={uploadProgress}
           error={uploadError}
         />
       )}
