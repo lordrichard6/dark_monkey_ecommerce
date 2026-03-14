@@ -9,6 +9,7 @@ export async function CategoryStrip() {
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, slug, image_url')
+    .is('parent_id', null)
     .not('image_url', 'is', null)
     .order('name')
 
