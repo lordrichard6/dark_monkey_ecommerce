@@ -38,7 +38,7 @@ function FeaturedCategoryCard({ category }: { category: CategoryItem }) {
           <img
             src={category.image_url}
             alt={category.name}
-            className="h-full w-full object-cover opacity-25 transition-opacity duration-500 group-hover:opacity-35"
+            className="h-full w-full object-cover opacity-55 transition-opacity duration-500 group-hover:opacity-70"
           />
         </div>
       )}
@@ -48,9 +48,9 @@ function FeaturedCategoryCard({ category }: { category: CategoryItem }) {
         className="absolute inset-0"
         style={{
           background: [
-            'radial-gradient(ellipse 120% 60% at 50% 110%, rgba(245,158,11,0.18) 0%, transparent 60%)',
-            'radial-gradient(ellipse at 30% 50%, rgba(180,120,0,0.12) 0%, transparent 50%)',
-            'linear-gradient(135deg, rgba(20,16,6,0.95) 0%, rgba(10,8,3,0.98) 100%)',
+            'radial-gradient(ellipse 120% 60% at 50% 110%, rgba(245,158,11,0.22) 0%, transparent 60%)',
+            'radial-gradient(ellipse at 30% 50%, rgba(180,120,0,0.15) 0%, transparent 50%)',
+            'linear-gradient(135deg, rgba(20,16,6,0.55) 0%, rgba(10,8,3,0.65) 100%)',
           ].join(', '),
         }}
       />
