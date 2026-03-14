@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, type CSSProperties } from 'react'
 import { ProductImageWithFallback } from './ProductImageWithFallback'
 import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from 'lucide-react'
 
@@ -74,7 +74,6 @@ function VideoEmbed({ url, className = '' }: { url: string; className?: string }
 
   if (isDirectVideo(url)) {
     return (
-       
       <video src={url} controls autoPlay className={`w-full h-full object-contain ${className}`} />
     )
   }
@@ -164,6 +163,23 @@ export function ProductImageGallery({
   if (unique.length === 0) return null
 
   const selectedIndex = unique.findIndex((img) => img.url === selectedImage?.url)
+
+  // Decorative background for transparent PNG mockups
+  const MOCKUP_BG: CSSProperties = {
+    backgroundImage: [
+      'radial-gradient(ellipse 160% 50% at 50% 115%, rgba(245,158,11,0.08) 0%, transparent 55%)',
+      'radial-gradient(ellipse at 50% 25%, #2e2e32 0%, #18181b 70%)',
+      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' fill-opacity='0.025'/%3E%3C/svg%3E\")",
+    ].join(', '),
+  }
+
+  const THUMBNAIL_BG: CSSProperties = {
+    backgroundImage: [
+      'radial-gradient(ellipse at 50% 110%, rgba(245,158,11,0.1) 0%, transparent 60%)',
+      'radial-gradient(ellipse at 50% 20%, #2a2a2e 0%, #18181b 80%)',
+      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' fill-opacity='0.025'/%3E%3C/svg%3E\")",
+    ].join(', '),
+  }
   const safeIndex = selectedIndex === -1 ? 0 : selectedIndex
   const currentItem = unique[safeIndex]
   const hasVideo = Boolean(currentItem?.video_url)
@@ -172,7 +188,10 @@ export function ProductImageGallery({
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
       {/* Main Image / Video Container */}
-      <div className="relative group overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 backdrop-blur-sm">
+      <div
+        style={MOCKUP_BG}
+        className="relative group overflow-hidden rounded-2xl border border-white/10 backdrop-blur-sm"
+      >
         <div className="relative aspect-square w-full sm:aspect-[4/5]">
           {hasVideo && isPlayingCurrent && currentItem.video_url ? (
             <div className="absolute inset-0">
@@ -224,10 +243,11 @@ export function ProductImageGallery({
                 setSelectedImage(img)
                 setPlayingVideo(null)
               }}
+              style={THUMBNAIL_BG}
               className={`relative aspect-square w-12 shrink-0 overflow-hidden rounded-lg border-2 transition ${
                 safeIndex === i
                   ? 'border-amber-500 shadow-lg shadow-amber-500/20 scale-105'
-                  : 'border-white/5 bg-zinc-900/40 hover:border-white/20'
+                  : 'border-white/5 hover:border-white/20'
               }`}
             >
               <ProductImageWithFallback

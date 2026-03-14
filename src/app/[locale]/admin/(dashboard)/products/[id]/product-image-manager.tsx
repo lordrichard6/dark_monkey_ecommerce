@@ -42,6 +42,24 @@ type Props = {
   availableColors?: string[]
 }
 
+// ── Mockup background — warm dark radial gradient + dot pattern ─────────────
+
+const MOCKUP_BG: React.CSSProperties = {
+  backgroundImage: [
+    'radial-gradient(ellipse 160% 50% at 50% 115%, rgba(245,158,11,0.09) 0%, transparent 55%)',
+    'radial-gradient(ellipse at 50% 25%, #2e2e32 0%, #18181b 70%)',
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' fill-opacity='0.025'/%3E%3C/svg%3E\")",
+  ].join(', '),
+}
+
+const THUMBNAIL_BG: React.CSSProperties = {
+  backgroundImage: [
+    'radial-gradient(ellipse at 50% 110%, rgba(245,158,11,0.1) 0%, transparent 60%)',
+    'radial-gradient(ellipse at 50% 20%, #2a2a2e 0%, #18181b 80%)',
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' fill-opacity='0.025'/%3E%3C/svg%3E\")",
+  ].join(', '),
+}
+
 // ── Color dot helper ─────────────────────────────────────────────────────────
 
 const COLOR_MAP: Record<string, string> = {
@@ -122,12 +140,15 @@ function SortableThumbnail({
         onKeyDown={(e) => e.key === 'Enter' && onSelect()}
         {...attributes}
         {...listeners}
+        style={THUMBNAIL_BG}
         className={`relative h-28 w-28 shrink-0 cursor-grab active:cursor-grabbing overflow-hidden rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
           isSelected
-            ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/30'
-            : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
+            ? 'border-amber-500 ring-2 ring-amber-500/30'
+            : 'border-zinc-700 hover:border-zinc-500'
         }`}
       >
+        {/* Selected tint overlay */}
+        {isSelected && <div className="pointer-events-none absolute inset-0 z-10 bg-amber-500/8" />}
         <NextImage
           src={img.url}
           alt={img.alt ?? ''}
@@ -523,7 +544,8 @@ export function ProductImageManager({
           tabIndex={0}
           onClick={() => setLightboxUrl(displayImage.url)}
           onKeyDown={(e) => e.key === 'Enter' && setLightboxUrl(displayImage.url)}
-          className="group relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          style={MOCKUP_BG}
+          className="group relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <NextImage
             src={displayImage.url}
@@ -546,7 +568,8 @@ export function ProductImageManager({
             setUploadError(null)
             setShowUploadDialog(true)
           }}
-          className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-700 bg-zinc-800/50 text-zinc-500 transition hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          style={MOCKUP_BG}
+          className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-700 text-zinc-500 transition hover:border-amber-500/60 hover:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           <ImagePlus className="h-8 w-8" />
           <span className="text-xs">{t('images.uploadFirstPhoto')}</span>
@@ -587,7 +610,10 @@ export function ProductImageManager({
         {/* Drag overlay — ghost image while dragging */}
         <DragOverlay>
           {activeImage && (
-            <div className="h-28 w-28 overflow-hidden rounded-lg border-2 border-amber-500 shadow-xl ring-4 ring-amber-500/20">
+            <div
+              style={THUMBNAIL_BG}
+              className="h-28 w-28 overflow-hidden rounded-lg border-2 border-amber-500 shadow-xl ring-4 ring-amber-500/20"
+            >
               <NextImage
                 src={activeImage.url}
                 alt={activeImage.alt ?? ''}
