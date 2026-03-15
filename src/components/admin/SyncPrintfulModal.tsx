@@ -7,9 +7,24 @@ import {
   getPrintfulSyncProductIds,
   syncPrintfulProductById,
 } from '@/actions/sync-printful'
-import { Loader2, CheckCircle2, AlertCircle, RefreshCw, Layers, Sparkles } from 'lucide-react'
+import {
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
+  Layers,
+  Sparkles,
+  TriangleAlert,
+} from 'lucide-react'
 
-type SyncState = 'idle' | 'counting' | 'confirming' | 'syncing' | 'complete' | 'error'
+type SyncState =
+  | 'idle'
+  | 'counting'
+  | 'confirming'
+  | 'confirming-all'
+  | 'syncing'
+  | 'complete'
+  | 'error'
 
 export function SyncPrintfulModal() {
   const router = useRouter()
@@ -86,8 +101,11 @@ export function SyncPrintfulModal() {
   /** "Sync New Only" — uses the IDs already returned from getPrintfulSyncStats */
   const handleSyncNew = () => handleSync(newProducts)
 
-  /** "Sync All" — re-fetches full paginated list so names are up to date */
-  const handleSyncAll = async () => {
+  /** "Sync All" — show confirmation warning before proceeding */
+  const handleSyncAll = () => setState('confirming-all')
+
+  /** Actually execute Sync All after user confirms the warning */
+  const proceedSyncAll = async () => {
     setState('syncing')
     setError(null)
     try {
@@ -184,6 +202,55 @@ export function SyncPrintfulModal() {
                   className="w-full rounded-xl border border-zinc-700 bg-transparent py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {state === 'confirming-all' && (
+            <div className="py-2">
+              <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 mb-5">
+                <TriangleAlert className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-300 mb-1">
+                    This will overwrite existing data
+                  </p>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Syncing all {totalItems} products will:
+                  </p>
+                </div>
+              </div>
+
+              <ul className="space-y-2 mb-6">
+                {[
+                  'Replace all Printful product images with fresh versions from Printful',
+                  'Update prices and variant attributes for every product',
+                  'Restore any previously hidden/deleted Printful products back to active',
+                  'Clean up orphaned variant records from deleted products',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-xs text-zinc-400">
+                    <span className="mt-0.5 text-amber-500 shrink-0">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <p className="text-xs text-zinc-500 mb-5 text-center">
+                Custom images you uploaded manually will not be affected.
+              </p>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={proceedSyncAll}
+                  className="w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 shadow-lg shadow-amber-500/10 transition-colors"
+                >
+                  Yes, Sync All ({totalItems})
+                </button>
+                <button
+                  onClick={() => setState('confirming')}
+                  className="w-full rounded-xl border border-zinc-700 bg-transparent py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  Go Back
                 </button>
               </div>
             </div>
