@@ -35,7 +35,6 @@ export function AdminFooter() {
     {
       label: t('nav.system'),
       links: [
-        { href: '/admin/emails', label: t('nav.emails') },
         { href: '/admin/settings', label: t('nav.settings') },
         { href: '/', label: t('nav.viewStore') },
       ],

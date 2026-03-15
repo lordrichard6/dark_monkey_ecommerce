@@ -1,8 +1,7 @@
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { TagManager } from '@/components/admin/settings/TagManager'
-import { EmailTester } from '@/components/admin/settings/EmailTester'
-import { Settings, Tag, Mail, Truck } from 'lucide-react'
+import { Settings, Tag, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 
@@ -65,18 +64,14 @@ export default async function AdminSettingsPage() {
               </div>
               <p className="mt-1 text-sm text-zinc-400">{t('settings.shippingRatesDesc')}</p>
             </Link>
+            <Link
+              href="/admin/emails"
+              className="block rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition hover:bg-zinc-900"
+            >
+              <h3 className="font-medium text-white">{t('emails.title')}</h3>
+              <p className="mt-1 text-sm text-zinc-400">{t('emails.subtitle')}</p>
+            </Link>
           </div>
-        </section>
-
-        {/* Email Testing */}
-        <section id="email-testing">
-          <div className="mb-6 flex items-center gap-2">
-            <Mail className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-zinc-50">
-              {t('settings.emailNotifications')}
-            </h2>
-          </div>
-          <EmailTester />
         </section>
 
         {/* Tag Management */}
