@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 import { updateProduct } from '@/actions/admin-products'
 import type { Category } from '@/actions/admin-categories'
 
@@ -38,17 +39,18 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
   const activeParent = roots.find((c) => c.id === parentId)
   const activeSubs = parentId ? subsOf(parentId) : []
 
-  async function handleUpdate(newSubId: string) {
-    setSubId(newSubId)
+  async function handleUpdate(categoryIdToSave: string) {
     setLoading(true)
     setError(null)
     const result = await updateProduct(productId, {
-      category_id: newSubId || null,
+      category_id: categoryIdToSave || null,
     })
     setLoading(false)
     if (result.ok) {
+      toast.success(t('fields.categorySaved'))
       router.refresh()
     } else {
+      toast.error(result.error ?? t('fields.saveFailed'))
       setError(result.error ?? null)
     }
   }
@@ -56,12 +58,18 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
   function handleParentChange(newParentId: string) {
     setParentId(newParentId)
     if (newParentId === '') {
+      setSubId('')
       handleUpdate('')
     } else {
       const newSubId = subsOf(newParentId).some((s) => s.id === subId) ? subId : ''
       setSubId(newSubId)
       handleUpdate(newSubId || newParentId)
     }
+  }
+
+  function handleSubChange(newSubId: string) {
+    setSubId(newSubId)
+    handleUpdate(newSubId || parentId)
   }
 
   return (
@@ -99,7 +107,7 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
             </label>
             <select
               value={subId}
-              onChange={(e) => handleUpdate(e.target.value)}
+              onChange={(e) => handleSubChange(e.target.value)}
               disabled={loading}
               className="block w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50"
             >

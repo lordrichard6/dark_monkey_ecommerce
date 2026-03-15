@@ -1048,6 +1048,7 @@
       "subcategory": "Subcategory",
       "selectCategory": "Select a category",
       "allOf": "All {name}",
+      "categorySaved": "Kategorie gespeichert",
       "printMethod": "Print Method",
       "printMethodHint": "e.g. DTF (Direct to Film), DTG, Embroidery",
       "sizeGuideUrl": "Size Guide URL",
