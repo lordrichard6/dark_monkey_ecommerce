@@ -61,7 +61,13 @@ export function GlobalUploadIndicator() {
               <p className="text-xs font-medium text-zinc-200">
                 {job.errors.length === job.total ? 'Upload failed' : 'Upload finished with errors'}
               </p>
-              <p className="mt-0.5 truncate text-[11px] text-red-400">{job.errors[0]}</p>
+              <ul className="mt-1 space-y-0.5">
+                {job.errors.map((err, i) => (
+                  <li key={i} className="truncate text-[11px] text-red-400" title={err}>
+                    {err}
+                  </li>
+                ))}
+              </ul>
             </>
           )}
           {isCancelled && (

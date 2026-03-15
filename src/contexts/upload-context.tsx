@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useRef } from 'react'
+import { toast } from 'sonner'
 import { uploadProductImage } from '@/actions/admin-products'
 
 type UploadStatus = 'uploading' | 'done' | 'error' | 'cancelled'
@@ -39,6 +40,11 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       const oversized = files.filter((f) => f.size > MAX_MB * 1024 * 1024)
       const validFiles = files.filter((f) => f.size <= MAX_MB * 1024 * 1024)
 
+      // Toast immediately for every oversized file — don't wait for anything
+      oversized.forEach((f) =>
+        toast.error(`${f.name} is too large — max ${MAX_MB} MB per file`, { duration: 6000 })
+      )
+
       if (oversized.length > 0 && validFiles.length === 0) {
         setJob({
           productId,
@@ -47,7 +53,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           done: 0,
           total: files.length,
           status: 'error',
-          errors: oversized.map((f) => `${f.name}: File too large (max ${MAX_MB} MB)`),
+          errors: oversized.map((f) => `${f.name}: exceeds ${MAX_MB} MB limit`),
         })
         return
       }
@@ -59,10 +65,10 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         done: 0,
         total: validFiles.length,
         status: 'uploading',
-        errors: oversized.map((f) => `${f.name}: File too large (max ${MAX_MB} MB)`),
+        errors: oversized.map((f) => `${f.name}: exceeds ${MAX_MB} MB limit`),
       })
 
-      const errors: string[] = oversized.map((f) => `${f.name}: File too large (max ${MAX_MB} MB)`)
+      const errors: string[] = oversized.map((f) => `${f.name}: exceeds ${MAX_MB} MB limit`)
 
       // Upload all valid files in parallel — each completes independently and updates the counter
       await Promise.all(
@@ -71,7 +77,11 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           const formData = new FormData()
           formData.append('file', file)
           const result = await uploadProductImage(productId, formData, color ?? undefined)
-          if (!result.ok) errors.push(`${file.name}: ${result.error}`)
+          if (!result.ok) {
+            const msg = `${file.name}: ${result.error}`
+            errors.push(msg)
+            toast.error(msg, { duration: 6000 })
+          }
           setJob((prev) => (prev ? { ...prev, done: prev.done + 1, errors: [...errors] } : prev))
         })
       )
