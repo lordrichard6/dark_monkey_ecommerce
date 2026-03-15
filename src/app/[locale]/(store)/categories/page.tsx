@@ -37,23 +37,35 @@ export default async function CategoriesPage() {
 
   const supabase = await createClient()
 
-  // Fetch root categories and sub-categories with product counts in parallel
-  const [{ data: rootCategories }, { data: subCatCounts }] = await Promise.all([
-    supabase
-      .from('categories')
-      .select('id, name, slug, description, image_url, is_featured, subtitle')
-      .is('parent_id', null)
-      .order('sort_order', { ascending: true })
-      .order('name', { ascending: true }),
-    supabase.from('categories').select('id, parent_id, products(id)').not('parent_id', 'is', null),
-  ])
+  // Fetch root categories, sub-categories with product counts, and direct root product counts in parallel
+  const [{ data: rootCategories }, { data: subCatCounts }, { data: rootProductCounts }] =
+    await Promise.all([
+      supabase
+        .from('categories')
+        .select('id, name, slug, description, image_url, is_featured, subtitle')
+        .is('parent_id', null)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true }),
+      supabase
+        .from('categories')
+        .select('id, parent_id, products(id)')
+        .not('parent_id', 'is', null),
+      // Also count products assigned directly to root categories (e.g. featured categories with no subcategories)
+      supabase.from('categories').select('id, products(id)').is('parent_id', null),
+    ])
 
   // Sum product counts per root category
   const countByParent: Record<string, number> = {}
+  // Roll up subcategory product counts to their parent
   for (const sub of subCatCounts ?? []) {
     if (!sub.parent_id) continue
     const count = Array.isArray(sub.products) ? sub.products.length : 0
     countByParent[sub.parent_id] = (countByParent[sub.parent_id] ?? 0) + count
+  }
+  // Add products assigned directly to root categories
+  for (const root of rootProductCounts ?? []) {
+    const count = Array.isArray(root.products) ? root.products.length : 0
+    if (count > 0) countByParent[root.id] = (countByParent[root.id] ?? 0) + count
   }
 
   const allCategories = (rootCategories ?? []).filter((cat) => (countByParent[cat.id] ?? 0) > 0)
