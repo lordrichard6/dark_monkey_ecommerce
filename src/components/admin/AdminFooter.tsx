@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 
 export function AdminFooter() {
-   
   const t = useTranslations('admin')
 
   const adminLinks = [
@@ -36,6 +35,7 @@ export function AdminFooter() {
     {
       label: t('nav.system'),
       links: [
+        { href: '/admin/emails', label: t('nav.emails') },
         { href: '/admin/settings', label: t('nav.settings') },
         { href: '/', label: t('nav.viewStore') },
       ],

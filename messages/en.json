@@ -764,6 +764,31 @@
       "cta": "Reset Password",
       "ignore": "If you didn't request this, you can safely ignore this email."
     },
+    "welcome": {
+      "subject": "Welcome to Dark Monkey 🦍",
+      "preview": "Your adventure starts here",
+      "title": "Welcome to the Family",
+      "body": "Your account is ready. Explore our exclusive collections and find your style.",
+      "bodyWithName": "Hey {name}, your account is ready. Explore our exclusive collections and find your style.",
+      "cta": "Start Shopping"
+    },
+    "orderCancellation": {
+      "subject": "Order Cancelled — #{orderId}",
+      "preview": "Your order #{orderId} has been cancelled",
+      "title": "Order Cancelled",
+      "body": "We're sorry, but your order has been cancelled. If you were charged, a full refund will be processed within 5–10 business days.",
+      "cta": "View Order History"
+    },
+    "reviewRequest": {
+      "subject": "How was your order? Leave a review ⭐",
+      "preview": "We'd love to hear what you think",
+      "title": "How Did We Do?",
+      "body": "We hope you're loving your new items! It would mean a lot if you could take a moment to share your experience.",
+      "cta": "Leave a Review"
+    },
+    "adminOrderAlert": {
+      "subject": "New order received"
+    },
     "footer": {
       "rights": "All rights reserved.",
       "address": "Dark Monkey, Switzerland",
@@ -855,6 +880,7 @@
       "features": "Features",
       "settings": "Settings",
       "viewStore": "View Store ↗",
+      "emails": "Emails",
       "content": "Content",
       "commerce": "Commerce",
       "engagement": "Engagement",
@@ -1151,6 +1177,10 @@
       "shippingRatesDesc": "Edit per-zone rates and free shipping threshold.",
       "emailNotifications": "Email Notifications",
       "tags": "Tags"
+    },
+    "emails": {
+      "title": "Email Templates",
+      "subtitle": "Preview and send test emails to registered users"
     },
     "footer": {
       "adminPanel": "DARKMONKEY Admin Panel",

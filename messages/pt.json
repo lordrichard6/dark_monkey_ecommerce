@@ -764,6 +764,31 @@
       "cta": "Redefinir Senha",
       "ignore": "Se não solicitou isso, pode ignorar este e-mail com segurança."
     },
+    "welcome": {
+      "subject": "Bem-vindo ao Dark Monkey 🦍",
+      "preview": "A tua aventura começa aqui",
+      "title": "Bem-vindo à Família",
+      "body": "A tua conta está pronta. Explora as nossas coleções exclusivas e encontra o teu estilo.",
+      "bodyWithName": "Olá {name}, a tua conta está pronta. Explora as nossas coleções exclusivas e encontra o teu estilo.",
+      "cta": "Começar a Comprar"
+    },
+    "orderCancellation": {
+      "subject": "Encomenda Cancelada — #{orderId}",
+      "preview": "A tua encomenda #{orderId} foi cancelada",
+      "title": "Encomenda Cancelada",
+      "body": "Lamentamos, mas a tua encomenda foi cancelada. Se foste cobrado, o reembolso completo será processado em 5 a 10 dias úteis.",
+      "cta": "Ver Histórico de Encomendas"
+    },
+    "reviewRequest": {
+      "subject": "Como foi a tua encomenda? Deixa uma avaliação ⭐",
+      "preview": "Adorávamos saber a tua opinião",
+      "title": "Como Correu?",
+      "body": "Esperamos que estejas a adorar os teus novos artigos! Significaria muito se pudesses partilhar a tua experiência.",
+      "cta": "Deixar uma Avaliação"
+    },
+    "adminOrderAlert": {
+      "subject": "Nova encomenda recebida"
+    },
     "footer": {
       "rights": "Todos os direitos reservados.",
       "address": "Dark Monkey, Suíça",
@@ -855,6 +880,7 @@
       "features": "Funcionalidades",
       "settings": "Configurações",
       "viewStore": "Ver Loja ↗",
+      "emails": "Emails",
       "content": "Conteúdo",
       "commerce": "Comércio",
       "engagement": "Envolvimento",
@@ -1151,6 +1177,10 @@
       "shippingRatesDesc": "Editar tarifas por zona e limite de envio grátis.",
       "emailNotifications": "Notificações por Email",
       "tags": "Etiquetas"
+    },
+    "emails": {
+      "title": "Templates de Email",
+      "subtitle": "Pré-visualiza e envia emails de teste para utilizadores registados"
     },
     "footer": {
       "adminPanel": "DARKMONKEY Painel de Administração",

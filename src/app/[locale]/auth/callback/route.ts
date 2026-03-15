@@ -1,7 +1,7 @@
-
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { sendWelcomeEmail } from '@/lib/resend'
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -55,9 +55,24 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // 3. Welcome email for new users (non-fatal)
+      const isNewUser =
+        data.user.created_at &&
+        Math.abs(new Date(data.user.created_at).getTime() - Date.now()) < 60_000
+      if (isNewUser && data.user.email) {
+        const locale = (new URL(request.url).pathname.match(/^\/([a-z]{2})\//) || [])[1] ?? 'en'
+        sendWelcomeEmail({
+          to: data.user.email,
+          firstName: data.user.user_metadata?.full_name?.split(' ')[0] as string | undefined,
+          locale,
+        }).catch(console.error)
+      }
+
       return response
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`)
+  const localeMatch = new URL(request.url).pathname.match(/^\/([a-z]{2})\//)
+  const locale = localeMatch ? localeMatch[1] : 'en'
+  return NextResponse.redirect(`${origin}/${locale}/login?error=auth`)
 }

@@ -8,20 +8,32 @@ const messages = { en, pt, fr, de, it }
 
 type Locale = keyof typeof messages
 
-export type EmailType = 'orderConfirmation' | 'abandonedCart' | 'restock' | 'wishlist' | 'shipment'
+export type EmailType =
+  | 'orderConfirmation'
+  | 'abandonedCart'
+  | 'restock'
+  | 'wishlist'
+  | 'shipment'
+  | 'passwordReset'
+  | 'welcome'
+  | 'orderCancellation'
+  | 'reviewRequest'
+  | 'adminOrderAlert'
 
 export function getEmailStrings(locale: string, type: EmailType) {
   const safeLocale = (locale in messages ? locale : 'en') as Locale
   const emails = messages[safeLocale].email
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const emailsAny = emails as any
   return {
-    ...emails[type],
+    ...(emailsAny[type] ?? {}),
     footer: emails.footer,
   }
 }
 
 export function generateEmailHtml(
   locale: string,
-  type: EmailType,
+  type: EmailType | string,
   content: {
     previewText: string
     title: string
@@ -35,7 +47,7 @@ export function generateEmailHtml(
   }
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const strings = getEmailStrings(locale, type) as any
+  const strings = getEmailStrings(locale, type as EmailType) as any
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dark-monkey.ch'
   const logoUrl = `${appUrl}/logo.png`
 

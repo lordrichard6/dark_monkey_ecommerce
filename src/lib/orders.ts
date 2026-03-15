@@ -1,7 +1,7 @@
 // import { createClient } from '@supabase/supabase-js'
 // import Stripe from 'stripe'
 import { getStripe } from './stripe'
-import { sendOrderConfirmation } from './resend'
+import { sendOrderConfirmation, sendAdminOrderAlert } from './resend'
 import { processXpForPurchase, processXpForReferral } from './gamification'
 import {
   createOrder as createPrintfulOrder,
@@ -283,6 +283,18 @@ export async function processSuccessfulCheckout(sessionId: string) {
       }).catch((err) => console.error('[OrderProcess] Email failed:', err))
     )
   }
+
+  // A2. Admin order alert
+  const totalItems = cartItems.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0)
+  fulfillmentPromises.push(
+    sendAdminOrderAlert({
+      orderId: order.id,
+      customerEmail: guestEmail ?? 'registered user',
+      totalCents: stripeAmountTotal,
+      currency: stripeCurrency,
+      itemCount: totalItems,
+    }).catch((err) => console.warn('[admin alert] Email failed:', err))
+  )
 
   // B. Printful Fulfillment
   const isPfConfigured = isPrintfulConfigured()

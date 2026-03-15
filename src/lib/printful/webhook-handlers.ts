@@ -6,7 +6,7 @@ import {
   PrintfulOrderFailedPayload,
   PrintfulOrderCanceledPayload,
 } from '@/lib/printful/types-webhooks'
-import { sendShipmentEmail } from '@/lib/resend'
+import { sendShipmentEmail, sendOrderCancellationEmail } from '@/lib/resend'
 
 /**
  * Handles the 'package_shipped' event from Printful.
@@ -211,6 +211,42 @@ export async function handleOrderCanceled(
   logger.info(`Order ${orderId} marked as 'fulfillment_canceled' (Printful reason: ${reason})`, {
     operation: 'webhook_handler',
   })
+
+  // Notify customer of cancellation (non-fatal)
+  try {
+    const { data: orderRow } = await supabase
+      .from('orders')
+      .select('guest_email, user_id, total_cents, currency, locale')
+      .eq('id', orderId)
+      .single()
+
+    let recipientEmail: string | null = orderRow?.guest_email ?? null
+    if (!recipientEmail && orderRow?.user_id) {
+      const { data: userData } = await supabase.auth.admin.getUserById(orderRow.user_id)
+      recipientEmail = userData?.user?.email ?? null
+    }
+
+    if (recipientEmail) {
+      sendOrderCancellationEmail({
+        to: recipientEmail,
+        orderId,
+        totalCents: orderRow?.total_cents ?? 0,
+        currency: orderRow?.currency ?? 'CHF',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        locale: (orderRow as any)?.locale ?? 'en',
+      }).catch((err) =>
+        logger.warn('[order_canceled] Email failed:', {
+          operation: 'webhook_handler',
+          error: String(err),
+        })
+      )
+    }
+  } catch (emailErr) {
+    logger.warn(`Error sending cancellation email for order ${orderId}`, {
+      operation: 'webhook_handler',
+      error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+    })
+  }
 }
 
 /**
