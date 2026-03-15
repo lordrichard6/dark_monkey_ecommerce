@@ -273,7 +273,16 @@
     "noImage": "No image",
     "exploreCollection": "Explore Collection",
     "all": "All",
-    "productCount": "{count, plural, =1 {# product} other {# products}}"
+    "productCount": "{count, plural, =1 {# product} other {# products}}",
+    "sortNewest": "Newest",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "sortBestseller": "Bestsellers first",
+    "sortDiscount": "Biggest discount",
+    "noProductsTitle": "No products found",
+    "noProductsDescription": "We couldn't find any products matching your selection.",
+    "backToTop": "Back to top",
+    "showingCount": "{count, plural, =1 {Showing # product} other {Showing # products}}"
   },
   "product": {
     "color": "Color",

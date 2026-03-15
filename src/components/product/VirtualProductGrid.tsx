@@ -3,7 +3,7 @@
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
-import { PackageOpen } from 'lucide-react'
+import { PackageOpen, ArrowUp } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { useSearchParams } from 'next/navigation'
@@ -61,12 +61,13 @@ function ProductGrid({ products }: { products: Product[] }) {
 }
 
 export function VirtualProductGrid({ products, title, sort = 'newest' }: VirtualProductGridProps) {
-  const t = useTranslations('home')
+  const t = useTranslations('store')
   const router = useRouter()
   const searchParams = useSearchParams()
   const listRef = useRef<HTMLDivElement>(null)
   const [columns, setColumns] = useState(4)
   const [scrollMargin, setScrollMargin] = useState(0)
+  const [showBackToTop, setShowBackToTop] = useState(false)
 
   useLayoutEffect(() => {
     if (listRef.current) {
@@ -83,6 +84,13 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
     updateColumns()
     window.addEventListener('resize', updateColumns)
     return () => window.removeEventListener('resize', updateColumns)
+  }, [])
+
+  // Back-to-top: show after scrolling 400px
+  useEffect(() => {
+    const handleScroll = () => setShowBackToTop(window.scrollY > 400)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   // Calculate rows
@@ -124,80 +132,98 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
     router.push(`?${params.toString()}`)
   }
 
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
-    <section ref={listRef}>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {title && <h2 className="text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>}
-        {products.length > 0 && (
-          <select
-            value={sort}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="w-fit rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      {products.length > 0 ? (
-        products.length <= VIRTUALIZER_THRESHOLD ? (
-          <ProductGrid products={products} />
-        ) : (
-          <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const rowStartIndex = virtualRow.index * columns
-              const rowProducts = products.slice(rowStartIndex, rowStartIndex + columns)
-
-              return (
-                <div
-                  key={virtualRow.key}
-                  className="absolute left-0 top-0 grid w-full grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4"
-                  style={{
-                    transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
-                  }}
-                >
-                  {rowProducts.map((product) => (
-                    <ProductCardWithWishlist
-                      key={product.slug}
-                      productId={product.productId!}
-                      slug={product.slug}
-                      name={product.name}
-                      priceCents={product.priceCents}
-                      compareAtPriceCents={product.compareAtPriceCents}
-                      imageUrl={product.imageUrl}
-                      imageAlt={product.imageAlt}
-                      isInWishlist={product.isInWishlist ?? false}
-                      isBestseller={product.isBestseller ?? false}
-                      isOnSale={product.isOnSale ?? false}
-                      isFeatured={product.isFeatured ?? false}
-                      createdAt={product.createdAt}
-                      showWishlist={!!product.productId}
-                    />
-                  ))}
-                </div>
-              )
-            })}
+    <>
+      <section ref={listRef}>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            {title && <h2 className="text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>}
+            {products.length > 0 && (
+              <span className="text-sm text-zinc-500">
+                {t('showingCount', { count: products.length })}
+              </span>
+            )}
           </div>
-        )
-      ) : (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-zinc-900/30 py-24 text-center">
-          <div className="mb-6 rounded-full bg-zinc-900 p-6 ring-1 ring-zinc-800">
-            <PackageOpen className="h-10 w-10 text-amber-500" />
-          </div>
-          <h3 className="text-xl font-medium text-zinc-200">
-            {t.has('comingSoonTitle') ? t('comingSoonTitle') : 'We are preparing our products'}
-          </h3>
-          <p className="mt-2 max-w-sm text-zinc-400">
-            {t.has('comingSoonDescription')
-              ? t('comingSoonDescription')
-              : 'We are currently updating our collection. Please check back soon!'}
-          </p>
+          {products.length > 0 && (
+            <select
+              value={sort}
+              onChange={(e) => handleSortChange(e.target.value)}
+              className="w-fit rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
+
+        {products.length > 0 ? (
+          products.length <= VIRTUALIZER_THRESHOLD ? (
+            <ProductGrid products={products} />
+          ) : (
+            <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const rowStartIndex = virtualRow.index * columns
+                const rowProducts = products.slice(rowStartIndex, rowStartIndex + columns)
+
+                return (
+                  <div
+                    key={virtualRow.key}
+                    className="absolute left-0 top-0 grid w-full grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4"
+                    style={{
+                      transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
+                    }}
+                  >
+                    {rowProducts.map((product) => (
+                      <ProductCardWithWishlist
+                        key={product.slug}
+                        productId={product.productId!}
+                        slug={product.slug}
+                        name={product.name}
+                        priceCents={product.priceCents}
+                        compareAtPriceCents={product.compareAtPriceCents}
+                        imageUrl={product.imageUrl}
+                        imageAlt={product.imageAlt}
+                        isInWishlist={product.isInWishlist ?? false}
+                        isBestseller={product.isBestseller ?? false}
+                        isOnSale={product.isOnSale ?? false}
+                        isFeatured={product.isFeatured ?? false}
+                        createdAt={product.createdAt}
+                        showWishlist={!!product.productId}
+                      />
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        ) : (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-800 bg-zinc-900/30 py-24 text-center">
+            <div className="mb-6 rounded-full bg-zinc-900 p-6 ring-1 ring-zinc-800">
+              <PackageOpen className="h-10 w-10 text-amber-500" />
+            </div>
+            <h3 className="text-xl font-medium text-zinc-200">{t('noProductsTitle')}</h3>
+            <p className="mt-2 max-w-sm text-zinc-400">{t('noProductsDescription')}</p>
+          </div>
+        )}
+      </section>
+
+      {/* Back-to-top button */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          aria-label={t('backToTop')}
+          className="fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-zinc-400 shadow-lg transition-all duration-200 hover:border-amber-500/50 hover:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </button>
       )}
-    </section>
+    </>
   )
 }

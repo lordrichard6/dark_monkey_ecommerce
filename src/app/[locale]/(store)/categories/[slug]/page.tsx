@@ -26,6 +26,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = category.description ?? title
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
 
+  const ogImages = category.image_url
+    ? [{ url: category.image_url, width: 1200, height: 630, alt: title }]
+    : []
+
   return {
     title,
     description,
@@ -34,11 +38,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: `${SITE_URL}/${locale}/categories/${slug}`,
+      ...(ogImages.length > 0 && { images: ogImages }),
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      ...(ogImages.length > 0 && { images: ogImages.map((i) => i.url) }),
     },
   }
 }
@@ -92,7 +98,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       name: p.name,
       priceCents: minPrice,
       compareAtPriceCents: compareAtPrice,
-      imageUrl: primaryImage?.url ?? '/images/hero_bg.webp',
+      imageUrl: primaryImage?.url ?? '',
       imageAlt: primaryImage?.alt ?? p.name,
       isInWishlist: wishlistProductIds.includes(p.id),
       isBestseller: bestsellerIds.has(p.id),
@@ -152,38 +158,44 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         <Breadcrumbs items={breadcrumbItems} />
 
         <h1 className="mb-2 text-2xl font-bold text-zinc-50 md:text-3xl">{category.name}</h1>
-        {category.description && <p className="mb-6 text-zinc-400">{category.description}</p>}
+        {category.description && (
+          <p className="mb-6 line-clamp-3 text-zinc-400">{category.description}</p>
+        )}
 
         {/* Subcategory tabs (only for parent categories) */}
         {subcategories.length > 0 && (
-          <div className="mb-8 flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-            <Link
-              href={`/categories/${slug}${sort !== 'newest' ? `?sort=${sort}` : ''}`}
-              className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                !activeSub
-                  ? 'bg-amber-500 text-black'
-                  : 'border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white'
-              }`}
-            >
-              {t('all')} ({products.length})
-            </Link>
-            {subcategories.map((sub) => {
-              const isActive = activeSub?.id === sub.id
-              const href = `/categories/${slug}?subcategory=${sub.slug}${sort !== 'newest' ? `&sort=${sort}` : ''}`
-              return (
-                <Link
-                  key={sub.id}
-                  href={href}
-                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-amber-500 text-black'
-                      : 'border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white'
-                  }`}
-                >
-                  {sub.name} ({countBySub[sub.id] ?? 0})
-                </Link>
-              )
-            })}
+          <div className="relative mb-8">
+            {/* Right-side fade affordance for horizontal overflow */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-zinc-950 to-transparent" />
+            <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+              <Link
+                href={`/categories/${slug}${sort !== 'newest' ? `?sort=${sort}` : ''}`}
+                className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  !activeSub
+                    ? 'bg-amber-500 text-black'
+                    : 'border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white'
+                }`}
+              >
+                {t('all')} ({products.length})
+              </Link>
+              {subcategories.map((sub) => {
+                const isActive = activeSub?.id === sub.id
+                const href = `/categories/${slug}?subcategory=${sub.slug}${sort !== 'newest' ? `&sort=${sort}` : ''}`
+                return (
+                  <Link
+                    key={sub.id}
+                    href={href}
+                    className={`flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-amber-500 text-black'
+                        : 'border border-white/10 text-zinc-400 hover:border-white/20 hover:text-white'
+                    }`}
+                  >
+                    {sub.name} ({countBySub[sub.id] ?? 0})
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         )}
 

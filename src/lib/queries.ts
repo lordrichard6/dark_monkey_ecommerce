@@ -307,7 +307,7 @@ export const getCategoryMetadata = cache(async (slug: string) => {
 
   const { data: category } = await supabase
     .from('categories')
-    .select('name, description')
+    .select('name, description, image_url')
     .eq('slug', slug)
     .single()
 
