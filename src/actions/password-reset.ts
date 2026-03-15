@@ -1,21 +1,51 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { sendPasswordResetEmail } from '@/lib/resend'
 
 /**
- * Sends a password reset email to the given address via Supabase Auth.
- * The magic link redirects to `/auth/reset-password` after callback.
- * Returns `{ ok: true }` on success or `{ ok: false, error: string }` on failure.
+ * Sends a password reset email via Resend using the Supabase admin API to
+ * generate the recovery link without triggering Supabase's built-in email.
+ * Always returns `{ ok: true }` to avoid leaking whether the email exists.
  *
  * @param email - Email address of the account requesting a password reset.
+ * @param locale - Current UI locale for the email and redirect URL.
  */
-export async function requestPasswordReset(email: string) {
-  const supabase = await createClient()
+export async function requestPasswordReset(email: string, locale: string = 'en') {
+  const trimmedEmail = email.trim()
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-    redirectTo: `${base}/auth/callback?redirectTo=/auth/reset-password`,
-  })
-  if (error) return { ok: false, error: error.message }
+  const redirectTo = `${base}/auth/callback?redirectTo=/auth/reset-password`
+
+  const admin = getAdminClient()
+  if (admin) {
+    try {
+      const { data, error } = await admin.auth.admin.generateLink({
+        type: 'recovery',
+        email: trimmedEmail,
+        options: { redirectTo },
+      })
+      if (!error && data?.properties?.action_link) {
+        await sendPasswordResetEmail({
+          to: trimmedEmail,
+          resetUrl: data.properties.action_link,
+          locale,
+        })
+      }
+    } catch {
+      // Silently ignore — never expose whether an account exists
+    }
+  } else {
+    // Fallback: use Supabase's built-in email if admin client is unavailable
+    try {
+      const supabase = await createClient()
+      await supabase.auth.resetPasswordForEmail(trimmedEmail, { redirectTo })
+    } catch {
+      // Silently ignore
+    }
+  }
+
+  // Always return ok to avoid email enumeration
   return { ok: true }
 }
 

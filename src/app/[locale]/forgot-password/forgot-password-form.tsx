@@ -1,15 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { requestPasswordReset } from '@/actions/password-reset'
 import { Loader2 } from 'lucide-react'
 import { MailIcon } from '@/components/icons/auth-icons'
 
 export function ForgotPasswordForm() {
   const t = useTranslations('forgotPassword')
   const tAuth = useTranslations('auth')
+  const params = useParams()
+  const locale = (params?.locale as string) || 'en'
 
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -24,15 +27,8 @@ export function ForgotPasswordForm() {
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/callback?redirectTo=/auth/reset-password`,
-      })
-      if (supabaseError) {
-        setError(supabaseError.message)
-      } else {
-        setSent(true)
-      }
+      await requestPasswordReset(email.trim(), locale)
+      setSent(true)
     } catch {
       setError(t('somethingWrong'))
     } finally {
