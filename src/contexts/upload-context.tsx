@@ -77,24 +77,30 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           const formData = new FormData()
           formData.append('file', file)
 
-          // Race the server action against a 45-second timeout so the UI never hangs forever
+          // Race the server action against a 15-second timeout so the UI never hangs forever
           const timeout = new Promise<{ ok: false; error: string }>((resolve) =>
             setTimeout(
               () =>
                 resolve({
                   ok: false,
-                  error: 'Upload timed out — try a smaller or more compressed image',
+                  error: 'Upload timed out — compress the image and try again',
                 }),
-              45_000
+              15_000
             )
           )
-          const result = await Promise.race([
-            uploadProductImage(productId, formData, color ?? undefined),
-            timeout,
-          ])
-
-          if (!result.ok) {
-            const msg = `${file.name}: ${result.error}`
+          try {
+            const result = await Promise.race([
+              uploadProductImage(productId, formData, color ?? undefined),
+              timeout,
+            ])
+            if (!result.ok) {
+              const msg = `${file.name}: ${result.error}`
+              errors.push(msg)
+              toast.error(msg, { duration: 6000 })
+            }
+          } catch (err) {
+            // Server action threw (e.g. Vercel hard-killed the function) — surface it
+            const msg = `${file.name}: ${err instanceof Error ? err.message : 'Upload failed'}`
             errors.push(msg)
             toast.error(msg, { duration: 6000 })
           }
