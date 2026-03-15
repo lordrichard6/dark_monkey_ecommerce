@@ -35,8 +35,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       if (dismissTimer.current) clearTimeout(dismissTimer.current)
       cancelledRef.current = false
 
-      // Client-side size guard — reject files over 10 MB immediately before any network call
-      const MAX_MB = 10
+      // Client-side size guard — reject files over 8 MB immediately before any network call
+      const MAX_MB = 8
       const oversized = files.filter((f) => f.size > MAX_MB * 1024 * 1024)
       const validFiles = files.filter((f) => f.size <= MAX_MB * 1024 * 1024)
 
@@ -76,7 +76,23 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           if (cancelledRef.current) return
           const formData = new FormData()
           formData.append('file', file)
-          const result = await uploadProductImage(productId, formData, color ?? undefined)
+
+          // Race the server action against a 45-second timeout so the UI never hangs forever
+          const timeout = new Promise<{ ok: false; error: string }>((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  ok: false,
+                  error: 'Upload timed out — try a smaller or more compressed image',
+                }),
+              45_000
+            )
+          )
+          const result = await Promise.race([
+            uploadProductImage(productId, formData, color ?? undefined),
+            timeout,
+          ])
+
           if (!result.ok) {
             const msg = `${file.name}: ${result.error}`
             errors.push(msg)
