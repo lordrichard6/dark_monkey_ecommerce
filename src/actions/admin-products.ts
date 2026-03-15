@@ -310,6 +310,110 @@ export async function uploadProductImage(
   }
 }
 
+export async function createPresignedUploadUrl(
+  productId: string,
+  filename: string,
+  color?: string | null
+): Promise<
+  { ok: true; uploadUrl: string; storagePath: string; token: string } | { ok: false; error: string }
+> {
+  try {
+    const user = await getAdminUser()
+    if (!user) return { ok: false, error: 'Unauthorized' }
+
+    const supabase = getAdminClient()
+    if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+    // Ensure bucket exists
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets()
+      if (!buckets?.some((b) => b.name === 'product-images')) {
+        await supabase.storage.createBucket('product-images', {
+          public: true,
+          fileSizeLimit: '20MB',
+          allowedMimeTypes: ['image/webp', 'image/png', 'image/jpeg', 'image/gif', 'image/avif'],
+        })
+      }
+    } catch {
+      // Bucket may already exist
+    }
+
+    // Always store as webp (client will send webp after client-side conversion, or we accept original and convert on register)
+    const ext = filename.split('.').pop()?.toLowerCase() ?? 'jpg'
+    const storagePath = `${productId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .createSignedUploadUrl(storagePath)
+
+    if (error || !data) return { ok: false, error: error?.message ?? 'Failed to create upload URL' }
+
+    return {
+      ok: true,
+      uploadUrl: data.signedUrl,
+      storagePath,
+      token: data.token,
+    }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to create upload URL' }
+  }
+}
+
+export async function registerUploadedImage(
+  productId: string,
+  storagePath: string,
+  originalFilename: string,
+  color?: string | null
+): Promise<{ ok: true; imageId: string; url: string } | { ok: false; error: string }> {
+  try {
+    const user = await getAdminUser()
+    if (!user) return { ok: false, error: 'Unauthorized' }
+
+    const supabase = getAdminClient()
+    if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(storagePath)
+    const publicUrl = urlData.publicUrl
+
+    // Get current max sort_order
+    const { data: existingImages } = await supabase
+      .from('product_images')
+      .select('sort_order')
+      .eq('product_id', productId)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+    const maxSort = existingImages?.[0]?.sort_order ?? -1
+
+    // Insert into product_images table
+    const { data: imageRow, error: insertError } = await supabase
+      .from('product_images')
+      .insert({
+        product_id: productId,
+        url: publicUrl,
+        alt: originalFilename.replace(/\.[^.]+$/, ''),
+        sort_order: maxSort + 1,
+        color: color || null,
+        source: 'custom',
+      })
+      .select('id')
+      .single()
+
+    if (insertError || !imageRow) {
+      // Cleanup: delete uploaded file
+      await supabase.storage.from('product-images').remove([storagePath])
+      return { ok: false, error: insertError?.message ?? 'Failed to save image' }
+    }
+
+    revalidatePath('/admin/products')
+    revalidatePath(`/admin/products/${productId}`)
+    revalidatePath('/')
+    return { ok: true, imageId: imageRow.id, url: publicUrl }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to register image' }
+  }
+}
+
 export async function deleteProductImage(
   imageId: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {

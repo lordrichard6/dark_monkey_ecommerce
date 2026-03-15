@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { uploadProductImage } from '@/actions/admin-products'
+import { createPresignedUploadUrl, registerUploadedImage } from '@/actions/admin-products'
 
 type UploadStatus = 'uploading' | 'done' | 'error' | 'cancelled'
 
@@ -35,8 +35,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       if (dismissTimer.current) clearTimeout(dismissTimer.current)
       cancelledRef.current = false
 
-      // Client-side size guard — reject files over 8 MB immediately before any network call
-      const MAX_MB = 8
+      // Client-side size guard — reject files over 50 MB immediately before any network call
+      const MAX_MB = 50
       const oversized = files.filter((f) => f.size > MAX_MB * 1024 * 1024)
       const validFiles = files.filter((f) => f.size <= MAX_MB * 1024 * 1024)
 
@@ -74,33 +74,55 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       await Promise.all(
         validFiles.map(async (file) => {
           if (cancelledRef.current) return
-          const formData = new FormData()
-          formData.append('file', file)
 
-          // Race the server action against a 15-second timeout so the UI never hangs forever
-          const timeout = new Promise<{ ok: false; error: string }>((resolve) =>
-            setTimeout(
-              () =>
-                resolve({
-                  ok: false,
-                  error: 'Upload timed out — compress the image and try again',
-                }),
-              15_000
-            )
+          // Step 1: Get presigned upload URL (tiny server action call — no file data)
+          const presignedResult = await createPresignedUploadUrl(
+            productId,
+            file.name,
+            color ?? null
+          )
+          if (!presignedResult.ok) {
+            const msg = `${file.name}: ${presignedResult.error}`
+            errors.push(msg)
+            toast.error(msg, { duration: 6000 })
+            setJob((prev) => (prev ? { ...prev, done: prev.done + 1, errors: [...errors] } : prev))
+            return
+          }
+
+          // Step 2: Upload directly to Supabase Storage (bypasses Vercel's 4.5 MB limit)
+          // Race against 60-second timeout
+          const uploadTimeout = new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error('Upload timed out — try again')), 60_000)
           )
           try {
-            const result = await Promise.race([
-              uploadProductImage(productId, formData, color ?? undefined),
-              timeout,
+            const uploadResponse = await Promise.race([
+              fetch(presignedResult.uploadUrl, {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': file.type || 'application/octet-stream' },
+              }),
+              uploadTimeout,
             ])
-            if (!result.ok) {
-              const msg = `${file.name}: ${result.error}`
-              errors.push(msg)
-              toast.error(msg, { duration: 6000 })
+            if (!uploadResponse.ok) {
+              throw new Error(`Storage upload failed (${uploadResponse.status})`)
             }
           } catch (err) {
-            // Server action threw (e.g. Vercel hard-killed the function) — surface it
             const msg = `${file.name}: ${err instanceof Error ? err.message : 'Upload failed'}`
+            errors.push(msg)
+            toast.error(msg, { duration: 6000 })
+            setJob((prev) => (prev ? { ...prev, done: prev.done + 1, errors: [...errors] } : prev))
+            return
+          }
+
+          // Step 3: Register the uploaded file in the DB
+          const registerResult = await registerUploadedImage(
+            productId,
+            presignedResult.storagePath,
+            file.name,
+            color ?? null
+          )
+          if (!registerResult.ok) {
+            const msg = `${file.name}: ${registerResult.error}`
             errors.push(msg)
             toast.error(msg, { duration: 6000 })
           }
