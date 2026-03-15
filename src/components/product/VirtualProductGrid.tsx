@@ -25,7 +25,7 @@ type Product = {
 
 type VirtualProductGridProps = {
   products: Product[]
-  title: string
+  title?: string
   sort?: string
 }
 
@@ -127,7 +127,7 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
   return (
     <section ref={listRef}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>
+        {title && <h2 className="text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>}
         {products.length > 0 && (
           <select
             value={sort}

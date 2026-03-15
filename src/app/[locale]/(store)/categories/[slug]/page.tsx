@@ -126,7 +126,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const t = await getTranslations('store')
   const tCommon = await getTranslations('common')
-  const title = t('categoryProductsTitle', { name: category.name })
 
   // Build breadcrumbs — handle both parent and child categories
   const breadcrumbItems = parent
@@ -192,7 +191,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <ScrollOnParamChange />
         </Suspense>
         <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-zinc-900" />}>
-          <VirtualProductGrid products={sortedProducts} title={title} sort={sort} />
+          <VirtualProductGrid products={sortedProducts} sort={sort} />
         </Suspense>
       </div>
     </div>
