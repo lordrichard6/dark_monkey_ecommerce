@@ -57,8 +57,10 @@ export function ProductCategoryField({ productId, categoryId, categories }: Prop
     setParentId(newParentId)
     if (newParentId === '') {
       handleUpdate('')
-    } else if (!subsOf(newParentId).some((s) => s.id === subId)) {
-      setSubId('')
+    } else {
+      const newSubId = subsOf(newParentId).some((s) => s.id === subId) ? subId : ''
+      setSubId(newSubId)
+      handleUpdate(newSubId || newParentId)
     }
   }
 
