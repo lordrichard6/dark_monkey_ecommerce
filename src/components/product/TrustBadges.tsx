@@ -1,6 +1,6 @@
 'use client'
 
-import { Truck, RotateCcw, ShieldCheck } from 'lucide-react'
+import { Truck, Lock, Package, ShieldCheck } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 export function TrustBadges() {
@@ -9,20 +9,24 @@ export function TrustBadges() {
   const badges = [
     {
       icon: Truck,
-      label: t('freeShipping'),
+      label: t('freeShippingThreshold'),
     },
     {
-      icon: RotateCcw,
-      label: t('thirtyDayReturns'),
+      icon: Lock,
+      label: t('securePayment'),
+    },
+    {
+      icon: Package,
+      label: t('madeToOrder'),
     },
     {
       icon: ShieldCheck,
-      label: t('oneYearWarranty'),
+      label: t('printQualityGuarantee'),
     },
   ]
 
   return (
-    <div className="grid grid-cols-1 gap-4 py-6 border-y border-white/5 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 py-6 border-y border-white/5 sm:grid-cols-4">
       {badges.map((badge, i) => (
         <div key={i} className="flex items-center gap-3 px-2">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-900/50 text-zinc-400 border border-white/5">
