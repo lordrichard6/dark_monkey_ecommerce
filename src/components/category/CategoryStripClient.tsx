@@ -42,70 +42,78 @@ export function CategoryStripClient({
         </Link>
       </div>
 
-      {/* Category grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4 lg:gap-5">
-        {featured.map((cat) => (
-          <div key={cat.id} className="sm:col-span-2" style={{ minHeight: '280px' }}>
-            <FeaturedCategoryCard category={cat} />
-          </div>
-        ))}
-        {regular.map((cat, index) => (
-          <Link
-            key={cat.id}
-            href={`/categories/${cat.slug}`}
-            className="group relative overflow-hidden rounded-2xl"
-            style={{ animationDelay: `${index * 40}ms` }}
-          >
-            {/* Card aspect ratio container */}
-            <div className="relative aspect-[3/4] w-full overflow-hidden">
-              {/* Background image */}
-              {cat.image_url ? (
-                <Image
-                  src={cat.image_url}
-                  alt={cat.name}
-                  fill
-                  className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-110"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 25vw, 20vw"
-                  unoptimized={cat.image_url.includes('/storage/')}
+      {/* Featured gold card — full width, above the regular strip */}
+      {featured.length > 0 && (
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:gap-5">
+          {featured.map((cat) => (
+            <div key={cat.id} className="sm:col-span-2" style={{ minHeight: '240px' }}>
+              <FeaturedCategoryCard category={cat} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Regular category cards */}
+      {regular.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4 lg:gap-5">
+          {regular.map((cat, index) => (
+            <Link
+              key={cat.id}
+              href={`/categories/${cat.slug}`}
+              className="group relative overflow-hidden rounded-2xl"
+              style={{ animationDelay: `${index * 40}ms` }}
+            >
+              {/* Card aspect ratio container */}
+              <div className="relative aspect-[3/4] w-full overflow-hidden">
+                {/* Background image */}
+                {cat.image_url ? (
+                  <Image
+                    src={cat.image_url}
+                    alt={cat.name}
+                    fill
+                    className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-110"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 25vw, 20vw"
+                    unoptimized={cat.image_url.includes('/storage/')}
+                  />
+                ) : (
+                  <div className="h-full w-full bg-zinc-800" />
+                )}
+
+                {/* Gradient overlay — stronger at bottom */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 group-hover:from-black/90" />
+
+                {/* Subtle top-left glow on hover */}
+                <div
+                  className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{
+                    background:
+                      'radial-gradient(ellipse at 20% 20%, rgba(251,191,36,0.08) 0%, transparent 60%)',
+                  }}
                 />
-              ) : (
-                <div className="h-full w-full bg-zinc-800" />
-              )}
 
-              {/* Gradient overlay — stronger at bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 group-hover:from-black/90" />
+                {/* Border ring */}
+                <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 transition-all duration-300 group-hover:ring-amber-500/30" />
 
-              {/* Subtle top-left glow on hover */}
-              <div
-                className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                style={{
-                  background:
-                    'radial-gradient(ellipse at 20% 20%, rgba(251,191,36,0.08) 0%, transparent 60%)',
-                }}
-              />
+                {/* Bottom content */}
+                <div className="absolute inset-x-0 bottom-0 p-3">
+                  {/* Category name */}
+                  <p className="text-sm font-bold leading-tight text-zinc-50 transition-transform duration-300 group-hover:-translate-y-0.5 md:text-base">
+                    {cat.name}
+                  </p>
 
-              {/* Border ring */}
-              <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 transition-all duration-300 group-hover:ring-amber-500/30" />
-
-              {/* Bottom content */}
-              <div className="absolute inset-x-0 bottom-0 p-3">
-                {/* Category name */}
-                <p className="text-sm font-bold leading-tight text-zinc-50 transition-transform duration-300 group-hover:-translate-y-0.5 md:text-base">
-                  {cat.name}
-                </p>
-
-                {/* "Explore" label — slides up on hover */}
-                <div className="flex items-center gap-1 overflow-hidden">
-                  <span className="translate-y-4 text-[11px] font-medium text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    {exploreLabel}
-                  </span>
-                  <ArrowRight className="h-3 w-3 translate-y-4 text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100" />
+                  {/* "Explore" label — slides up on hover */}
+                  <div className="flex items-center gap-1 overflow-hidden">
+                    <span className="translate-y-4 text-[11px] font-medium text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                      {exploreLabel}
+                    </span>
+                    <ArrowRight className="h-3 w-3 translate-y-4 text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
