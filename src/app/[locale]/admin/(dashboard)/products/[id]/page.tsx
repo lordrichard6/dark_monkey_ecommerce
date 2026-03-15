@@ -1,3 +1,6 @@
+// Allow up to 30s for this route — needed for sharp image processing in upload server actions
+export const maxDuration = 30
+
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { getAdminClient } from '@/lib/supabase/admin'
