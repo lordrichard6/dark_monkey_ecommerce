@@ -6,6 +6,9 @@ import { notifyRestockAlerts } from '@/lib/wishlist-notifications'
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 
+// Give image-processing functions 30 s on Vercel (default is 10 s)
+export const maxDuration = 30
+
 export async function createProduct(input: {
   name: string
   slug: string

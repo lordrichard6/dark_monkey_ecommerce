@@ -7,6 +7,8 @@ const withNextIntl = createNextIntlPlugin()
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // Tell Next.js NOT to bundle sharp — it must resolve its native binary at runtime on Vercel
+  serverExternalPackages: ['sharp'],
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
