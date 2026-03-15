@@ -25,6 +25,59 @@ type UploadContextValue = {
 
 const UploadContext = createContext<UploadContextValue | null>(null)
 
+/**
+ * Convert any image File to a WebP Blob client-side using the Canvas API.
+ * Max dimension is capped at 1500px to mirror what sharp used to do server-side.
+ * Falls back to the original file if the browser doesn't support WebP export.
+ */
+async function convertToWebP(file: File, quality = 0.85): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+
+      const MAX_DIM = 1500
+      let { width, height } = img
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        resolve(file) // fallback to original
+        return
+      }
+      ctx.drawImage(img, 0, 0, width, height)
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file) // fallback to original
+            return
+          }
+          resolve(blob)
+        },
+        'image/webp',
+        quality
+      )
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Failed to load image for conversion'))
+    }
+
+    img.src = objectUrl
+  })
+}
+
 export function UploadProvider({ children }: { children: React.ReactNode }) {
   const [job, setJob] = useState<UploadJob | null>(null)
   const cancelledRef = useRef(false)
@@ -75,10 +128,19 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         validFiles.map(async (file) => {
           if (cancelledRef.current) return
 
-          // Step 1: Get presigned upload URL (tiny server action call — no file data)
+          // Step 1: Convert to WebP client-side (Canvas API — no server needed)
+          let webpBlob: Blob
+          try {
+            webpBlob = await convertToWebP(file)
+          } catch {
+            webpBlob = file // fallback to original if conversion fails
+          }
+          const webpFilename = file.name.replace(/\.[^.]+$/, '') + '.webp'
+
+          // Step 2: Get presigned upload URL (tiny server action call — no file data sent)
           const presignedResult = await createPresignedUploadUrl(
             productId,
-            file.name,
+            webpFilename,
             color ?? null
           )
           if (!presignedResult.ok) {
@@ -89,8 +151,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             return
           }
 
-          // Step 2: Upload directly to Supabase Storage (bypasses Vercel's 4.5 MB limit)
-          // Race against 60-second timeout
+          // Step 3: Upload WebP blob directly to Supabase Storage (bypasses Vercel's 4.5 MB limit)
           const uploadTimeout = new Promise<Response>((_, reject) =>
             setTimeout(() => reject(new Error('Upload timed out — try again')), 60_000)
           )
@@ -98,8 +159,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             const uploadResponse = await Promise.race([
               fetch(presignedResult.uploadUrl, {
                 method: 'PUT',
-                body: file,
-                headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                body: webpBlob,
+                headers: { 'Content-Type': 'image/webp' },
               }),
               uploadTimeout,
             ])
