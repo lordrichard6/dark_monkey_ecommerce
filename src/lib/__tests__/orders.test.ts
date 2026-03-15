@@ -44,6 +44,7 @@ vi.mock('../supabase/admin', () => ({
 
 vi.mock('../resend', () => ({
   sendOrderConfirmation: vi.fn().mockResolvedValue({ ok: true }),
+  sendAdminOrderAlert: vi.fn().mockResolvedValue({ ok: true }),
 }))
 
 vi.mock('../gamification', () => ({
