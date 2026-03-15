@@ -88,29 +88,20 @@ async function ensureProductImages(
     const color = sv.color || null
 
     const allFiles = sv.files || []
-    const previewFiles = allFiles.filter(
-      (f) => f.type === 'preview' && (f.preview_url || f.thumbnail_url)
-    )
-    const otherFiles = allFiles.filter(
+    // Collect ALL view files: preview composites + individual views (front, back, sleeve, etc.)
+    // Previously used exclusive if/else which silently discarded back files when a preview existed.
+    const viewFiles = allFiles.filter(
       (f) =>
-        (f.type === 'default' ||
+        (f.type === 'preview' ||
+          f.type === 'default' ||
           f.type === 'back' ||
           f.type === 'front' ||
           f.type.includes('sleeve')) &&
-        (f.preview_url || f.thumbnail_url) &&
-        f.type !== 'preview'
+        (f.preview_url || f.thumbnail_url)
     )
 
-    if (previewFiles.length > 0) {
-      for (const file of previewFiles) {
-        const url = file.preview_url || file.thumbnail_url
-        if (url) {
-          const key = `${url}::${color || 'null'}`
-          keepers.set(key, { url, color, printful_sync_variant_id: sv.id })
-        }
-      }
-    } else if (otherFiles.length > 0) {
-      for (const file of otherFiles) {
+    if (viewFiles.length > 0) {
+      for (const file of viewFiles) {
         const url = file.preview_url || file.thumbnail_url
         if (url) {
           const key = `${url}::${color || 'null'}`
@@ -118,6 +109,7 @@ async function ensureProductImages(
         }
       }
     } else {
+      // Fallback: catalog image if no files have usable preview URLs
       const catalogImage = sv.product?.image
       if (catalogImage) {
         const key = `${catalogImage}::${color || 'null'}`
