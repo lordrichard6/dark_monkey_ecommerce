@@ -97,10 +97,9 @@ export function ProductImageGallery({
   const filtered = useMemo(() => {
     if (!selectedColor && !selectedVariantId) return images
     const matched = images.filter((img) => {
-      if (img.sort_order === 0 && !img.color && !img.variant_id) return true
+      if (img.sort_order === 0 && !img.color && !img.variant_id) return true // universal primary (no colour tag)
       if (selectedVariantId && img.variant_id === selectedVariantId) return true
       if (selectedColor && img.color === selectedColor) return true
-      if (img.sort_order === 0) return true
       return false
     })
     return matched.length === 0 ? images : matched
