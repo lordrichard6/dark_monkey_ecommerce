@@ -25,7 +25,7 @@ export function CategoriesPageClient({ featuredCategories, regularCards, explore
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {/* Featured gold cards — full width, pinned to top */}
       {featuredCategories.map((cat) => (
-        <div key={cat.id} className="col-span-full" style={{ minHeight: '320px' }}>
+        <div key={cat.id} className="col-span-full" style={{ minHeight: '260px' }}>
           <FeaturedCategoryCard category={cat} />
         </div>
       ))}
