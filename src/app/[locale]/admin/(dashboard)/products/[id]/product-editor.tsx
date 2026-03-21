@@ -275,7 +275,7 @@ export function ProductEditor({
               productId={productId}
               images={images}
               selectedColor={selectedColor}
-              availableColors={colors.map((c) => c.name)}
+              availableColors={colors}
             />
           </div>
         </div>

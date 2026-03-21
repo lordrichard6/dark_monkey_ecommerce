@@ -14,6 +14,8 @@ type Product = {
   compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
+  imageUrl2?: string | null
+  dualImageMode?: boolean
   isInWishlist?: boolean
   isBestseller?: boolean
 }
@@ -84,6 +86,8 @@ export function ProductGrid({
               compareAtPriceCents={product.compareAtPriceCents}
               imageUrl={product.imageUrl}
               imageAlt={product.imageAlt}
+              imageUrl2={product.imageUrl2}
+              dualImageMode={product.dualImageMode}
               isInWishlist={product.isInWishlist ?? false}
               isBestseller={product.isBestseller ?? false}
               showWishlist={!!product.productId}

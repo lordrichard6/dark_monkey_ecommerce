@@ -21,6 +21,7 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
       id,
       name,
       slug,
+      dual_image_mode,
       product_images (url, alt, sort_order),
       product_variants (price_cents, compare_at_price_cents),
       product_tags!inner (
@@ -41,6 +42,7 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
         id,
         name,
         slug,
+        dual_image_mode,
         product_images (url, alt, sort_order),
         product_variants (price_cents, compare_at_price_cents)
       `
@@ -70,6 +72,7 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
       id: string
       name: string
       slug: string
+      dual_image_mode: boolean
       product_images: { url: string; alt: string | null; sort_order: number }[] | null
       product_variants: { price_cents: number; compare_at_price_cents: number | null }[] | null
     }[]
@@ -94,7 +97,10 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
         compareAtPriceCents = cheapest.compare_at_price_cents || null
       }
 
-      const primaryImage = images?.sort((a, b) => a.sort_order - b.sort_order)[0]
+      const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) ?? []
+      const primaryImage = sortedImages[0]
+      const secondImage = sortedImages[1]
+
       return {
         productId: p.id,
         slug: p.slug,
@@ -103,6 +109,8 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
         compareAtPriceCents,
         imageUrl: primaryImage?.url ?? '',
         imageAlt: primaryImage?.alt ?? p.name,
+        imageUrl2: p.dual_image_mode ? (secondImage?.url ?? null) : null,
+        dualImageMode: p.dual_image_mode && !!secondImage,
         isInWishlist: wishlistProductIds.includes(p.id),
         isBestseller: bestsellerIds.has(p.id),
       }

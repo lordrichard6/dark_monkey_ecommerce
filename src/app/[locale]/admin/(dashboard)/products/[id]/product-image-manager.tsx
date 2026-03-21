@@ -4,28 +4,18 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import NextImage from 'next/image'
-import { Loader2, X, Upload, ImagePlus, ZoomIn, GripVertical } from 'lucide-react'
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-  type DragStartEvent,
-  type DragEndEvent,
-} from '@dnd-kit/core'
-import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { Loader2, X, Upload, ImagePlus, ZoomIn } from 'lucide-react'
 import {
   deleteProductImage,
   setPrimaryProductImage,
+  setSecondaryProductImage,
   updateProductImageColor,
-  reorderProductImages,
   updateProductImageAlt,
 } from '@/actions/admin-products'
 import { useUpload } from '@/contexts/upload-context'
 import { Tooltip } from '@/components/admin/Tooltip'
+import { colorToHex } from '@/lib/color-swatch'
+import { ColorOption } from '@/types/product'
 
 type Image = {
   id: string
@@ -40,7 +30,7 @@ type Props = {
   productId: string
   images: Image[]
   selectedColor?: string | null
-  availableColors?: string[]
+  availableColors?: ColorOption[]
 }
 
 // ── Mockup background — warm dark radial gradient + dot pattern ─────────────
@@ -149,60 +139,62 @@ function AltTextField({ imageId, initialAlt }: { imageId: string; initialAlt: st
   )
 }
 
-// ── Sortable thumbnail item ──────────────────────────────────────────────────
+// ── Thumbnail item ────────────────────────────────────────────────────────────
 
-function SortableThumbnail({
+function Thumbnail({
   img,
   isSelected,
   isPrimary,
+  isSecondary,
   isDeleting,
   isSettingPrimary,
+  isSettingSecondary,
   isUpdatingColor,
   availableColors,
   onSelect,
   onDelete,
   onSetPrimary,
+  onSetSecondary,
   onUpdateColor,
 }: {
   img: Image
   isSelected: boolean
   isPrimary: boolean
+  isSecondary: boolean
   isDeleting: boolean
   isSettingPrimary: boolean
+  isSettingSecondary: boolean
   isUpdatingColor: boolean
   availableColors: string[]
   onSelect: () => void
   onDelete: (e: React.MouseEvent) => void
   onSetPrimary: (e: React.MouseEvent) => void
+  onSetSecondary: (e: React.MouseEvent) => void
   onUpdateColor: (color: string | null) => void
 }) {
   const t = useTranslations('admin')
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: img.id,
-  })
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.35 : 1,
-      }}
-      className="group relative"
-    >
+    <div className="group relative">
       <div
         onClick={onSelect}
         onKeyDown={(e) => e.key === 'Enter' && onSelect()}
-        {...attributes}
-        {...listeners}
+        tabIndex={0}
+        role="button"
         style={THUMBNAIL_BG}
-        className={`relative h-28 w-28 shrink-0 cursor-grab active:cursor-grabbing overflow-hidden rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+        className={`relative h-28 w-28 shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
           isSelected
             ? 'border-amber-500 ring-2 ring-amber-500/30'
             : 'border-zinc-700 hover:border-zinc-500'
         }`}
       >
+        {/* Color identity strip — top edge */}
+        {img.color && (
+          <div
+            className="absolute top-0 left-0 right-0 h-1 z-20 pointer-events-none"
+            style={{ background: COLOR_MAP[img.color.toLowerCase()] ?? '#71717a' }}
+          />
+        )}
         {/* Selected tint overlay */}
         {isSelected && <div className="pointer-events-none absolute inset-0 z-10 bg-amber-500/8" />}
         <NextImage
@@ -212,13 +204,6 @@ function SortableThumbnail({
           sizes="112px"
           className="object-contain pointer-events-none"
         />
-
-        {/* Drag handle — visible on hover */}
-        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 opacity-0 transition group-hover:opacity-100 pointer-events-none">
-          <div className="flex items-center justify-center rounded bg-zinc-950/70 px-1 py-0.5">
-            <GripVertical className="h-3 w-3 text-zinc-300" />
-          </div>
-        </div>
 
         {/* Cover / Primary marker */}
         {isPrimary ? (
@@ -239,7 +224,27 @@ function SortableThumbnail({
           </button>
         )}
 
-        {/* Source badge — on hover only */}
+        {/* Cover 2 / Secondary marker */}
+        {!isPrimary &&
+          (isSecondary ? (
+            <span className="absolute left-1 top-7 rounded bg-violet-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+              Cover 2
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSetSecondary(e)
+              }}
+              disabled={isSettingSecondary}
+              className="absolute left-1 top-7 rounded bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-200 opacity-0 transition hover:bg-violet-500 hover:text-white group-hover:opacity-100 disabled:opacity-50"
+            >
+              {isSettingSecondary ? '…' : 'Cover 2'}
+            </button>
+          ))}
+
+        {/* Source badge */}
         <span
           className={`absolute bottom-1 left-1 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide opacity-0 transition group-hover:opacity-100 ${
             img.source === 'custom'
@@ -264,9 +269,8 @@ function SortableThumbnail({
         </button>
       </div>
 
-      {/* Color selector with dot */}
+      {/* Color selector */}
       <div className="mt-1.5 flex items-center gap-1">
-        {img.color && <ColorDot name={img.color} />}
         <select
           value={img.color || ''}
           onChange={(e) => onUpdateColor(e.target.value || null)}
@@ -321,13 +325,9 @@ function UploadDialog({
     e.preventDefault()
     setIsDraggingOver(true)
   }
-
   function handleDragLeave(e: React.DragEvent) {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDraggingOver(false)
-    }
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingOver(false)
   }
-
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
     setIsDraggingOver(false)
@@ -340,7 +340,6 @@ function UploadDialog({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
           <div className="flex items-center gap-2">
             <ImagePlus className="h-4 w-4 text-amber-400" />
@@ -355,10 +354,7 @@ function UploadDialog({
             <X className="h-4 w-4" />
           </button>
         </div>
-
-        {/* Body */}
         <div className="space-y-4 p-5">
-          {/* Drop zone */}
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -371,15 +367,12 @@ function UploadDialog({
             }`}
           >
             <div
-              className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
-                isDraggingOver ? 'bg-amber-500/20' : 'bg-zinc-800'
-              }`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${isDraggingOver ? 'bg-amber-500/20' : 'bg-zinc-800'}`}
             >
               <Upload
                 className={`h-5 w-5 transition-colors ${isDraggingOver ? 'text-amber-400' : 'text-zinc-400'}`}
               />
             </div>
-
             {isDraggingOver ? (
               <p className="text-sm font-semibold text-amber-400">{t('images.dropToUpload')}</p>
             ) : (
@@ -389,18 +382,13 @@ function UploadDialog({
               </div>
             )}
           </div>
-
-          {/* Error */}
           {error && (
             <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
               {error}
             </p>
           )}
-
           <p className="text-center text-[11px] text-zinc-600">{t('images.fileTypes')}</p>
         </div>
-
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -428,12 +416,12 @@ export function ProductImageManager({
 
   const [localImages, setLocalImages] = useState(imagesProp)
   const [selectedId, setSelectedId] = useState<string | null>(imagesProp[0]?.id ?? null)
-  const [activeId, setActiveId] = useState<string | null>(null)
 
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
+  const [settingSecondaryId, setSettingSecondaryId] = useState<string | null>(null)
   const [updatingColorId, setUpdatingColorId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
@@ -443,81 +431,29 @@ export function ProductImageManager({
   }, [imagesProp])
 
   useEffect(() => {
-    if (!selectedColor) {
-      setSelectedId(localImages[0]?.id ?? null)
-      return
-    }
-    const colorSpecific = localImages.find((img) => img.color === selectedColor)
-    setSelectedId(colorSpecific?.id ?? localImages[0]?.id ?? null)
-  }, [selectedColor]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
     if (!lightboxUrl) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setLightboxUrl(null)
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [lightboxUrl])
 
-  const filteredImages = selectedColor
-    ? localImages.filter((img) => !img.color || img.color === selectedColor)
-    : localImages
-
-  const displayImage = filteredImages.find((img) => img.id === selectedId) ?? filteredImages[0]
+  const displayImage = localImages.find((img) => img.id === selectedId) ?? localImages[0]
   const primaryImageId = localImages[0]?.id ?? null
-
-  // ── DnD ──────────────────────────────────────────────────────────────────
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-
-  function handleDragStart(event: DragStartEvent) {
-    setActiveId(event.active.id as string)
-  }
-
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    setActiveId(null)
-    if (!over || active.id === over.id) return
-
-    const oldIndex = localImages.findIndex((img) => img.id === active.id)
-    const newIndex = localImages.findIndex((img) => img.id === over.id)
-    if (oldIndex === -1 || newIndex === -1) return
-
-    const newOrder = arrayMove(localImages, oldIndex, newIndex)
-    setLocalImages(newOrder)
-
-    const result = await reorderProductImages(newOrder.map((img) => img.id))
-    if (!result.ok) {
-      setLocalImages(localImages)
-      setError(result.error || t('images.reorderFailed'))
-    } else {
-      router.refresh()
-    }
-  }
-
-  const activeImage = activeId ? localImages.find((img) => img.id === activeId) : null
-
-  // ── Upload ────────────────────────────────────────────────────────────────
+  const secondaryImageId = localImages[1]?.id ?? null
 
   const handleUpload = useCallback(
     (files: File[]) => {
       if (!files.length) return
-
       if (files.length > 5) {
         setUploadError(t('images.maxUploadError'))
         return
       }
-
-      // Close the dialog immediately — progress is shown in the global indicator
       setShowUploadDialog(false)
       setUploadError(null)
-
-      // Fire and forget — context handles progress and keeps it visible across navigation
       startUpload(productId, files, selectedColor).then(() => router.refresh())
     },
-    [productId, selectedColor, router, startUpload]
+    [productId, selectedColor, router, startUpload, t]
   )
-
-  // ── Delete / Primary / Color ──────────────────────────────────────────────
 
   async function handleUpdateColor(imageId: string, color: string | null) {
     setUpdatingColorId(imageId)
@@ -559,7 +495,18 @@ export function ProductImageManager({
     }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  async function handleSetSecondary(imageId: string) {
+    if (imageId === secondaryImageId || imageId === primaryImageId) return
+    setSettingSecondaryId(imageId)
+    setError(null)
+    const result = await setSecondaryProductImage(imageId)
+    setSettingSecondaryId(null)
+    if (result.ok) {
+      router.refresh()
+    } else {
+      setError(result.error || 'Failed to set Cover 2')
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -569,13 +516,12 @@ export function ProductImageManager({
           <span className="text-sm font-medium text-zinc-400">{t('images.title')}</span>
           {localImages.length > 0 && (
             <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
-              {filteredImages.length}
-              {filteredImages.length !== localImages.length && ` / ${localImages.length}`}
+              {localImages.length}
             </span>
           )}
         </div>
         <Tooltip
-          content="Upload up to 5 product photos at once. Images are automatically converted to WebP for faster loading. You can drag to reorder after uploading."
+          content="Upload up to 5 product photos at once. Images are automatically converted to WebP for faster loading."
           align="right"
           width={230}
         >
@@ -612,7 +558,6 @@ export function ProductImageManager({
             sizes="(max-width: 768px) 100vw, 400px"
             className="object-contain transition-transform duration-300 group-hover:scale-[1.02]"
           />
-          {/* Hover overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/0 opacity-0 backdrop-blur-sm transition-all group-hover:bg-white/15 group-hover:opacity-100">
               <ZoomIn className="h-5 w-5 text-white" />
@@ -634,55 +579,55 @@ export function ProductImageManager({
         </button>
       )}
 
-      {/* Sortable thumbnail grid */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={filteredImages.map((img) => img.id)} strategy={rectSortingStrategy}>
-          <div className="flex flex-wrap gap-3">
-            {filteredImages.map((img) => (
-              <SortableThumbnail
-                key={img.id}
-                img={img}
-                isSelected={img.id === selectedId}
-                isPrimary={img.id === primaryImageId}
-                isDeleting={deletingId === img.id}
-                isSettingPrimary={settingPrimaryId === img.id}
-                isUpdatingColor={updatingColorId === img.id}
-                availableColors={availableColors}
-                onSelect={() => setSelectedId(img.id)}
-                onDelete={() => handleDelete(img.id)}
-                onSetPrimary={() => handleSetPrimary(img.id)}
-                onUpdateColor={(color) => handleUpdateColor(img.id, color)}
-              />
-            ))}
-            {filteredImages.length === 0 && localImages.length > 0 && (
-              <p className="py-4 text-xs text-zinc-500">{t('images.noImagesForColor')}</p>
-            )}
+      {/* Informational color chips */}
+      {availableColors.length > 0 && (
+        <div>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+            Colors
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {availableColors.map((c) => {
+              const hex = c.hex || colorToHex(c.name)
+              const background = c.hex2 ? `linear-gradient(135deg, ${hex} 50%, ${c.hex2} 50%)` : hex
+              return (
+                <div key={c.name} className="flex flex-col items-center gap-1">
+                  <div
+                    className="h-7 w-7 rounded-lg border border-zinc-700"
+                    style={{ background }}
+                    title={c.name}
+                  />
+                  <span className="max-w-[44px] truncate text-center text-[9px] leading-tight text-zinc-500">
+                    {c.name}
+                  </span>
+                </div>
+              )
+            })}
           </div>
-        </SortableContext>
+        </div>
+      )}
 
-        {/* Drag overlay — ghost image while dragging */}
-        <DragOverlay>
-          {activeImage && (
-            <div
-              style={THUMBNAIL_BG}
-              className="h-28 w-28 overflow-hidden rounded-lg border-2 border-amber-500 shadow-xl ring-4 ring-amber-500/20"
-            >
-              <NextImage
-                src={activeImage.url}
-                alt={activeImage.alt ?? ''}
-                width={112}
-                height={112}
-                className="object-contain"
-              />
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+      {/* Thumbnail grid */}
+      <div className="flex flex-wrap gap-3">
+        {localImages.map((img) => (
+          <Thumbnail
+            key={img.id}
+            img={img}
+            isSelected={img.id === selectedId}
+            isPrimary={img.id === primaryImageId}
+            isSecondary={img.id === secondaryImageId}
+            isDeleting={deletingId === img.id}
+            isSettingPrimary={settingPrimaryId === img.id}
+            isSettingSecondary={settingSecondaryId === img.id}
+            isUpdatingColor={updatingColorId === img.id}
+            availableColors={availableColors.map((c) => c.name)}
+            onSelect={() => setSelectedId(img.id)}
+            onDelete={() => handleDelete(img.id)}
+            onSetPrimary={() => handleSetPrimary(img.id)}
+            onSetSecondary={() => handleSetSecondary(img.id)}
+            onUpdateColor={(color) => handleUpdateColor(img.id, color)}
+          />
+        ))}
+      </div>
 
       {/* Upload Dialog */}
       {showUploadDialog && (

@@ -68,19 +68,28 @@ export async function FrequentlyBought({ productId, locale }: FrequentlyBoughtPr
               </div>
             )}
             <div className="w-full max-w-[200px]">
-              <ProductCard
-                id={product.id}
-                slug={product.slug}
-                name={product.name}
-                priceCents={product.price_cents || 0}
-                imageUrl={
-                  Array.isArray(product.product_images)
-                    ? ((product.product_images[0] as { url?: string } | undefined)?.url ?? '')
-                    : ''
-                }
-                imageAlt={product.name}
-                fullProduct={product}
-              />
+              {(() => {
+                const imgs = Array.isArray(product.product_images)
+                  ? ([...product.product_images] as { url: string; sort_order: number }[]).sort(
+                      (a, b) => a.sort_order - b.sort_order
+                    )
+                  : []
+                const dual =
+                  (product as unknown as { dual_image_mode?: boolean }).dual_image_mode ?? false
+                return (
+                  <ProductCard
+                    id={product.id}
+                    slug={product.slug}
+                    name={product.name}
+                    priceCents={product.price_cents || 0}
+                    imageUrl={imgs[0]?.url ?? ''}
+                    imageAlt={product.name}
+                    imageUrl2={dual ? (imgs[1]?.url ?? null) : null}
+                    dualImageMode={dual && !!imgs[1]}
+                    fullProduct={product}
+                  />
+                )
+              })()}
             </div>
             {index < recommendations.length - 1 && (
               <div className="flex items-center justify-center p-2 text-zinc-500">

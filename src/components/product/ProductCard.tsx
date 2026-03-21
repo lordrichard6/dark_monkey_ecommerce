@@ -17,6 +17,8 @@ type ProductCardProps = {
   compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
+  imageUrl2?: string | null
+  dualImageMode?: boolean
   fullProduct?: Product
 }
 
@@ -28,6 +30,8 @@ export function ProductCard({
   compareAtPriceCents,
   imageUrl,
   imageAlt,
+  imageUrl2,
+  dualImageMode = false,
   fullProduct,
 }: ProductCardProps) {
   const { format } = useCurrency()
@@ -35,6 +39,10 @@ export function ProductCard({
   const { addProduct, removeProduct, isInCompare } = useCompare()
 
   const isComparing = isInCompare(id)
+  const showDual = dualImageMode && !!imageUrl2
+
+  const unoptimizedFor = (url: string) =>
+    url.endsWith('.svg') || url.includes('picsum.photos') || url.includes('placehold.co')
 
   const toggleCompare = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -61,7 +69,74 @@ export function ProductCard({
       <div className="group block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20">
         <Link href={`/products/${slug}`} className="block">
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
-            {imageUrl ? (
+            {showDual ? (
+              <>
+                {/* Image 1: left side, clipped diagonally */}
+                <div
+                  className="absolute inset-0 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(0 0, 62% 0, 38% 100%, 0 100%)' }}
+                >
+                  {imageUrl ? (
+                    <Image
+                      src={imageUrl}
+                      alt={imageAlt}
+                      fill
+                      className="object-cover"
+                      style={{ objectPosition: '65% center' }}
+                      sizes="(max-width: 640px) 30vw, 15vw"
+                      loading="lazy"
+                      unoptimized={unoptimizedFor(imageUrl)}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 text-zinc-600">
+                      <span className="text-xs">No image</span>
+                    </div>
+                  )}
+                </div>
+                {/* Image 2: right side, clipped diagonally */}
+                <div
+                  className="absolute inset-0 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 38% 100%)' }}
+                >
+                  <Image
+                    src={imageUrl2!}
+                    alt={imageAlt}
+                    fill
+                    className="object-cover"
+                    style={{ objectPosition: '35% center' }}
+                    sizes="(max-width: 640px) 30vw, 15vw"
+                    loading="lazy"
+                    unoptimized={unoptimizedFor(imageUrl2!)}
+                  />
+                </div>
+                {/* Diagonal slash — SVG line matching clip-path exactly */}
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <filter id="slash-glow-pc" x="-50%" y="-10%" width="200%" height="120%">
+                      <feGaussianBlur stdDeviation="1" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <line
+                    x1="62"
+                    y1="0"
+                    x2="38"
+                    y2="100"
+                    stroke="rgba(255,255,255,0.75)"
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                    filter="url(#slash-glow-pc)"
+                  />
+                </svg>
+              </>
+            ) : imageUrl ? (
               <Image
                 src={imageUrl}
                 alt={imageAlt}
@@ -69,7 +144,7 @@ export function ProductCard({
                 className="object-cover transition group-hover:scale-105"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 loading="lazy"
-                unoptimized={imageUrl.endsWith('.svg') || imageUrl.includes('picsum.photos')}
+                unoptimized={unoptimizedFor(imageUrl)}
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 text-zinc-600">
@@ -108,16 +183,16 @@ export function ProductCard({
               {name}
             </h3>
             <div className="mt-2 flex flex-wrap items-baseline gap-1">
-              {compareAtPriceCents && compareAtPriceCents > priceCents && (
-                <span className="text-xs text-zinc-500 line-through decoration-zinc-500/50 md:text-sm">
-                  {format(compareAtPriceCents)}
-                </span>
-              )}
               <span
                 className={`text-sm font-bold md:text-base ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}
               >
                 {format(priceCents || 0)}
               </span>
+              {compareAtPriceCents && compareAtPriceCents > priceCents && (
+                <span className="text-xs text-zinc-500 line-through decoration-zinc-500/50 md:text-sm">
+                  {format(compareAtPriceCents)}
+                </span>
+              )}
             </div>
           </div>
         </Link>

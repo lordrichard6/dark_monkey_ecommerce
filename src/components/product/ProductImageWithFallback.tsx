@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import type React from 'react'
 import Image from 'next/image'
 
 type ProductImageWithFallbackProps = {
@@ -11,6 +12,7 @@ type ProductImageWithFallbackProps = {
   unoptimized?: boolean
   priority?: boolean
   className?: string
+  style?: React.CSSProperties
 }
 
 export function ProductImageWithFallback({
@@ -21,6 +23,7 @@ export function ProductImageWithFallback({
   unoptimized,
   priority,
   className,
+  style,
 }: ProductImageWithFallbackProps) {
   const [error, setError] = useState(!src)
 
@@ -41,6 +44,7 @@ export function ProductImageWithFallback({
       unoptimized={unoptimized}
       priority={priority}
       className={className}
+      style={style}
       onError={() => setError(true)}
     />
   )

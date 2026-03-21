@@ -16,6 +16,8 @@ type Product = {
   compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
+  imageUrl2?: string | null
+  dualImageMode?: boolean
   isInWishlist?: boolean
   isBestseller?: boolean
   isOnSale?: boolean
@@ -48,6 +50,8 @@ function ProductGrid({ products }: { products: Product[] }) {
           compareAtPriceCents={product.compareAtPriceCents}
           imageUrl={product.imageUrl}
           imageAlt={product.imageAlt}
+          imageUrl2={product.imageUrl2}
+          dualImageMode={product.dualImageMode}
           isInWishlist={product.isInWishlist ?? false}
           isBestseller={product.isBestseller ?? false}
           isOnSale={product.isOnSale ?? false}
@@ -190,6 +194,8 @@ export function VirtualProductGrid({ products, title, sort = 'newest' }: Virtual
                         compareAtPriceCents={product.compareAtPriceCents}
                         imageUrl={product.imageUrl}
                         imageAlt={product.imageAlt}
+                        imageUrl2={product.imageUrl2}
+                        dualImageMode={product.dualImageMode}
                         isInWishlist={product.isInWishlist ?? false}
                         isBestseller={product.isBestseller ?? false}
                         isOnSale={product.isOnSale ?? false}

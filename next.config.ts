@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
       {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '54321',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
         protocol: 'https',
         hostname: 'ehkwnyiktjsmegzxbpph.supabase.co',
         pathname: '/storage/v1/object/public/**',
@@ -63,6 +69,37 @@ const nextConfig: NextConfig = {
   },
   // Security headers
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development'
+
+    // In development, allow connections to local Supabase (localhost:54321)
+    const connectSrc = [
+      "'self'",
+      'https://ehkwnyiktjsmegzxbpph.supabase.co',
+      'wss://ehkwnyiktjsmegzxbpph.supabase.co',
+      'https://api.stripe.com',
+      'https://www.google-analytics.com',
+      'https://analytics.google.com',
+      'https://region1.google-analytics.com',
+      'https://vitals.vercel-insights.com',
+      'https://o4510900578680832.ingest.de.sentry.io',
+      ...(isDev
+        ? ['http://localhost:54321', 'ws://localhost:54321', 'http://127.0.0.1:54321']
+        : []),
+    ].join(' ')
+
+    const imgSrc = [
+      "'self'",
+      'data:',
+      'blob:',
+      'https://ehkwnyiktjsmegzxbpph.supabase.co',
+      'https://files.cdn.printful.com',
+      'https://picsum.photos',
+      'https://images.unsplash.com',
+      'https://placehold.co',
+      'https://www.google-analytics.com',
+      ...(isDev ? ['http://localhost:54321', 'http://127.0.0.1:54321'] : []),
+    ].join(' ')
+
     return [
       {
         source: '/(.*)',
@@ -84,22 +121,25 @@ const nextConfig: NextConfig = {
           //   - 'unsafe-inline' for scripts is required by Stripe and Google Analytics
           //   - stripe.com, supabase, printful CDN, and GA are allowlisted
           //   - 'unsafe-eval' removed intentionally; add back only if a dependency requires it
+          //   - In development, localhost:54321 is added to allow local Supabase
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               // Scripts: self + GA + Stripe + Vercel analytics + service worker
-              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://va.vercel-scripts.com",
+              // 'unsafe-eval' is required in dev mode for React error overlays and Turbopack;
+              // React guarantees it never uses eval() in production.
+              `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://va.vercel-scripts.com https://challenges.cloudflare.com`,
               // Styles: self + inline (Tailwind runtime)
               "style-src 'self' 'unsafe-inline'",
               // Images: self + Supabase + Printful CDN + placeholder services
-              "img-src 'self' data: blob: https://ehkwnyiktjsmegzxbpph.supabase.co https://files.cdn.printful.com https://picsum.photos https://images.unsplash.com https://placehold.co https://www.google-analytics.com",
+              `img-src ${imgSrc}`,
               // Fonts: self only (using system/Tailwind fonts)
               "font-src 'self'",
-              // Connect: self + Supabase + Stripe + GA (GA4 uses region1 endpoint) + Vercel + Sentry
-              "connect-src 'self' https://ehkwnyiktjsmegzxbpph.supabase.co wss://ehkwnyiktjsmegzxbpph.supabase.co https://api.stripe.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://vitals.vercel-insights.com https://o4510900578680832.ingest.de.sentry.io",
-              // Frames: Stripe checkout iframes only
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              // Connect: self + Supabase + Stripe + GA + Vercel + Sentry (+ localhost in dev)
+              `connect-src ${connectSrc}`,
+              // Frames: Stripe checkout + Cloudflare Turnstile iframes
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
               // Workers: self (service worker)
               "worker-src 'self' blob:",
               // Media: self only

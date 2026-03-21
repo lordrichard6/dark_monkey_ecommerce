@@ -355,7 +355,8 @@ export function Footer() {
                       alt={name}
                       width={width}
                       height={height}
-                      className="h-full w-auto object-contain"
+                      style={{ height: '100%', width: 'auto' }}
+                      className="object-contain"
                     />
                   </div>
                 ))}

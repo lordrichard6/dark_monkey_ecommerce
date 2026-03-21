@@ -6,7 +6,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { UserMenuDropdown } from '@/components/UserMenuDropdown'
 import { CurrencySelector } from '@/components/currency/CurrencySelector'
 import { SearchBar } from '@/components/search/SearchBar'
-
+import { NotificationBell } from '@/components/admin/NotificationBell'
 
 type UserInfo = {
   user: { email?: string | null; user_metadata?: { avatar_url?: string } } | null
@@ -16,16 +16,12 @@ type UserInfo = {
 }
 
 export function DesktopTopBar({ user, displayName, avatarUrl, isAdmin }: UserInfo) {
-
-
   return (
     <header className="fixed top-0 left-0 right-0 z-30 hidden h-14 border-b border-white/10 bg-black/40 backdrop-blur-xl md:flex md:pl-16">
       <div className="flex flex-1 items-center justify-between px-4">
         {/* Left side - Logo & Menu */}
         <div className="flex h-full items-center gap-4">
           <DarkMonkeyLogo size="sm" href="/" textOnly />
-
-
         </div>
 
         {/* Right side - Search and utilities */}
@@ -35,6 +31,7 @@ export function DesktopTopBar({ user, displayName, avatarUrl, isAdmin }: UserInf
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher variant="desktop" showName={false} />
+            {isAdmin && <NotificationBell />}
             <CartTrigger />
             <UserMenuDropdown
               user={user}

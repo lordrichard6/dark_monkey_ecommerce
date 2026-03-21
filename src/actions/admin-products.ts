@@ -496,6 +496,51 @@ export async function setPrimaryProductImage(
   return { ok: true }
 }
 
+export async function setSecondaryProductImage(
+  imageId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { data: image } = await supabase
+    .from('product_images')
+    .select('id, product_id')
+    .eq('id', imageId)
+    .single()
+
+  if (!image) return { ok: false, error: 'Image not found' }
+
+  const { data: allImages } = await supabase
+    .from('product_images')
+    .select('id, sort_order')
+    .eq('product_id', image.product_id)
+    .order('sort_order', { ascending: true })
+
+  if (!allImages?.length) return { ok: false, error: 'No images found' }
+
+  const primary = allImages[0]
+  if (primary.id === imageId) return { ok: false, error: 'Cover image cannot also be Cover 2' }
+
+  const others = allImages.filter((img) => img.id !== primary.id && img.id !== imageId)
+  const reordered = [
+    { id: primary.id, sort_order: 0 },
+    { id: imageId, sort_order: 1 },
+    ...others.map((img, i) => ({ id: img.id, sort_order: i + 2 })),
+  ]
+
+  for (const { id, sort_order } of reordered) {
+    await supabase.from('product_images').update({ sort_order }).eq('id', id)
+  }
+
+  revalidatePath('/admin/products')
+  revalidatePath(`/admin/products/${image.product_id}`)
+  revalidatePath('/')
+  return { ok: true }
+}
+
 export async function reorderProductImages(
   imageIds: string[]
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -874,4 +919,25 @@ export async function duplicateProduct(
 
   revalidatePath('/admin/products')
   return { ok: true, newProductId: newProduct.id }
+}
+
+export async function updateProductDualImageMode(
+  productId: string,
+  dualImageMode: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { error } = await supabase
+    .from('products')
+    .update({ dual_image_mode: dualImageMode })
+    .eq('id', productId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/admin/products/${productId}`)
+  revalidatePath('/')
+  return { ok: true }
 }

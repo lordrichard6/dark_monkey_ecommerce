@@ -61,6 +61,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       description,
       category_id,
       created_at,
+      dual_image_mode,
       categories (id, name, slug),
       product_images (url, alt, sort_order),
       product_variants (
@@ -102,6 +103,9 @@ export default async function ProductsPage({ searchParams }: Props) {
 
     const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) || []
     const primaryImage = sortedImages[0]
+    const secondImage = sortedImages[1]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dualImageMode = (p as any).dual_image_mode as boolean
 
     const colors = new Set<string>()
     const sizes = new Set<string>()
@@ -137,6 +141,8 @@ export default async function ProductsPage({ searchParams }: Props) {
       sizes: Array.from(sizes).filter(Boolean) as string[],
       inStock: totalStock > 0,
       imageUrl: primaryImage?.url || null,
+      imageUrl2: dualImageMode ? (secondImage?.url ?? null) : null,
+      dualImageMode: dualImageMode && !!secondImage,
       createdAt: p.created_at,
       isBestseller: false,
       averageRating: undefined,

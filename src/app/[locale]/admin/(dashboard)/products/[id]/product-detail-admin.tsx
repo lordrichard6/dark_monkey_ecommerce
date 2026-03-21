@@ -318,65 +318,6 @@ export function ProductDetailAdmin({
         </div>
       </div>
 
-      {/* Colors Section */}
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-          {t('stock.colors')}
-        </span>
-        <div className="mt-3 flex flex-wrap gap-3">
-          {availableColors.map((colorObj) => {
-            const colorName = colorObj.name
-            const hex = colorObj.hex || colorToHex(colorName)
-            const hex2 = colorObj.hex2
-            const isLight = ['#ffffff', '#fff', '#ffc0cb', '#fffdd0', '#f5f5dc'].includes(
-              hex.toLowerCase()
-            )
-            const isSelected = selectedColor === colorName
-
-            const background = hex2 ? `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)` : hex
-
-            return (
-              <div key={colorName} className="flex flex-col items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onColorChange(colorName)}
-                  title={colorName}
-                  className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 transition-all ${
-                    isSelected
-                      ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110'
-                      : isLight
-                        ? 'border-zinc-600 hover:border-zinc-500 hover:scale-105'
-                        : 'border-zinc-700 hover:border-zinc-600 hover:scale-105'
-                  }`}
-                >
-                  <div className="h-full w-full rounded-md" style={{ background }} />
-                  {isSelected && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <svg
-                        className="h-5 w-5 text-white drop-shadow-lg"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </button>
-                <span
-                  className={`text-[9px] font-medium leading-tight text-center max-w-[48px] truncate ${isSelected ? 'text-amber-400' : 'text-zinc-500'}`}
-                >
-                  {colorName}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
       {/* Sizes Section */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <label

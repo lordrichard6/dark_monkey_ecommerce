@@ -22,7 +22,7 @@ export function AnnouncementBar({ announcements = [] }: Props) {
   const hasAnnouncements = announcements.length > 0
 
   // Persistent dismiss via localStorage fingerprint
-   
+
   useEffect(() => {
     if (!hasAnnouncements) return
     const fingerprint = JSON.stringify(announcements.map((a) => a.id).sort())
@@ -51,7 +51,7 @@ export function AnnouncementBar({ announcements = [] }: Props) {
   const styles = variantStyles[variant] ?? variantStyles.default
 
   return (
-    <div className={`relative z-50 py-2.5 ${styles.bar}`}>
+    <div className={`relative z-50 py-2.5 md:ml-16 ${styles.bar}`}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex flex-1 items-center justify-center">
           <div className="relative h-5 w-full overflow-hidden">

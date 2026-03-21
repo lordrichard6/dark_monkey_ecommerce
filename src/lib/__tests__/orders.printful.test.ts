@@ -53,7 +53,6 @@ vi.mock('../stripe', () => ({ getStripe: () => mockStripe }))
 vi.mock('../supabase/admin', () => ({ getAdminClient: () => mockSupabase }))
 vi.mock('../resend', () => ({
   sendOrderConfirmation: vi.fn().mockResolvedValue({ ok: true }),
-  sendAdminOrderAlert: vi.fn().mockResolvedValue({ ok: true }),
 }))
 vi.mock('../gamification', () => ({
   processXpForPurchase: vi.fn().mockResolvedValue(undefined),

@@ -134,13 +134,15 @@ export function LoginForm() {
     const trimmedEmail = email.trim()
     setEmail(trimmedEmail)
 
-    if (failedAttempts >= 3 && !captchaToken) {
+    const isDev = process.env.NODE_ENV === 'development'
+
+    if (!isDev && failedAttempts >= 3 && !captchaToken) {
       setMessage({ type: 'error', text: t('verifyCaptcha') })
       setLoading(false)
       return
     }
 
-    if (captchaToken) {
+    if (!isDev && captchaToken) {
       try {
         const verify = await fetch('/api/auth/verify-turnstile', {
           method: 'POST',
@@ -179,7 +181,7 @@ export function LoginForm() {
       const { error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
         password,
-        options: { captchaToken: captchaToken || undefined },
+        options: { captchaToken: (!isDev && captchaToken) || undefined },
       })
       if (error) throw error
 

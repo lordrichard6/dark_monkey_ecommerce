@@ -15,6 +15,8 @@ type Product = {
   compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
+  imageUrl2?: string | null
+  dualImageMode?: boolean
   isInWishlist: boolean
   isBestseller: boolean
   categoryId?: string
@@ -170,6 +172,8 @@ export function NewArrivals({ products, categories }: Props) {
                   compareAtPriceCents={product.compareAtPriceCents}
                   imageUrl={product.imageUrl}
                   imageAlt={product.imageAlt}
+                  imageUrl2={product.imageUrl2}
+                  dualImageMode={product.dualImageMode}
                   isInWishlist={product.isInWishlist}
                   isBestseller={product.isBestseller}
                 />

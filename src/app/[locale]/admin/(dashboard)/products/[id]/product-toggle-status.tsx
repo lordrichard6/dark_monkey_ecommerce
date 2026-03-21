@@ -37,27 +37,25 @@ export function ProductToggleStatus({ productId, initialIsActive }: Props) {
       onClick={handleToggle}
       disabled={loading}
       title={isActive ? t('status.clickToDeactivate') : t('status.clickToActivate')}
-      className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${
-        isActive
-          ? 'bg-emerald-900/40 text-emerald-400 hover:bg-emerald-900/70 ring-1 ring-emerald-500/20'
-          : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 ring-1 ring-zinc-700'
-      }`}
+      className="inline-flex cursor-pointer items-center gap-2.5 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {/* Animated dot */}
-      <span className="relative flex h-2 w-2">
-        {isActive && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
-        )}
+      {/* Track */}
+      <span
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+          isActive ? 'bg-emerald-500' : 'bg-zinc-700'
+        }`}
+      >
+        {/* Thumb */}
         <span
-          className={`relative inline-flex h-2 w-2 rounded-full ${
-            isActive ? 'bg-emerald-400' : 'bg-zinc-500'
+          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+            isActive ? 'translate-x-[18px]' : 'translate-x-[3px]'
           }`}
         />
       </span>
-      {loading ? t('status.saving') : isActive ? t('status.active') : t('status.inactive')}
-      {/* Toggle hint */}
-      <span className={`text-[10px] ${isActive ? 'text-emerald-600' : 'text-zinc-600'}`}>
-        {isActive ? t('status.deactivate') : t('status.activate')}
+      <span
+        className={`text-xs font-medium transition-colors ${isActive ? 'text-emerald-400' : 'text-zinc-500'}`}
+      >
+        {loading ? t('status.saving') : isActive ? t('status.active') : t('status.inactive')}
       </span>
     </button>
   )

@@ -88,6 +88,8 @@ export function SearchResults({ products, categories, query, title, initialCateg
     priceCents: p.priceCents,
     imageUrl: p.imageUrl || '/placeholder.png',
     imageAlt: p.name,
+    imageUrl2: p.imageUrl2,
+    dualImageMode: p.dualImageMode,
     isInWishlist: false,
     isBestseller: p.isBestseller || false,
   }))

@@ -12,6 +12,7 @@ import { ProductDescriptionField } from './product-description-field'
 import { ProductCategoryField } from './product-category-field'
 import { ProductTagsField } from './product-tags-field'
 import { ProductToggleStatus } from './product-toggle-status'
+import { ProductToggleDualImage } from './product-toggle-dual-image'
 import { ProductDangerZone } from './product-danger-zone'
 import { ProductInfoFields } from './product-info-fields'
 import { CopyIdButton } from './copy-id-button'
@@ -55,6 +56,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
         category_id,
         is_active,
         is_customizable,
+        dual_image_mode,
         printful_sync_product_id,
         material_info,
         care_instructions,
@@ -222,9 +224,15 @@ export default async function AdminProductDetailPage({ params }: Props) {
 
             <div className="border-t border-zinc-800" />
 
-            {/* Status — now interactive toggle + static Customizable badge */}
+            {/* Status — interactive toggle + dual image toggle + static Customizable badge */}
             <div className="flex flex-wrap items-center gap-2">
               <ProductToggleStatus productId={product.id} initialIsActive={product.is_active} />
+              <ProductToggleDualImage
+                productId={product.id}
+                initialDualImageMode={
+                  ((product as Record<string, unknown>).dual_image_mode as boolean) ?? false
+                }
+              />
               {product.is_customizable && (
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-900/40 px-3 py-1.5 text-xs font-medium text-amber-400 ring-1 ring-amber-500/20">
                   <svg

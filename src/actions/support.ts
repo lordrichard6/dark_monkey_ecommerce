@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { createAdminNotification } from '@/lib/admin-notifications'
 
 export type TicketCategory = 'order_issue' | 'complaint' | 'suggestion' | 'question'
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
@@ -47,18 +48,25 @@ export async function createTicket(subject: string, category: TicketCategory, me
     return { ok: false as const, error: 'Failed to create ticket.' }
   }
 
-  const { error: msgError } = await supabase
-    .from('ticket_messages')
-    .insert({
-      ticket_id: ticket.id,
-      user_id: user.id,
-      is_admin_reply: false,
-      message: message.trim(),
-    })
+  const { error: msgError } = await supabase.from('ticket_messages').insert({
+    ticket_id: ticket.id,
+    user_id: user.id,
+    is_admin_reply: false,
+    message: message.trim(),
+  })
 
   if (msgError) {
     return { ok: false as const, error: 'Failed to save message.' }
   }
+
+  // Must be awaited before redirect() — redirect() throws immediately and a floating
+  // Promise would never resolve in a serverless environment.
+  await createAdminNotification({
+    type: 'support',
+    title: `New support ticket — ${category.replaceAll('_', ' ')}`,
+    body: subject.trim(),
+    data: { ticketId: ticket.id, category },
+  })
 
   revalidatePath('/account/support')
   redirect(`/account/support/${ticket.id}`)
@@ -84,16 +92,21 @@ export async function replyToTicket(ticketId: string, message: string) {
   if (!ticket) return { ok: false as const, error: 'Ticket not found.' }
   if (ticket.status === 'closed') return { ok: false as const, error: 'This ticket is closed.' }
 
-  const { error } = await supabase
-    .from('ticket_messages')
-    .insert({
-      ticket_id: ticketId,
-      user_id: user.id,
-      is_admin_reply: false,
-      message: message.trim(),
-    })
+  const { error } = await supabase.from('ticket_messages').insert({
+    ticket_id: ticketId,
+    user_id: user.id,
+    is_admin_reply: false,
+    message: message.trim(),
+  })
 
   if (error) return { ok: false as const, error: 'Failed to send reply.' }
+
+  createAdminNotification({
+    type: 'support',
+    title: 'Customer replied to support ticket',
+    body: message.trim().slice(0, 120),
+    data: { ticketId },
+  }).catch(() => {})
 
   revalidatePath(`/account/support/${ticketId}`)
   return { ok: true as const }

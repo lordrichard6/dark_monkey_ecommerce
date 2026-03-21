@@ -19,12 +19,7 @@ export type FilterState = {
   inStockOnly: boolean
 }
 
-export type SortOption =
-  | 'newest'
-  | 'price-asc'
-  | 'price-desc'
-  | 'bestseller'
-  | 'rating'
+export type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'bestseller' | 'rating'
 
 export type FilterableProduct = {
   id: string
@@ -37,6 +32,8 @@ export type FilterableProduct = {
   sizes: string[]
   inStock: boolean
   imageUrl: string | null
+  imageUrl2?: string | null
+  dualImageMode?: boolean
   createdAt: string
   isBestseller?: boolean
   averageRating?: number
@@ -109,8 +106,7 @@ export function sortProducts(
 
     case 'newest':
       return sorted.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
 
     case 'bestseller':
@@ -158,9 +154,7 @@ export function getAvailableFilters(products: FilterableProduct[]): {
 /**
  * Create initial filter state
  */
-export function createInitialFilterState(
-  products: FilterableProduct[]
-): FilterState {
+export function createInitialFilterState(products: FilterableProduct[]): FilterState {
   const { priceRange } = getAvailableFilters(products)
 
   return {
@@ -176,10 +170,7 @@ export function createInitialFilterState(
 /**
  * Check if any filters are active
  */
-export function hasActiveFilters(
-  filters: FilterState,
-  initialFilters: FilterState
-): boolean {
+export function hasActiveFilters(filters: FilterState, initialFilters: FilterState): boolean {
   return (
     filters.priceMin !== initialFilters.priceMin ||
     filters.priceMax !== initialFilters.priceMax ||

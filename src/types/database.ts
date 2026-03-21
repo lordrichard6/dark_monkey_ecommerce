@@ -33,6 +33,7 @@ export interface Database {
           description: string | null
           is_customizable: boolean
           is_active: boolean
+          dual_image_mode: boolean
           created_at: string
           updated_at: string
         }

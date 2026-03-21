@@ -30,7 +30,7 @@ export async function getRelatedProducts(
   // 2. Fetch products in same category or with matching tags
   let query = supabase
     .from('products')
-    .select('*')
+    .select('*, product_images (url, alt, sort_order)')
     .or(
       `category_id.eq.${currentProduct.category_id},tags.ov.{${currentProduct.tags?.join(',') || ''}}`
     )
@@ -76,7 +76,7 @@ export async function getFrequentlyBoughtTogether(
       `
       product_b_id,
       frequency,
-      products!product_associations_product_b_id_fkey (*)
+      products!product_associations_product_b_id_fkey (*, product_images (url, alt, sort_order))
     `
     )
     .eq('product_a_id', productId)
@@ -118,7 +118,7 @@ export async function getRecentlyViewed(
 ): Promise<Product[]> {
   let query = supabase
     .from('product_views')
-    .select('*, products(*)')
+    .select('*, products(*, product_images (url, alt, sort_order))')
     .eq('products.is_active', true)
     .order('created_at', { ascending: false })
     .limit(limit * 3)

@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
 
   const toRemind = [...countByUser.entries()].filter(([uid]) => !recentlySentIds.has(uid))
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  const wishlistUrl = baseUrl ? `${baseUrl}/en/account/wishlist` : '/en/account/wishlist'
 
   let sent = 0
   for (const [userId, itemCount] of toRemind) {
@@ -60,10 +59,15 @@ export async function GET(request: NextRequest) {
         error: userError,
       } = await supabase.auth.admin.getUserById(userId)
       if (userError || !user?.email) continue
+      const locale = (user.user_metadata?.locale as string | undefined) ?? 'en'
+      const wishlistUrl = baseUrl
+        ? `${baseUrl}/${locale}/account/wishlist`
+        : `/${locale}/account/wishlist`
       const result = await sendWishlistReminderEmail({
         to: user.email,
         wishlistUrl,
         itemCount,
+        locale,
       })
       if (result.ok) {
         await supabase.from('wishlist_reminder_sent').insert({ user_id: userId })

@@ -22,7 +22,7 @@ function getRateLimitBucket(pathname: string): RateLimitBucket | null {
   return null
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // --- Rate limiting (runs before i18n/session for sensitive routes) ---

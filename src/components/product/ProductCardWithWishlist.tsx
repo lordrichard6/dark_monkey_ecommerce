@@ -16,6 +16,8 @@ type ProductCardProps = {
   compareAtPriceCents?: number | null
   imageUrl: string
   imageAlt: string
+  imageUrl2?: string | null
+  dualImageMode?: boolean
   isInWishlist?: boolean
   isBestseller?: boolean
   isFeatured?: boolean
@@ -35,6 +37,8 @@ export function ProductCardWithWishlist({
   compareAtPriceCents,
   imageUrl,
   imageAlt,
+  imageUrl2,
+  dualImageMode = false,
   isInWishlist = false,
   isBestseller = false,
   isFeatured = false,
@@ -59,6 +63,11 @@ export function ProductCardWithWishlist({
 
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
 
+  const showDual = dualImageMode && !!imageUrl2
+
+  const unoptimizedFor = (url: string) =>
+    url.endsWith('.svg') || url.includes('picsum.photos') || url.includes('placehold.co')
+
   return (
     <>
       <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20 h-full">
@@ -75,20 +84,79 @@ export function ProductCardWithWishlist({
                 ))}
               </div>
             )}
-            <ProductImageWithFallback
-              src={imageUrl}
-              alt={imageAlt}
-              fill
-              className="object-cover object-center transition group-hover:scale-105"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              unoptimized={
-                imageUrl.endsWith('.svg') ||
-                imageUrl.includes('picsum.photos') ||
-                imageUrl.includes('placehold.co') ||
-                imageUrl.includes('/storage/') ||
-                imageUrl.includes('product-images')
-              }
-            />
+
+            {showDual ? (
+              /* ── Dual-image diagonal cut ── */
+              <>
+                {/* Image 1: left side, clipped diagonally */}
+                <div
+                  className="absolute inset-0 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(0 0, 62% 0, 38% 100%, 0 100%)' }}
+                >
+                  <ProductImageWithFallback
+                    src={imageUrl}
+                    alt={imageAlt}
+                    fill
+                    className="object-cover"
+                    style={{ objectPosition: '65% center' }}
+                    sizes="(max-width: 640px) 30vw, (max-width: 1024px) 20vw, 15vw"
+                    unoptimized={unoptimizedFor(imageUrl)}
+                  />
+                </div>
+                {/* Image 2: right side, clipped diagonally */}
+                <div
+                  className="absolute inset-0 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 38% 100%)' }}
+                >
+                  <ProductImageWithFallback
+                    src={imageUrl2!}
+                    alt={imageAlt}
+                    fill
+                    className="object-cover"
+                    style={{ objectPosition: '35% center' }}
+                    sizes="(max-width: 640px) 30vw, (max-width: 1024px) 20vw, 15vw"
+                    unoptimized={unoptimizedFor(imageUrl2!)}
+                  />
+                </div>
+                {/* Diagonal slash — SVG line matching clip-path exactly */}
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <filter id="slash-glow-wl" x="-50%" y="-10%" width="200%" height="120%">
+                      <feGaussianBlur stdDeviation="1" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <line
+                    x1="62"
+                    y1="0"
+                    x2="38"
+                    y2="100"
+                    stroke="rgba(255,255,255,0.75)"
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                    filter="url(#slash-glow-wl)"
+                  />
+                </svg>
+              </>
+            ) : (
+              /* ── Single image (default) ── */
+              <ProductImageWithFallback
+                src={imageUrl}
+                alt={imageAlt}
+                fill
+                className="object-cover object-center transition group-hover:scale-105"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                unoptimized={unoptimizedFor(imageUrl)}
+              />
+            )}
+
             {showWishlist && (
               <WishlistButton
                 productId={productId}
@@ -114,16 +182,16 @@ export function ProductCardWithWishlist({
           <div className="p-4 flex flex-col flex-1">
             <ProductName name={name} />
             <div className="mt-auto pt-2 flex flex-wrap items-baseline gap-1">
-              {compareAtPriceCents && compareAtPriceCents > priceCents && (
-                <span className="text-xs text-zinc-500 line-through decoration-zinc-500/50 md:text-sm">
-                  {format(compareAtPriceCents)}
-                </span>
-              )}
               <span
                 className={`text-sm font-bold md:text-base ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}
               >
                 {format(priceCents || 0)}
               </span>
+              {compareAtPriceCents && compareAtPriceCents > priceCents && (
+                <span className="text-xs text-zinc-500 line-through decoration-zinc-500/50 md:text-sm">
+                  {format(compareAtPriceCents)}
+                </span>
+              )}
             </div>
           </div>
         </Link>
