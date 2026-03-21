@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
   const cronSecret = request.headers.get('x-cron-secret')
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : cronSecret
 
-  if (CRON_SECRET && token !== CRON_SECRET) {
+  if (!CRON_SECRET) {
+    console.error('[cron/abandoned-cart] CRON_SECRET is not configured — all requests rejected')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (token !== CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -31,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   const { data: rows, error: fetchError } = await supabase
     .from('abandoned_checkouts')
-    .select('id, email, cart_summary, created_at')
+    .select('id, email, cart_summary, checkout_url, created_at')
     .is('emailed_at', null)
     .lt('created_at', cutoff)
 
@@ -41,22 +45,30 @@ export async function GET(request: NextRequest) {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.dark-monkey.ch'
-  const cartUrl = `${baseUrl}/checkout`
 
   let sent = 0
   for (const row of rows ?? []) {
     const summary = (row.cart_summary ?? {}) as {
       itemCount?: number
       totalCents?: number
+      currency?: string
+      locale?: string
       items?: { name?: string }[]
     }
+    const locale = summary.locale ?? 'en'
+    // Use the stored Stripe session URL (valid 24 h) so the customer can resume their
+    // exact checkout. Fall back to the generic checkout page for older rows without it.
+    const cartUrl =
+      (row as { checkout_url?: string | null }).checkout_url ?? `${baseUrl}/${locale}/checkout`
     const productNames = (summary.items ?? []).map((i) => i.name ?? '').filter(Boolean)
     const result = await sendAbandonedCartEmail({
       to: row.email,
       itemCount: summary.itemCount ?? 0,
       totalCents: summary.totalCents ?? 0,
+      currency: summary.currency ?? 'CHF',
       productNames,
       cartUrl,
+      locale,
     })
     if (result.ok) {
       await supabase

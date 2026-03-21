@@ -370,6 +370,7 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
     // cartItems removed to avoid 500 char limit - stored in abandoned_checkouts
     totalCents: String(totalCents),
     currency: requestedCurrency,
+    locale: input?.locale ?? 'en',
   }
   if (discountId) {
     metadata.discount_id = discountId
@@ -424,7 +425,9 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
 
     // Session created — record in logs without exposing sensitive data
 
-    const emailForAbandoned = input?.email?.trim() || null
+    // Prefer the explicitly-provided email; fall back to the signed-in user's email
+    // so logged-in users who don't re-type their email are also tracked.
+    const emailForAbandoned = input?.email?.trim() || user?.email || null
     // DO NOT use fire-and-forget here - the webhook RELIES on this record.
     // Use admin client to ensure insertion succeeds regardless of user session state.
     // Skip insert entirely if there's no email — webhook recovery relies on the cart_summary,
@@ -441,9 +444,12 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
         const { error } = await adminSupabase.from('abandoned_checkouts').insert({
           stripe_session_id: session.id,
           email: emailForAbandoned,
+          checkout_url: session.url,
           cart_summary: {
             itemCount: validatedItems.reduce((s, { item }) => s + item.quantity, 0),
             totalCents,
+            currency: requestedCurrency,
+            locale: input?.locale ?? 'en',
             items: validatedItems.map(({ item }) => ({
               variantId: item.variantId,
               productId: item.productId,

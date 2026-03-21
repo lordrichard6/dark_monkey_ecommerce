@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { signUpWithEmail, resendConfirmationEmail } from '@/actions/auth-signup'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 import { validateEmail } from '@/utils/email-validation'
@@ -110,10 +111,9 @@ export function SignupForm({ initialEmail = '' }: Props) {
   const handleResendEmail = async () => {
     if (!canResend) return
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.resend({ type: 'signup', email })
-      if (error) {
-        setMessage({ type: 'error', text: error.message })
+      const result = await resendConfirmationEmail(email, locale)
+      if (!result.ok) {
+        setMessage({ type: 'error', text: result.error ?? t('somethingWrong') })
         setCanResend(true) // let user retry immediately on error
       } else {
         startCountdown()
@@ -148,10 +148,14 @@ export function SignupForm({ initialEmail = '' }: Props) {
   }
 
   const parseAuthError = (err: unknown): AuthMessage => {
-    const errorMsg = err instanceof Error ? err.message : String(err || '') || t('somethingWrong')
+    const code = (err as { code?: string })?.code
+    const errorMsg =
+      err instanceof Error
+        ? err.message
+        : (err as { message?: string })?.message || String(err || '') || t('somethingWrong')
     const lowerMsg = errorMsg.toLowerCase()
 
-    if (lowerMsg.includes('already registered')) {
+    if (code === 'EMAIL_EXISTS' || lowerMsg.includes('already registered')) {
       return {
         type: 'error',
         text: t('errorEmailExists'),
@@ -228,40 +232,23 @@ export function SignupForm({ initialEmail = '' }: Props) {
       }
     }
 
-    let supabase
-    try {
-      supabase = createClient()
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : t('supabaseNotConfigured'),
-      })
-      setLoading(false)
-      return
-    }
-
     try {
       trackEvent('sign_up', { method: 'email' })
-      const { error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/${locale}/auth/callback`,
-          captchaToken: captchaToken || undefined,
-        },
-      })
-      if (error) throw error
-      setSignupSuccess(true)
-      sessionStorage.removeItem('auth_failed_attempts')
+      const result = await signUpWithEmail(trimmedEmail, password, locale)
+      if (!result.ok) {
+        const parsed = parseAuthError({ message: result.error ?? '', code: result.code })
+        setMessage(parsed)
+        const newAttempts = failedAttempts + 1
+        setFailedAttempts(newAttempts)
+        sessionStorage.setItem('auth_failed_attempts', newAttempts.toString())
+        if (turnstileRef.current) turnstileRef.current.reset()
+        setCaptchaToken(null)
+      } else {
+        setSignupSuccess(true)
+        sessionStorage.removeItem('auth_failed_attempts')
+      }
     } catch (err) {
       const parsed = parseAuthError(err)
-      const errMsg = err instanceof Error ? err.message : ''
-      if (
-        errMsg &&
-        (errMsg.toLowerCase().includes('security') || errMsg.toLowerCase().includes('blocked'))
-      ) {
-        parsed.text = errMsg
-      }
       setMessage(parsed)
       const newAttempts = failedAttempts + 1
       setFailedAttempts(newAttempts)
@@ -305,6 +292,11 @@ export function SignupForm({ initialEmail = '' }: Props) {
           <p className="animate-success-fade-in mt-1 break-all text-sm font-medium text-amber-400">
             {email}
           </p>
+          {/* Spam warning */}
+          <div className="animate-success-fade-in mt-5 flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-left max-w-sm w-full">
+            <span className="mt-0.5 text-base shrink-0">📬</span>
+            <p className="text-xs text-amber-300/80 leading-relaxed">{t('spamWarning')}</p>
+          </div>
           <p className="animate-success-fade-in mt-4 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-lg font-medium text-transparent">
             {t('dressLikeVIP')}
           </p>

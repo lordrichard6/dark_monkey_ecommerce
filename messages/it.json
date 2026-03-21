@@ -161,6 +161,7 @@
     "magicLinkSent": "Link magico inviato! Controlla la tua email.",
     "continueWithGithub": "Continua con GitHub",
     "continueWithApple": "Continua con Apple",
+    "spamWarning": "Non vedi l'email? Controlla la cartella spam o posta indesiderata.",
     "resendEmail": "Reinvia link di verifica",
     "resendIn": "Reinvia tra",
     "useMagicLink": "Usa Link Magico",
@@ -507,6 +508,7 @@
     "paymentsNotConfigured": "I pagamenti non sono ancora configurati. Riprova più tardi.",
     "orderConfirmed": "Ordine confermato",
     "thankYou": "Grazie per il tuo ordine.",
+    "spamWarning": "Un'email di conferma è in arrivo. Se non la trovi, controlla la cartella spam o posta indesiderata.",
     "paymentReceived": "Pagamento ricevuto.",
     "orderProcessed": "Il tuo ordine è in elaborazione.",
     "orderConfirmedTitle": "Ordine confermato",
@@ -738,13 +740,16 @@
       "shippingAddress": "Indirizzo di spedizione",
       "orderSummary": "Riepilogo ordine",
       "total": "Totale",
-      "items": "Articoli"
+      "items": "Articoli",
+      "createAccount": "Non ancora registrato?",
+      "createAccountAction": "Crea un account per seguire il tuo ordine"
     },
     "abandonedCart": {
       "subject": "Il tuo carrello ti aspetta",
       "title": "Hai lasciato qualcosa indietro",
       "body": "La tua selezione premium è riservata. Completa il tuo ordine ora per assicurarti i tuoi articoli.",
-      "cta": "Completa l'ordine"
+      "cta": "Completa l'ordine",
+      "total": "Totale"
     },
     "restock": {
       "subject": "Di nuovo disponibile: {productName}",
@@ -774,19 +779,29 @@
       "ignore": "Se non hai richiesto questo, puoi ignorare tranquillamente questa email."
     },
     "welcome": {
-      "subject": "Welcome to Dark Monkey 🦍",
-      "preview": "Your adventure starts here",
-      "title": "Welcome to the Family",
-      "body": "Your account is ready. Explore our exclusive collections and find your style.",
-      "bodyWithName": "Hey {name}, your account is ready. Explore our exclusive collections and find your style.",
-      "cta": "Start Shopping"
+      "subject": "Benvenuto su Dark Monkey 🦍",
+      "preview": "La tua avventura inizia qui",
+      "title": "Benvenuto nella famiglia",
+      "body": "Il tuo account è pronto. Esplora le nostre collezioni esclusive e trova il tuo stile.",
+      "bodyWithName": "Ciao {name}, il tuo account è pronto. Esplora le nostre collezioni esclusive e trova il tuo stile.",
+      "cta": "Inizia a fare shopping"
+    },
+    "emailConfirmation": {
+      "subject": "Conferma la tua email — Dark Monkey",
+      "preview": "Un clic per attivare il tuo account",
+      "title": "Conferma la tua email",
+      "body": "Grazie per esserti registrato! Clicca sul pulsante qui sotto per verificare il tuo indirizzo email e attivare il tuo account. Questo link scade in 24 ore.",
+      "cta": "Conferma email",
+      "ignore": "Se non hai creato un account, puoi ignorare questa email."
     },
     "orderCancellation": {
-      "subject": "Order Cancelled — #{orderId}",
-      "preview": "Your order #{orderId} has been cancelled",
-      "title": "Order Cancelled",
-      "body": "We're sorry, but your order has been cancelled. If you were charged, a full refund will be processed within 5–10 business days.",
-      "cta": "View Order History"
+      "subject": "Ordine annullato — #{orderId}",
+      "preview": "Il tuo ordine #{orderId} è stato annullato",
+      "title": "Ordine annullato",
+      "body": "Ci dispiace, ma il tuo ordine è stato annullato. Se sei stato addebitato, un rimborso completo sarà elaborato entro 5–10 giorni lavorativi.",
+      "cta": "Visualizza cronologia ordini",
+      "orderNumber": "Ordine #{orderId}",
+      "total": "Totale"
     },
     "reviewRequest": {
       "subject": "How was your order? Leave a review ⭐",
@@ -801,7 +816,8 @@
     "footer": {
       "rights": "Tutti i diritti riservati.",
       "address": "Dark Monkey, Svizzera",
-      "questions": "Domande? Rispondi a questa email."
+      "questions": "Domande? Rispondi a questa email.",
+      "qty": "Qtà:"
     }
   },
   "art": {

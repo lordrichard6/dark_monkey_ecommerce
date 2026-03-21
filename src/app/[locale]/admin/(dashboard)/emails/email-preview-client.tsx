@@ -55,10 +55,10 @@ const EMAIL_TYPES = [
     description: 'Sent when user requests reset',
   },
   {
-    id: 'admin-order-alert',
-    label: 'Admin: New Order',
-    icon: '🔔',
-    description: 'Sent to admin on new order',
+    id: 'email-confirmation',
+    label: 'Account Confirmation',
+    icon: '✅',
+    description: 'Sent on signup via Resend',
   },
 ] as const
 

@@ -220,6 +220,7 @@
     "magicLinkSent": "Link mágico enviado! Verifica o teu e-mail.",
     "continueWithGithub": "Continuar com o GitHub",
     "continueWithApple": "Continuar com a Apple",
+    "spamWarning": "Não vês o email? Verifica a pasta de spam ou lixo.",
     "resendEmail": "Reenviar link de verificação",
     "resendIn": "Reenviar em",
     "useMagicLink": "Usar Magic Link",
@@ -507,6 +508,7 @@
     "paymentsNotConfigured": "Os pagamentos ainda não estão configurados. Tente mais tarde.",
     "orderConfirmed": "Encomenda confirmada",
     "thankYou": "Obrigado pela sua encomenda.",
+    "spamWarning": "Um email de confirmação está a caminho. Se não o encontrares, verifica a pasta de spam ou lixo.",
     "paymentReceived": "Pagamento recebido.",
     "orderProcessed": "A sua encomenda está a ser processada.",
     "orderFinalizing": "A finalizar a sua encomenda...",
@@ -738,13 +740,16 @@
       "shippingAddress": "Morada de Envio",
       "orderSummary": "Resumo da Encomenda",
       "total": "Total",
-      "items": "Artigos"
+      "items": "Artigos",
+      "createAccount": "Ainda não tem conta?",
+      "createAccountAction": "Criar conta para acompanhar a encomenda"
     },
     "abandonedCart": {
       "subject": "O seu carrinho está à espera",
       "title": "Deixou algo para trás",
       "body": "A sua seleção premium está reservada. Finalize a encomenda agora para garantir os seus artigos.",
-      "cta": "Finalizar Encomenda"
+      "cta": "Finalizar Encomenda",
+      "total": "Total"
     },
     "restock": {
       "subject": "De volta ao stock: {productName}",
@@ -781,12 +786,22 @@
       "bodyWithName": "Olá {name}, a tua conta está pronta. Explora as nossas coleções exclusivas e encontra o teu estilo.",
       "cta": "Começar a Comprar"
     },
+    "emailConfirmation": {
+      "subject": "Confirma o teu email — Dark Monkey",
+      "preview": "Um clique para ativar a tua conta",
+      "title": "Confirma o Teu Email",
+      "body": "Obrigado por te registares! Clica no botão abaixo para verificar o teu endereço de email e ativar a tua conta. Este link expira em 24 horas.",
+      "cta": "Confirmar Email",
+      "ignore": "Se não criaste uma conta, podes ignorar este email com segurança."
+    },
     "orderCancellation": {
       "subject": "Encomenda Cancelada — #{orderId}",
       "preview": "A tua encomenda #{orderId} foi cancelada",
       "title": "Encomenda Cancelada",
       "body": "Lamentamos, mas a tua encomenda foi cancelada. Se foste cobrado, o reembolso completo será processado em 5 a 10 dias úteis.",
-      "cta": "Ver Histórico de Encomendas"
+      "cta": "Ver Histórico de Encomendas",
+      "orderNumber": "Encomenda #{orderId}",
+      "total": "Total"
     },
     "reviewRequest": {
       "subject": "Como foi a tua encomenda? Deixa uma avaliação ⭐",
@@ -801,7 +816,8 @@
     "footer": {
       "rights": "Todos os direitos reservados.",
       "address": "Dark Monkey, Suíça",
-      "questions": "Questões? Responda a este e-mail."
+      "questions": "Questões? Responda a este e-mail.",
+      "qty": "Qtd.:"
     }
   },
   "art": {

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { sendWelcomeEmail } from '@/lib/resend'
+import { createAdminNotification } from '@/lib/admin-notifications'
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -56,16 +57,29 @@ export async function GET(request: NextRequest) {
       }
 
       // 3. Welcome email for new users (non-fatal)
+      // 10-minute window: confirmation emails can take several minutes to arrive,
+      // so a 60-second window caused welcome emails to be silently dropped.
       const isNewUser =
         data.user.created_at &&
-        Math.abs(new Date(data.user.created_at).getTime() - Date.now()) < 60_000
+        Math.abs(new Date(data.user.created_at).getTime() - Date.now()) < 600_000
       if (isNewUser && data.user.email) {
         const locale = (new URL(request.url).pathname.match(/^\/([a-z]{2})\//) || [])[1] ?? 'en'
-        sendWelcomeEmail({
+        // Awaited — Vercel terminates the function context after the response is sent,
+        // which kills floating promises before they resolve.
+        const welcomeResult = await sendWelcomeEmail({
           to: data.user.email,
           firstName: data.user.user_metadata?.full_name?.split(' ')[0] as string | undefined,
           locale,
-        }).catch(console.error)
+        })
+        if (!welcomeResult.ok) {
+          console.warn('[auth/callback] Welcome email failed:', welcomeResult.error)
+        }
+        await createAdminNotification({
+          type: 'signup',
+          title: 'New user registered',
+          body: data.user.email,
+          data: { userId: data.user.id, email: data.user.email },
+        })
       }
 
       return response

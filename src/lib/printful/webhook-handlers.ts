@@ -7,6 +7,7 @@ import {
   PrintfulOrderCanceledPayload,
 } from '@/lib/printful/types-webhooks'
 import { sendShipmentEmail, sendOrderCancellationEmail } from '@/lib/resend'
+import { createAdminNotification } from '@/lib/admin-notifications'
 
 /**
  * Handles the 'package_shipped' event from Printful.
@@ -30,21 +31,30 @@ export async function handlePackageShipped(
 
   const orderId = await resolveLocalOrderId(supabase, order.id, order.external_id)
   if (!orderId) {
-    logger.warn(
-      `Could not find local order for Printful Order ${order.id} (External ID: ${order.external_id})`,
-      { operation: 'webhook_handler' }
+    logger.error(
+      `Could not find local order for Printful Order ${order.id} (External ID: ${order.external_id}) — shipment tracking will not be recorded`,
+      { operation: 'webhook_handler', printfulOrderId: order.id, externalId: order.external_id }
     )
+    await createAdminNotification({
+      type: 'order',
+      title: 'Shipment webhook unmatched',
+      body: `Printful fired package_shipped for order ${order.id} but no matching local order was found. Tracking: ${shipment.tracking_number ?? 'N/A'}`,
+      data: {
+        printfulOrderId: order.id,
+        externalId: order.external_id,
+        tracking: shipment.tracking_number,
+      },
+    })
     return
   }
 
   const { error } = await supabase
     .from('orders')
     .update({
-      status: 'shipped', // or 'delivered' if we want to differentiate? Printful sends 'package_shipped'
+      status: 'shipped',
       tracking_number: shipment.tracking_number,
       tracking_url: shipment.tracking_url,
       carrier: shipment.carrier,
-      // We might want to store printful_order_id if it wasn't there
       printful_order_id: order.id,
     })
     .eq('id', orderId)
@@ -61,11 +71,19 @@ export async function handlePackageShipped(
     operation: 'webhook_handler',
   })
 
+  // Notify admins (non-fatal)
+  await createAdminNotification({
+    type: 'order',
+    title: 'Order shipped',
+    body: `Order #${orderId.slice(0, 8).toUpperCase()} shipped via ${shipment.carrier ?? 'unknown carrier'}. Tracking: ${shipment.tracking_number ?? 'N/A'}`,
+    data: { orderId, trackingNumber: shipment.tracking_number, carrier: shipment.carrier },
+  })
+
   // Send shipment notification email (non-fatal if it fails)
   try {
     const { data: orderRow } = await supabase
       .from('orders')
-      .select('guest_email, user_id')
+      .select('guest_email, user_id, locale')
       .eq('id', orderId)
       .single()
 
@@ -76,13 +94,17 @@ export async function handlePackageShipped(
       recipientEmail = userData?.user?.email ?? null
     }
 
-    if (recipientEmail && shipment.tracking_url) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const locale = (orderRow as any)?.locale ?? 'en'
+
+    if (recipientEmail) {
       const emailResult = await sendShipmentEmail({
         to: recipientEmail,
         orderId,
-        trackingNumber: shipment.tracking_number ?? '',
-        trackingUrl: shipment.tracking_url,
+        trackingNumber: shipment.tracking_number ?? undefined,
+        trackingUrl: shipment.tracking_url ?? undefined,
         carrier: shipment.carrier ?? undefined,
+        locale,
       })
       if (!emailResult.ok) {
         logger.warn(`Shipment email failed for order ${orderId}: ${emailResult.error}`, {
@@ -212,6 +234,14 @@ export async function handleOrderCanceled(
     operation: 'webhook_handler',
   })
 
+  // Notify admins of the Printful cancellation (non-fatal)
+  await createAdminNotification({
+    type: 'order',
+    title: 'Order cancelled by Printful',
+    body: `Printful cancelled order #${orderId.slice(0, 8).toUpperCase()}. Reason: ${reason ?? 'unknown'}`,
+    data: { orderId, printfulOrderId: order.id, reason },
+  })
+
   // Notify customer of cancellation (non-fatal)
   try {
     const { data: orderRow } = await supabase
@@ -227,19 +257,19 @@ export async function handleOrderCanceled(
     }
 
     if (recipientEmail) {
-      sendOrderCancellationEmail({
+      const emailResult = await sendOrderCancellationEmail({
         to: recipientEmail,
         orderId,
         totalCents: orderRow?.total_cents ?? 0,
         currency: orderRow?.currency ?? 'CHF',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         locale: (orderRow as any)?.locale ?? 'en',
-      }).catch((err) =>
-        logger.warn('[order_canceled] Email failed:', {
+      })
+      if (!emailResult.ok) {
+        logger.warn(`[order_canceled] Email failed: ${emailResult.error}`, {
           operation: 'webhook_handler',
-          error: String(err),
         })
-      )
+      }
     }
   } catch (emailErr) {
     logger.warn(`Error sending cancellation email for order ${orderId}`, {

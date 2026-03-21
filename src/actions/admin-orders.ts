@@ -11,6 +11,8 @@ import {
 import type { PrintfulOrderItem } from '@/lib/printful/types'
 import { revalidatePath } from 'next/cache'
 import type { Stripe } from 'stripe'
+import { sendOrderCancellationEmail } from '@/lib/resend'
+import { createAdminNotification } from '@/lib/admin-notifications'
 
 export type RefundOrderResult = { ok: true } | { ok: false; error: string }
 
@@ -100,6 +102,47 @@ export async function updateOrderStatus(orderId: string, status: string) {
   const { error } = await supabase.from('orders').update({ status }).eq('id', orderId)
 
   if (error) return { ok: false, error: error.message }
+
+  // When admin manually cancels an order, notify the customer and admins.
+  if (status === 'cancelled') {
+    try {
+      const { data: orderRow } = await supabase
+        .from('orders')
+        .select('guest_email, user_id, total_cents, currency, locale')
+        .eq('id', orderId)
+        .single()
+
+      let recipientEmail: string | null = orderRow?.guest_email ?? null
+      if (!recipientEmail && orderRow?.user_id) {
+        const { data: userData } = await supabase.auth.admin.getUserById(orderRow.user_id)
+        recipientEmail = userData?.user?.email ?? null
+      }
+
+      if (recipientEmail) {
+        const emailResult = await sendOrderCancellationEmail({
+          to: recipientEmail,
+          orderId,
+          totalCents: orderRow?.total_cents ?? 0,
+          currency: orderRow?.currency ?? 'CHF',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          locale: (orderRow as any)?.locale ?? 'en',
+        })
+        if (!emailResult.ok) {
+          console.warn(`[updateOrderStatus] Cancellation email failed: ${emailResult.error}`)
+        }
+      }
+
+      await createAdminNotification({
+        type: 'order',
+        title: `Order cancelled by admin`,
+        body: `Order #${orderId.slice(0, 8).toUpperCase()} has been manually cancelled.`,
+        data: { orderId },
+      })
+    } catch (err) {
+      console.warn('[updateOrderStatus] Post-cancel side-effects failed:', err)
+    }
+  }
+
   revalidatePath('/admin')
   revalidatePath('/admin/dashboard')
   revalidatePath(`/admin/orders/${orderId}`)

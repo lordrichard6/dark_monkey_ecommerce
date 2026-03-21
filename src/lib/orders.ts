@@ -12,6 +12,7 @@ import type { PrintfulOrderItem } from './printful/types'
 import { revalidatePath } from 'next/cache'
 
 import { getAdminClient } from './supabase/admin'
+import { createAdminNotification } from './admin-notifications'
 
 /**
  * Processes a successful Stripe checkout session.
@@ -157,6 +158,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
     fullSession.metadata?.guest_email ||
     fullSession.customer_email ||
     fullSession.customer_details?.email
+  const locale = (fullSession.metadata?.locale as string | undefined) ?? 'en'
 
   // Derive the actual charged currency and amount from Stripe (source of truth).
   // fullSession.amount_total is in the currency's smallest unit (e.g. cents).
@@ -183,6 +185,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
       shipping_cost_cents: Number.isFinite(shippingCostCents) ? shippingCostCents : 0,
       shipping_country: shippingCountry,
       gift_note: giftNote,
+      locale,
     })
     .select('id, guest_email')
     .single()
@@ -267,10 +270,9 @@ export async function processSuccessfulCheckout(sessionId: string) {
   // A. Confirmation Email
   const email = guestEmail ?? order.guest_email ?? undefined
   if (email) {
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
     const registerUrl =
-      !userId && email
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/signup?email=${encodeURIComponent(email)}`
-        : undefined
+      !userId && email ? `${appUrl}/${locale}/signup?email=${encodeURIComponent(email)}` : undefined
 
     fulfillmentPromises.push(
       sendOrderConfirmation({
@@ -279,6 +281,7 @@ export async function processSuccessfulCheckout(sessionId: string) {
         totalCents: stripeAmountTotal,
         currency: stripeCurrency,
         itemCount: cartItems.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0),
+        locale,
         registerUrl,
       }).catch((err) => console.error('[OrderProcess] Email failed:', err))
     )
@@ -401,7 +404,17 @@ export async function processSuccessfulCheckout(sessionId: string) {
     )
   }
 
-  // D. Inventory & Social Proof (Essential but can be parallel)
+  // D. Admin Notification
+  fulfillmentPromises.push(
+    createAdminNotification({
+      type: 'order',
+      title: `New order — ${new Intl.NumberFormat('en', { style: 'currency', currency: stripeCurrency }).format(stripeAmountTotal / 100)}`,
+      body: guestEmail ?? 'Guest checkout',
+      data: { orderId: order.id, totalCents: stripeAmountTotal, currency: stripeCurrency },
+    }).catch((err) => console.error('[OrderProcess] Admin notification failed:', err))
+  )
+
+  // E. Inventory & Social Proof (Essential but can be parallel)
   const postProcessJob = (async () => {
     const productSlugsToRevalidate = new Set<string>()
     const location =

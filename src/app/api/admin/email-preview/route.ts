@@ -149,19 +149,13 @@ function getPreviewHtml(type: string, locale: string): string {
         ctaUrl: '#',
         ctaText: locale === 'pt' ? 'Redefinir Palavra-passe' : 'Reset Password',
       })
-    case 'admin-order-alert':
-      return generateEmailHtml('en', 'adminOrderAlert', {
-        previewText: `New order #${orderId} — ${total}`,
-        title: '🛒 New Order Received',
-        body: 'A new order has been placed on Dark Monkey.',
-        details: [
-          { label: 'Order ID', value: `#${orderId}` },
-          { label: 'Customer', value: 'customer@example.com' },
-          { label: 'Items', value: '3' },
-          { label: 'Total', value: total },
-        ],
+    case 'email-confirmation':
+      return generateEmailHtml(locale, 'emailConfirmation', {
+        previewText: 'Confirm your Dark Monkey account',
+        title: 'Confirm Your Account',
+        body: 'Thank you for signing up. Click the button below to confirm your email address and activate your account.<br><br><small style="color:#737373;">If you did not create an account, you can safely ignore this email.</small>',
         ctaUrl: '#',
-        ctaText: 'View in Admin',
+        ctaText: 'Confirm Account',
       })
     default:
       return '<p>Unknown email type</p>'

@@ -11,10 +11,20 @@ import {
   sendWelcomeEmail,
   sendOrderCancellationEmail,
   sendReviewRequestEmail,
-  sendAdminOrderAlert,
+  sendConfirmationEmail,
 } from '@/lib/resend'
 
-export type EmailTestType = 'order' | 'abandoned-cart' | 'restock' | 'wishlist'
+export type EmailTestType =
+  | 'order'
+  | 'abandoned-cart'
+  | 'restock'
+  | 'wishlist'
+  | 'shipment'
+  | 'welcome'
+  | 'cancellation'
+  | 'review-request'
+  | 'password-reset'
+  | 'email-confirmation'
 
 export async function sendTestEmail(type: EmailTestType, toEmail: string, locale: string = 'en') {
   // 1. Verify Admin
@@ -97,16 +107,14 @@ export async function sendTestEmailFull(
           customerName: 'Test Admin',
           locale,
         })
-      case 'cancellation': {
-        const ok = await sendOrderCancellationEmail({
+      case 'cancellation':
+        return await sendOrderCancellationEmail({
           to: toEmail,
           orderId: 'TEST-ORDER-1234',
           totalCents: 12900,
           currency: 'CHF',
           locale,
         })
-        return { ok }
-      }
       case 'shipment':
         return await sendShipmentEmail({
           to: toEmail,
@@ -139,14 +147,12 @@ export async function sendTestEmailFull(
           wishlistUrl: `${appUrl}/account/wishlist`,
           locale,
         })
-      case 'welcome': {
-        const ok = await sendWelcomeEmail({
+      case 'welcome':
+        return await sendWelcomeEmail({
           to: toEmail,
           firstName: 'Test',
           locale,
         })
-        return { ok }
-      }
       case 'review-request': {
         const ok = await sendReviewRequestEmail({
           to: toEmail,
@@ -162,20 +168,12 @@ export async function sendTestEmailFull(
           resetUrl: `${appUrl}/reset-password?token=test`,
           locale,
         })
-      case 'admin-order-alert': {
-        // Temporarily override ADMIN_ALERT_EMAIL for test sends to allow routing to the chosen user
-        const original = process.env.ADMIN_ALERT_EMAIL
-        process.env.ADMIN_ALERT_EMAIL = toEmail
-        const ok = await sendAdminOrderAlert({
-          orderId: 'TEST-ORDER-1234',
-          customerEmail: toEmail,
-          totalCents: 12900,
-          currency: 'CHF',
-          itemCount: 2,
+      case 'email-confirmation':
+        return await sendConfirmationEmail({
+          to: toEmail,
+          confirmationUrl: `${appUrl}/${locale}/auth/callback?token=test`,
+          locale,
         })
-        process.env.ADMIN_ALERT_EMAIL = original
-        return { ok }
-      }
       default:
         return { ok: false, error: 'Invalid email type' }
     }

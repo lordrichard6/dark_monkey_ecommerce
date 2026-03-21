@@ -69,12 +69,18 @@ export function SuccessContent({ sessionId, initialOrder }: Props) {
           <CheckCircle2 className="h-10 w-10 text-emerald-400" />
         </div>
         <h1 className="mb-4 text-3xl font-bold text-zinc-50">{t('orderConfirmed')}</h1>
-        <p className="mb-8 text-lg text-zinc-400">
+        <p className="mb-6 text-lg text-zinc-400">
           {t('thankYou')}
           <span className="block mt-2 font-mono text-zinc-500 text-sm">
             Order #{order.id.split('-')[0].toUpperCase()}
           </span>
         </p>
+
+        {/* Spam warning */}
+        <div className="mb-8 mx-auto flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-left max-w-sm">
+          <span className="mt-0.5 text-base shrink-0">📬</span>
+          <p className="text-xs text-amber-300/80 leading-relaxed">{t('spamWarning')}</p>
+        </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link

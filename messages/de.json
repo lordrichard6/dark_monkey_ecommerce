@@ -89,7 +89,7 @@
     "priceRange": "Preisspanne",
     "categories": "Kategorien",
     "colors": "Farben",
-    "sizes": "Größen",
+    "sizes": "Grössen",
     "inStockOnly": "Nur auf Lager",
     "activeFilters": "{count, plural, =1 {1 aktiver Filter} other {# aktive Filter}}",
     "sortBy": "Sortieren nach",
@@ -156,7 +156,7 @@
     "comingSoonTitle": "Wir bereiten unsere Kollektion vor",
     "comingSoonDescription": "Wir aktualisieren gerade unsere Produkte. Schaue bald wieder vorbei!",
     "sortBestseller": "Bestseller zuerst",
-    "sortDiscount": "Größter Rabatt"
+    "sortDiscount": "Grösster Rabatt"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",
@@ -171,7 +171,7 @@
     "forgotPassword": "Passwort vergessen?",
     "createAccount": "Konto erstellen",
     "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
-    "passwordTooWeak": "Das Passwort ist zu schwach. Bitte Großbuchstaben, Zahlen und Sonderzeichen verwenden.",
+    "passwordTooWeak": "Das Passwort ist zu schwach. Bitte Grossbuchstaben, Zahlen und Sonderzeichen verwenden.",
     "passwordsMatch": "Passwörter stimmen überein",
     "supabaseNotConfigured": "Supabase nicht konfiguriert",
     "somethingWrong": "Etwas ist schiefgelaufen",
@@ -192,7 +192,7 @@
     "strengthMedium": "Mittel",
     "strengthStrong": "Stark",
     "reqLength": "8+ Zeichen",
-    "reqUppercase": "Großbuchstabe",
+    "reqUppercase": "Grossbuchstabe",
     "reqNumber": "Eine Zahl",
     "reqSpecial": "Sonderzeichen",
     "termsAgreement": "Mit der Erstellung eines Kontos stimmen Sie unseren",
@@ -209,7 +209,7 @@
     "retry": "Wiederholen",
     "or": "Oder",
     "didYouMean": "Meinten Sie",
-    "verifyCaptcha": "Bitte schließe die Verifizierung ab",
+    "verifyCaptcha": "Bitte schliesse die Verifizierung ab",
     "errorEmailExists": "Diese E-Mail ist bereits registriert.",
     "errorInvalidCredentials": "Ungültige E-Mail-Adresse oder Passwort.",
     "errorNetwork": "Netzwerkfehler. Bitte überprüfe deine Verbindung.",
@@ -220,6 +220,7 @@
     "magicLinkSent": "Magic Link gesendet! Überprüfen Sie Ihre E-Mails.",
     "continueWithGithub": "Mit GitHub fortfahren",
     "continueWithApple": "Mit Apple fortfahren",
+    "spamWarning": "E-Mail nicht gefunden? Überprüfe deinen Spam- oder Junk-Ordner.",
     "resendEmail": "Bestätigungslink erneut senden",
     "resendIn": "Erneut senden in",
     "useMagicLink": "Magic Link verwenden",
@@ -278,7 +279,7 @@
     "sortPriceAsc": "Preis: niedrig bis hoch",
     "sortPriceDesc": "Preis: hoch bis niedrig",
     "sortBestseller": "Bestseller zuerst",
-    "sortDiscount": "Größter Rabatt",
+    "sortDiscount": "Grösster Rabatt",
     "noProductsTitle": "Keine Produkte gefunden",
     "noProductsDescription": "Wir konnten keine Produkte finden, die Ihrer Auswahl entsprechen.",
     "backToTop": "Nach oben",
@@ -286,7 +287,7 @@
   },
   "product": {
     "color": "Farbe",
-    "size": "Größe",
+    "size": "Grösse",
     "priceLabel": "Preis *",
     "inclVat": "inkl. MwSt.",
     "includesCustomization": "(inkl. Personalisierung)",
@@ -330,12 +331,12 @@
     "copyLink": "Link kopieren",
     "linkCopied": "Link kopiert!",
     "measurement": "Messung",
-    "sizeGuide": "Größentabelle",
-    "sizeGuideTitle": "Größentabelle",
-    "sizeGuideNote": "Die Maße sind ungefähre Angaben und können leicht variieren. Alle Maße sind in Zentimetern angegeben.",
+    "sizeGuide": "Grössentabelle",
+    "sizeGuideTitle": "Grössentabelle",
+    "sizeGuideNote": "Die Masse sind ungefähre Angaben und können leicht variieren. Alle Masse sind in Zentimetern angegeben.",
     "howToMeasure": "Wie man misst",
     "chest": "Brust",
-    "chestMeasurement": "Messen Sie an der stärksten Stelle Ihrer Brust und halten Sie das Maßband horizontal.",
+    "chestMeasurement": "Messen Sie an der stärksten Stelle Ihrer Brust und halten Sie das Massband horizontal.",
     "length": "Länge",
     "lengthMeasurement": "Messen Sie vom höchsten Punkt der Schulter bis zum unteren Saum.",
     "sleeve": "Ärmel",
@@ -353,7 +354,7 @@
     "cartWithItems": "Warenkorb mit {count} Artikeln",
     "item": "Artikel",
     "items": "Artikel",
-    "closeCart": "Warenkorb schließen",
+    "closeCart": "Warenkorb schliessen",
     "yourCartEmpty": "Ihr Warenkorb ist leer.",
     "remove": "Entfernen",
     "total": "Gesamt",
@@ -507,6 +508,7 @@
     "paymentsNotConfigured": "Zahlungen sind noch nicht konfiguriert. Bitte später erneut versuchen.",
     "orderConfirmed": "Bestellung bestätigt",
     "thankYou": "Vielen Dank für Ihre Bestellung.",
+    "spamWarning": "Eine Bestätigungs-E-Mail ist unterwegs. Falls du sie nicht siehst, überprüfe deinen Spam- oder Junk-Ordner.",
     "paymentReceived": "Zahlung erhalten.",
     "orderProcessed": "Ihre Bestellung wird bearbeitet.",
     "orderConfirmedTitle": "Bestellung bestätigt",
@@ -563,7 +565,7 @@
     "consentCookie": "Einwilligungs-Cookie",
     "consentCookieDesc": "Merkt sich, dass Sie unserer Cookie-Richtlinie zugestimmt haben.",
     "dataWeCollect": "Erhobene Daten",
-    "dataIntro": "Bei einer Bestellung erheben wir Name, E-Mail, Lieferadresse und Zahlungsdaten (sicher über Stripe verarbeitet). Wir nutzen diese ausschließlich zur Auftragsabwicklung und Kommunikation mit Ihnen.",
+    "dataIntro": "Bei einer Bestellung erheben wir Name, E-Mail, Lieferadresse und Zahlungsdaten (sicher über Stripe verarbeitet). Wir nutzen diese ausschliesslich zur Auftragsabwicklung und Kommunikation mit Ihnen.",
     "yourRights": "Ihre Rechte",
     "rightsIntro": "Sie können Zugang zu, Berichtigung oder Löschung Ihrer personenbezogenen Daten verlangen. Kontaktieren Sie uns bei datenschutzbezogenen Anfragen."
   },
@@ -581,7 +583,7 @@
     "acceptanceTitle": "Annahme der Bedingungen",
     "acceptanceIntro": "Mit der Nutzung des DarkMonkey-Shops akzeptieren Sie diese Nutzungsbedingungen. Wenn Sie nicht einverstanden sind, nutzen Sie bitte weder unsere Website noch unsere Dienste.",
     "useOfStoreTitle": "Nutzung des Shops",
-    "useOfStoreIntro": "Sie dürfen unseren Shop nur für rechtmäßige Zwecke nutzen. Missbrauch, unbefugter Zugriff oder Nutzung zum Nachteil des Dienstes oder anderer Nutzer sind nicht gestattet.",
+    "useOfStoreIntro": "Sie dürfen unseren Shop nur für rechtmässige Zwecke nutzen. Missbrauch, unbefugter Zugriff oder Nutzung zum Nachteil des Dienstes oder anderer Nutzer sind nicht gestattet.",
     "ordersPaymentTitle": "Bestellungen & Zahlung",
     "ordersPaymentIntro": "Bestellungen unterliegen der Verfügbarkeit. Wir behalten uns vor, Bestellungen abzulehnen oder zu stornieren. Mit einer Bestellung erklären Sie sich mit dem angegebenen Preis sowie Steuern und Versand einverstanden."
   },
@@ -662,7 +664,7 @@
     "bio": "Biografie",
     "birthday": "Geburtstag",
     "personalization": "Personalisierung",
-    "preferredSize": "Bevorzugte Größe",
+    "preferredSize": "Bevorzugte Grösse",
     "stylePreferences": "Stilpräferenzen",
     "privacy": "Privatsphäre",
     "makeProfilePublic": "Profil öffentlich machen",
@@ -671,7 +673,7 @@
     "uploadNewPhoto": "Neues Foto hochladen",
     "remove": "Entfernen",
     "avatarUpdated": "Avatar aktualisiert",
-    "fileTooLarge": "Datei zu groß (max. 5MB)",
+    "fileTooLarge": "Datei zu gross (max. 5MB)",
     "saving": "Wird gespeichert...",
     "profileUpdated": "Profil erfolgreich aktualisiert",
     "failedToUpdate": "Profil konnte nicht aktualisiert werden",
@@ -693,7 +695,7 @@
     "copyLink": "Link kopieren",
     "displayNamePlaceholder": "Dein Name",
     "makeProfilePublicHint": "Anderen erlauben, deine Wunschliste und Errungenschaften zu sehen",
-    "preferredSizeHint": "Hilft uns, die richtige Größe zu empfehlen",
+    "preferredSizeHint": "Hilft uns, die richtige Grösse zu empfehlen",
     "saveChanges": "Änderungen speichern",
     "stylePreferencesHint": "Hilft uns, Produkte für dich zusammenzustellen"
   },
@@ -738,13 +740,16 @@
       "shippingAddress": "Lieferadresse",
       "orderSummary": "Bestellübersicht",
       "total": "Summe",
-      "items": "Artikel"
+      "items": "Artikel",
+      "createAccount": "Noch kein Konto?",
+      "createAccountAction": "Konto erstellen, um die Bestellung zu verfolgen"
     },
     "abandonedCart": {
       "subject": "Ihr Warenkorb wartet",
       "title": "Sie haben etwas vergessen",
-      "body": "Ihre Premium-Auswahl ist reserviert. Schließen Sie Ihre Bestellung jetzt ab, um Ihre Artikel zu sichern.",
-      "cta": "Bestellung abschließen"
+      "body": "Ihre Premium-Auswahl ist reserviert. Schliessen Sie Ihre Bestellung jetzt ab, um Ihre Artikel zu sichern.",
+      "cta": "Bestellung abschliessen",
+      "total": "Summe"
     },
     "restock": {
       "subject": "Wieder auf Lager: {productName}",
@@ -774,19 +779,29 @@
       "ignore": "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren."
     },
     "welcome": {
-      "subject": "Welcome to Dark Monkey 🦍",
-      "preview": "Your adventure starts here",
-      "title": "Welcome to the Family",
-      "body": "Your account is ready. Explore our exclusive collections and find your style.",
-      "bodyWithName": "Hey {name}, your account is ready. Explore our exclusive collections and find your style.",
-      "cta": "Start Shopping"
+      "subject": "Willkommen bei Dark Monkey 🦍",
+      "preview": "Dein Abenteuer beginnt hier",
+      "title": "Willkommen in der Familie",
+      "body": "Dein Konto ist bereit. Entdecke unsere exklusiven Kollektionen und finde deinen Stil.",
+      "bodyWithName": "Hey {name}, dein Konto ist bereit. Entdecke unsere exklusiven Kollektionen und finde deinen Stil.",
+      "cta": "Jetzt einkaufen"
+    },
+    "emailConfirmation": {
+      "subject": "Bestätige deine E-Mail — Dark Monkey",
+      "preview": "Ein Klick, um dein Konto zu aktivieren",
+      "title": "E-Mail bestätigen",
+      "body": "Danke für deine Anmeldung! Klicke auf die Schaltfläche unten, um deine E-Mail-Adresse zu bestätigen und dein Konto zu aktivieren. Dieser Link läuft in 24 Stunden ab.",
+      "cta": "E-Mail bestätigen",
+      "ignore": "Wenn du kein Konto erstellt hast, kannst du diese E-Mail ignorieren."
     },
     "orderCancellation": {
-      "subject": "Order Cancelled — #{orderId}",
-      "preview": "Your order #{orderId} has been cancelled",
-      "title": "Order Cancelled",
-      "body": "We're sorry, but your order has been cancelled. If you were charged, a full refund will be processed within 5–10 business days.",
-      "cta": "View Order History"
+      "subject": "Bestellung storniert — #{orderId}",
+      "preview": "Deine Bestellung #{orderId} wurde storniert",
+      "title": "Bestellung storniert",
+      "body": "Es tut uns leid, aber deine Bestellung wurde storniert. Falls du belastet wurdest, wird eine vollständige Rückerstattung innerhalb von 5–10 Werktagen bearbeitet.",
+      "cta": "Bestellhistorie ansehen",
+      "orderNumber": "Bestellung #{orderId}",
+      "total": "Summe"
     },
     "reviewRequest": {
       "subject": "How was your order? Leave a review ⭐",
@@ -801,7 +816,8 @@
     "footer": {
       "rights": "Alle Rechte vorbehalten.",
       "address": "Dark Monkey, Schweiz",
-      "questions": "Fragen? Antworten Sie auf diese E-Mail."
+      "questions": "Fragen? Antworten Sie auf diese E-Mail.",
+      "qty": "Anz.:"
     }
   },
   "art": {
@@ -823,7 +839,7 @@
     "prev": "Zurück",
     "next": "Weiter",
     "pageOf": "Seite {page} von {total}",
-    "closePreview": "Vorschau schließen",
+    "closePreview": "Vorschau schliessen",
     "prevImage": "Vorheriges Bild",
     "nextImage": "Nächstes Bild",
     "imageOf": "Bild {current} von {total}"

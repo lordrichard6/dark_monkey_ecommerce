@@ -161,6 +161,7 @@
     "magicLinkSent": "Magic link sent! Check your email.",
     "continueWithGithub": "Continue with GitHub",
     "continueWithApple": "Continue with Apple",
+    "spamWarning": "Don't see the email? Check your spam or junk folder.",
     "resendEmail": "Resend verification link",
     "resendIn": "Resend in",
     "useMagicLink": "Use Magic Link",
@@ -507,6 +508,7 @@
     "paymentsNotConfigured": "Payments are not configured yet. Please try again later.",
     "orderConfirmed": "Order confirmed",
     "thankYou": "Thank you for your order.",
+    "spamWarning": "A confirmation email is on its way. If you don't see it, check your spam or junk folder.",
     "paymentReceived": "Payment received.",
     "orderProcessed": "Your order is being processed.",
     "orderFinalizing": "Finalizing your order...",
@@ -738,13 +740,16 @@
       "shippingAddress": "Shipping Address",
       "orderSummary": "Order Summary",
       "total": "Total",
-      "items": "Items"
+      "items": "Items",
+      "createAccount": "Not registered yet?",
+      "createAccountAction": "Create an account to track your order"
     },
     "abandonedCart": {
       "subject": "Your cart is waiting",
       "title": "You left something behind",
       "body": "Your premium selection is reserved. Complete your order now to secure your items.",
-      "cta": "Complete Order"
+      "cta": "Complete Order",
+      "total": "Total"
     },
     "restock": {
       "subject": "Back in Stock: {productName}",
@@ -781,12 +786,22 @@
       "bodyWithName": "Hey {name}, your account is ready. Explore our exclusive collections and find your style.",
       "cta": "Start Shopping"
     },
+    "emailConfirmation": {
+      "subject": "Confirm your email — Dark Monkey",
+      "preview": "One click to activate your account",
+      "title": "Confirm Your Email",
+      "body": "Thanks for signing up! Click the button below to verify your email address and activate your account. This link expires in 24 hours.",
+      "cta": "Confirm Email",
+      "ignore": "If you didn't create an account, you can safely ignore this email."
+    },
     "orderCancellation": {
       "subject": "Order Cancelled — #{orderId}",
       "preview": "Your order #{orderId} has been cancelled",
       "title": "Order Cancelled",
       "body": "We're sorry, but your order has been cancelled. If you were charged, a full refund will be processed within 5–10 business days.",
-      "cta": "View Order History"
+      "cta": "View Order History",
+      "orderNumber": "Order #{orderId}",
+      "total": "Total"
     },
     "reviewRequest": {
       "subject": "How was your order? Leave a review ⭐",
@@ -801,7 +816,8 @@
     "footer": {
       "rights": "All rights reserved.",
       "address": "Dark Monkey, Switzerland",
-      "questions": "Questions? Reply to this email."
+      "questions": "Questions? Reply to this email.",
+      "qty": "Qty:"
     }
   },
   "art": {
