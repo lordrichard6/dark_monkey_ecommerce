@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
+    qualities: [75, 90], // 75 = default product images, 90 = hero/high-priority images
     minimumCacheTTL: 2592000, // 30 days — product images are static Printful CDN assets
     remotePatterns: [
       {
