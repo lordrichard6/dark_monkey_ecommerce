@@ -65,6 +65,11 @@ const nextConfig: NextConfig = {
         hostname: 'files.cdn.printful.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
     ],
   },
   // Security headers

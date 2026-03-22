@@ -88,33 +88,31 @@ export function ProductCardWithWishlist({
             {showDual ? (
               /* ── Dual-image diagonal cut ── */
               <>
-                {/* Image 1: left side, clipped diagonally */}
+                {/* Image 1: left half — fills only left half so object-center works correctly */}
                 <div
-                  className="absolute inset-0 transition group-hover:scale-105"
-                  style={{ clipPath: 'polygon(0 0, 62% 0, 38% 100%, 0 100%)' }}
+                  className="absolute inset-y-0 left-0 w-1/2 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(0 0, 124% 0, 76% 100%, 0 100%)' }}
                 >
                   <ProductImageWithFallback
                     src={imageUrl}
                     alt={imageAlt}
                     fill
-                    className="object-cover"
-                    style={{ objectPosition: '65% center' }}
-                    sizes="(max-width: 640px) 30vw, (max-width: 1024px) 20vw, 15vw"
+                    className="object-cover object-center"
+                    sizes="(max-width: 640px) 15vw, (max-width: 1024px) 10vw, 8vw"
                     unoptimized={unoptimizedFor(imageUrl)}
                   />
                 </div>
-                {/* Image 2: right side, clipped diagonally */}
+                {/* Image 2: right half — fills only right half so object-center works correctly */}
                 <div
-                  className="absolute inset-0 transition group-hover:scale-105"
-                  style={{ clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 38% 100%)' }}
+                  className="absolute inset-y-0 right-0 w-1/2 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(24% 0, 100% 0, 100% 100%, -24% 100%)' }}
                 >
                   <ProductImageWithFallback
                     src={imageUrl2!}
                     alt={imageAlt}
                     fill
-                    className="object-cover"
-                    style={{ objectPosition: '35% center' }}
-                    sizes="(max-width: 640px) 30vw, (max-width: 1024px) 20vw, 15vw"
+                    className="object-cover object-center"
+                    sizes="(max-width: 640px) 15vw, (max-width: 1024px) 10vw, 8vw"
                     unoptimized={unoptimizedFor(imageUrl2!)}
                   />
                 </div>

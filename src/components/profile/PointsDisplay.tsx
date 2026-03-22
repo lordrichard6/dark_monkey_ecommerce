@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { POINTS_REDEMPTION } from '@/lib/gamification'
-import { useCurrency } from '@/components/currency/CurrencyContext'
 import { Award, Gift, TrendingUp, ChevronRight } from 'lucide-react'
 import { PointsHistory } from '@/components/profile/PointsHistory'
 import { toast } from 'sonner'
@@ -15,7 +14,6 @@ type Props = {
 }
 
 export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Props) {
-  const { format } = useCurrency()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedRedemption, setSelectedRedemption] = useState<number | null>(null)
 
@@ -47,9 +45,9 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
     }
   }
 
-  const redemptionOptions = Object.entries(POINTS_REDEMPTION).map(([points, discountCents]) => ({
+  const redemptionOptions = Object.entries(POINTS_REDEMPTION).map(([points, option]) => ({
     points: parseInt(points),
-    discountCents,
+    label: option.label,
     available: totalPoints >= parseInt(points),
   }))
 
@@ -80,8 +78,8 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
         </h3>
         <div className="space-y-3">
           <EarnRule icon="🛍️" title="Make a Purchase" points="1 point per CHF 1" />
-          <EarnRule icon="⭐" title="Write a Review" points="100 points" />
-          <EarnRule icon="🤝" title="Refer a Friend (Signup)" points="200 points" />
+          <EarnRule icon="⭐" title="Write a Review" points="50 points" />
+          <EarnRule icon="🤝" title="Refer a Friend (Signup)" points="100 points" />
           <EarnRule icon="💰" title="Refer a Friend (First Purchase)" points="500 points" />
           <EarnRule icon="🏆" title="Unlock Achievements" points="Varies" />
         </div>
@@ -116,9 +114,7 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Get {format(option.discountCents)} discount
-                  </p>
+                  <p className="mt-1 text-sm text-zinc-400">Get {option.label}</p>
                 </div>
                 {option.available && (
                   <ChevronRight
@@ -130,8 +126,8 @@ export function PointsDisplay({ totalPoints, userId: _userId, transactions }: Pr
               {selectedRedemption === option.points && (
                 <div className="mt-2 p-4 rounded-lg bg-zinc-900 border border-zinc-700 animate-in fade-in slide-in-from-top-2">
                   <p className="text-zinc-300 mb-4 text-sm">
-                    Are you sure you want to redeem <strong>{option.points} points</strong> for a{' '}
-                    <strong>{format(option.discountCents)} discount</strong>?
+                    Are you sure you want to redeem <strong>{option.points} points</strong> for{' '}
+                    <strong>{option.label}</strong>?
                   </p>
                   <div className="flex gap-3">
                     <button

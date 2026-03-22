@@ -130,7 +130,11 @@ export function ReferralCard({ userId, referralCount }: Props) {
                 className="rounded-lg bg-zinc-800 p-3 text-zinc-400 transition hover:bg-zinc-700 hover:text-zinc-200"
                 title={t('copyLink')}
               >
-                {copied ? <Check className="h-5 w-5 text-green-400" /> : <Copy className="h-5 w-5" />}
+                {copied ? (
+                  <Check className="h-5 w-5 text-green-400" />
+                ) : (
+                  <Copy className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
@@ -151,10 +155,14 @@ export function ReferralCard({ userId, referralCount }: Props) {
               {t('referralRewards')}
             </p>
             <ul className="space-y-1 text-sm text-zinc-400">
-              <li>• {t('referralSignup')}: +200 {t('points')}</li>
-              <li>• {t('referralPurchase')}: +500 {t('points')}</li>
               <li>
-                • {t('friendGets')}: 10% {t('discount')}
+                • {t('referralSignup')}: +100 {t('points')}
+              </li>
+              <li>
+                • {t('referralPurchase')}: +500 {t('points')}
+              </li>
+              <li>
+                • {t('friendGets')}: 5% {t('discount')}
               </li>
             </ul>
           </div>

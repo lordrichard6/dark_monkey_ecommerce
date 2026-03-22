@@ -148,8 +148,8 @@ export function checkAchievementQualification(
 // Points earning rules
 export const POINTS_RULES = {
   PURCHASE: 10, // 10 points per CHF 1 spent (1000 cents = 10 points)
-  REVIEW: 100, // Points for writing a review
-  REFERRAL_SIGNUP: 200, // When referred friend signs up
+  REVIEW: 50, // Points for writing a review (reduced to limit abuse)
+  REFERRAL_SIGNUP: 100, // When referred friend signs up (reduced to limit fake accounts)
   REFERRAL_PURCHASE: 500, // When referred friend makes first purchase
   ACHIEVEMENT: 0, // Varies by achievement
 } as const
@@ -158,13 +158,19 @@ export function calculatePurchasePoints(priceCents: number): number {
   return Math.floor(priceCents / 100) // 1 point per CHF 1
 }
 
-// Points redemption values (more conservative rates for sustainability)
-export const POINTS_REDEMPTION = {
-  500: 500, // 500 points = CHF 5 discount (1% return rate)
-  1000: 1200, // 1000 points = CHF 12 discount (1.2% return rate)
-  2500: 3000, // 2500 points = CHF 30 discount (1.2% return rate)
-  5000: 6500, // 5000 points = CHF 65 discount (1.3% return rate)
-} as const
+// Points redemption tiers
+// type 'percentage': value stored as percentage * 100 (e.g. 500 = 5%, 1000 = 10%)
+// type 'fixed': value stored in cents (e.g. 6500 = CHF 65)
+export const POINTS_REDEMPTION: Record<
+  number,
+  { type: 'percentage' | 'fixed'; value: number; label: string }
+> = {
+  200: { type: 'percentage', value: 500, label: '5% off' },
+  500: { type: 'percentage', value: 1000, label: '10% off' },
+  1000: { type: 'percentage', value: 1500, label: '15% off' },
+  2000: { type: 'percentage', value: 2000, label: '20% off' },
+  5000: { type: 'fixed', value: 6500, label: 'Free product up to CHF 65' },
+}
 
 // Aliases for backward compatibility in tests
 export const XP_REFERRAL_FIRST_PURCHASE = POINTS_RULES.REFERRAL_PURCHASE

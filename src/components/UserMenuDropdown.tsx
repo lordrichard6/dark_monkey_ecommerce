@@ -160,12 +160,18 @@ export function UserMenuDropdown({ user, displayName, avatarUrl, isAdmin }: Prop
             width={28}
             height={28}
             className="h-7 w-7 rounded-full object-cover ring-1 ring-white/10"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+              e.currentTarget.nextElementSibling?.removeAttribute('style')
+            }}
           />
-        ) : (
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10">
-            <UserIcon className="h-4 w-4" />
-          </span>
-        )}
+        ) : null}
+        <span
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10"
+          style={imgSrc ? { display: 'none' } : undefined}
+        >
+          <UserIcon className="h-4 w-4" />
+        </span>
         {user && (
           <div className="flex flex-col items-start leading-none">
             <span className="max-w-[120px] truncate text-sm text-zinc-300">{label}</span>
@@ -197,9 +203,7 @@ export function UserMenuDropdown({ user, displayName, avatarUrl, isAdmin }: Prop
                     </span>
                   )}
                 </div>
-                {user.email && (
-                  <p className="truncate text-xs text-zinc-500">{user.email}</p>
-                )}
+                {user.email && <p className="truncate text-xs text-zinc-500">{user.email}</p>}
               </div>
               <div className="py-2">
                 {isAdmin && (

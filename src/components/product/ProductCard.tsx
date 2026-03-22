@@ -71,19 +71,18 @@ export function ProductCard({
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
             {showDual ? (
               <>
-                {/* Image 1: left side, clipped diagonally */}
+                {/* Image 1: left half — image fills only the left half so object-position:center works correctly */}
                 <div
-                  className="absolute inset-0 transition group-hover:scale-105"
-                  style={{ clipPath: 'polygon(0 0, 62% 0, 38% 100%, 0 100%)' }}
+                  className="absolute inset-y-0 left-0 w-1/2 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(0 0, 124% 0, 76% 100%, 0 100%)' }}
                 >
                   {imageUrl ? (
                     <Image
                       src={imageUrl}
                       alt={imageAlt}
                       fill
-                      className="object-cover"
-                      style={{ objectPosition: '65% center' }}
-                      sizes="(max-width: 640px) 30vw, 15vw"
+                      className="object-cover object-center"
+                      sizes="(max-width: 640px) 15vw, 8vw"
                       loading="lazy"
                       unoptimized={unoptimizedFor(imageUrl)}
                     />
@@ -93,18 +92,17 @@ export function ProductCard({
                     </div>
                   )}
                 </div>
-                {/* Image 2: right side, clipped diagonally */}
+                {/* Image 2: right half — image fills only the right half so object-position:center works correctly */}
                 <div
-                  className="absolute inset-0 transition group-hover:scale-105"
-                  style={{ clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 38% 100%)' }}
+                  className="absolute inset-y-0 right-0 w-1/2 transition group-hover:scale-105"
+                  style={{ clipPath: 'polygon(24% 0, 100% 0, 100% 100%, -24% 100%)' }}
                 >
                   <Image
                     src={imageUrl2!}
                     alt={imageAlt}
                     fill
-                    className="object-cover"
-                    style={{ objectPosition: '35% center' }}
-                    sizes="(max-width: 640px) 30vw, 15vw"
+                    className="object-cover object-center"
+                    sizes="(max-width: 640px) 15vw, 8vw"
                     loading="lazy"
                     unoptimized={unoptimizedFor(imageUrl2!)}
                   />
