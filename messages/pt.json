@@ -794,6 +794,14 @@
       "cta": "Confirmar Email",
       "ignore": "Se não criaste uma conta, podes ignorar este email com segurança."
     },
+    "magicLink": {
+      "subject": "O teu link de acesso — Dark Monkey",
+      "preview": "Clica para entrar instantaneamente",
+      "title": "Entrar no Dark Monkey",
+      "body": "Pediste um link mágico para entrar. Clica no botão abaixo para aceder à tua conta. Este link expira em 1 hora e só pode ser usado uma vez.",
+      "cta": "Entrar",
+      "ignore": "Se não pediste este link, podes ignorar este email com segurança."
+    },
     "orderCancellation": {
       "subject": "Encomenda Cancelada — #{orderId}",
       "preview": "A tua encomenda #{orderId} foi cancelada",

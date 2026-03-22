@@ -427,6 +427,45 @@ export async function sendConfirmationEmail(
   }
 }
 
+// ─── Magic link email ─────────────────────────────────────────────────────────
+
+export interface MagicLinkPayload {
+  to: string
+  magicLinkUrl: string
+  locale?: string
+}
+
+export async function sendMagicLinkEmail(
+  payload: MagicLinkPayload
+): Promise<{ ok: boolean; error?: string }> {
+  const client = getResendClient()
+  if (!client) return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
+  const { to, magicLinkUrl, locale = 'en' } = payload
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strings = getEmailStrings(locale, 'magicLink') as any
+  try {
+    const html = generateEmailHtml(locale, 'magicLink', {
+      previewText: strings.preview,
+      title: strings.title,
+      body: `${strings.body}<br><br><small style="color:#737373;">${strings.ignore}</small>`,
+      ctaText: strings.cta,
+      ctaUrl: magicLinkUrl,
+    })
+    const { error } = await client.emails.send({
+      from: getDefaultFrom(),
+      to,
+      subject: strings.subject,
+      html,
+    })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[sendMagicLinkEmail]', err)
+    return { ok: false, error: message }
+  }
+}
+
 // ─── Order cancellation email ─────────────────────────────────────────────────
 
 export interface OrderCancellationPayload {

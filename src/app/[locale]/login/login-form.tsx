@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { sendMagicLink } from '@/actions/auth-signup'
 import { useState, useEffect, useRef } from 'react'
 import { validateEmail } from '@/utils/email-validation'
 import { Turnstile } from '@marsidev/react-turnstile'
@@ -62,14 +63,10 @@ export function LoginForm() {
     }
     setLoading(true)
     setMessage(null)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/${locale}/auth/callback` },
-    })
+    const result = await sendMagicLink(email, locale)
     setLoading(false)
-    if (error) {
-      setMessage({ type: 'error', text: error.message })
+    if (!result.ok) {
+      setMessage({ type: 'error', text: result.error })
     } else {
       setMessage({ type: 'success', text: t('magicLinkSent') })
     }
@@ -414,6 +411,9 @@ export function LoginForm() {
               }`}
             >
               <p className="text-sm">{message.text}</p>
+              {message.type === 'success' && isMagicLink && (
+                <p className="text-xs text-emerald-400/70">{t('spamWarning')}</p>
+              )}
               {message.action && (
                 <button
                   type="button"

@@ -60,6 +60,12 @@ const EMAIL_TYPES = [
     icon: '✅',
     description: 'Sent on signup via Resend',
   },
+  {
+    id: 'magic-link',
+    label: 'Magic Link',
+    icon: '🔗',
+    description: 'Sent on passwordless sign-in',
+  },
 ] as const
 
 type EmailTypeId = (typeof EMAIL_TYPES)[number]['id']

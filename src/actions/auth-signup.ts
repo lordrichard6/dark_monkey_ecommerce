@@ -1,7 +1,7 @@
 'use server'
 
 import { getAdminClient } from '@/lib/supabase/admin'
-import { sendConfirmationEmail } from '@/lib/resend'
+import { sendConfirmationEmail, sendMagicLinkEmail } from '@/lib/resend'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.dark-monkey.ch'
 
@@ -59,6 +59,35 @@ export async function signUpWithEmail(
       code: 'RESEND_FAILED',
     }
   }
+
+  return { ok: true }
+}
+
+export type MagicLinkResult = { ok: true } | { ok: false; error: string }
+
+/**
+ * Generates a magic link for passwordless sign-in via the Supabase admin API
+ * and sends it via Resend with our custom branded template.
+ */
+export async function sendMagicLink(email: string, locale: string): Promise<MagicLinkResult> {
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Service not configured' }
+
+  const { data, error } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+    options: {
+      redirectTo: `${APP_URL}/${locale}/auth/callback`,
+    },
+  })
+
+  if (error) return { ok: false, error: error.message }
+
+  const magicLinkUrl = data?.properties?.action_link
+  if (!magicLinkUrl) return { ok: false, error: 'Failed to generate magic link' }
+
+  const result = await sendMagicLinkEmail({ to: email, magicLinkUrl, locale })
+  if (!result.ok) return { ok: false, error: result.error ?? 'Failed to send magic link email' }
 
   return { ok: true }
 }

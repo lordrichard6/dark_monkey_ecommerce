@@ -17,6 +17,7 @@ export type EmailType =
   | 'passwordReset'
   | 'welcome'
   | 'emailConfirmation'
+  | 'magicLink'
   | 'orderCancellation'
   | 'reviewRequest'
   | 'adminOrderAlert'

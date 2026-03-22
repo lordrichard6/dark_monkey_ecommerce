@@ -12,6 +12,7 @@ import {
   sendOrderCancellationEmail,
   sendReviewRequestEmail,
   sendConfirmationEmail,
+  sendMagicLinkEmail,
 } from '@/lib/resend'
 
 export type EmailTestType =
@@ -25,6 +26,7 @@ export type EmailTestType =
   | 'review-request'
   | 'password-reset'
   | 'email-confirmation'
+  | 'magic-link'
 
 export async function sendTestEmail(type: EmailTestType, toEmail: string, locale: string = 'en') {
   // 1. Verify Admin
@@ -172,6 +174,12 @@ export async function sendTestEmailFull(
         return await sendConfirmationEmail({
           to: toEmail,
           confirmationUrl: `${appUrl}/${locale}/auth/callback?token=test`,
+          locale,
+        })
+      case 'magic-link':
+        return await sendMagicLinkEmail({
+          to: toEmail,
+          magicLinkUrl: `${appUrl}/${locale}/auth/callback?token=test`,
           locale,
         })
       default:

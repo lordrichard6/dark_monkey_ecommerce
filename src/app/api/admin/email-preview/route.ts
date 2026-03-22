@@ -157,6 +157,14 @@ function getPreviewHtml(type: string, locale: string): string {
         ctaUrl: '#',
         ctaText: 'Confirm Account',
       })
+    case 'magic-link':
+      return generateEmailHtml(locale, 'magicLink', {
+        previewText: 'Click to sign in instantly',
+        title: 'Sign in to Dark Monkey',
+        body: 'You requested a magic link to sign in. Click the button below to access your account. This link expires in 1 hour and can only be used once.<br><br><small style="color:#737373;">If you didn\'t request this link, you can safely ignore this email.</small>',
+        ctaUrl: '#',
+        ctaText: 'Sign In',
+      })
     default:
       return '<p>Unknown email type</p>'
   }

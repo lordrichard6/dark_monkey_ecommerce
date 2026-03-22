@@ -794,6 +794,14 @@
       "cta": "Confirm Email",
       "ignore": "If you didn't create an account, you can safely ignore this email."
     },
+    "magicLink": {
+      "subject": "Your sign-in link — Dark Monkey",
+      "preview": "Click to sign in instantly",
+      "title": "Sign in to Dark Monkey",
+      "body": "You requested a magic link to sign in. Click the button below to access your account. This link expires in 1 hour and can only be used once.",
+      "cta": "Sign In",
+      "ignore": "If you didn't request this link, you can safely ignore this email."
+    },
     "orderCancellation": {
       "subject": "Order Cancelled — #{orderId}",
       "preview": "Your order #{orderId} has been cancelled",
