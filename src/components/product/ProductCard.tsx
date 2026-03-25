@@ -71,9 +71,9 @@ export function ProductCard({
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
             {showDual ? (
               <>
-                {/* Image 1: left half — image fills only the left half so object-position:center works correctly */}
+                {/* Image 1: left half — contained so full product is visible */}
                 <div
-                  className="absolute inset-y-0 left-0 w-1/2 transition group-hover:scale-105"
+                  className="absolute inset-y-0 left-0 w-1/2"
                   style={{ clipPath: 'polygon(0 0, 124% 0, 76% 100%, 0 100%)' }}
                 >
                   {imageUrl ? (
@@ -81,8 +81,8 @@ export function ProductCard({
                       src={imageUrl}
                       alt={imageAlt}
                       fill
-                      className="object-cover object-center"
-                      sizes="(max-width: 640px) 15vw, 8vw"
+                      className="object-cover object-center transition group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       loading="lazy"
                       unoptimized={unoptimizedFor(imageUrl)}
                     />
@@ -92,17 +92,17 @@ export function ProductCard({
                     </div>
                   )}
                 </div>
-                {/* Image 2: right half — image fills only the right half so object-position:center works correctly */}
+                {/* Image 2: right — starts at 38% to fully cover the diagonal triangle */}
                 <div
-                  className="absolute inset-y-0 right-0 w-1/2 transition group-hover:scale-105"
-                  style={{ clipPath: 'polygon(24% 0, 100% 0, 100% 100%, -24% 100%)' }}
+                  className="absolute inset-y-0 right-0"
+                  style={{ left: '38%', clipPath: 'polygon(39% 0, 100% 0, 100% 100%, 0% 100%)' }}
                 >
                   <Image
                     src={imageUrl2!}
                     alt={imageAlt}
                     fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 640px) 15vw, 8vw"
+                    className="object-cover object-center transition group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     loading="lazy"
                     unoptimized={unoptimizedFor(imageUrl2!)}
                   />

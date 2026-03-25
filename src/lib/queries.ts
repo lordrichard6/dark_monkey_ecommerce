@@ -251,6 +251,7 @@ export const getCategoryBySlug = cache(async (slug: string) => {
       description,
       category_id,
       created_at,
+      dual_image_mode,
       product_images (url, alt, sort_order),
       product_variants (price_cents, compare_at_price_cents, product_inventory (quantity))
     `

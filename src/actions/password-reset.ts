@@ -14,7 +14,7 @@ import { sendPasswordResetEmail } from '@/lib/resend'
  */
 export async function requestPasswordReset(email: string, locale: string = 'en') {
   const trimmedEmail = email.trim()
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.dark-monkey.ch'
   const redirectTo = `${base}/${locale}/auth/callback?redirectTo=/${locale}/auth/reset-password`
 
   const admin = getAdminClient()

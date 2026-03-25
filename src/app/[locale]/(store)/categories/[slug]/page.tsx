@@ -91,7 +91,11 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       : null
     const minPrice = minVariant?.price_cents ?? 0
     const compareAtPrice = minVariant?.compare_at_price_cents ?? null
-    const primaryImage = images?.sort((a, b) => a.sort_order - b.sort_order)[0]
+    const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) ?? []
+    const primaryImage = sortedImages[0]
+    const secondImage = sortedImages[1]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dualImageMode = (p as any).dual_image_mode as boolean
     return {
       productId: p.id,
       slug: p.slug,
@@ -100,6 +104,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       compareAtPriceCents: compareAtPrice,
       imageUrl: primaryImage?.url ?? '',
       imageAlt: primaryImage?.alt ?? p.name,
+      imageUrl2: dualImageMode ? (secondImage?.url ?? null) : null,
+      dualImageMode: dualImageMode && !!secondImage,
       isInWishlist: wishlistProductIds.includes(p.id),
       isBestseller: bestsellerIds.has(p.id),
       isOnSale: !!(compareAtPrice && compareAtPrice > minPrice),
