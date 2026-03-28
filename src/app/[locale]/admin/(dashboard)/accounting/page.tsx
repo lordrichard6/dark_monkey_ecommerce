@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 import { getAdminUser } from '@/lib/auth-admin'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
-import { getAccountingData, FIXED_COSTS, TOTAL_FIXED_MONTHLY } from '@/actions/accounting'
+import { getAccountingData } from '@/actions/accounting'
+import { FIXED_COSTS, TOTAL_FIXED_MONTHLY } from '@/lib/accounting-utils'
 import { AccountingCharts } from './accounting-charts'
 import {
   TrendingUp,

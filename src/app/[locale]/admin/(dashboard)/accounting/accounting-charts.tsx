@@ -11,7 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import type { MonthlyData } from '@/actions/accounting'
+import type { MonthlyData } from '@/lib/accounting-utils'
 
 function chf(cents: number) {
   return `CHF ${(cents / 100).toFixed(2)}`
