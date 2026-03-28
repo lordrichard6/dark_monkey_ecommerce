@@ -21,6 +21,7 @@ export function AdminFooter() {
         { href: '/admin/customers', label: t('nav.customers') },
         { href: '/admin/discounts', label: t('nav.discounts') },
         { href: '/admin/stock-notifications', label: t('nav.stockAlerts') },
+        { href: '/admin/accounting', label: t('nav.accounting') },
       ],
     },
     {

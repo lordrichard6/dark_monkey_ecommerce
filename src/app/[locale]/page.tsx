@@ -9,6 +9,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { GalleryPreviewSection } from '@/components/gallery/GalleryPreviewSection'
 import { AuthCTASection } from '@/components/auth/AuthCTASection'
+import { Lopes2TechSection } from '@/components/Lopes2TechSection'
 import { Link } from '@/i18n/navigation'
 import { CategoryStrip } from '@/components/category/CategoryStrip'
 
@@ -84,6 +85,7 @@ export default async function HomePage({ params, searchParams }: Props) {
       </div>
 
       <GalleryPreviewSection />
+      <Lopes2TechSection />
       <AuthCTASection />
     </div>
   )
