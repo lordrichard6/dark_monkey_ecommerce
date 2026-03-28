@@ -15,7 +15,9 @@ import { sendPasswordResetEmail } from '@/lib/resend'
 export async function requestPasswordReset(email: string, locale: string = 'en') {
   const trimmedEmail = email.trim()
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.dark-monkey.ch'
-  const redirectTo = `${base}/${locale}/auth/callback?redirectTo=/${locale}/auth/reset-password`
+  // Point to the client-side /auth/confirm page, which handles both PKCE
+  // (code query param) and implicit (hash fragment) flows from admin-generated links.
+  const redirectTo = `${base}/${locale}/auth/confirm`
 
   const admin = getAdminClient()
   if (admin) {
