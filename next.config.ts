@@ -45,21 +45,14 @@ const nextConfig: NextConfig = {
         hostname: 'ehkwnyiktjsmegzxbpph.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        pathname: '/**',
-      },
+      // Dev-only placeholder image domains — excluded from production builds
+      ...(process.env.NODE_ENV === 'development'
+        ? ([
+            { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
+            { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
+            { protocol: 'https', hostname: 'placehold.co', pathname: '/**' },
+          ] as const)
+        : []),
       {
         protocol: 'https',
         hostname: 'files.cdn.printful.com',
@@ -98,17 +91,32 @@ const nextConfig: NextConfig = {
       'blob:',
       'https://ehkwnyiktjsmegzxbpph.supabase.co',
       'https://files.cdn.printful.com',
-      'https://picsum.photos',
-      'https://images.unsplash.com',
-      'https://placehold.co',
+      'https://lh3.googleusercontent.com',
       'https://www.google-analytics.com',
-      ...(isDev ? ['http://localhost:54321', 'http://127.0.0.1:54321'] : []),
+      ...(isDev
+        ? [
+            'https://picsum.photos',
+            'https://images.unsplash.com',
+            'https://placehold.co',
+            'http://localhost:54321',
+            'http://127.0.0.1:54321',
+          ]
+        : []),
     ].join(' ')
 
     return [
       {
         source: '/(.*)',
         headers: [
+          // Force HTTPS for 2 years — tells browsers to never connect via HTTP again
+          ...(!isDev
+            ? [
+                {
+                  key: 'Strict-Transport-Security',
+                  value: 'max-age=63072000; includeSubDomains; preload',
+                },
+              ]
+            : []),
           // Clickjacking protection
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           // Prevent MIME type sniffing
