@@ -17,8 +17,11 @@ import { describe, it, expect } from 'vitest'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
-// Only run these tests when pointing at a real local instance
-const IS_LOCAL = SUPABASE_URL.includes('localhost') || SUPABASE_URL.includes('127.0.0.1')
+// Only run these tests when pointing at a real local instance AND not in CI.
+// The CI secret NEXT_PUBLIC_SUPABASE_URL may contain 'localhost', but there is
+// no local Supabase stack running in GitHub Actions, so we must skip there too.
+const IS_LOCAL =
+  (SUPABASE_URL.includes('localhost') || SUPABASE_URL.includes('127.0.0.1')) && !process.env.CI
 // Vitest setup injects a mock key — skip real-key checks when that's active
 const IS_MOCK_KEY = ANON_KEY === 'test-anon-key' || ANON_KEY === ''
 

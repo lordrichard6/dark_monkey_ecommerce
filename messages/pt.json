@@ -1102,6 +1102,7 @@
       "saving": "A guardar…",
       "cancel": "Cancelar",
       "saved": "{label} guardado",
+      "categorySaved": "Categoria guardada",
       "saveFailed": "Falha ao guardar",
       "openInStorefront": "Abrir este produto na loja (novo separador)",
       "slugInvalid": "O slug só pode conter letras minúsculas, números e hífens",
