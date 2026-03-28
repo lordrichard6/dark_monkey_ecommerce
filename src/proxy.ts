@@ -11,8 +11,6 @@ const handleI18n = createMiddleware(routing)
  * Returns null for routes that don't need rate limiting.
  */
 function getRateLimitBucket(pathname: string): RateLimitBucket | null {
-  // Auth pages: login, signup, forgot-password, reset-password
-  if (/\/(login|forgot-password|auth)/.test(pathname)) return 'auth'
   // Checkout pages
   if (/\/(checkout)/.test(pathname)) return 'checkout'
   // Search page
