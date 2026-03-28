@@ -28,6 +28,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       shipping_cost_cents,
       discount_cents,
       currency,
+      user_id,
       order_items (
         id,
         quantity,
@@ -39,14 +40,28 @@ export async function getAccountingData(): Promise<AccountingData | null> {
           printful_variant_id,
           products ( id, name )
         )
-      ),
-      user_profiles:user_id ( display_name, email )
+      )
     `
     )
     .in('status', ['paid', 'processing', 'shipped', 'delivered'])
     .order('created_at', { ascending: false })
 
   if (error || !orders) return null
+
+  // Fetch user profiles for logged-in customers
+  const userIds = [
+    ...new Set(orders.map((o) => (o as { user_id?: string }).user_id).filter(Boolean)),
+  ] as string[]
+  const profileMap = new Map<string, { display_name?: string; email?: string }>()
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('id, display_name, email')
+      .in('id', userIds)
+    for (const p of profiles ?? []) {
+      profileMap.set(p.id, { display_name: p.display_name, email: p.email })
+    }
+  }
 
   // Collect unique printful_variant_ids to fetch costs
   const variantIdSet = new Set<number>()
@@ -143,7 +158,8 @@ export async function getAccountingData(): Promise<AccountingData | null> {
 
     const grossProfit = order.total_cents - stripeFee - orderPrintfulCost
 
-    const profile = order.user_profiles as { display_name?: string; email?: string } | null
+    const userId = (order as { user_id?: string }).user_id
+    const profile = userId ? profileMap.get(userId) : null
     const customer = profile?.display_name ?? profile?.email ?? order.guest_email ?? 'Guest'
 
     accountingOrders.push({
