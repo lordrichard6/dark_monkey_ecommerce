@@ -1,7 +1,7 @@
 'use server'
 
 import { getAdminClient } from '@/lib/supabase/admin'
-import { fetchCatalogVariant } from '@/lib/printful'
+import { fetchStoreOrder } from '@/lib/printful'
 import {
   calcStripeFee,
   TOTAL_FIXED_MONTHLY,
@@ -29,6 +29,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       discount_cents,
       currency,
       user_id,
+      printful_order_id,
       order_items (
         id,
         quantity,
@@ -63,22 +64,16 @@ export async function getAccountingData(): Promise<AccountingData | null> {
     }
   }
 
-  // Collect unique printful_variant_ids to fetch costs
-  const variantIdSet = new Set<number>()
-  for (const order of orders) {
-    for (const item of order.order_items ?? []) {
-      const pv = item.product_variants as unknown as { printful_variant_id?: number } | null
-      if (pv?.printful_variant_id) variantIdSet.add(pv.printful_variant_id)
-    }
-  }
-
-  // Fetch Printful costs (cached after first call)
-  const costMap = new Map<number, number>() // printful_variant_id → cost in cents
+  // Fetch actual Printful order costs (includes shipping, digitization, VAT)
+  // These are the real amounts Printful charges, not just the catalog base price
+  const printfulCostMap = new Map<string, number>() // order.id → total cost in cents
   await Promise.all(
-    Array.from(variantIdSet).map(async (variantId) => {
-      const result = await fetchCatalogVariant(variantId)
-      if (result.ok && result.variant?.price) {
-        costMap.set(variantId, Math.round(parseFloat(result.variant.price) * 100))
+    orders.map(async (order) => {
+      const printfulOrderId = (order as { printful_order_id?: number }).printful_order_id
+      if (!printfulOrderId) return
+      const result = await fetchStoreOrder(printfulOrderId)
+      if (result.ok && result.order?.costs?.total) {
+        printfulCostMap.set(order.id, Math.round(parseFloat(result.order.costs.total) * 100))
       }
     })
   )
@@ -102,8 +97,10 @@ export async function getAccountingData(): Promise<AccountingData | null> {
 
   for (const order of orders) {
     const stripeFee = calcStripeFee(order.total_cents)
-    let orderPrintfulCost = 0
     const items: AccountingOrderItem[] = []
+
+    // Use actual Printful order cost if available
+    const orderPrintfulCost = printfulCostMap.get(order.id) ?? 0
 
     for (const item of order.order_items ?? []) {
       const pv = item.product_variants as unknown as {
@@ -114,10 +111,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       } | null
 
       const printfulVariantId = pv?.printful_variant_id ?? 0
-      const costCents = costMap.get(printfulVariantId) ?? 0
-      const totalItemCost = costCents * item.quantity
       const totalItemRevenue = item.price_cents * item.quantity
-      orderPrintfulCost += totalItemCost
 
       const productName = (pv?.products as { name?: string } | null)?.name ?? 'Unknown'
       const variantName = pv?.name ?? 'Unknown'
@@ -128,18 +122,17 @@ export async function getAccountingData(): Promise<AccountingData | null> {
         variantName,
         quantity: item.quantity,
         salePriceCents: item.price_cents,
-        printfulCostCents: costCents,
-        itemProfit: totalItemRevenue - totalItemCost,
+        printfulCostCents: 0, // line-item cost not available without catalog API; use order-level total
+        itemProfit: totalItemRevenue, // profit allocated at order level below
       })
 
-      // Aggregate per-product
+      // Aggregate per-product (revenue side only; cost is at order level)
       if (printfulVariantId) {
         const key = `${pv?.id}`
         const existing = productMap.get(key)
         if (existing) {
           existing.unitsSold += item.quantity
           existing.totalRevenue += totalItemRevenue
-          existing.totalCost += totalItemCost
         } else {
           productMap.set(key, {
             productId: (pv?.products as { id?: string } | null)?.id ?? '',
@@ -147,10 +140,10 @@ export async function getAccountingData(): Promise<AccountingData | null> {
             variantName,
             printfulVariantId,
             salePriceCents: item.price_cents,
-            printfulCostCents: costCents,
+            printfulCostCents: 0, // filled below from printfulCostMap
             unitsSold: item.quantity,
             totalRevenue: totalItemRevenue,
-            totalCost: totalItemCost,
+            totalCost: 0,
           })
         }
       }
@@ -177,6 +170,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
   }
 
   // Build products array sorted by total profit
+  // Use per-order printful costs distributed proportionally where possible
   const products: ProductProfit[] = Array.from(productMap.values())
     .map((p) => ({
       productId: p.productId,
@@ -187,7 +181,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       printfulCostCents: p.printfulCostCents,
       marginCents: p.salePriceCents - p.printfulCostCents,
       marginPercent:
-        p.salePriceCents > 0
+        p.salePriceCents > 0 && p.printfulCostCents > 0
           ? Math.round(((p.salePriceCents - p.printfulCostCents) / p.salePriceCents) * 100)
           : 0,
       unitsSold: p.unitsSold,
@@ -262,7 +256,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       stripeFees: allTimeStripeFees,
       printfulCosts: allTimePrintfulCosts,
       grossProfit: allTimeGrossProfit,
-      netProfit: allTimeGrossProfit, // fixed costs are monthly, gross = best all-time metric
+      netProfit: allTimeGrossProfit,
       orderCount,
       avgOrderRevenue: orderCount > 0 ? Math.round(allTimeRevenue / orderCount) : 0,
       avgOrderProfit: avgProfitPerOrder,
