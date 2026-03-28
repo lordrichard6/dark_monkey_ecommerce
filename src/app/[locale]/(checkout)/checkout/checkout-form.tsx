@@ -155,17 +155,24 @@ export function CheckoutForm({
       return
     }
 
-    const result = await createCheckoutSession({
-      email: email.trim(),
-      fullName: '',
-      line1: '',
-      city: '',
-      postalCode: '',
-      country,
-      discountCode: appliedDiscount ? appliedDiscount.code : discountCode.trim() || undefined,
-      locale,
-      giftNote: isGift && giftNote.trim() ? giftNote.trim() : null,
-    })
+    let result: Awaited<ReturnType<typeof createCheckoutSession>>
+    try {
+      result = await createCheckoutSession({
+        email: email.trim(),
+        fullName: '',
+        line1: '',
+        city: '',
+        postalCode: '',
+        country,
+        discountCode: appliedDiscount ? appliedDiscount.code : discountCode.trim() || undefined,
+        locale,
+        giftNote: isGift && giftNote.trim() ? giftNote.trim() : null,
+      })
+    } catch (err) {
+      setLoading(false)
+      setError(err instanceof Error ? err.message : t('validationFailed'))
+      return
+    }
 
     setLoading(false)
 
