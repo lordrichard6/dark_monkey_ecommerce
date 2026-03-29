@@ -13,6 +13,7 @@ import { ProductCategoryField } from './product-category-field'
 import { ProductTagsField } from './product-tags-field'
 import { ProductToggleStatus } from './product-toggle-status'
 import { ProductToggleDualImage } from './product-toggle-dual-image'
+import { ProductToggleFeatured } from './product-toggle-featured'
 import { ProductDangerZone } from './product-danger-zone'
 import { ProductInfoFields } from './product-info-fields'
 import { CopyIdButton } from './copy-id-button'
@@ -55,6 +56,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
         description,
         category_id,
         is_active,
+        is_featured,
         is_customizable,
         dual_image_mode,
         printful_sync_product_id,
@@ -231,6 +233,12 @@ export default async function AdminProductDetailPage({ params }: Props) {
                 productId={product.id}
                 initialDualImageMode={
                   ((product as Record<string, unknown>).dual_image_mode as boolean) ?? false
+                }
+              />
+              <ProductToggleFeatured
+                productId={product.id}
+                initialIsFeatured={
+                  ((product as Record<string, unknown>).is_featured as boolean) ?? false
                 }
               />
               {product.is_customizable && (
