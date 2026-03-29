@@ -718,6 +718,28 @@ export async function bulkUpdateProductStatus(
   return { ok: true }
 }
 
+export async function bulkUpdateProductFeatured(
+  productIds: string[],
+  isFeatured: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { error } = await supabase
+    .from('products')
+    .update({ is_featured: isFeatured })
+    .in('id', productIds)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/admin/products')
+  revalidatePath('/')
+  return { ok: true }
+}
+
 export async function updateProductTags(
   productId: string,
   tagIds: string[]

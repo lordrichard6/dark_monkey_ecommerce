@@ -19,6 +19,7 @@ export default async function AdminProductsPage({
     search?: string
     status?: string
     category?: string
+    tag?: string
     sort?: string
     dir?: string
   }>
@@ -38,6 +39,7 @@ export default async function AdminProductsPage({
     search,
     status,
     category,
+    tag,
     sort,
     dir,
   } = await searchParams
@@ -61,6 +63,7 @@ export default async function AdminProductsPage({
       name,
       slug,
       is_active,
+      is_featured,
       is_customizable,
       category_id,
       categories (id, name),
@@ -99,6 +102,21 @@ export default async function AdminProductsPage({
     query = query.order('created_at', { ascending: sortAsc })
   }
 
+  // Tag filter — fetch matching product IDs first
+  if (tag) {
+    const { data: taggedIds } = await supabase
+      .from('product_tags')
+      .select('product_id')
+      .eq('tag_id', tag)
+    const ids = (taggedIds ?? []).map((t) => t.product_id)
+    if (ids.length > 0) {
+      query = query.in('id', ids)
+    } else {
+      // No products match this tag — force empty result
+      query = query.in('id', ['00000000-0000-0000-0000-000000000000'])
+    }
+  }
+
   query = query.range(start, end)
 
   const supabaseUser = await createClient()
@@ -106,20 +124,25 @@ export default async function AdminProductsPage({
     data: { user: currentUser },
   } = await supabaseUser.auth.getUser()
 
-  const [{ data: products, count, error }, { data: allCategories }, { data: adminProfiles }] =
-    await Promise.all([
-      query,
-      supabase
-        .from('categories')
-        .select('id, name, parent_id')
-        .order('sort_order', { ascending: true })
-        .order('name', { ascending: true }),
-      supabase
-        .from('user_profiles')
-        .select('id, admin_color')
-        .eq('is_admin', true)
-        .not('admin_color', 'is', null),
-    ])
+  const [
+    { data: products, count, error },
+    { data: allCategories },
+    { data: adminProfiles },
+    { data: allTags },
+  ] = await Promise.all([
+    query,
+    supabase
+      .from('categories')
+      .select('id, name, parent_id')
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true }),
+    supabase
+      .from('user_profiles')
+      .select('id, admin_color, display_name')
+      .eq('is_admin', true)
+      .not('admin_color', 'is', null),
+    supabase.from('tags').select('id, name').order('name', { ascending: true }),
+  ])
 
   const productIds = (products ?? []).map((p) => p.id)
   const { data: votes } =
@@ -175,8 +198,16 @@ export default async function AdminProductsPage({
           sortBy={sortCol}
           sortDir={sortAsc ? 'asc' : 'desc'}
           votes={(votes ?? []) as { product_id: string; user_id: string; vote: 'up' | 'down' }[]}
-          adminProfiles={(adminProfiles ?? []) as { id: string; admin_color: string | null }[]}
+          adminProfiles={
+            (adminProfiles ?? []) as {
+              id: string
+              admin_color: string | null
+              display_name?: string | null
+            }[]
+          }
           currentUserId={currentUser?.id ?? ''}
+          allTags={allTags ?? []}
+          tagFilter={tag ?? ''}
         />
       </div>
     </div>

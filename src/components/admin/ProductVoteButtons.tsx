@@ -14,6 +14,7 @@ export type AdminVote = {
 export type AdminProfile = {
   id: string
   admin_color: string | null
+  display_name?: string | null
 }
 
 type Props = {
@@ -70,7 +71,7 @@ export function ProductVoteButtons({ productId, currentUserId, votes, adminProfi
         return (
           <span
             key={v.user_id}
-            title={`${v.vote === 'up' ? '👍' : '👎'} from another admin`}
+            title={`${v.vote === 'up' ? '👍' : '👎'} by ${adminProfiles.find((a) => a.id === v.user_id)?.display_name ?? 'Admin'}`}
             style={{ color }}
           >
             {v.vote === 'up' ? (
@@ -87,7 +88,7 @@ export function ProductVoteButtons({ productId, currentUserId, votes, adminProfi
         <button
           onClick={() => handleVote('up')}
           disabled={loading}
-          title="Upvote"
+          title={myVote === 'up' ? 'Remove upvote' : 'Upvote'}
           className="rounded p-0.5 transition-all disabled:opacity-40 hover:scale-110"
           style={{
             color: myVote === 'up' ? colorForUser(currentUserId) : 'rgb(113 113 122)', // zinc-500
@@ -99,7 +100,7 @@ export function ProductVoteButtons({ productId, currentUserId, votes, adminProfi
         <button
           onClick={() => handleVote('down')}
           disabled={loading}
-          title="Downvote"
+          title={myVote === 'down' ? 'Remove downvote' : 'Downvote'}
           className="rounded p-0.5 transition-all disabled:opacity-40 hover:scale-110"
           style={{
             color: myVote === 'down' ? colorForUser(currentUserId) : 'rgb(113 113 122)',

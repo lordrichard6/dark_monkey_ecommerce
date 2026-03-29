@@ -14,6 +14,7 @@ import {
   ChevronsUpDown,
   LayoutList,
   LayoutGrid,
+  Star,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -22,6 +23,7 @@ import { SyncPrintfulButton } from '@/app/[locale]/admin/(dashboard)/products/sy
 import {
   bulkDeleteProducts,
   bulkUpdateProductStatus,
+  bulkUpdateProductFeatured,
   updateProductStatus,
 } from '@/actions/admin-products'
 import { CategoryPickerDialog, type PickerCategory } from './CategoryPickerDialog'
@@ -35,6 +37,7 @@ type Product = {
   name: string
   slug: string
   is_active: boolean
+  is_featured: boolean
   is_customizable: boolean
   category_id: string | null
   categories: { id: string; name: string } | null
@@ -59,6 +62,8 @@ type Props = {
   votes: AdminVote[]
   adminProfiles: AdminProfile[]
   currentUserId: string
+  allTags: { id: string; name: string }[]
+  tagFilter: string
 }
 
 type PickerTarget = { id: string; name: string; categoryId: string | null }
@@ -158,6 +163,8 @@ export function ProductListTable({
   votes,
   adminProfiles,
   currentUserId,
+  allTags,
+  tagFilter,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -195,9 +202,32 @@ export function ProductListTable({
   // Local controlled search input (push to URL on submit/debounce)
   const [searchInput, setSearchInput] = useState(search)
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== search) {
+        pushParams({ search: searchInput || null })
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput])
+
   const safeProducts = products || []
-  const allSelected = safeProducts.length > 0 && selectedIds.size === safeProducts.length
-  const indeterminate = selectedIds.size > 0 && selectedIds.size < safeProducts.length
+
+  // Client-side sort by votes
+  const displayProducts =
+    sortBy === 'votes'
+      ? [...safeProducts].sort((a, b) => {
+          const score = (id: string) =>
+            votes.filter((v) => v.product_id === id && v.vote === 'up').length -
+            votes.filter((v) => v.product_id === id && v.vote === 'down').length
+          return sortDir === 'asc' ? score(a.id) - score(b.id) : score(b.id) - score(a.id)
+        })
+      : safeProducts
+
+  const allSelected = displayProducts.length > 0 && selectedIds.size === displayProducts.length
+  const indeterminate = selectedIds.size > 0 && selectedIds.size < displayProducts.length
 
   // ── URL param helper ──────────────────────────────────────────────────────
   function pushParams(updates: Record<string, string | null>) {
@@ -237,7 +267,7 @@ export function ProductListTable({
     if (allSelected) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(safeProducts.map((p) => p.id)))
+      setSelectedIds(new Set(displayProducts.map((p) => p.id)))
     }
   }
 
@@ -274,6 +304,18 @@ export function ProductListTable({
       router.refresh()
     } else {
       toast.error(result.error ?? t('status.failedToUpdate'))
+    }
+  }
+
+  async function handleBulkFeatured(isFeatured: boolean) {
+    setLoading('status')
+    const result = await bulkUpdateProductFeatured(Array.from(selectedIds), isFeatured)
+    setLoading(null)
+    if (result.ok) {
+      setSelectedIds(new Set())
+      router.refresh()
+    } else {
+      toast.error(result.error ?? 'Failed to update featured status')
     }
   }
 
@@ -355,12 +397,26 @@ export function ProductListTable({
             })}
           </select>
 
+          {/* Tag filter */}
+          <select
+            value={tagFilter}
+            onChange={(e) => pushParams({ tag: e.target.value || null })}
+            className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+          >
+            <option value="">All Tags</option>
+            {allTags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
+
           {/* Active filter chips */}
-          {(search || statusFilter || categoryFilter) && (
+          {(search || statusFilter || categoryFilter || tagFilter) && (
             <button
               onClick={() => {
                 setSearchInput('')
-                pushParams({ search: null, status: null, category: null })
+                pushParams({ search: null, status: null, category: null, tag: null })
               }}
               className="flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
             >
@@ -426,6 +482,21 @@ export function ProductListTable({
               className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
               {t('products.setInactive')}
+            </button>
+            <div className="mx-2 hidden h-4 w-px bg-zinc-600 sm:block" />
+            <button
+              onClick={() => handleBulkFeatured(true)}
+              disabled={loading !== null}
+              className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+            >
+              ★ Set Featured
+            </button>
+            <button
+              onClick={() => handleBulkFeatured(false)}
+              disabled={loading !== null}
+              className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+            >
+              ☆ Unset Featured
             </button>
             <div className="mx-2 hidden h-4 w-px bg-zinc-600 sm:block" />
             <button
@@ -518,14 +589,22 @@ export function ProductListTable({
                     <SortIcon col="is_active" sortBy={sortBy} sortDir={sortDir} />
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Votes</th>
+                <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  <button
+                    onClick={() => handleSortClick('votes')}
+                    className="flex items-center whitespace-nowrap hover:text-zinc-200"
+                  >
+                    Votes
+                    <SortIcon col="votes" sortBy={sortBy} sortDir={sortDir} />
+                  </button>
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                   {t('dashboard.actions')}
                 </th>
               </tr>
             </thead>
             <tbody>
-              {safeProducts.map((p) => {
+              {displayProducts.map((p) => {
                 const variants = p.product_variants ?? []
                 const images = (p.product_images ?? []).sort(
                   (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
@@ -591,6 +670,11 @@ export function ProductListTable({
                       {p.is_customizable && (
                         <span className="ml-2 rounded bg-amber-900/40 px-2 py-0.5 text-xs text-amber-400">
                           Customizable
+                        </span>
+                      )}
+                      {p.is_featured && (
+                        <span className="ml-1.5 inline-flex items-center">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         </span>
                       )}
                     </td>
@@ -688,7 +772,7 @@ export function ProductListTable({
       {/* ── Grid View ────────────────────────────────────────────────────────── */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {safeProducts.map((p) => {
+          {displayProducts.map((p) => {
             const variants = p.product_variants ?? []
             const images = (p.product_images ?? []).sort(
               (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
@@ -751,6 +835,28 @@ export function ProductListTable({
                     {formatPrice(minPrice)}
                   </div>
 
+                  {/* Meta row */}
+                  <div className="flex flex-wrap gap-1 text-[10px]">
+                    {p.is_featured && (
+                      <span className="flex items-center gap-0.5 rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
+                        <Star className="h-2.5 w-2.5 fill-amber-400" /> Featured
+                      </span>
+                    )}
+                    {p.is_customizable && (
+                      <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-400">
+                        Custom
+                      </span>
+                    )}
+                    {images.length === 0 && (
+                      <span className="flex items-center gap-0.5 rounded bg-amber-900/20 px-1.5 py-0.5 text-amber-500">
+                        <AlertTriangle className="h-2.5 w-2.5" /> No images
+                      </span>
+                    )}
+                  </div>
+                  {p.categories && (
+                    <div className="text-[10px] text-zinc-500 truncate">{p.categories.name}</div>
+                  )}
+
                   {/* Votes */}
                   <div className="mt-auto pt-1 border-t border-zinc-800">
                     <ProductVoteButtons
@@ -768,143 +874,155 @@ export function ProductListTable({
       )}
 
       {/* ── Mobile Card View ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
-        {safeProducts.map((p) => {
-          const variants = p.product_variants ?? []
-          const images = (p.product_images ?? []).sort(
-            (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-          )
-          const thumbnailUrl = images[0]?.url
-          const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
-          const maxPrice = variants.length ? Math.max(...variants.map((v) => v.price_cents)) : 0
-          const priceRange =
-            minPrice === maxPrice
-              ? formatPrice(minPrice)
-              : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
-          const isSelected = selectedIds.has(p.id)
-          const tags = p.product_tags ?? []
+      {viewMode === 'list' && (
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+          {displayProducts.map((p) => {
+            const variants = p.product_variants ?? []
+            const images = (p.product_images ?? []).sort(
+              (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+            )
+            const thumbnailUrl = images[0]?.url
+            const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
+            const maxPrice = variants.length ? Math.max(...variants.map((v) => v.price_cents)) : 0
+            const priceRange =
+              minPrice === maxPrice
+                ? formatPrice(minPrice)
+                : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
+            const isSelected = selectedIds.has(p.id)
+            const tags = p.product_tags ?? []
 
-          return (
-            <div
-              key={p.id}
-              className={`relative flex flex-col gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition-colors ${
-                isSelected ? 'border-amber-500/50 bg-amber-500/5' : ''
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <Link href={`/admin/products/${p.id}`} className="block shrink-0">
-                    {thumbnailUrl ? (
-                      <div className="relative h-16 w-16 overflow-hidden rounded-md ring-1 ring-zinc-700">
-                        <Image
-                          src={thumbnailUrl}
-                          alt=""
-                          fill
-                          sizes="64px"
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-md bg-zinc-800 ring-1 ring-zinc-700">
-                        <AlertTriangle className="h-5 w-5 text-amber-500" />
-                      </div>
-                    )}
-                  </Link>
-                  <div className="min-w-0">
-                    <Link
-                      href={`/admin/products/${p.id}`}
-                      className="font-medium text-zinc-50 hover:text-amber-400 line-clamp-2"
-                    >
-                      {p.name}
-                    </Link>
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
-                        }
-                        className="flex items-center gap-1 transition-colors hover:text-amber-400"
-                      >
-                        {p.categories ? (
-                          <>
-                            <span className="text-zinc-400">{p.categories.name}</span>
-                            <Pencil className="h-2.5 w-2.5 text-zinc-600" />
-                          </>
-                        ) : (
-                          <>
-                            <AlertTriangle className="h-3 w-3 text-amber-500" />
-                            <span className="text-amber-500">
-                              {t('products.missingCategoryFull')}
-                            </span>
-                            <Pencil className="h-2.5 w-2.5 text-amber-600" />
-                          </>
-                        )}
-                      </button>
-                      {p.is_customizable && (
-                        <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
-                          Customizable
-                        </span>
-                      )}
-                    </div>
-                    {/* Tags */}
-                    {tags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {tags.slice(0, 4).map((tag) => (
-                          <span
-                            key={tag.id}
-                            className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 ring-1 ring-zinc-700"
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
-                        {tags.length > 4 && (
-                          <span className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 ring-1 ring-zinc-700">
-                            +{tags.length - 4}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="mt-2 text-sm font-medium text-zinc-300">{priceRange}</div>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
-                      {images.length === 0 && <AlertTriangle className="h-3 w-3 text-amber-500" />}
-                      {images.length === 0 ? (
-                        <span className="text-amber-500">{t('products.noImages')}</span>
+            return (
+              <div
+                key={p.id}
+                className={`relative flex flex-col gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition-colors ${
+                  isSelected ? 'border-amber-500/50 bg-amber-500/5' : ''
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <Link href={`/admin/products/${p.id}`} className="block shrink-0">
+                      {thumbnailUrl ? (
+                        <div className="relative h-16 w-16 overflow-hidden rounded-md ring-1 ring-zinc-700">
+                          <Image
+                            src={thumbnailUrl}
+                            alt=""
+                            fill
+                            sizes="64px"
+                            className="object-cover"
+                          />
+                        </div>
                       ) : (
-                        <span>{t('products.imagesCount', { count: images.length })}</span>
+                        <div className="flex h-16 w-16 items-center justify-center rounded-md bg-zinc-800 ring-1 ring-zinc-700">
+                          <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        </div>
                       )}
-                      <span>·</span>
-                      <span>
-                        {t('products.addedDate')} {formatDate(p.created_at)}
-                      </span>
+                    </Link>
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/products/${p.id}`}
+                        className="font-medium text-zinc-50 hover:text-amber-400 line-clamp-2"
+                      >
+                        {p.name}
+                      </Link>
+                      <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
+                          }
+                          className="flex items-center gap-1 transition-colors hover:text-amber-400"
+                        >
+                          {p.categories ? (
+                            <>
+                              <span className="text-zinc-400">{p.categories.name}</span>
+                              <Pencil className="h-2.5 w-2.5 text-zinc-600" />
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="h-3 w-3 text-amber-500" />
+                              <span className="text-amber-500">
+                                {t('products.missingCategoryFull')}
+                              </span>
+                              <Pencil className="h-2.5 w-2.5 text-amber-600" />
+                            </>
+                          )}
+                        </button>
+                        {p.is_customizable && (
+                          <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
+                            Customizable
+                          </span>
+                        )}
+                      </div>
+                      {/* Tags */}
+                      {tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {tags.slice(0, 4).map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 ring-1 ring-zinc-700"
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                          {tags.length > 4 && (
+                            <span className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 ring-1 ring-zinc-700">
+                              +{tags.length - 4}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="mt-2 text-sm font-medium text-zinc-300">{priceRange}</div>
+                      <div className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+                        {images.length === 0 && (
+                          <AlertTriangle className="h-3 w-3 text-amber-500" />
+                        )}
+                        {images.length === 0 ? (
+                          <span className="text-amber-500">{t('products.noImages')}</span>
+                        ) : (
+                          <span>{t('products.imagesCount', { count: images.length })}</span>
+                        )}
+                        <span>·</span>
+                        <span>
+                          {t('products.addedDate')} {formatDate(p.created_at)}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="shrink-0">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(p.id)}
+                    />
+                  </div>
                 </div>
-                <div className="shrink-0">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
-                    checked={isSelected}
-                    onChange={() => toggleSelect(p.id)}
-                  />
-                </div>
-              </div>
 
-              <div className="mt-2 flex items-center justify-between border-t border-zinc-800/50 pt-3">
-                <ToggleStatusButton productId={p.id} isActive={p.is_active} />
-                <ProductActionsDropdown
-                  productId={p.id}
-                  productName={p.name}
-                  productSlug={p.slug}
-                  isActive={p.is_active}
-                />
+                <div className="mt-2 flex items-center justify-between border-t border-zinc-800/50 pt-3">
+                  <ToggleStatusButton productId={p.id} isActive={p.is_active} />
+                  <div className="flex items-center gap-2">
+                    <ProductVoteButtons
+                      productId={p.id}
+                      currentUserId={currentUserId}
+                      votes={votes.filter((v) => v.product_id === p.id)}
+                      adminProfiles={adminProfiles}
+                    />
+                    <ProductActionsDropdown
+                      productId={p.id}
+                      productName={p.name}
+                      productSlug={p.slug}
+                      isActive={p.is_active}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* ── Empty State ──────────────────────────────────────────────────────── */}
-      {safeProducts.length === 0 && (
+      {displayProducts.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-800 py-16 text-center">
           <div className="mb-4 rounded-full bg-zinc-900 p-4 ring-1 ring-zinc-800">
             <svg
@@ -923,14 +1041,14 @@ export function ProductListTable({
               <path d="M12 22V12" />
             </svg>
           </div>
-          {search || statusFilter || categoryFilter ? (
+          {search || statusFilter || categoryFilter || tagFilter ? (
             <>
               <h3 className="text-lg font-medium text-zinc-200">{t('products.noProductsMatch')}</h3>
               <p className="mt-1 max-w-sm text-sm text-zinc-500">{t('products.adjustFilters')}</p>
               <button
                 onClick={() => {
                   setSearchInput('')
-                  pushParams({ search: null, status: null, category: null })
+                  pushParams({ search: null, status: null, category: null, tag: null })
                 }}
                 className="mt-4 rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
               >
