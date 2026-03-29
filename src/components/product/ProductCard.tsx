@@ -81,7 +81,7 @@ export function ProductCard({
                       src={imageUrl}
                       alt={imageAlt}
                       fill
-                      className="object-cover object-center transition group-hover:scale-105"
+                      className="object-cover object-top transition group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       loading="lazy"
                       unoptimized={unoptimizedFor(imageUrl)}
