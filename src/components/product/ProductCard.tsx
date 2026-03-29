@@ -71,10 +71,10 @@ export function ProductCard({
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
             {showDual ? (
               <>
-                {/* Image 1: left half — contained so full product is visible */}
+                {/* Image 1: full container, clipped to left half by diagonal */}
                 <div
-                  className="absolute inset-y-0 left-0 w-1/2"
-                  style={{ clipPath: 'polygon(0 0, 124% 0, 76% 100%, 0 100%)' }}
+                  className="absolute inset-0"
+                  style={{ clipPath: 'polygon(0 0, 62% 0, 38% 100%, 0 100%)' }}
                 >
                   {imageUrl ? (
                     <Image
@@ -92,16 +92,16 @@ export function ProductCard({
                     </div>
                   )}
                 </div>
-                {/* Image 2: right — starts at 38% to fully cover the diagonal triangle */}
+                {/* Image 2: full container, clipped to right half by diagonal */}
                 <div
-                  className="absolute inset-y-0 right-0"
-                  style={{ left: '38%', clipPath: 'polygon(39% 0, 100% 0, 100% 100%, 0% 100%)' }}
+                  className="absolute inset-0"
+                  style={{ clipPath: 'polygon(62% 0, 100% 0, 100% 100%, 38% 100%)' }}
                 >
                   <Image
                     src={imageUrl2!}
                     alt={imageAlt}
                     fill
-                    className="object-cover object-center transition group-hover:scale-105"
+                    className="object-cover object-top transition group-hover:scale-105"
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     loading="lazy"
                     unoptimized={unoptimizedFor(imageUrl2!)}
