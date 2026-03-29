@@ -74,9 +74,7 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
         : []
 
       const processed = mapProducts(featuredData as ProductRow[], wishlistProductIds, bestsellerIds)
-      return (
-        <ProductGrid products={processed.slice(0, 8)} title={t('featuredProducts')} sort={sort} />
-      )
+      return <ProductGrid products={processed.slice(0, 8)} title={t('allProducts')} sort={sort} />
     }
 
     // No featured products — fall back to newest
@@ -130,7 +128,7 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
   return (
     <ProductGrid
       products={displayedProducts}
-      title={tag ? `${t('discovery')}: ${tag}` : t('featuredProducts')}
+      title={tag ? `${t('discovery')}: ${tag}` : t('allProducts')}
       sort={sort}
     />
   )

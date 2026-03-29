@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { Hero } from '@/components/Hero'
 import { FeaturedProducts } from '@/components/product/FeaturedProducts'
 import { NewArrivalsSection } from '@/components/product/NewArrivalsSection'
+import { FeaturedProductsSection } from '@/components/product/FeaturedProductsSection'
 import { TagFilterSection } from '@/components/product/TagFilterSection'
 import { ProductGridSkeleton } from '@/components/product/ProductGridSkeleton'
 import { ProductCarouselSkeleton } from '@/components/product/ProductCarouselSkeleton'
@@ -55,6 +56,10 @@ export default async function HomePage({ params, searchParams }: Props) {
 
       <Suspense fallback={<ProductCarouselSkeleton />}>
         <NewArrivalsSection />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <FeaturedProductsSection />
       </Suspense>
 
       <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-12 h-64 animate-pulse" />}>
