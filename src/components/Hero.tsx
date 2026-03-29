@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { HeroLogo } from './HeroLogo'
 import { ArrowRight, TrendingUp } from 'lucide-react'
+import { LaunchCountdownBanner } from './LaunchCountdownBanner'
 
 export function Hero() {
   const t = useTranslations('home')
@@ -93,6 +94,8 @@ export function Hero() {
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
+
+        <LaunchCountdownBanner />
       </div>
     </section>
   )
