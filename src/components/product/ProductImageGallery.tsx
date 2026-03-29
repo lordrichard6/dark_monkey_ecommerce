@@ -202,9 +202,13 @@ export function ProductImageGallery({
       <div
         style={MOCKUP_BG}
         className="relative group overflow-hidden rounded-2xl border border-white/10 backdrop-blur-sm"
-        // Change 2: touch swipe handlers for main gallery
-        onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+        // Change 2: touch swipe handlers for main gallery (single finger only — ignore pinch)
+        onTouchStart={(e) => {
+          if (e.touches.length !== 1) return
+          setTouchStartX(e.touches[0].clientX)
+        }}
         onTouchEnd={(e) => {
+          if (e.touches.length > 0) return // still multi-touch, ignore
           if (touchStartX === null) return
           const diff = touchStartX - e.changedTouches[0].clientX
           if (Math.abs(diff) > 40) {
@@ -369,8 +373,12 @@ export function ProductImageGallery({
           <div
             className="relative h-[85vh] w-[90vw]"
             onClick={closeLightbox}
-            onTouchStart={(e) => setLightboxTouchStartX(e.touches[0].clientX)}
+            onTouchStart={(e) => {
+              if (e.touches.length !== 1) return // ignore pinch
+              setLightboxTouchStartX(e.touches[0].clientX)
+            }}
             onTouchEnd={(e) => {
+              if (e.touches.length > 0) return // still multi-touch, ignore
               if (lightboxTouchStartX === null) return
               const diff = lightboxTouchStartX - e.changedTouches[0].clientX
               if (Math.abs(diff) > 40) {
