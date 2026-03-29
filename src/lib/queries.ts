@@ -50,7 +50,8 @@ export const getProductBySlug = cache(async (slug: string) => {
         sort_order,
         printful_sync_variant_id,
         product_inventory (quantity)
-      )
+      ),
+      product_tags (tags (id, name, slug))
     `
     )
     .eq('slug', slug)

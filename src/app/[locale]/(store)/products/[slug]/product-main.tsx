@@ -33,7 +33,7 @@ import { CustomizationPanel } from '@/components/customization/CustomizationPane
 import { StockNotificationButton } from '@/components/product/StockNotificationButton'
 import { ProductInfoTabs } from '@/components/product/ProductInfoTabs'
 import { toast } from 'sonner'
-import { AlertTriangle } from 'lucide-react'
+import { Link } from '@/i18n/navigation'
 
 type Props = {
   product: {
@@ -41,7 +41,7 @@ type Props = {
     name: string
     slug: string
     description: string | null
-    categories: { name?: string } | null
+    categories: { name?: string; slug?: string } | null
     images: Array<{
       url: string
       alt: string | null
@@ -55,6 +55,12 @@ type Props = {
     size_guide_url?: string | null
     origin_country?: string | null
     avg_fulfillment_time?: string | null
+    product_tags?: Array<{
+      tags:
+        | { id: string; name: string; slug: string }[]
+        | { id: string; name: string; slug: string }
+        | null
+    }> | null
   }
   images: Array<{
     url: string
@@ -235,13 +241,45 @@ export function ProductMain({
     setSelectedVariantId(v?.id ?? null)
   }, [])
 
+  // Derive tags from product_tags join
+  // Supabase may return tags as an array or single object depending on the join type
+  const tags: Array<{ id: string; name: string; slug: string }> =
+    product.product_tags?.flatMap((pt) => {
+      if (!pt.tags) return []
+      if (Array.isArray(pt.tags)) return pt.tags
+      return [pt.tags]
+    }) ?? []
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-0 md:py-8 md:px-8">
+      {/* Change 6: Breadcrumb */}
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-2 text-xs text-zinc-500 mb-6 px-0"
+      >
+        <Link href="/" className="hover:text-zinc-300 transition-colors">
+          Home
+        </Link>
+        <span>/</span>
+        <Link href="/products" className="hover:text-zinc-300 transition-colors">
+          Products
+        </Link>
+        {product.categories?.name && (
+          <>
+            <span>/</span>
+            <span className="text-zinc-400">{product.categories.name}</span>
+          </>
+        )}
+        <span>/</span>
+        <span className="text-zinc-300 truncate max-w-[120px] sm:max-w-xs">{product.name}</span>
+      </nav>
+
       {/* ── TOP SECTION ─────────────────────────────────────────── */}
+      {/* Change 1 + 4 + 5: Mobile = flex-col vertical stack; desktop = grid-cols-2 */}
       <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-12 mt-4">
         {/* LEFT: Image System */}
-        <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-8">
-          {/* Main image — mobile only (no thumbnails, left cell of 2-col grid) */}
+        <div>
+          {/* Mobile image — full width, no 2-col grid */}
           <div className="md:hidden">
             <ProductImageGallery
               images={images}
@@ -252,37 +290,6 @@ export function ProductMain({
             />
           </div>
 
-          {/* Mobile info — right cell */}
-          <div className="flex flex-col gap-3 md:hidden">
-            {/* Name + category */}
-            <div className="space-y-1">
-              <h1 className="text-lg font-black leading-tight text-white">{product.name}</h1>
-              {product.categories?.name && (
-                <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
-                  {product.categories.name}
-                </p>
-              )}
-            </div>
-
-            <ProductRatingSummary reviews={reviews} />
-
-            {/* Price + stock — aria-live so screen readers announce updates */}
-            <div className="flex flex-col gap-0.5 mt-1" aria-live="polite" aria-atomic="true">
-              <span className="text-xl font-black text-amber-500">{format(priceCents)}</span>
-              <span
-                className={`text-[9px] font-bold uppercase tracking-widest ${
-                  stock > 0 ? 'text-green-500/90' : 'text-zinc-500'
-                }`}
-              >
-                {stock > 0
-                  ? stock <= 5
-                    ? `${t('onlyLeft', { count: stock })}`
-                    : t('inStock')
-                  : t('outOfStock')}
-              </span>
-            </div>
-          </div>
-
           {/* Desktop thumbnails gallery */}
           <div className="hidden md:block">
             <ProductImageGallery
@@ -291,6 +298,49 @@ export function ProductMain({
               selectedColor={selectedColor}
               selectedVariantId={selectedVariantId}
             />
+          </div>
+        </div>
+
+        {/* Mobile info — below image on mobile, hidden on desktop (desktop uses right column) */}
+        {/* Change 1 + 4 + 5: Name + category + rating + price appear below image on mobile */}
+        <div className="flex flex-col gap-3 md:hidden">
+          {/* Name + category + share button (Change 11: share next to product name on mobile) */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1 flex-1 min-w-0">
+              {/* Change 5: text-2xl on mobile */}
+              <h1 className="text-2xl font-black leading-tight text-white">{product.name}</h1>
+              {product.categories?.name && (
+                <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                  {product.categories.name}
+                </p>
+              )}
+            </div>
+            {/* Change 11: Share button next to product name on mobile */}
+            <div className="flex-shrink-0 mt-1">
+              <ShareButton
+                productName={product.name}
+                productUrl={`/products/${product.slug}`}
+                productImage={images[0]?.url}
+              />
+            </div>
+          </div>
+
+          <ProductRatingSummary reviews={reviews} />
+
+          {/* Price + stock — aria-live so screen readers announce updates */}
+          <div className="flex flex-col gap-0.5 mt-1" aria-live="polite" aria-atomic="true">
+            <span className="text-xl font-black text-amber-500">{format(priceCents)}</span>
+            <span
+              className={`text-[9px] font-bold uppercase tracking-widest ${
+                stock > 0 ? 'text-green-500/90' : 'text-zinc-500'
+              }`}
+            >
+              {stock > 0
+                ? stock <= 5
+                  ? `${t('onlyLeft', { count: stock })}`
+                  : t('inStock')
+                : t('outOfStock')}
+            </span>
           </div>
         </div>
 
@@ -484,7 +534,7 @@ export function ProductMain({
           />
         )}
 
-        {/* Mobile wishlist + share — below action buttons */}
+        {/* Mobile wishlist — below action buttons (share is now next to product name) */}
         <div className="flex items-center gap-3 mt-4">
           <WishlistButton
             productId={product.id}
@@ -495,11 +545,6 @@ export function ProductMain({
             isInWishlist={isInWishlist}
             variant="button"
             className="flex-1 justify-center"
-          />
-          <ShareButton
-            productName={product.name}
-            productUrl={`/products/${product.slug}`}
-            productImage={images[0]?.url}
           />
         </div>
       </div>
@@ -521,6 +566,21 @@ export function ProductMain({
             dangerouslySetInnerHTML={{ __html: product.description || '' }}
           />
         </div>
+
+        {/* Change 8: Product tags */}
+        {tags.length > 0 && (
+          <div className="mt-6 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Link
+                key={tag.id}
+                href={`/products?tag=${tag.slug}`}
+                className="rounded-full border border-white/10 bg-zinc-900/50 px-3 py-1 text-xs font-medium text-zinc-400 hover:border-amber-500/40 hover:text-amber-400 transition-colors"
+              >
+                #{tag.name}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── INFO TABS (Material / Care & Print / Shipment / GPSR) ── */}

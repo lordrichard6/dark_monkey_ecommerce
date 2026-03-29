@@ -93,6 +93,18 @@ export function ProductImageGallery({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [playingVideo, setPlayingVideo] = useState<string | null>(null)
+  // Change 2: touch swipe state for main gallery
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  // Change 12: tap-to-zoom hint
+  const [showZoomHint, setShowZoomHint] = useState(true)
+  // Change 9: lightbox swipe state
+  const [lightboxTouchStartX, setLightboxTouchStartX] = useState<number | null>(null)
+
+  // Change 12: fade out zoom hint after 2.5 seconds
+  useEffect(() => {
+    const t = setTimeout(() => setShowZoomHint(false), 2500)
+    return () => clearTimeout(t)
+  }, [])
 
   const filtered = useMemo(() => {
     if (!selectedColor && !selectedVariantId) return images
@@ -190,6 +202,24 @@ export function ProductImageGallery({
       <div
         style={MOCKUP_BG}
         className="relative group overflow-hidden rounded-2xl border border-white/10 backdrop-blur-sm"
+        // Change 2: touch swipe handlers for main gallery
+        onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+        onTouchEnd={(e) => {
+          if (touchStartX === null) return
+          const diff = touchStartX - e.changedTouches[0].clientX
+          if (Math.abs(diff) > 40) {
+            if (diff > 0) {
+              // swipe left → next image
+              const nextIndex = (safeIndex + 1) % unique.length
+              setSelectedImage(unique[nextIndex])
+            } else {
+              // swipe right → prev image
+              const prevIndex = (safeIndex - 1 + unique.length) % unique.length
+              setSelectedImage(unique[prevIndex])
+            }
+          }
+          setTouchStartX(null)
+        }}
       >
         <div className="relative aspect-square w-full sm:aspect-[4/5]">
           {hasVideo && isPlayingCurrent && currentItem.video_url ? (
@@ -224,6 +254,16 @@ export function ProductImageGallery({
               {!hasVideo && (
                 <div className="absolute right-3 top-3 rounded-full bg-black/50 p-2 text-white/70 opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-md border border-white/10 pointer-events-none">
                   <ZoomIn className="h-4 w-4" />
+                </div>
+              )}
+              {/* Change 12: Tap-to-zoom hint on mobile */}
+              {showZoomHint && (
+                <div
+                  className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 rounded-full bg-black/60 px-3 py-1 text-[10px] text-white/70 backdrop-blur-sm flex items-center gap-1 sm:hidden transition-opacity animate-out fade-out duration-500"
+                  style={{ animationDelay: '2000ms', animationFillMode: 'forwards' }}
+                >
+                  <ZoomIn className="h-3 w-3" />
+                  Tap to zoom
                 </div>
               )}
             </>
@@ -267,6 +307,24 @@ export function ProductImageGallery({
         </div>
       )}
 
+      {/* Change 3 + 10: Dot indicators on mobile (when no thumbnails) */}
+      {!showThumbnails && unique.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-2">
+          {unique.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setSelectedImage(unique[i])}
+              className={`rounded-full transition-all duration-200 ${
+                i === safeIndex
+                  ? 'w-4 h-1.5 bg-amber-400'
+                  : 'w-1.5 h-1.5 bg-zinc-600 hover:bg-zinc-400'
+              }`}
+              aria-label={`Image ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Lightbox Modal */}
       {isLightboxOpen && (
         <div
@@ -285,12 +343,13 @@ export function ProductImageGallery({
 
           {unique.length > 1 && (
             <>
+              {/* Change 9: smaller buttons on mobile, positioned at very sides */}
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   prevImage()
                 }}
-                className="absolute left-6 z-10 rounded-full bg-white/10 p-4 text-white transition hover:bg-white/20 border border-white/10"
+                className="absolute left-2 sm:left-6 z-10 rounded-full bg-white/10 p-2 sm:p-4 text-white transition hover:bg-white/20 border border-white/10"
               >
                 <ChevronLeft className="h-8 w-8" />
               </button>
@@ -299,14 +358,32 @@ export function ProductImageGallery({
                   e.stopPropagation()
                   nextImage()
                 }}
-                className="absolute right-6 z-10 rounded-full bg-white/10 p-4 text-white transition hover:bg-white/20 border border-white/10"
+                className="absolute right-2 sm:right-6 z-10 rounded-full bg-white/10 p-2 sm:p-4 text-white transition hover:bg-white/20 border border-white/10"
               >
                 <ChevronRight className="h-8 w-8" />
               </button>
             </>
           )}
 
-          <div className="relative h-[85vh] w-[90vw]" onClick={closeLightbox}>
+          {/* Change 9: lightbox swipe support */}
+          <div
+            className="relative h-[85vh] w-[90vw]"
+            onClick={closeLightbox}
+            onTouchStart={(e) => setLightboxTouchStartX(e.touches[0].clientX)}
+            onTouchEnd={(e) => {
+              if (lightboxTouchStartX === null) return
+              const diff = lightboxTouchStartX - e.changedTouches[0].clientX
+              if (Math.abs(diff) > 40) {
+                e.stopPropagation()
+                if (diff > 0) {
+                  nextImage()
+                } else {
+                  prevImage()
+                }
+              }
+              setLightboxTouchStartX(null)
+            }}
+          >
             {unique[lightboxIndex].video_url ? (
               <div className="h-full w-full" onClick={(e) => e.stopPropagation()}>
                 <VideoEmbed url={unique[lightboxIndex].video_url!} />
