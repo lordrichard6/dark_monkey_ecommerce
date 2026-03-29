@@ -21,6 +21,7 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
   const [selectedIds, setSelectedIds] = useState<string[]>(initialTagIds)
   const [loading, setLoading] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [search, setSearch] = useState('')
 
   async function handleToggleTag(tagId: string) {
     const isSelected = selectedIds.includes(tagId)
@@ -47,7 +48,9 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
   }
 
   const selectedTags = availableTags.filter((t) => selectedIds.includes(t.id))
-  const unselectedTags = availableTags.filter((t) => !selectedIds.includes(t.id))
+  const unselectedTags = availableTags
+    .filter((t) => !selectedIds.includes(t.id))
+    .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="space-y-3">
@@ -85,9 +88,26 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
 
           {isDropdownOpen && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-              <div className="absolute left-0 top-full mt-2 z-20 w-48 rounded-lg border border-zinc-800 bg-zinc-900 p-1 shadow-xl ring-1 ring-black ring-opacity-5">
-                <div className="max-h-60 overflow-auto">
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => {
+                  setIsDropdownOpen(false)
+                  setSearch('')
+                }}
+              />
+              <div className="absolute left-0 top-full mt-2 z-20 w-56 rounded-lg border border-zinc-800 bg-zinc-900 shadow-xl ring-1 ring-black ring-opacity-5">
+                {/* Search input */}
+                <div className="p-2 border-b border-zinc-800">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search tags..."
+                    className="w-full rounded-md bg-zinc-800 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  />
+                </div>
+                <div className="max-h-52 overflow-auto p-1">
                   {unselectedTags.length > 0 ? (
                     unselectedTags.map((tag) => (
                       <button
@@ -95,6 +115,7 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
                         onClick={() => {
                           handleToggleTag(tag.id)
                           setIsDropdownOpen(false)
+                          setSearch('')
                         }}
                         className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 rounded-md transition-colors"
                       >
@@ -103,7 +124,7 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
                     ))
                   ) : (
                     <p className="px-3 py-2 text-xs text-zinc-500 italic">
-                      {t('products.noMoreTags')}
+                      {search ? `No tags matching "${search}"` : t('products.noMoreTags')}
                     </p>
                   )}
                 </div>
