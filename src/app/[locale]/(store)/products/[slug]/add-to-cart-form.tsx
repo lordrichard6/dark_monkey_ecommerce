@@ -20,6 +20,7 @@ export type Variant = {
   id: string
   name: string | null
   price_cents: number
+  compare_at_price_cents?: number | null
   attributes: Record<string, string>
   stock: number
 }
@@ -85,12 +86,14 @@ export function ProductQuantitySelector({
 
 export function ProductActionButtons({
   isAdding,
+  isSuccess = false,
   stock,
   onSubmit,
   onBuyNow,
   disabled = false,
 }: {
   isAdding: boolean
+  isSuccess?: boolean
   stock: number
   onSubmit: () => void
   onBuyNow: () => void
@@ -101,14 +104,18 @@ export function ProductActionButtons({
 
   return (
     <div className="grid grid-cols-2 gap-3 w-full">
-      {/* Add to cart — primary amber */}
+      {/* Add to cart — primary amber, turns green on success */}
       <button
         type="button"
         disabled={disabled || isAdding}
         onClick={onSubmit}
-        className="h-12 flex items-center justify-center rounded-xl bg-amber-500 text-[10px] font-black uppercase tracking-[0.15em] text-zinc-950 transition-all hover:bg-amber-400 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+        className={`h-12 flex items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed ${
+          isSuccess
+            ? 'bg-green-500 text-white scale-95'
+            : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
+        }`}
       >
-        {isAdding ? t('adding') : t('addToCart')}
+        {isSuccess ? '✓ ' + t('added') : isAdding ? t('adding') : t('addToCart')}
       </button>
       {/* Buy now — ghost white outline */}
       <button

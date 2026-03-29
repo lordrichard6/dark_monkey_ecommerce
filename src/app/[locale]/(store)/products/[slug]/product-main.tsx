@@ -26,12 +26,13 @@ import { useCurrency } from '@/components/currency/CurrencyContext'
 import type { CustomizationRuleDef } from '@/types/customization'
 import { ProductRatingSummary } from '@/components/product/ProductRatingSummary'
 import { TrustBadges } from '@/components/product/TrustBadges'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { addToCart } from '@/actions/cart'
 import { colorToHex } from '@/lib/color-swatch'
 import { CustomizationPanel } from '@/components/customization/CustomizationPanel'
 import { StockNotificationButton } from '@/components/product/StockNotificationButton'
 import { ProductInfoTabs } from '@/components/product/ProductInfoTabs'
+import { BackToTop } from '@/components/BackToTop'
 import { toast } from 'sonner'
 import { Link } from '@/i18n/navigation'
 
@@ -104,6 +105,8 @@ export function ProductMain({
   const t = useTranslations('product')
   const { format, currency } = useCurrency()
   const router = useRouter()
+  const params = useParams()
+  const locale = (params?.locale as string) || 'en'
   const addToCartFormRef = useRef<HTMLDivElement>(null)
 
   // ── Single source of truth for all selection state ──────────────────────
@@ -119,6 +122,7 @@ export function ProductMain({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [isAdding, setIsAdding] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
   // BUG FIX: config is now owned here and passed down so mobile Add to Cart picks it up
   const [config, setConfig] = useState<Record<string, string>>({})
 
@@ -220,6 +224,9 @@ export function ProductMain({
       toast.success(t('addedToCart'), {
         description: `${product.name}${selectedVariant.name ? ` — ${selectedVariant.name}` : ''}`,
       })
+      // Brief success animation on the button
+      setIsSuccess(true)
+      setTimeout(() => setIsSuccess(false), 1500)
       return true
     } catch (err) {
       toast.error(t('addToCartError') || 'Failed to add to cart. Please try again.')
@@ -315,11 +322,11 @@ export function ProductMain({
                 </p>
               )}
             </div>
-            {/* Change 11: Share button next to product name on mobile */}
+            {/* Share button next to product name on mobile */}
             <div className="flex-shrink-0 mt-1">
               <ShareButton
                 productName={product.name}
-                productUrl={`/products/${product.slug}`}
+                productUrl={`/${locale}/products/${product.slug}`}
                 productImage={images[0]?.url}
               />
             </div>
@@ -327,17 +334,24 @@ export function ProductMain({
 
           <ProductRatingSummary reviews={reviews} />
 
-          {/* Price + stock — aria-live so screen readers announce updates */}
+          {/* Price + stock + selected size — aria-live so screen readers announce updates */}
           <div className="flex flex-col gap-0.5 mt-1" aria-live="polite" aria-atomic="true">
-            <span className="text-xl font-black text-amber-500">{format(priceCents)}</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-black text-amber-500">{format(priceCents)}</span>
+              {selectedVariant && hasSizes && (
+                <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">
+                  {(selectedVariant.attributes?.size as string) || selectedVariant.name || ''}
+                </span>
+              )}
+            </div>
             <span
               className={`text-[9px] font-bold uppercase tracking-widest ${
-                stock > 0 ? 'text-green-500/90' : 'text-zinc-500'
+                stock === 0 ? 'text-zinc-500' : stock <= 5 ? 'text-amber-500' : 'text-green-500/90'
               }`}
             >
               {stock > 0
                 ? stock <= 5
-                  ? `${t('onlyLeft', { count: stock })}`
+                  ? `⚠ ${t('onlyLeft', { count: stock })}`
                   : t('inStock')
                 : t('outOfStock')}
             </span>
@@ -369,7 +383,7 @@ export function ProductMain({
               />
               <ShareButton
                 productName={product.name}
-                productUrl={`/products/${product.slug}`}
+                productUrl={`/${locale}/products/${product.slug}`}
                 productImage={images[0]?.url}
               />
             </div>
@@ -500,6 +514,14 @@ export function ProductMain({
           </div>
         )}
 
+        {/* Low stock warning near size selector — visible immediately after picking a size */}
+        {hasSizes && stock > 0 && stock <= 5 && (
+          <p className="mb-3 text-xs font-bold text-amber-500 flex items-center gap-1">
+            <span>⚠</span>
+            {t('lowStockSize', { count: stock })}
+          </p>
+        )}
+
         {stock > 0 && (
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
@@ -527,6 +549,7 @@ export function ProductMain({
         ) : (
           <ProductActionButtons
             isAdding={isAdding}
+            isSuccess={isSuccess}
             stock={stock}
             onSubmit={handleAddToCart}
             onBuyNow={handleBuyNow}
@@ -596,6 +619,13 @@ export function ProductMain({
         />
       </div>
 
+      {/* ── STORY — before reviews to build purchase intent ────── */}
+      {storyContent && (
+        <div className="mt-12">
+          <ProductStory story={storyContent} />
+        </div>
+      )}
+
       {/* ── REVIEWS ─────────────────────────────────────────────── */}
       <div className="mt-24 border-t border-white/5 pt-20">
         <div id="reviews-section">
@@ -611,24 +641,27 @@ export function ProductMain({
         </div>
       </div>
 
-      {/* ── STORY + SOCIAL PROOF ────────────────────────────────── */}
+      {/* ── SOCIAL PROOF ────────────────────────────────────────── */}
       <div className="mt-12">
-        <ProductStory story={storyContent || null} />
         <LivePurchaseIndicator productId={product.id} />
       </div>
 
       <RecentPurchaseToast productId={product.id} />
 
-      {/* Sticky bar receives quantity so it adds the correct amount */}
+      {/* Sticky bar — compare price + quantity-aware button text */}
       <StickyAddToCart
         productName={product.name}
         priceCents={priceCents}
+        compareAtPriceCents={selectedVariant?.compare_at_price_cents ?? null}
         imageUrl={images[0]?.url || ''}
         stock={stock}
         quantity={quantity}
         onAddToCart={handleAddToCart}
         observeRef={addToCartFormRef}
       />
+
+      {/* Back to top — appears after scrolling down */}
+      <BackToTop />
     </div>
   )
 }

@@ -348,7 +348,17 @@
     "freeShippingThreshold": "Portes Grátis acima de CHF 100",
     "securePayment": "Pagamento Seguro",
     "madeToOrder": "Feito por Encomenda",
-    "printQualityGuarantee": "Qualidade de Impressão Garantida"
+    "printQualityGuarantee": "Qualidade de Impressão Garantida",
+    "tabMaterial": "Material",
+    "tabCare": "Cuidados & Impressão",
+    "tabShipment": "Envio",
+    "tabGpsr": "GPSR",
+    "lowStockSize": "Apenas {count} restantes neste tamanho!",
+    "signInToSave": "Inicie sessão para guardar artigos",
+    "signIn": "Iniciar sessão",
+    "addQuantityToCart": "Adicionar {count} ao carrinho",
+    "added": "Adicionado!",
+    "reviewsCount": "{count} avaliações"
   },
   "cart": {
     "cartWithItems": "Carrinho com {count} artigos",

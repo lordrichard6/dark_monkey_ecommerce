@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Shirt, Droplets, Truck, ShieldCheck } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type Tab = 'material' | 'care' | 'shipment' | 'gpsr'
 
@@ -15,13 +16,6 @@ type Props = {
   gpsrInfo: string | null
 }
 
-const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: 'material', label: 'Material', icon: Shirt },
-  { id: 'care', label: 'Care & Print', icon: Droplets },
-  { id: 'shipment', label: 'Shipment', icon: Truck },
-  { id: 'gpsr', label: 'GPSR', icon: ShieldCheck },
-]
-
 const RICH_TEXT_CLASSES =
   'styled-description prose prose-invert prose-sm max-w-none text-zinc-400 font-sans leading-relaxed'
 
@@ -34,13 +28,34 @@ export function ProductInfoTabs({
   shipmentInfo,
   gpsrInfo,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('material')
+  const t = useTranslations('product')
+
+  // Only show tabs that have actual content — never show "No X available" placeholders
+  const hasContent: Record<Tab, boolean> = {
+    material: !!(materialInfo || originCountry),
+    care: !!(careInstructions || printMethod),
+    shipment: !!(shipmentInfo || avgFulfillmentTime),
+    gpsr: !!gpsrInfo,
+  }
+
+  const allTabs: { id: Tab; labelKey: string; icon: React.ElementType }[] = [
+    { id: 'material', labelKey: 'tabMaterial', icon: Shirt },
+    { id: 'care', labelKey: 'tabCare', icon: Droplets },
+    { id: 'shipment', labelKey: 'tabShipment', icon: Truck },
+    { id: 'gpsr', labelKey: 'tabGpsr', icon: ShieldCheck },
+  ]
+
+  const visibleTabs = allTabs.filter((tab) => hasContent[tab.id])
+
+  const [activeTab, setActiveTab] = useState<Tab>(visibleTabs[0]?.id ?? 'material')
+
+  if (visibleTabs.length === 0) return null
 
   return (
     <div className="max-w-4xl">
       {/* Tab bar */}
       <div className="flex gap-1 rounded-2xl bg-zinc-900/60 p-1 border border-white/5">
-        {tabs.map(({ id, label, icon: Icon }) => (
+        {visibleTabs.map(({ id, labelKey, icon: Icon }) => (
           <button
             key={id}
             type="button"
@@ -52,7 +67,7 @@ export function ProductInfoTabs({
             }`}
           >
             <Icon className="h-3.5 w-3.5 shrink-0" />
-            <span className="hidden sm:inline">{label}</span>
+            <span className="hidden sm:inline">{t(labelKey as Parameters<typeof t>[0])}</span>
           </button>
         ))}
       </div>
@@ -61,7 +76,6 @@ export function ProductInfoTabs({
       <div className="mt-4 rounded-2xl border border-white/5 bg-zinc-900/20 px-6 py-6 md:px-10 md:py-8">
         {activeTab === 'material' && (
           <TabContent>
-            {/* Origin country badge */}
             {originCountry && (
               <div className="mb-5 flex items-center gap-2">
                 <span className="rounded-full bg-zinc-800 border border-white/5 px-3 py-1 text-xs font-medium text-zinc-400">
@@ -69,15 +83,11 @@ export function ProductInfoTabs({
                 </span>
               </div>
             )}
-            {materialInfo ? (
+            {materialInfo && (
               <div
                 className={RICH_TEXT_CLASSES}
                 dangerouslySetInnerHTML={{ __html: materialInfo }}
               />
-            ) : (
-              <p className="text-sm text-zinc-500 italic">
-                No material information available for this product.
-              </p>
             )}
           </TabContent>
         )}
@@ -108,7 +118,6 @@ export function ProductInfoTabs({
 
         {activeTab === 'shipment' && (
           <TabContent>
-            {/* Fulfillment time pill from Printful */}
             {avgFulfillmentTime && (
               <div className="mb-5 flex items-center gap-2 rounded-xl bg-emerald-500/5 border border-emerald-500/10 px-4 py-3">
                 <span className="text-lg">⚡</span>
@@ -122,24 +131,18 @@ export function ProductInfoTabs({
                 </div>
               </div>
             )}
-            {shipmentInfo ? (
+            {shipmentInfo && (
               <div
                 className={RICH_TEXT_CLASSES}
                 dangerouslySetInnerHTML={{ __html: shipmentInfo }}
               />
-            ) : (
-              <p className="text-sm text-zinc-500 italic">No shipment information available.</p>
             )}
           </TabContent>
         )}
 
-        {activeTab === 'gpsr' && (
+        {activeTab === 'gpsr' && gpsrInfo && (
           <TabContent>
-            {gpsrInfo ? (
-              <div className={RICH_TEXT_CLASSES} dangerouslySetInnerHTML={{ __html: gpsrInfo }} />
-            ) : (
-              <p className="text-sm text-zinc-500 italic">No GPSR information available.</p>
-            )}
+            <div className={RICH_TEXT_CLASSES} dangerouslySetInnerHTML={{ __html: gpsrInfo }} />
           </TabContent>
         )}
       </div>

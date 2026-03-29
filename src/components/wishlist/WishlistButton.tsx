@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toggleWishlist } from '@/actions/wishlist'
 import { trackWishlistAdd, trackWishlistRemove } from '@/lib/analytics'
+import { toast } from 'sonner'
 
 type Props = {
   productId: string
@@ -54,7 +55,14 @@ export function WishlistButton({
 
       router.refresh()
     } else if (result.error === 'Sign in to save items') {
-      router.push(`/login?redirectTo=${productSlug ? `/products/${productSlug}` : '/'}`)
+      toast.info('Sign in to save items to your wishlist', {
+        action: {
+          label: 'Sign in',
+          onClick: () =>
+            router.push(`/login?redirectTo=${productSlug ? `/products/${productSlug}` : '/'}`),
+        },
+        duration: 4000,
+      })
     }
   }
 
@@ -64,10 +72,11 @@ export function WishlistButton({
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className={`inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium transition hover:border-zinc-600 disabled:opacity-50 ${inWishlist
+        className={`inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium transition hover:border-zinc-600 disabled:opacity-50 ${
+          inWishlist
             ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
             : 'text-zinc-400 hover:text-zinc-300'
-          } ${className}`}
+        } ${className}`}
       >
         <HeartIcon filled={inWishlist} />
         {inWishlist ? 'Saved' : 'Save for later'}
@@ -81,8 +90,9 @@ export function WishlistButton({
       onClick={handleClick}
       disabled={loading}
       aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-      className={`absolute right-3 top-3 z-10 rounded-full bg-black/50 p-2 backdrop-blur-sm transition hover:bg-black/70 disabled:opacity-50 ${inWishlist ? 'text-amber-400' : 'text-zinc-400 hover:text-zinc-100'
-        } ${className}`}
+      className={`absolute right-3 top-3 z-10 rounded-full bg-black/50 p-2 backdrop-blur-sm transition hover:bg-black/70 disabled:opacity-50 ${
+        inWishlist ? 'text-amber-400' : 'text-zinc-400 hover:text-zinc-100'
+      } ${className}`}
     >
       <HeartIcon filled={inWishlist} />
     </button>
