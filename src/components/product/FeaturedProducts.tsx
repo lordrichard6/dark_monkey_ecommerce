@@ -20,6 +20,7 @@ type ProductRow = {
 
 export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
   const t = await getTranslations('home')
+  const tCommon = await getTranslations('common')
   const supabase = await createClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,7 +94,7 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
   return (
     <ProductGrid
       products={sortedProducts.slice(0, 8)}
-      title={tag ? `${t('discovery')}: ${tag}` : t('featuredProducts')}
+      title={tag ? `${t('discovery')}: ${tag}` : tCommon('allProducts')}
       sort={sort}
     />
   )
