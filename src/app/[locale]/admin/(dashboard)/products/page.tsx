@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { FetchLatestProductButton } from './fetch-latest-button'
 import { SyncPrintfulModal } from '@/components/admin/SyncPrintfulModal'
@@ -100,14 +101,34 @@ export default async function AdminProductsPage({
 
   query = query.range(start, end)
 
-  const [{ data: products, count, error }, { data: allCategories }] = await Promise.all([
-    query,
-    supabase
-      .from('categories')
-      .select('id, name, parent_id')
-      .order('sort_order', { ascending: true })
-      .order('name', { ascending: true }),
-  ])
+  const supabaseUser = await createClient()
+  const {
+    data: { user: currentUser },
+  } = await supabaseUser.auth.getUser()
+
+  const [{ data: products, count, error }, { data: allCategories }, { data: adminProfiles }] =
+    await Promise.all([
+      query,
+      supabase
+        .from('categories')
+        .select('id, name, parent_id')
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true }),
+      supabase
+        .from('user_profiles')
+        .select('id, admin_color')
+        .eq('is_admin', true)
+        .not('admin_color', 'is', null),
+    ])
+
+  const productIds = (products ?? []).map((p) => p.id)
+  const { data: votes } =
+    productIds.length > 0
+      ? await supabase
+          .from('product_votes')
+          .select('product_id, user_id, vote')
+          .in('product_id', productIds)
+      : { data: [] }
 
   if (error) {
     console.error('[AdminProductsPage] Database error:', error)
@@ -153,6 +174,9 @@ export default async function AdminProductsPage({
           categoryFilter={category ?? ''}
           sortBy={sortCol}
           sortDir={sortAsc ? 'asc' : 'desc'}
+          votes={(votes ?? []) as { product_id: string; user_id: string; vote: 'up' | 'down' }[]}
+          adminProfiles={(adminProfiles ?? []) as { id: string; admin_color: string | null }[]}
+          currentUserId={currentUser?.id ?? ''}
         />
       </div>
     </div>

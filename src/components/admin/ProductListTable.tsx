@@ -12,6 +12,8 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  LayoutList,
+  LayoutGrid,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
@@ -24,6 +26,7 @@ import {
 } from '@/actions/admin-products'
 import { CategoryPickerDialog, type PickerCategory } from './CategoryPickerDialog'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { ProductVoteButtons, type AdminVote, type AdminProfile } from './ProductVoteButtons'
 
 type Tag = { id: string; name: string }
 
@@ -53,6 +56,9 @@ type Props = {
   categoryFilter: string
   sortBy: string
   sortDir: 'asc' | 'desc'
+  votes: AdminVote[]
+  adminProfiles: AdminProfile[]
+  currentUserId: string
 }
 
 type PickerTarget = { id: string; name: string; categoryId: string | null }
@@ -149,6 +155,9 @@ export function ProductListTable({
   categoryFilter,
   sortBy,
   sortDir,
+  votes,
+  adminProfiles,
+  currentUserId,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -158,6 +167,17 @@ export function ProductListTable({
   const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('admin-products-view')
+    if (saved === 'grid' || saved === 'list') setViewMode(saved)
+  }, [])
+
+  function setView(mode: 'list' | 'grid') {
+    setViewMode(mode)
+    localStorage.setItem('admin-products-view', mode)
+  }
 
   // Focus trap + Escape key for the bulk-delete confirmation dialog
   const bulkDeleteRef = useRef<HTMLDivElement>(null)
@@ -350,13 +370,30 @@ export function ProductListTable({
           )}
         </div>
 
-        {/* Right: per-page + count */}
+        {/* Right: view toggle + per-page + count */}
         <div className="flex items-center gap-3 text-sm text-zinc-500">
           <span className="whitespace-nowrap">
             {totalCount === 0
               ? t('products.noProducts')
               : `${pageStart}–${pageEnd} of ${totalCount}`}
           </span>
+          {/* View toggle */}
+          <div className="flex items-center rounded-lg border border-zinc-700 bg-zinc-900 p-0.5">
+            <button
+              onClick={() => setView('list')}
+              title="List view"
+              className={`rounded p-1.5 transition-colors ${viewMode === 'list' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              <LayoutList className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setView('grid')}
+              title="Grid view"
+              className={`rounded p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <select
             value={limit}
             onChange={(e) => pushParams({ limit: e.target.value, page: '1' })}
@@ -419,218 +456,316 @@ export function ProductListTable({
       </div>
 
       {/* ── Desktop Table View ───────────────────────────────────────────────── */}
-      <div className="hidden overflow-x-auto rounded-lg border border-zinc-800 md:block">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-zinc-800 bg-zinc-900/80">
-              <th className="w-10 px-4 py-3 text-left">
-                <input
-                  type="checkbox"
-                  className="rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
-                  checked={allSelected}
-                  ref={(input) => {
-                    if (input) input.indeterminate = indeterminate
-                  }}
-                  onChange={toggleSelectAll}
-                />
-              </th>
-              {/* Thumbnail */}
-              <th className="w-14 px-4 py-3 text-left text-sm font-medium text-zinc-400" />
-              {/* Product name — sortable */}
-              <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                <button
-                  onClick={() => handleSortClick('name')}
-                  className="flex items-center whitespace-nowrap hover:text-zinc-200"
-                >
-                  {t('products.product')}
-                  <SortIcon col="name" sortBy={sortBy} sortDir={sortDir} />
-                </button>
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                {t('products.category')}
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                {t('products.tags')}
-              </th>
-              {/* Images count */}
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                {t('products.images')}
-              </th>
-              {/* Price range — sortable (client-side note) */}
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                {t('products.priceRange')}
-              </th>
-              {/* Date — sortable */}
-              <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                <button
-                  onClick={() => handleSortClick('created_at')}
-                  className="flex items-center whitespace-nowrap hover:text-zinc-200"
-                >
-                  {t('orders.date')}
-                  <SortIcon col="created_at" sortBy={sortBy} sortDir={sortDir} />
-                </button>
-              </th>
-              {/* Status — sortable */}
-              <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                <button
-                  onClick={() => handleSortClick('is_active')}
-                  className="flex items-center whitespace-nowrap hover:text-zinc-200"
-                >
-                  {t('dashboard.status')}
-                  <SortIcon col="is_active" sortBy={sortBy} sortDir={sortDir} />
-                </button>
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
-                {t('dashboard.actions')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {safeProducts.map((p) => {
-              const variants = p.product_variants ?? []
-              const images = (p.product_images ?? []).sort(
-                (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-              )
-              const thumbnailUrl = images[0]?.url
-              const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
-              const maxPrice = variants.length ? Math.max(...variants.map((v) => v.price_cents)) : 0
-              const priceRange =
-                minPrice === maxPrice
-                  ? formatPrice(minPrice)
-                  : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
-              const isSelected = selectedIds.has(p.id)
-              const tags = p.product_tags ?? []
-
-              return (
-                <tr
-                  key={p.id}
-                  className={`border-b border-zinc-800/50 transition-colors ${
-                    isSelected ? 'bg-amber-500/5' : 'hover:bg-zinc-900/60'
-                  }`}
-                >
-                  {/* Checkbox */}
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      className="rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
-                      checked={isSelected}
-                      onChange={() => toggleSelect(p.id)}
-                    />
-                  </td>
-                  {/* Thumbnail */}
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/products/${p.id}`} className="block">
-                      {thumbnailUrl ? (
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded ring-1 ring-zinc-700">
-                          <Image
-                            src={thumbnailUrl}
-                            alt=""
-                            fill
-                            sizes="48px"
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-zinc-800 text-xs text-zinc-500 ring-1 ring-zinc-700">
-                          —
-                        </div>
-                      )}
-                    </Link>
-                  </td>
-                  {/* Name */}
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/products/${p.id}`}
-                      className="font-medium text-zinc-50 hover:text-amber-400"
-                    >
-                      {p.name}
-                    </Link>
-                    {p.is_customizable && (
-                      <span className="ml-2 rounded bg-amber-900/40 px-2 py-0.5 text-xs text-amber-400">
-                        Customizable
-                      </span>
-                    )}
-                  </td>
-                  {/* Category */}
-                  <td
-                    className="group/cat cursor-pointer px-4 py-3 text-sm text-zinc-400"
-                    onClick={() =>
-                      setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
-                    }
+      {viewMode === 'list' && (
+        <div className="hidden overflow-x-auto rounded-lg border border-zinc-800 md:block">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-zinc-800 bg-zinc-900/80">
+                <th className="w-10 px-4 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    className="rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
+                    checked={allSelected}
+                    ref={(input) => {
+                      if (input) input.indeterminate = indeterminate
+                    }}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
+                {/* Thumbnail */}
+                <th className="w-14 px-4 py-3 text-left text-sm font-medium text-zinc-400" />
+                {/* Product name — sortable */}
+                <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  <button
+                    onClick={() => handleSortClick('name')}
+                    className="flex items-center whitespace-nowrap hover:text-zinc-200"
                   >
-                    <div className="flex items-center gap-1.5">
-                      {p.categories ? (
-                        <>
-                          <span>{p.categories.name}</span>
-                          <Pencil className="h-3 w-3 text-zinc-600 opacity-0 transition-opacity group-hover/cat:opacity-100" />
-                        </>
-                      ) : (
-                        <>
-                          <AlertTriangle className="h-4 w-4 text-amber-500" />
-                          <span className="text-xs font-medium text-amber-500">
-                            {t('products.missingCategory')}
-                          </span>
-                          <Pencil className="h-3 w-3 text-amber-600 opacity-0 transition-opacity group-hover/cat:opacity-100" />
-                        </>
+                    {t('products.product')}
+                    <SortIcon col="name" sortBy={sortBy} sortDir={sortDir} />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  {t('products.category')}
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  {t('products.tags')}
+                </th>
+                {/* Images count */}
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  {t('products.images')}
+                </th>
+                {/* Price range — sortable (client-side note) */}
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  {t('products.priceRange')}
+                </th>
+                {/* Date — sortable */}
+                <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  <button
+                    onClick={() => handleSortClick('created_at')}
+                    className="flex items-center whitespace-nowrap hover:text-zinc-200"
+                  >
+                    {t('orders.date')}
+                    <SortIcon col="created_at" sortBy={sortBy} sortDir={sortDir} />
+                  </button>
+                </th>
+                {/* Status — sortable */}
+                <th className="group/th px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  <button
+                    onClick={() => handleSortClick('is_active')}
+                    className="flex items-center whitespace-nowrap hover:text-zinc-200"
+                  >
+                    {t('dashboard.status')}
+                    <SortIcon col="is_active" sortBy={sortBy} sortDir={sortDir} />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">Votes</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
+                  {t('dashboard.actions')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {safeProducts.map((p) => {
+                const variants = p.product_variants ?? []
+                const images = (p.product_images ?? []).sort(
+                  (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+                )
+                const thumbnailUrl = images[0]?.url
+                const minPrice = variants.length
+                  ? Math.min(...variants.map((v) => v.price_cents))
+                  : 0
+                const maxPrice = variants.length
+                  ? Math.max(...variants.map((v) => v.price_cents))
+                  : 0
+                const priceRange =
+                  minPrice === maxPrice
+                    ? formatPrice(minPrice)
+                    : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`
+                const isSelected = selectedIds.has(p.id)
+                const tags = p.product_tags ?? []
+
+                return (
+                  <tr
+                    key={p.id}
+                    className={`border-b border-zinc-800/50 transition-colors ${
+                      isSelected ? 'bg-amber-500/5' : 'hover:bg-zinc-900/60'
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(p.id)}
+                      />
+                    </td>
+                    {/* Thumbnail */}
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/products/${p.id}`} className="block">
+                        {thumbnailUrl ? (
+                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded ring-1 ring-zinc-700">
+                            <Image
+                              src={thumbnailUrl}
+                              alt=""
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-zinc-800 text-xs text-zinc-500 ring-1 ring-zinc-700">
+                            —
+                          </div>
+                        )}
+                      </Link>
+                    </td>
+                    {/* Name */}
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/products/${p.id}`}
+                        className="font-medium text-zinc-50 hover:text-amber-400"
+                      >
+                        {p.name}
+                      </Link>
+                      {p.is_customizable && (
+                        <span className="ml-2 rounded bg-amber-900/40 px-2 py-0.5 text-xs text-amber-400">
+                          Customizable
+                        </span>
                       )}
-                    </div>
-                  </td>
-                  {/* Tags */}
-                  <td className="px-4 py-3">
-                    {tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag.id}
-                            className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 ring-1 ring-zinc-700"
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
-                        {tags.length > 3 && (
-                          <span className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 ring-1 ring-zinc-700">
-                            +{tags.length - 3}
-                          </span>
+                    </td>
+                    {/* Category */}
+                    <td
+                      className="group/cat cursor-pointer px-4 py-3 text-sm text-zinc-400"
+                      onClick={() =>
+                        setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
+                      }
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {p.categories ? (
+                          <>
+                            <span>{p.categories.name}</span>
+                            <Pencil className="h-3 w-3 text-zinc-600 opacity-0 transition-opacity group-hover/cat:opacity-100" />
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="h-4 w-4 text-amber-500" />
+                            <span className="text-xs font-medium text-amber-500">
+                              {t('products.missingCategory')}
+                            </span>
+                            <Pencil className="h-3 w-3 text-amber-600 opacity-0 transition-opacity group-hover/cat:opacity-100" />
+                          </>
                         )}
                       </div>
+                    </td>
+                    {/* Tags */}
+                    <td className="px-4 py-3">
+                      {tags.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 ring-1 ring-zinc-700"
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                          {tags.length > 3 && (
+                            <span className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 ring-1 ring-zinc-700">
+                              +{tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-zinc-600">—</span>
+                      )}
+                    </td>
+                    {/* Images count — warning if 0 */}
+                    <td className="px-4 py-3 text-sm">
+                      {images.length === 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                          <span className="font-medium text-amber-500">0</span>
+                        </div>
+                      ) : (
+                        <span className="text-zinc-400">{images.length}</span>
+                      )}
+                    </td>
+                    {/* Price */}
+                    <td className="px-4 py-3 text-sm text-zinc-300">{priceRange}</td>
+                    {/* Date */}
+                    <td className="px-4 py-3 text-sm text-zinc-400">{formatDate(p.created_at)}</td>
+                    {/* Status — quick toggle */}
+                    <td className="px-4 py-3">
+                      <ToggleStatusButton productId={p.id} isActive={p.is_active} />
+                    </td>
+                    {/* Votes */}
+                    <td className="px-4 py-3">
+                      <ProductVoteButtons
+                        productId={p.id}
+                        currentUserId={currentUserId}
+                        votes={votes.filter((v) => v.product_id === p.id)}
+                        adminProfiles={adminProfiles}
+                      />
+                    </td>
+                    {/* Actions */}
+                    <td className="px-4 py-3">
+                      <ProductActionsDropdown
+                        productId={p.id}
+                        productName={p.name}
+                        productSlug={p.slug}
+                        isActive={p.is_active}
+                      />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Grid View ────────────────────────────────────────────────────────── */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {safeProducts.map((p) => {
+            const variants = p.product_variants ?? []
+            const images = (p.product_images ?? []).sort(
+              (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+            )
+            const thumbnailUrl = images[0]?.url
+            const minPrice = variants.length ? Math.min(...variants.map((v) => v.price_cents)) : 0
+            const isSelected = selectedIds.has(p.id)
+
+            return (
+              <div
+                key={p.id}
+                className={`group relative flex flex-col rounded-xl border transition-colors ${
+                  isSelected
+                    ? 'border-amber-500/50 bg-amber-500/5'
+                    : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'
+                }`}
+              >
+                {/* Checkbox */}
+                <div className="absolute left-2 top-2 z-10">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
+                    checked={isSelected}
+                    onChange={() => toggleSelect(p.id)}
+                  />
+                </div>
+
+                {/* Image */}
+                <Link href={`/admin/products/${p.id}`} className="block">
+                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-xl bg-zinc-800">
+                    {thumbnailUrl ? (
+                      <Image
+                        src={thumbnailUrl}
+                        alt={p.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        className="object-cover transition group-hover:scale-105"
+                      />
                     ) : (
-                      <span className="text-xs text-zinc-600">—</span>
-                    )}
-                  </td>
-                  {/* Images count — warning if 0 */}
-                  <td className="px-4 py-3 text-sm">
-                    {images.length === 0 ? (
-                      <div className="flex items-center gap-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                        <span className="font-medium text-amber-500">0</span>
+                      <div className="flex h-full items-center justify-center text-zinc-600">
+                        <AlertTriangle className="h-8 w-8" />
                       </div>
-                    ) : (
-                      <span className="text-zinc-400">{images.length}</span>
                     )}
-                  </td>
-                  {/* Price */}
-                  <td className="px-4 py-3 text-sm text-zinc-300">{priceRange}</td>
-                  {/* Date */}
-                  <td className="px-4 py-3 text-sm text-zinc-400">{formatDate(p.created_at)}</td>
-                  {/* Status — quick toggle */}
-                  <td className="px-4 py-3">
-                    <ToggleStatusButton productId={p.id} isActive={p.is_active} />
-                  </td>
-                  {/* Actions */}
-                  <td className="px-4 py-3">
-                    <ProductActionsDropdown
+                    {/* Status badge */}
+                    <div className="absolute bottom-2 right-2">
+                      <ToggleStatusButton productId={p.id} isActive={p.is_active} />
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Info */}
+                <div className="flex flex-1 flex-col gap-2 p-3">
+                  <Link
+                    href={`/admin/products/${p.id}`}
+                    className="line-clamp-2 text-xs font-medium leading-snug text-zinc-100 hover:text-amber-400"
+                  >
+                    {p.name}
+                  </Link>
+                  <div className="text-xs font-semibold text-amber-400">
+                    {formatPrice(minPrice)}
+                  </div>
+
+                  {/* Votes */}
+                  <div className="mt-auto pt-1 border-t border-zinc-800">
+                    <ProductVoteButtons
                       productId={p.id}
-                      productName={p.name}
-                      productSlug={p.slug}
-                      isActive={p.is_active}
+                      currentUserId={currentUserId}
+                      votes={votes.filter((v) => v.product_id === p.id)}
+                      adminProfiles={adminProfiles}
                     />
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* ── Mobile Card View ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 md:hidden">
