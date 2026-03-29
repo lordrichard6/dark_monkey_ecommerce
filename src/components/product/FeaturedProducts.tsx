@@ -23,29 +23,10 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
   const supabase = await createClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
-    .from('products')
-    .select(
-      `
-      id,
-      name,
-      slug,
-      dual_image_mode,
-      product_images (url, alt, sort_order),
-      product_variants (price_cents, compare_at_price_cents),
-      product_tags!inner (
-        tags!inner (slug)
-      )
-    `
-    )
-    .eq('is_active', true)
-    .is('deleted_at', null)
+  let query: any
 
   if (tag) {
-    query = query.eq('product_tags.tags.slug', tag)
-  } else {
-    // Try is_featured=true first; fall back to newest if none are set
-    const { data: featuredData } = await supabase
+    query = supabase
       .from('products')
       .select(
         `
@@ -54,30 +35,16 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
         slug,
         dual_image_mode,
         product_images (url, alt, sort_order),
-        product_variants (price_cents, compare_at_price_cents)
+        product_variants (price_cents, compare_at_price_cents),
+        product_tags!inner (
+          tags!inner (slug)
+        )
       `
       )
       .eq('is_active', true)
-      .eq('is_featured', true)
       .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-
-    if (featuredData && featuredData.length > 0) {
-      const [user, bestsellerIds] = await Promise.all([
-        getUserSafe(supabase),
-        getBestsellerProductIds(),
-      ])
-      const wishlistProductIds = user?.id
-        ? ((
-            await supabase.from('user_wishlist').select('product_id').eq('user_id', user.id)
-          ).data?.map((w) => w.product_id) ?? [])
-        : []
-
-      const processed = mapProducts(featuredData as ProductRow[], wishlistProductIds, bestsellerIds)
-      return <ProductGrid products={processed.slice(0, 8)} title={t('allProducts')} sort={sort} />
-    }
-
-    // No featured products — fall back to newest
+      .eq('product_tags.tags.slug', tag)
+  } else {
     query = supabase
       .from('products')
       .select(
@@ -123,12 +90,10 @@ export async function FeaturedProducts({ sort = 'newest', tag }: Props) {
         ? [...productsWithPrice].sort((a, b) => b.priceCents - a.priceCents)
         : productsWithPrice
 
-  const displayedProducts = sortedProducts.slice(0, 8)
-
   return (
     <ProductGrid
-      products={displayedProducts}
-      title={tag ? `${t('discovery')}: ${tag}` : t('allProducts')}
+      products={sortedProducts.slice(0, 8)}
+      title={tag ? `${t('discovery')}: ${tag}` : t('featuredProducts')}
       sort={sort}
     />
   )
@@ -143,17 +108,14 @@ function mapProducts(data: ProductRow[], wishlistProductIds: string[], bestselle
     let compareAtPriceCents: number | null = null
 
     if (variants && variants.length > 0) {
-      const sortedVariants = [...variants].sort(
-        (a, b) => (a.price_cents || 0) - (b.price_cents || 0)
-      )
-      const cheapest = sortedVariants[0]
-      priceCents = cheapest.price_cents || 0
-      compareAtPriceCents = cheapest.compare_at_price_cents || null
+      const sorted = [...variants].sort((a, b) => (a.price_cents || 0) - (b.price_cents || 0))
+      priceCents = sorted[0].price_cents || 0
+      compareAtPriceCents = sorted[0].compare_at_price_cents || null
     }
 
     const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) ?? []
-    const primaryImage = sortedImages[0]
-    const secondImage = sortedImages[1]
+    const primary = sortedImages[0]
+    const second = sortedImages[1]
 
     return {
       productId: p.id,
@@ -161,10 +123,10 @@ function mapProducts(data: ProductRow[], wishlistProductIds: string[], bestselle
       name: p.name,
       priceCents,
       compareAtPriceCents,
-      imageUrl: primaryImage?.url ?? '',
-      imageAlt: primaryImage?.alt ?? p.name,
-      imageUrl2: p.dual_image_mode ? (secondImage?.url ?? null) : null,
-      dualImageMode: p.dual_image_mode && !!secondImage,
+      imageUrl: primary?.url ?? '',
+      imageAlt: primary?.alt ?? p.name,
+      imageUrl2: p.dual_image_mode ? (second?.url ?? null) : null,
+      dualImageMode: p.dual_image_mode && !!second,
       isInWishlist: wishlistProductIds.includes(p.id),
       isBestseller: bestsellerIds.has(p.id),
     }
