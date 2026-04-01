@@ -235,7 +235,26 @@
     "comingSoonTitle": "Nous préparons notre collection",
     "comingSoonDescription": "Nous mettons à jour nos produits. Revenez bientôt !",
     "sortBestseller": "Meilleures ventes d'abord",
-    "sortDiscount": "Plus grande réduction"
+    "sortDiscount": "Plus grande réduction",
+    "socialEyebrow": "Communauté",
+    "socialTitle": "suis-nous & reste connecté",
+    "socialSubtitle": "Suis-nous sur les réseaux sociaux et sois le premier informé des nouveautés, des remises exclusives et des coulisses de la marque.",
+    "socialFollowButton": "Suivre sur {platform}",
+    "socialPerk1": "Lancements exclusifs",
+    "socialPerk2": "Réductions spéciales",
+    "socialPerk3": "Coulisses",
+    "customEyebrow": "Commandes Personnalisées",
+    "customTitle": "ta vision. notre savoir-faire.",
+    "customSubtitle": "Tu as un design en tête ? Envoie-nous tes images, esquisses ou références et nous imprimerons ta vision sur des vêtements premium — exactement comme tu le souhaites.",
+    "customStep1Title": "Prépare ton design",
+    "customStep1Desc": "Rassemble tes images, esquisses ou références visuelles. Plus tu partages de détails, plus le résultat sera proche de ta vision.",
+    "customStep2Title": "Envoie-nous un e-mail",
+    "customStep2Desc": "Écris-nous à support@dark-monkey.ch avec tes fichiers et une description — type de vêtement, couleurs, emplacement et quantité.",
+    "customStep3Title": "On donne vie à ton idée",
+    "customStep3Desc": "Notre équipe examine ta demande, confirme les détails et produit tes pièces personnalisées avec la même qualité que notre collection habituelle.",
+    "customCta": "Envoyer mon design",
+    "customEmailSubject": "Demande de Design Personnalisé",
+    "customEmailBody": "Bonjour l'équipe Dark Monkey,\n\nJe souhaite commander un design personnalisé. Voici les détails :\n\n- Type de vêtement :\n- Couleurs :\n- Emplacement :\n- Quantité :\n- Description :\n\n[Joindre les images ici]\n\nMerci !"
   },
   "userMenu": {
     "account": "Compte",
@@ -358,7 +377,12 @@
     "sleeve": "Manche",
     "sleeveMeasurement": "Mesurez depuis le centre du dos du cou jusqu'au poignet, bras tendu.",
     "stockNotificationError": "Échec de l'inscription à la notification. Veuillez réessayer.",
-    "stockNotificationSuccess": "Vous serez notifié lorsque cet article sera à nouveau disponible !"
+    "stockNotificationSuccess": "Vous serez notifié lorsque cet article sera à nouveau disponible !",
+    "noReviewsYet": "Aucun avis",
+    "badgeSale": "Promo",
+    "badgeNew": "Nouveau",
+    "badgeBestseller": "🔥 Hot",
+    "badgeFeatured": "À la une"
   },
   "cart": {
     "cartWithItems": "Panier avec {count} articles",
@@ -634,7 +658,7 @@
     "contactTitle": "Contact",
     "emailLabel": "E-mail :",
     "responsibleLabel": "Responsable :",
-    "responsibleValue": "Paulo Lopes",
+    "responsibleValue": "Paulo Lopes & Gonçalo Pinto",
     "disputeTitle": "Résolution des litiges",
     "disputeIntro": "Nous ne sommes pas tenus de participer à des procédures de règlement des litiges devant un organe de conciliation des consommateurs. En Suisse, l'autorité de conciliation cantonale est compétente.",
     "disclaimerTitle": "Avertissement",
@@ -652,7 +676,9 @@
     "signInToReview": "Connectez-vous pour écrire un avis",
     "noReviews": "Aucun avis pour le moment. Soyez le premier à donner votre avis.",
     "orderPageCta": "Écrire un avis",
-    "photos": "Photos"
+    "photos": "Photos",
+    "editReview": "Modifier l'avis",
+    "cancel": "Annuler"
   },
   "profile": {
     "editProfile": "Modifier le profil",
@@ -923,6 +949,7 @@
       "announcements": "Announcements",
       "features": "Features",
       "settings": "Settings",
+      "board": "Board",
       "viewStore": "View Store ↗",
       "emails": "Emails",
       "content": "Content",

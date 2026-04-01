@@ -24,10 +24,21 @@ type ProductCardProps = {
   isOnSale?: boolean
   createdAt?: string
   showWishlist?: boolean
+  index?: number
+  upvotes?: number
+  publicUp?: number
+  publicDown?: number
+  timesBought?: number
+  reviewCount?: number
+  avgRating?: number | null
 }
 
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { useTranslations } from 'next-intl'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+import { ProductVoteButtons } from './ProductVoteButtons'
+import { ProductCardStats } from './ProductCardStats'
+import { AdminEditButton } from './AdminEditButton'
 
 export function ProductCardWithWishlist({
   slug,
@@ -45,23 +56,44 @@ export function ProductCardWithWishlist({
   isOnSale = false,
   createdAt,
   showWishlist = true,
+  index = 0,
+  upvotes = 0,
+  publicUp = 0,
+  publicDown = 0,
+  timesBought = 0,
+  reviewCount = 0,
+  avgRating = null,
 }: ProductCardProps) {
   const { format } = useCurrency()
   const t = useTranslations('product')
+
 
   // Check if product is new (created within last 3 days)
   const isNew = createdAt
     ? new Date().getTime() - new Date(createdAt).getTime() < 3 * 24 * 60 * 60 * 1000
     : false
 
+  // Derive sale state directly from prices — never rely solely on the prop
+  const actuallyOnSale = isOnSale || !!(compareAtPriceCents && compareAtPriceCents > priceCents)
+
+  // Badge translated labels
+  const badgeLabels: Record<string, string> = {
+    sale: t('badgeSale'),
+    new: t('badgeNew'),
+    bestseller: t('badgeBestseller'),
+    featured: t('badgeFeatured'),
+  }
+
   // Determine which badges to show (priority: Sale > New > Featured > Bestseller)
   const badges = []
-  if (isOnSale) badges.push('sale')
+  if (actuallyOnSale) badges.push('sale')
   if (isNew) badges.push('new')
   if (isFeatured) badges.push('featured')
   if (isBestseller) badges.push('bestseller')
 
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
+  const { ref, visible } = useScrollReveal()
+  const delay = Math.min(index % 4, 3) * 80
 
   const showDual = dualImageMode && !!imageUrl2
 
@@ -70,20 +102,36 @@ export function ProductCardWithWishlist({
 
   return (
     <>
-      <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20 h-full">
+      <div
+        ref={ref}
+        className="group relative flex flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20 h-full"
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(28px)',
+          transitionProperty: 'opacity, transform',
+          transitionDuration: '0.55s',
+          transitionTimingFunction: 'ease',
+          transitionDelay: `${delay}ms`,
+        }}
+      >
         <Link href={`/products/${slug}`} className="flex flex-col flex-1">
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
-            {/* Display badges */}
-            {badges.length > 0 && (
-              <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
-                {badges.map((badge) => (
-                  <ProductBadge
-                    key={badge}
-                    type={badge as 'new' | 'featured' | 'sale' | 'bestseller'}
-                  />
-                ))}
-              </div>
-            )}
+            {/* Top-left: badges + vote pill stacked in a column */}
+            <div className="absolute left-2 top-2 z-30 flex flex-col gap-1">
+              {badges.map((badge) => (
+                <ProductBadge
+                  key={badge}
+                  type={badge as 'new' | 'featured' | 'sale' | 'bestseller'}
+                  label={badgeLabels[badge]}
+                />
+              ))}
+              <ProductVoteButtons
+                productId={productId}
+                initialUp={publicUp}
+                initialDown={publicDown}
+                variant="overlay"
+              />
+            </div>
 
             {showDual ? (
               /* ── Dual-image diagonal cut ── */
@@ -179,20 +227,29 @@ export function ProductCardWithWishlist({
           </div>
           <div className="p-4 flex flex-col flex-1">
             <ProductName name={name} />
-            <div className="mt-auto pt-2 flex flex-wrap items-baseline gap-1">
-              <span
-                className={`text-sm font-bold md:text-base ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-500' : 'text-zinc-200'}`}
-              >
-                {format(priceCents || 0)}
-              </span>
-              {compareAtPriceCents && compareAtPriceCents > priceCents && (
-                <span className="text-xs text-zinc-500 line-through decoration-zinc-500/50 md:text-sm">
-                  {format(compareAtPriceCents)}
+            <div className="mt-auto pt-3">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span
+                  className={`text-base font-extrabold md:text-xl ${compareAtPriceCents && compareAtPriceCents > priceCents ? 'text-amber-400' : 'text-zinc-100'}`}
+                >
+                  {format(priceCents || 0)}
                 </span>
-              )}
+                {compareAtPriceCents && compareAtPriceCents > priceCents && (
+                  <span className="text-xs font-medium text-zinc-500 line-through decoration-zinc-600 md:text-sm">
+                    {format(compareAtPriceCents)}
+                  </span>
+                )}
+              </div>
+              <ProductCardStats
+                timesBought={timesBought}
+                reviewCount={reviewCount}
+                avgRating={avgRating}
+              />
             </div>
           </div>
         </Link>
+
+        <AdminEditButton productId={productId} />
       </div>
 
       <QuickViewModal

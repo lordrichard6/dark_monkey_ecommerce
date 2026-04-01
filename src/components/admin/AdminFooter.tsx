@@ -36,6 +36,7 @@ export function AdminFooter() {
     {
       label: t('nav.system'),
       links: [
+        { href: '/admin/board', label: t('nav.board') },
         { href: '/admin/settings', label: t('nav.settings') },
         { href: '/', label: t('nav.viewStore') },
       ],

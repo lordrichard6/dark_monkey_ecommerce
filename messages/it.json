@@ -235,7 +235,26 @@
     "comingSoonTitle": "Stiamo preparando la nostra collezione",
     "comingSoonDescription": "Stiamo aggiornando i nostri prodotti. Torna presto!",
     "sortBestseller": "Bestseller prima",
-    "sortDiscount": "Sconto maggiore"
+    "sortDiscount": "Sconto maggiore",
+    "socialEyebrow": "Community",
+    "socialTitle": "seguici & resta aggiornato",
+    "socialSubtitle": "Seguici sui social media e scopri per primo i nuovi lanci, gli sconti esclusivi e i contenuti dietro le quinte.",
+    "socialFollowButton": "Segui su {platform}",
+    "socialPerk1": "Lanci esclusivi",
+    "socialPerk2": "Sconti speciali",
+    "socialPerk3": "Dietro le quinte",
+    "customEyebrow": "Ordini Personalizzati",
+    "customTitle": "la tua visione. il nostro mestiere.",
+    "customSubtitle": "Hai un design in mente? Inviaci le tue immagini, bozzetti o riferimenti e stamperemo la tua visione su capi premium — esattamente come vuoi.",
+    "customStep1Title": "Prepara il tuo design",
+    "customStep1Desc": "Raccogli le tue immagini, bozzetti o riferimenti visivi. Più dettagli condividi, più il risultato sarà vicino alla tua visione.",
+    "customStep2Title": "Inviaci un'email",
+    "customStep2Desc": "Scrivi a support@dark-monkey.ch con i tuoi file e una descrizione — tipo di capo, colori, posizionamento e quantità.",
+    "customStep3Title": "Noi lo realizziamo",
+    "customStep3Desc": "Il nostro team esamina la tua richiesta, conferma i dettagli e produce i tuoi capi personalizzati con la stessa qualità della nostra collezione regolare.",
+    "customCta": "Invia il tuo design",
+    "customEmailSubject": "Richiesta Design Personalizzato",
+    "customEmailBody": "Ciao team Dark Monkey,\n\nVorrei ordinare un design personalizzato. Ecco i dettagli:\n\n- Tipo di capo:\n- Colori:\n- Posizionamento:\n- Quantità:\n- Descrizione:\n\n[Allega le immagini qui]\n\nGrazie!"
   },
   "userMenu": {
     "account": "Account",
@@ -358,7 +377,12 @@
     "sleeve": "Manica",
     "sleeveMeasurement": "Misura dal centro della schiena del collo fino al polso con il braccio esteso.",
     "stockNotificationError": "Impossibile registrare la notifica. Riprova.",
-    "stockNotificationSuccess": "Riceverai una notifica quando questo articolo sarà di nuovo disponibile!"
+    "stockNotificationSuccess": "Riceverai una notifica quando questo articolo sarà di nuovo disponibile!",
+    "noReviewsYet": "Nessuna recensione",
+    "badgeSale": "Offerta",
+    "badgeNew": "Nuovo",
+    "badgeBestseller": "🔥 Hot",
+    "badgeFeatured": "In evidenza"
   },
   "cart": {
     "cartWithItems": "Carrello con {count} articoli",
@@ -634,7 +658,7 @@
     "contactTitle": "Contatto",
     "emailLabel": "Email:",
     "responsibleLabel": "Responsabile:",
-    "responsibleValue": "Paulo Lopes",
+    "responsibleValue": "Paulo Lopes & Gonçalo Pinto",
     "disputeTitle": "Risoluzione delle controversie",
     "disputeIntro": "Non siamo obbligati a partecipare a procedure di risoluzione delle controversie davanti a un organo di conciliazione dei consumatori. In Svizzera è competente l'autorità di conciliazione cantonale.",
     "disclaimerTitle": "Esclusione di responsabilità",
@@ -652,7 +676,9 @@
     "signInToReview": "Accedi per scrivere una recensione",
     "noReviews": "Nessuna recensione ancora. Sii il primo a recensire questo prodotto.",
     "orderPageCta": "Scrivi una recensione",
-    "photos": "Foto"
+    "photos": "Foto",
+    "editReview": "Modifica recensione",
+    "cancel": "Annulla"
   },
   "profile": {
     "editProfile": "Modifica profilo",
@@ -923,6 +949,7 @@
       "announcements": "Announcements",
       "features": "Features",
       "settings": "Settings",
+      "board": "Board",
       "viewStore": "View Store ↗",
       "emails": "Emails",
       "content": "Content",

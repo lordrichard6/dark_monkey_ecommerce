@@ -8,7 +8,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import { SUPPORTED_CURRENCIES, SupportedCurrency } from '@/lib/currency'
 import Image from 'next/image'
-import { Instagram, Twitter, Facebook, Send, Loader2, Mail, Clock } from 'lucide-react'
+import { Instagram, Facebook, Send, Loader2, Mail, Clock } from 'lucide-react'
 import { subscribeToNewsletter } from '@/actions/newsletter'
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -370,25 +370,22 @@ export function Footer() {
               </span>
               <div className="flex gap-4">
                 <a
-                  href="#"
-                  className="rounded text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  href="https://www.instagram.com/dark_monkey_store/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded text-zinc-400 transition hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                   aria-label="Instagram"
                 >
                   <Instagram className="h-5 w-5" />
                 </a>
                 <a
-                  href="#"
-                  className="rounded text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  href="https://www.facebook.com/profile.php?id=61574367719121"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded text-zinc-400 transition hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                   aria-label="Facebook"
                 >
                   <Facebook className="h-5 w-5" />
-                </a>
-                <a
-                  href="#"
-                  className="rounded text-zinc-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-                  aria-label="Twitter"
-                >
-                  <Twitter className="h-5 w-5" />
                 </a>
               </div>
             </div>
@@ -413,6 +410,33 @@ export function Footer() {
               </Link>
             </span>
           ))}
+        </div>
+      </div>
+
+      {/* Made by Lopes2Tech */}
+      <div className="border-t border-white/[0.04] px-4 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-center">
+          <a
+            href="https://www.lopes2tech.ch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-2.5 transition-all duration-300"
+          >
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-700 transition-colors duration-300 group-hover:text-zinc-500">
+              Crafted by
+            </span>
+            <span className="h-px w-6 bg-zinc-800 transition-all duration-300 group-hover:w-3 group-hover:bg-zinc-600" />
+            <Image
+              src="/images/lopes2tech_logo.png"
+              alt="Lopes2Tech"
+              width={18}
+              height={18}
+              className="rounded grayscale opacity-30 transition-all duration-300 group-hover:opacity-70 group-hover:grayscale-0"
+            />
+            <span className="text-[11px] font-bold tracking-widest text-zinc-700 transition-colors duration-300 group-hover:text-zinc-300">
+              LOPES<span className="text-amber-500/60 group-hover:text-amber-400 transition-colors duration-300">2</span>TECH
+            </span>
+          </a>
         </div>
       </div>
     </footer>

@@ -156,7 +156,26 @@
     "comingSoonTitle": "Wir bereiten unsere Kollektion vor",
     "comingSoonDescription": "Wir aktualisieren gerade unsere Produkte. Schaue bald wieder vorbei!",
     "sortBestseller": "Bestseller zuerst",
-    "sortDiscount": "Grösster Rabatt"
+    "sortDiscount": "Grösster Rabatt",
+    "socialEyebrow": "Community",
+    "socialTitle": "folge uns & bleib dabei",
+    "socialSubtitle": "Folge uns in den sozialen Medien und erfahre als Erster von neuen Drops, exklusiven Rabatten und Hinter-den-Kulissen-Inhalten.",
+    "socialFollowButton": "Auf {platform} folgen",
+    "socialPerk1": "Exklusive Drops",
+    "socialPerk2": "Sonderrabatte",
+    "socialPerk3": "Hinter den Kulissen",
+    "customEyebrow": "Individuelle Bestellungen",
+    "customTitle": "deine vision. unser handwerk.",
+    "customSubtitle": "Hast du ein Design im Kopf? Schick uns deine Bilder, Skizzen oder Referenzen und wir drucken deine Vision auf Premium-Kleidung — genau so, wie du es dir vorstellst.",
+    "customStep1Title": "Bereite dein Design vor",
+    "customStep1Desc": "Sammle deine Bilder, Skizzen oder visuellen Referenzen. Je mehr Details du teilst, desto näher wird das Ergebnis deiner Vorstellung sein.",
+    "customStep2Title": "Schick uns eine E-Mail",
+    "customStep2Desc": "Sende eine E-Mail an support@dark-monkey.ch mit deinen Dateien und einer Beschreibung — Kleidungsstück, Farben, Platzierung und Menge.",
+    "customStep3Title": "Wir setzen es um",
+    "customStep3Desc": "Unser Team prüft deine Anfrage, bestätigt die Details und produziert deine individuellen Stücke in der gleichen Qualität wie unsere reguläre Kollektion.",
+    "customCta": "Design einsenden",
+    "customEmailSubject": "Anfrage für individuelles Design",
+    "customEmailBody": "Hallo Dark Monkey Team,\n\nIch möchte ein individuelles Design bestellen. Hier sind die Details:\n\n- Kleidungsstücktyp:\n- Farben:\n- Platzierung:\n- Menge:\n- Beschreibung:\n\n[Bilder hier anhängen]\n\nVielen Dank!"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",
@@ -358,7 +377,12 @@
     "added": "Hinzugefügt!",
     "reviewsCount": "{count} Bewertungen",
     "recentlyViewed": "Zuletzt angesehen",
-    "recentlyViewedSubtitle": "Mach weiter, wo du aufgehört hast."
+    "recentlyViewedSubtitle": "Mach weiter, wo du aufgehört hast.",
+    "noReviewsYet": "Noch keine Bewertungen",
+    "badgeSale": "Angebot",
+    "badgeNew": "Neu",
+    "badgeBestseller": "🔥 Hot",
+    "badgeFeatured": "Empfohlen"
   },
   "cart": {
     "cartWithItems": "Warenkorb mit {count} Artikeln",
@@ -634,7 +658,7 @@
     "contactTitle": "Kontakt",
     "emailLabel": "E-Mail:",
     "responsibleLabel": "Verantwortlich:",
-    "responsibleValue": "Paulo Lopes",
+    "responsibleValue": "Paulo Lopes & Gonçalo Pinto",
     "disputeTitle": "Streitbeilegung",
     "disputeIntro": "Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen. In der Schweiz ist die kantonale Schlichtungsbehörde zuständig.",
     "disclaimerTitle": "Haftungsausschluss",
@@ -652,7 +676,9 @@
     "signInToReview": "Melden Sie sich an, um eine Bewertung zu schreiben",
     "noReviews": "Noch keine Bewertungen. Seien Sie der Erste.",
     "orderPageCta": "Bewertung schreiben",
-    "photos": "Fotos"
+    "photos": "Fotos",
+    "editReview": "Bewertung bearbeiten",
+    "cancel": "Abbrechen"
   },
   "profile": {
     "editProfile": "Profil bearbeiten",
@@ -923,6 +949,7 @@
       "announcements": "Announcements",
       "features": "Features",
       "settings": "Settings",
+      "board": "Board",
       "viewStore": "View Store ↗",
       "emails": "Emails",
       "content": "Content",

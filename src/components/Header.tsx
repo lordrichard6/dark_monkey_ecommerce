@@ -44,13 +44,37 @@ export async function Header() {
     console.error('Error fetching categories:', error)
   }
 
+  let boardCounts: { tasks: number; ideas: number } | undefined
+
+  if (isAdmin) {
+    try {
+      const admin = getAdminClient()
+      const client = admin ?? (await createClient())
+      const [taskRes, ideaRes] = await Promise.all([
+        client
+          .from('admin_board_items')
+          .select('*', { count: 'exact', head: true })
+          .eq('type', 'task')
+          .in('status', ['open', 'in_progress']),
+        client
+          .from('admin_board_items')
+          .select('*', { count: 'exact', head: true })
+          .eq('type', 'idea')
+          .neq('status', 'archived'),
+      ])
+      boardCounts = { tasks: taskRes.count ?? 0, ideas: ideaRes.count ?? 0 }
+    } catch {
+      // non-critical — badges just won't show
+    }
+  }
+
   const userInfo = user
     ? { user, displayName, avatarUrl, isAdmin }
     : { user: null, displayName: null, avatarUrl: null, isAdmin: false }
 
   return (
     <>
-      <SideNav isAdmin={isAdmin} categories={navCategories} />
+      <SideNav isAdmin={isAdmin} categories={navCategories} boardCounts={boardCounts} />
       <DesktopTopBar {...userInfo} />
       <MobileHeader {...userInfo} categories={navCategories} />
     </>

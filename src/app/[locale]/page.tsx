@@ -1,22 +1,22 @@
 import { Suspense } from 'react'
 import { Hero } from '@/components/Hero'
-import { FeaturedProducts } from '@/components/product/FeaturedProducts'
 import { NewArrivalsSection } from '@/components/product/NewArrivalsSection'
 import { FeaturedProductsSection } from '@/components/product/FeaturedProductsSection'
-import { TagFilterSection } from '@/components/product/TagFilterSection'
-import { ProductGridSkeleton } from '@/components/product/ProductGridSkeleton'
 import { ProductCarouselSkeleton } from '@/components/product/ProductCarouselSkeleton'
+import { AllProductsSection } from '@/components/product/AllProductsSection'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { GalleryPreviewSection } from '@/components/gallery/GalleryPreviewSection'
 import { AuthCTASection } from '@/components/auth/AuthCTASection'
-import { Lopes2TechSection } from '@/components/Lopes2TechSection'
-import { Link } from '@/i18n/navigation'
+import { SocialSection } from '@/components/social/SocialSection'
+import { CustomDesignSection } from '@/components/custom/CustomDesignSection'
 import { CategoryStrip } from '@/components/category/CategoryStrip'
+import { fetchHomeProducts } from '@/actions/products'
+import { createClient } from '@/lib/supabase/server'
 
 type Props = {
   params: Promise<{ locale: string }>
-  searchParams: Promise<{ sort?: string; tag?: string }>
+  searchParams: Promise<Record<string, string | undefined>>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -46,9 +46,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ISR: Revalidate home page every 10 minutes
 export const revalidate = 600
 
-export default async function HomePage({ params, searchParams }: Props) {
-  const { sort = 'newest', tag } = await searchParams
+export default async function HomePage({ params: _params }: Props) {
   const t = await getTranslations('home')
+  const supabase = await createClient()
+
+  // Fetch initial data server-side for instant render
+  const [initialProducts, activePtData] = await Promise.all([
+    fetchHomeProducts('newest'),
+    supabase
+      .from('product_tags')
+      .select('tag_id, products!inner(id)')
+      .eq('products.is_active', true)
+      .is('products.deleted_at', null),
+  ])
+
+  const activeTagIds = [...new Set((activePtData.data ?? []).map((pt) => pt.tag_id))]
+  const { data: tagsData } =
+    activeTagIds.length > 0
+      ? await supabase
+          .from('tags')
+          .select('id, name, slug')
+          .in('id', activeTagIds)
+          .order('name', { ascending: true })
+      : { data: [] }
 
   return (
     <div>
@@ -57,6 +77,24 @@ export default async function HomePage({ params, searchParams }: Props) {
       <Suspense fallback={<ProductCarouselSkeleton />}>
         <NewArrivalsSection />
       </Suspense>
+
+      {/* Diagonal slash transition — dark → gradient */}
+      <div className="relative -mb-1 h-20 overflow-hidden">
+        <svg
+          viewBox="0 0 1440 80"
+          preserveAspectRatio="none"
+          className="absolute inset-0 h-full w-full"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <polygon points="0,0 1440,0 1440,20 0,80" fill="#09090b" />
+          <line
+            x1="0" y1="80"
+            x2="1440" y2="20"
+            stroke="rgba(251,191,36,0.15)"
+            strokeWidth="2"
+          />
+        </svg>
+      </div>
 
       <Suspense fallback={null}>
         <FeaturedProductsSection />
@@ -67,30 +105,15 @@ export default async function HomePage({ params, searchParams }: Props) {
       </Suspense>
 
       <div id="products" className="mx-auto max-w-6xl px-4 py-16 scroll-mt-4">
-        <Suspense
-          fallback={<div className="h-12 w-full animate-pulse rounded-lg bg-zinc-900/50 mb-8" />}
-        >
-          <TagFilterSection selectedTag={tag} />
-        </Suspense>
-
-        <Suspense fallback={<ProductGridSkeleton />}>
-          <FeaturedProducts sort={sort} tag={tag} />
-        </Suspense>
-
-        {!tag && (
-          <div className="mt-8 text-center">
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 rounded-lg bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-700"
-            >
-              {t('seeAllProducts')}
-            </Link>
-          </div>
-        )}
+        <AllProductsSection
+          initialProducts={initialProducts}
+          tags={tagsData ?? []}
+        />
       </div>
 
       <GalleryPreviewSection />
-      <Lopes2TechSection />
+      <CustomDesignSection />
+      <SocialSection />
       <AuthCTASection />
     </div>
   )

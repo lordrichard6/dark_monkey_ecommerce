@@ -11,12 +11,13 @@ type NavCategory = Category & { subcategories: Category[] }
 type Props = {
   isAdmin?: boolean
   categories: NavCategory[]
+  boardCounts?: { tasks: number; ideas: number }
 }
 
 const SIDEBAR_COLLAPSED = 64
 const SIDEBAR_EXPANDED = 240
 
-export function SideNav({ isAdmin, categories }: Props) {
+export function SideNav({ isAdmin, categories, boardCounts }: Props) {
   const t = useTranslations('common')
   const pathname = usePathname()
   const [expanded, setExpanded] = useState(false)
@@ -39,6 +40,7 @@ export function SideNav({ isAdmin, categories }: Props) {
         { href: '/admin/customers', label: 'Users', icon: UsersIcon },
         { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon },
         { href: '/admin/support', label: 'Support', icon: LifeBuoyIcon },
+        { href: '/admin/board', label: 'Board', icon: KanbanIcon },
         { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
       ]
     : []
@@ -178,6 +180,11 @@ export function SideNav({ isAdmin, categories }: Props) {
             {adminItems.map(({ href, label, icon: Icon }) => {
               const isActive =
                 pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
+              const isBoard = href === '/admin/board'
+              const taskCount = isBoard ? (boardCounts?.tasks ?? 0) : 0
+              const ideaCount = isBoard ? (boardCounts?.ideas ?? 0) : 0
+              const hasBadges = isBoard && (taskCount > 0 || ideaCount > 0)
+
               return (
                 <Link
                   key={href}
@@ -188,8 +195,45 @@ export function SideNav({ isAdmin, categories }: Props) {
                       : 'text-amber-500/60 hover:bg-amber-500/10 hover:text-amber-400 focus:text-amber-400'
                   }`}
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  {expanded && <span className="truncate">{label}</span>}
+                  {/* Icon — with badge dots when collapsed */}
+                  <div className="relative shrink-0">
+                    <Icon className="h-5 w-5" />
+                    {hasBadges && !expanded && (
+                      <>
+                        {taskCount > 0 && (
+                          <span className="absolute -left-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {taskCount > 9 ? '9+' : taskCount}
+                          </span>
+                        )}
+                        {ideaCount > 0 && (
+                          <span className="absolute -bottom-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-green-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {ideaCount > 9 ? '9+' : ideaCount}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Label + inline badges when expanded */}
+                  {expanded && (
+                    <>
+                      <span className="truncate">{label}</span>
+                      {hasBadges && (
+                        <div className="ml-auto flex items-center gap-1">
+                          {taskCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {taskCount > 9 ? '9+' : taskCount}
+                            </span>
+                          )}
+                          {ideaCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {ideaCount > 9 ? '9+' : ideaCount}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </Link>
               )
             })}
@@ -418,6 +462,25 @@ function UsersIcon({ className }: { className?: string }) {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}
+
+function KanbanIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="5" height="14" x="2" y="5" rx="1" />
+      <rect width="5" height="9" x="9.5" y="5" rx="1" />
+      <rect width="5" height="11" x="17" y="5" rx="1" />
     </svg>
   )
 }
