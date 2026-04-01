@@ -31,7 +31,8 @@ function StarIcon({ fill, index }: { fill: number; index: number }) {
 function BagIcon() {
   return (
     <svg
-      width="10" height="10"
+      width="10"
+      height="10"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -62,7 +63,7 @@ export function ProductCardStats({ timesBought, reviewCount, avgRating }: Props)
             />
           </svg>
         ))}
-        <span className="ml-1 text-[10px] font-medium tracking-wide text-zinc-600 uppercase">
+        <span className="ml-1 whitespace-nowrap text-[10px] font-medium tracking-wide text-zinc-600 uppercase">
           {t('noReviewsYet')}
         </span>
       </div>
