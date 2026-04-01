@@ -1303,6 +1303,38 @@
     "footer": {
       "adminPanel": "DARKMONKEY Admin Panel",
       "allRightsReserved": "© {year} All rights reserved"
+    },
+    "activity": {
+      "title": "Aktivität",
+      "subtitle": "Live-Feed mit Konto- und Kaufereignissen · letzte 30 Tage",
+      "signupsToday": "Anmeldungen heute",
+      "verificationsToday": "Verifizierungen heute",
+      "purchasesToday": "Käufe heute",
+      "revenueToday": "Umsatz heute",
+      "inThirtyDays": "{n} in 30 Tagen",
+      "filterAll": "Alle",
+      "filterSignups": "Anmeldungen",
+      "filterVerifications": "Verifizierungen",
+      "filterPurchases": "Käufe",
+      "searchPlaceholder": "Nach E-Mail oder Bestellung suchen…",
+      "createdAccount": "hat ein Konto erstellt",
+      "verifiedEmail": "hat die E-Mail verifiziert",
+      "purchased": "hat gekauft",
+      "for": "für",
+      "guest": "Gast",
+      "moreProducts": "+{count} mehr",
+      "noEvents": "Keine Ereignisse in den letzten 30 Tagen.",
+      "noEventsMatching": "Keine Ereignisse für \"{query}\"",
+      "showingCount": "{count} Ereignisse angezeigt",
+      "matchingQuery": "für \"{query}\"",
+      "lastThirtyDays": "· letzte 30 Tage",
+      "refresh": "Aktualisieren",
+      "exportCsv": "CSV exportieren",
+      "loadMore": "{count} weitere laden",
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "truncatedOrdersWarning": "Zeigt nur die neuesten 500 Bestellungen — einige Ereignisse fehlen möglicherweise.",
+      "truncatedUsersWarning": "Benutzerliste auf 1.000 begrenzt — einige E-Mails können als Unbekannt angezeigt werden."
     }
   }
 }

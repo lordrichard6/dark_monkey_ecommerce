@@ -1303,6 +1303,38 @@
     "footer": {
       "adminPanel": "DARKMONKEY Admin Panel",
       "allRightsReserved": "© {year} All rights reserved"
+    },
+    "activity": {
+      "title": "Attività",
+      "subtitle": "Feed in tempo reale di eventi account e acquisto · ultimi 30 giorni",
+      "signupsToday": "Iscrizioni oggi",
+      "verificationsToday": "Verifiche oggi",
+      "purchasesToday": "Acquisti oggi",
+      "revenueToday": "Entrate oggi",
+      "inThirtyDays": "{n} in 30 giorni",
+      "filterAll": "Tutti",
+      "filterSignups": "Iscrizioni",
+      "filterVerifications": "Verifiche",
+      "filterPurchases": "Acquisti",
+      "searchPlaceholder": "Cerca per email o ordine…",
+      "createdAccount": "ha creato un account",
+      "verifiedEmail": "ha verificato l'email",
+      "purchased": "ha acquistato",
+      "for": "per",
+      "guest": "ospite",
+      "moreProducts": "+{count} altri",
+      "noEvents": "Nessun evento negli ultimi 30 giorni.",
+      "noEventsMatching": "Nessun evento per \"{query}\"",
+      "showingCount": "Visualizzazione di {count} eventi",
+      "matchingQuery": "per \"{query}\"",
+      "lastThirtyDays": "· ultimi 30 giorni",
+      "refresh": "Aggiorna",
+      "exportCsv": "Esporta CSV",
+      "loadMore": "Carica altri {count}",
+      "today": "Oggi",
+      "yesterday": "Ieri",
+      "truncatedOrdersWarning": "Mostra solo gli ultimi 500 ordini — alcuni eventi potrebbero mancare.",
+      "truncatedUsersWarning": "Lista utenti limitata a 1.000 — alcune email potrebbero apparire come Sconosciuto."
     }
   }
 }

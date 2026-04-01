@@ -1303,6 +1303,38 @@
     "footer": {
       "adminPanel": "DARKMONKEY Admin Panel",
       "allRightsReserved": "© {year} All rights reserved"
+    },
+    "activity": {
+      "title": "Activité",
+      "subtitle": "Feed en direct des événements de compte et d'achat · 30 derniers jours",
+      "signupsToday": "Inscriptions aujourd'hui",
+      "verificationsToday": "Vérifications aujourd'hui",
+      "purchasesToday": "Achats aujourd'hui",
+      "revenueToday": "Revenus aujourd'hui",
+      "inThirtyDays": "{n} en 30 jours",
+      "filterAll": "Tous",
+      "filterSignups": "Inscriptions",
+      "filterVerifications": "Vérifications",
+      "filterPurchases": "Achats",
+      "searchPlaceholder": "Rechercher par email ou commande…",
+      "createdAccount": "a créé un compte",
+      "verifiedEmail": "a vérifié son email",
+      "purchased": "a acheté",
+      "for": "pour",
+      "guest": "invité",
+      "moreProducts": "+{count} de plus",
+      "noEvents": "Aucun événement au cours des 30 derniers jours.",
+      "noEventsMatching": "Aucun événement pour \"{query}\"",
+      "showingCount": "Affichage de {count} événements",
+      "matchingQuery": "pour \"{query}\"",
+      "lastThirtyDays": "· 30 derniers jours",
+      "refresh": "Actualiser",
+      "exportCsv": "Exporter CSV",
+      "loadMore": "Charger {count} de plus",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "truncatedOrdersWarning": "Affichage des 500 dernières commandes uniquement — certains événements peuvent manquer.",
+      "truncatedUsersWarning": "Liste d'utilisateurs limitée à 1 000 — certains emails peuvent apparaître comme Inconnu."
     }
   }
 }

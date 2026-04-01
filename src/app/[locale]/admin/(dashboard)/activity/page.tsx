@@ -1,7 +1,8 @@
 import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { ActivityFeed } from './activity-feed'
-import { RefreshButton } from './refresh-button'
+import { getTranslations } from 'next-intl/server'
+import { Users, UserCheck, ShoppingBag, TrendingUp } from 'lucide-react'
 
 export type ActivityEvent = {
   id: string
@@ -14,6 +15,7 @@ export type ActivityEvent = {
   currency?: string
   productNames?: string[]
   productSlugs?: string[]
+  productIds?: string[]
   isGuest?: boolean
 }
 
@@ -26,10 +28,11 @@ function formatCHF(cents: number) {
 }
 
 export default async function AdminActivityPage() {
+  const t = await getTranslations('admin')
   const supabase = getAdminClient()
   if (!supabase)
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <AdminNotConfigured />
       </div>
     )
@@ -41,17 +44,21 @@ export default async function AdminActivityPage() {
       .from('orders')
       .select(
         `id, total_cents, currency, created_at, user_id, guest_email,
-         order_items ( product_variants ( products ( name, slug ) ) )`
+         order_items ( product_variants ( products ( id, name, slug ) ) )`
       )
       .gte('created_at', thirtyDaysAgo)
       .order('created_at', { ascending: false })
       .limit(500),
-    // perPage 1000 is the Supabase max; avoids missing users in large stores
+    // perPage 1000 is the Supabase auth admin API max
     supabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
   ])
 
   const orders = ordersRes.data ?? []
   const authUsers = authUsersRes.data?.users ?? []
+
+  // Detect truncation so we can warn the user in the UI
+  const isTruncatedOrders = (ordersRes.data?.length ?? 0) >= 500
+  const isTruncatedUsers = (authUsersRes.data?.users?.length ?? 0) >= 1000
 
   const userEmailMap = new Map(authUsers.map((u) => [u.id, u.email ?? '']))
 
@@ -83,39 +90,42 @@ export default async function AdminActivityPage() {
     const items: any[] = (order as any).order_items ?? []
     const productNames: string[] = []
     const productSlugs: string[] = []
+    const productIds: string[] = []
+
     for (const item of items) {
       const name = item?.product_variants?.products?.name
       const slug = item?.product_variants?.products?.slug
+      const id = item?.product_variants?.products?.id
       if (name && !productNames.includes(name)) {
         productNames.push(name)
         if (slug) productSlugs.push(slug)
+        if (id) productIds.push(id)
       }
     }
 
-    const email =
-      (order as { guest_email?: string | null }).guest_email ||
-      userEmailMap.get((order as { user_id?: string | null }).user_id ?? '') ||
-      'Unknown'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orderAny = order as any
+    const email = orderAny.guest_email || userEmailMap.get(orderAny.user_id ?? '') || 'Unknown'
 
     events.push({
       id: `purchase-${order.id}`,
       type: 'purchase',
       timestamp: order.created_at,
-      userId: (order as { user_id?: string | null }).user_id ?? undefined,
+      userId: orderAny.user_id ?? undefined,
       email,
       orderId: order.id,
       totalCents: order.total_cents,
       currency: order.currency ?? 'CHF',
       productNames,
       productSlugs,
-      isGuest: !(order as { user_id?: string | null }).user_id,
+      productIds,
+      isGuest: !orderAny.user_id,
     })
   }
 
   events.sort((a, b) => b.timestamp.localeCompare(a.timestamp))
 
-  // Use Switzerland timezone (Europe/Zurich) for "today" — avoids off-by-one
-  // errors when the server runs in UTC and midnight falls inside business hours.
+  // Use Europe/Zurich for "today" to avoid UTC off-by-one at midnight
   const todayZurich = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Zurich' })
   const isToday = (ts: string) =>
     new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Europe/Zurich' }) === todayZurich
@@ -137,44 +147,77 @@ export default async function AdminActivityPage() {
     .reduce((sum, e) => sum + (e.totalCents ?? 0), 0)
 
   return (
-    <div className="p-6 md:p-8">
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-50">Activity</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Live feed of account and purchase events · last 30 days
-          </p>
-        </div>
-        <RefreshButton />
+    <div className="p-4 sm:p-8">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-zinc-50">{t('activity.title')}</h1>
+        <p className="mt-1 text-sm text-zinc-400">{t('activity.subtitle')}</p>
       </div>
 
       {/* Stats — today + 30-day context */}
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-zinc-500">Signups Today</p>
-          <p className="mt-1 text-2xl font-bold text-zinc-50">{todaySignups}</p>
-          <p className="mt-1 text-xs text-zinc-600">{thirtyDaySignups} in 30 days</p>
-        </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-zinc-500">Verifications Today</p>
-          <p className="mt-1 text-2xl font-bold text-zinc-50">{todayVerifications}</p>
-          <p className="mt-1 text-xs text-zinc-600">{thirtyDayVerifications} in 30 days</p>
-        </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-zinc-500">Purchases Today</p>
-          <p className="mt-1 text-2xl font-bold text-zinc-50">{todayPurchases}</p>
-          <p className="mt-1 text-xs text-zinc-600">{thirtyDayPurchases} in 30 days</p>
-        </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-xs text-zinc-500">Revenue Today</p>
-          <p className="mt-1 text-2xl font-bold text-amber-400">{formatCHF(todayRevenueCents)}</p>
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        {/* Signups */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/15">
+              <Users className="h-3.5 w-3.5 text-blue-400" />
+            </div>
+            <p className="text-xs text-zinc-500">{t('activity.signupsToday')}</p>
+          </div>
+          <p className="text-2xl font-bold text-zinc-50">{todaySignups}</p>
           <p className="mt-1 text-xs text-zinc-600">
-            {formatCHF(thirtyDayRevenueCents)} in 30 days
+            {t('activity.inThirtyDays', { n: thirtyDaySignups })}
+          </p>
+        </div>
+
+        {/* Verifications */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/15">
+              <UserCheck className="h-3.5 w-3.5 text-emerald-400" />
+            </div>
+            <p className="text-xs text-zinc-500">{t('activity.verificationsToday')}</p>
+          </div>
+          <p className="text-2xl font-bold text-zinc-50">{todayVerifications}</p>
+          <p className="mt-1 text-xs text-zinc-600">
+            {t('activity.inThirtyDays', { n: thirtyDayVerifications })}
+          </p>
+        </div>
+
+        {/* Purchases */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
+              <ShoppingBag className="h-3.5 w-3.5 text-amber-400" />
+            </div>
+            <p className="text-xs text-zinc-500">{t('activity.purchasesToday')}</p>
+          </div>
+          <p className="text-2xl font-bold text-zinc-50">{todayPurchases}</p>
+          <p className="mt-1 text-xs text-zinc-600">
+            {t('activity.inThirtyDays', { n: thirtyDayPurchases })}
+          </p>
+        </div>
+
+        {/* Revenue */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
+              <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
+            </div>
+            <p className="text-xs text-zinc-500">{t('activity.revenueToday')}</p>
+          </div>
+          <p className="text-2xl font-bold text-amber-400">{formatCHF(todayRevenueCents)}</p>
+          <p className="mt-1 text-xs text-zinc-600">
+            {t('activity.inThirtyDays', { n: formatCHF(thirtyDayRevenueCents) })}
           </p>
         </div>
       </div>
 
-      <ActivityFeed events={events} />
+      <ActivityFeed
+        events={events}
+        isTruncatedOrders={isTruncatedOrders}
+        isTruncatedUsers={isTruncatedUsers}
+      />
     </div>
   )
 }

@@ -1368,6 +1368,38 @@
     "footer": {
       "adminPanel": "DARKMONKEY Admin Panel",
       "allRightsReserved": "© {year} All rights reserved"
+    },
+    "activity": {
+      "title": "Activity",
+      "subtitle": "Live feed of account and purchase events · last 30 days",
+      "signupsToday": "Signups Today",
+      "verificationsToday": "Verifications Today",
+      "purchasesToday": "Purchases Today",
+      "revenueToday": "Revenue Today",
+      "inThirtyDays": "{n} in 30 days",
+      "filterAll": "All",
+      "filterSignups": "Signups",
+      "filterVerifications": "Verifications",
+      "filterPurchases": "Purchases",
+      "searchPlaceholder": "Search by email or order…",
+      "createdAccount": "created an account",
+      "verifiedEmail": "verified their email",
+      "purchased": "purchased",
+      "for": "for",
+      "guest": "guest",
+      "moreProducts": "+{count} more",
+      "noEvents": "No events in the last 30 days.",
+      "noEventsMatching": "No events matching \"{query}\"",
+      "showingCount": "Showing {count} events",
+      "matchingQuery": "matching \"{query}\"",
+      "lastThirtyDays": "· last 30 days",
+      "refresh": "Refresh",
+      "exportCsv": "Export CSV",
+      "loadMore": "Load {count} more",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "truncatedOrdersWarning": "Showing latest 500 orders only — some events may be missing.",
+      "truncatedUsersWarning": "User list capped at 1,000 — some emails may show as Unknown."
     }
   }
 }
