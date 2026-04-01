@@ -146,7 +146,7 @@ function ArchiveButton({
 }: {
   orderId: string
   isArchived: boolean
-  onDone: () => void
+  onDone: (ok: boolean) => void
 }) {
   const t = useTranslations('admin')
   const [pending, setPending] = useState(false)
@@ -156,11 +156,13 @@ function ArchiveButton({
     e.preventDefault()
     setPending(true)
     const result = await archiveOrder(orderId, !isArchived)
+    setPending(false)
     if (!result.ok) {
       alert(t('orders.archiveFailed'))
+      onDone(false)
+    } else {
+      onDone(true)
     }
-    setPending(false)
-    onDone()
   }
 
   return (
@@ -204,6 +206,8 @@ export function OrdersTable({
   const t = useTranslations('admin')
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [isPending, startTransition] = useTransition()
+  // Optimistically hide rows that have just been archived/unarchived
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
 
   const pushParams = useCallback(
     (updates: Record<string, string | number | undefined>) => {
@@ -422,98 +426,102 @@ export function OrdersTable({
 
       {/* ── Mobile: Card list ── */}
       <div className="space-y-2 md:hidden">
-        {orders.map((order) => {
-          const statusLabel =
-            t(`orders.status_${order.status}` as Parameters<typeof t>[0]) ?? order.status
-          const hasDiscount = (order.discount_cents ?? 0) > 0
-          const isHighValue = order.total_cents >= 10000
-          const dotColor = STATUS_DOT[order.status] ?? 'bg-zinc-500'
+        {orders
+          .filter((o) => !hiddenIds.has(o.id))
+          .map((order) => {
+            const statusLabel =
+              t(`orders.status_${order.status}` as Parameters<typeof t>[0]) ?? order.status
+            const hasDiscount = (order.discount_cents ?? 0) > 0
+            const isHighValue = order.total_cents >= 10000
+            const dotColor = STATUS_DOT[order.status] ?? 'bg-zinc-500'
 
-          return (
-            <Link
-              key={order.id}
-              href={`/admin/orders/${order.id}`}
-              className={`block overflow-hidden rounded-xl border bg-zinc-900/60 transition-colors active:scale-[0.99] ${
-                isHighValue
-                  ? 'border-amber-500/30 hover:bg-zinc-800/50'
-                  : 'border-zinc-800 hover:bg-zinc-800/40'
-              }`}
-            >
-              {/* Status accent bar */}
-              <div
-                className={`h-0.5 w-full ${
-                  order.status === 'paid'
-                    ? 'bg-blue-500/60'
-                    : order.status === 'processing'
-                      ? 'bg-amber-500/60'
-                      : order.status === 'shipped'
-                        ? 'bg-purple-500/60'
-                        : order.status === 'delivered'
-                          ? 'bg-emerald-500/60'
-                          : order.status === 'cancelled'
-                            ? 'bg-red-500/60'
-                            : order.status === 'refunded'
-                              ? 'bg-rose-500/60'
-                              : 'bg-zinc-700/60'
+            return (
+              <Link
+                key={order.id}
+                href={`/admin/orders/${order.id}`}
+                className={`block overflow-hidden rounded-xl border bg-zinc-900/60 transition-colors active:scale-[0.99] ${
+                  isHighValue
+                    ? 'border-amber-500/30 hover:bg-zinc-800/50'
+                    : 'border-zinc-800 hover:bg-zinc-800/40'
                 }`}
-              />
+              >
+                {/* Status accent bar */}
+                <div
+                  className={`h-0.5 w-full ${
+                    order.status === 'paid'
+                      ? 'bg-blue-500/60'
+                      : order.status === 'processing'
+                        ? 'bg-amber-500/60'
+                        : order.status === 'shipped'
+                          ? 'bg-purple-500/60'
+                          : order.status === 'delivered'
+                            ? 'bg-emerald-500/60'
+                            : order.status === 'cancelled'
+                              ? 'bg-red-500/60'
+                              : order.status === 'refunded'
+                                ? 'bg-rose-500/60'
+                                : 'bg-zinc-700/60'
+                  }`}
+                />
 
-              <div className="p-4">
-                {/* Top row: ID + date */}
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-sm font-bold text-amber-400">
-                    #{order.id.slice(0, 8)}
-                  </span>
-                  <span className="text-[11px] text-zinc-500">
-                    {new Date(order.created_at).toLocaleDateString('de-CH', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-
-                {/* Middle row: email + status */}
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="min-w-0 flex-1 truncate text-sm text-zinc-400">
-                    {order.guest_email ?? '—'}
-                  </p>
-                  <StatusBadge status={order.status} label={statusLabel} />
-                </div>
-
-                {/* Bottom row: items + discount + total + archive */}
-                <div className="mt-3 flex items-center justify-between border-t border-zinc-800 pt-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-700/60 px-1.5 text-[10px] font-semibold text-zinc-400">
-                      {order.item_count}
+                <div className="p-4">
+                  {/* Top row: ID + date */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-sm font-bold text-amber-400">
+                      #{order.id.slice(0, 8)}
                     </span>
-                    <span className="text-xs text-zinc-600">{t('orders.items')}</span>
-                    {hasDiscount && (
-                      <span title={t('orders.discounted')}>
-                        <Tag className="h-3 w-3 text-amber-500" />
+                    <span className="text-[11px] text-zinc-500">
+                      {new Date(order.created_at).toLocaleDateString('de-CH', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+
+                  {/* Middle row: email + status */}
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="min-w-0 flex-1 truncate text-sm text-zinc-400">
+                      {order.guest_email ?? '—'}
+                    </p>
+                    <StatusBadge status={order.status} label={statusLabel} />
+                  </div>
+
+                  {/* Bottom row: items + discount + total + archive */}
+                  <div className="mt-3 flex items-center justify-between border-t border-zinc-800 pt-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-700/60 px-1.5 text-[10px] font-semibold text-zinc-400">
+                        {order.item_count}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      suppressHydrationWarning
-                      className={`text-sm font-bold tabular-nums ${
-                        isHighValue ? 'text-amber-300' : 'text-zinc-100'
-                      }`}
-                    >
-                      {formatPrice(order.total_cents)}
-                    </span>
-                    <ArchiveButton
-                      orderId={order.id}
-                      isArchived={order.is_archived}
-                      onDone={() => router.refresh()}
-                    />
+                      <span className="text-xs text-zinc-600">{t('orders.items')}</span>
+                      {hasDiscount && (
+                        <span title={t('orders.discounted')}>
+                          <Tag className="h-3 w-3 text-amber-500" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        suppressHydrationWarning
+                        className={`text-sm font-bold tabular-nums ${
+                          isHighValue ? 'text-amber-300' : 'text-zinc-100'
+                        }`}
+                      >
+                        {formatPrice(order.total_cents)}
+                      </span>
+                      <ArchiveButton
+                        orderId={order.id}
+                        isArchived={order.is_archived}
+                        onDone={(ok) => {
+                          if (ok) setHiddenIds((prev) => new Set([...prev, order.id]))
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          )
-        })}
+              </Link>
+            )
+          })}
         {orders.length === 0 && (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-10 text-center text-sm text-zinc-500">
             {showArchived
@@ -550,104 +558,108 @@ export function OrdersTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
-              {orders.map((order) => {
-                const isHighValue = order.total_cents >= 10000
-                const hasDiscount = (order.discount_cents ?? 0) > 0
-                const statusLabel =
-                  t(`orders.status_${order.status}` as Parameters<typeof t>[0]) ?? order.status
-                const dateObj = new Date(order.created_at)
-                const dateOnly = dateObj.toLocaleDateString('de-CH', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })
-                const dateTimeFull = dateObj.toLocaleString('de-CH')
+              {orders
+                .filter((o) => !hiddenIds.has(o.id))
+                .map((order) => {
+                  const isHighValue = order.total_cents >= 10000
+                  const hasDiscount = (order.discount_cents ?? 0) > 0
+                  const statusLabel =
+                    t(`orders.status_${order.status}` as Parameters<typeof t>[0]) ?? order.status
+                  const dateObj = new Date(order.created_at)
+                  const dateOnly = dateObj.toLocaleDateString('de-CH', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                  const dateTimeFull = dateObj.toLocaleString('de-CH')
 
-                return (
-                  <tr
-                    key={order.id}
-                    onClick={() => router.push(`/admin/orders/${order.id}`)}
-                    className={`group cursor-pointer transition-colors hover:bg-zinc-800/30 ${
-                      isHighValue ? 'border-l-2 border-l-amber-500/40' : ''
-                    }`}
-                  >
-                    {/* Order ID */}
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <span className="font-mono font-bold text-amber-400 transition-colors group-hover:text-amber-300">
-                        #{order.id.slice(0, 8)}
-                      </span>
-                    </td>
-
-                    {/* Customer */}
-                    <td
-                      className="whitespace-nowrap px-4 py-3 text-zinc-400"
-                      onClick={(e) => e.stopPropagation()}
+                  return (
+                    <tr
+                      key={order.id}
+                      onClick={() => router.push(`/admin/orders/${order.id}`)}
+                      className={`group cursor-pointer transition-colors hover:bg-zinc-800/30 ${
+                        isHighValue ? 'border-l-2 border-l-amber-500/40' : ''
+                      }`}
                     >
-                      {order.guest_email ? (
-                        <Link
-                          href={`/admin/customers?search=${encodeURIComponent(order.guest_email)}`}
-                          className="transition-colors hover:text-amber-400"
-                        >
-                          {order.guest_email}
-                        </Link>
-                      ) : (
-                        <span className="text-zinc-600">—</span>
-                      )}
-                    </td>
-
-                    {/* Items */}
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-700/60 px-1.5 text-[10px] font-semibold text-zinc-400">
-                        {order.item_count}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <StatusBadge status={order.status} label={statusLabel} />
-                    </td>
-
-                    {/* Total */}
-                    <td className="whitespace-nowrap px-4 py-3" suppressHydrationWarning>
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className={`font-bold tabular-nums ${
-                            isHighValue ? 'text-amber-300' : 'text-zinc-200'
-                          }`}
-                        >
-                          {formatPrice(order.total_cents)}
+                      {/* Order ID */}
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span className="font-mono font-bold text-amber-400 transition-colors group-hover:text-amber-300">
+                          #{order.id.slice(0, 8)}
                         </span>
-                        {hasDiscount && (
-                          <span title={t('orders.discounted')}>
-                            <Tag className="h-3 w-3 text-amber-500" />
-                          </span>
+                      </td>
+
+                      {/* Customer */}
+                      <td
+                        className="whitespace-nowrap px-4 py-3 text-zinc-400"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {order.guest_email ? (
+                          <Link
+                            href={`/admin/customers?search=${encodeURIComponent(order.guest_email)}`}
+                            className="transition-colors hover:text-amber-400"
+                          >
+                            {order.guest_email}
+                          </Link>
+                        ) : (
+                          <span className="text-zinc-600">—</span>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Date */}
-                    <td
-                      className="whitespace-nowrap px-4 py-3 text-zinc-500"
-                      title={dateTimeFull}
-                      suppressHydrationWarning
-                    >
-                      {dateOnly}
-                    </td>
+                      {/* Items */}
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-700/60 px-1.5 text-[10px] font-semibold text-zinc-400">
+                          {order.item_count}
+                        </span>
+                      </td>
 
-                    {/* Archive */}
-                    <td
-                      className="whitespace-nowrap px-3 py-3"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ArchiveButton
-                        orderId={order.id}
-                        isArchived={order.is_archived}
-                        onDone={() => router.refresh()}
-                      />
-                    </td>
-                  </tr>
-                )
-              })}
+                      {/* Status */}
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <StatusBadge status={order.status} label={statusLabel} />
+                      </td>
+
+                      {/* Total */}
+                      <td className="whitespace-nowrap px-4 py-3" suppressHydrationWarning>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`font-bold tabular-nums ${
+                              isHighValue ? 'text-amber-300' : 'text-zinc-200'
+                            }`}
+                          >
+                            {formatPrice(order.total_cents)}
+                          </span>
+                          {hasDiscount && (
+                            <span title={t('orders.discounted')}>
+                              <Tag className="h-3 w-3 text-amber-500" />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Date */}
+                      <td
+                        className="whitespace-nowrap px-4 py-3 text-zinc-500"
+                        title={dateTimeFull}
+                        suppressHydrationWarning
+                      >
+                        {dateOnly}
+                      </td>
+
+                      {/* Archive */}
+                      <td
+                        className="whitespace-nowrap px-3 py-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ArchiveButton
+                          orderId={order.id}
+                          isArchived={order.is_archived}
+                          onDone={(ok) => {
+                            if (ok) setHiddenIds((prev) => new Set([...prev, order.id]))
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
               {orders.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
