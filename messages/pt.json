@@ -59,7 +59,16 @@
     "errorPageBody": "Ocorreu um erro ao carregar esta página. Geralmente é temporário — tente novamente.",
     "errorProductBody": "Não conseguimos carregar este produto. Tente novamente ou explore os nossos outros produtos.",
     "errorGalleryBody": "Ocorreu um erro ao carregar a galeria. Tente novamente.",
-    "backToShop": "Voltar à loja"
+    "backToShop": "Voltar à loja",
+    "adminManagement": "Admin",
+    "language": "Idioma",
+    "customers": "Clientes",
+    "newsletter": "Newsletter",
+    "announcements": "Anúncios",
+    "reviews": "Avaliações",
+    "activity": "Atividade",
+    "gallery": "Galeria",
+    "features": "Funcionalidades"
   },
   "search": {
     "placeholder": "Pesquisar produtos...",
@@ -82,7 +91,11 @@
     "browseCategories": "Explorar categorias",
     "trendingHoodies": "Hoodies Premium",
     "trendingArt": "Arte Exclusiva",
-    "trendingAccessories": "Acessórios de Luxo"
+    "trendingAccessories": "Acessórios de Luxo",
+    "products": "Produtos",
+    "trending": "Em tendência",
+    "noResultsFor": "Sem resultados para \"{query}\"",
+    "searching": "A procurar…"
   },
   "filters": {
     "filters": "Filtros",
@@ -262,7 +275,9 @@
     "orders": "Encomendas",
     "wishlist": "Lista de desejos",
     "signOut": "Sair",
-    "signInUp": "Entrar / Registar"
+    "signInUp": "Entrar / Registar",
+    "adminDashboard": "Painel Admin",
+    "features": "Funcionalidades"
   },
   "footer": {
     "refundPolicy": "Política de reembolso",
@@ -961,7 +976,8 @@
       "content": "Conteúdo",
       "commerce": "Comércio",
       "engagement": "Envolvimento",
-      "system": "Sistema"
+      "system": "Sistema",
+      "activity": "Atividade"
     },
     "board": {
       "title": "Board",

@@ -59,7 +59,16 @@
     "errorPageBody": "Beim Laden dieser Seite ist ein Fehler aufgetreten. Dies ist normalerweise vorübergehend — bitte versuchen Sie es erneut.",
     "errorProductBody": "Wir konnten dieses Produkt nicht laden. Bitte versuchen Sie es erneut oder stöbern Sie in unseren anderen Produkten.",
     "errorGalleryBody": "Beim Laden der Galerie ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-    "backToShop": "Zurück zum Shop"
+    "backToShop": "Zurück zum Shop",
+    "adminManagement": "Admin",
+    "language": "Sprache",
+    "customers": "Kunden",
+    "newsletter": "Newsletter",
+    "announcements": "Ankündigungen",
+    "reviews": "Bewertungen",
+    "activity": "Aktivität",
+    "gallery": "Galerie",
+    "features": "Funktionen"
   },
   "search": {
     "placeholder": "Produkte suchen...",
@@ -82,7 +91,11 @@
     "browseCategories": "Kategorien durchsuchen",
     "trendingHoodies": "Premium-Hoodies",
     "trendingArt": "Exklusive Kunst",
-    "trendingAccessories": "Luxus-Accessoires"
+    "trendingAccessories": "Luxus-Accessoires",
+    "products": "Produkte",
+    "trending": "Angesagt",
+    "noResultsFor": "Keine Ergebnisse für „{query}\"",
+    "searching": "Suche…"
   },
   "filters": {
     "filters": "Filter",
@@ -262,7 +275,9 @@
     "orders": "Bestellungen",
     "wishlist": "Wunschliste",
     "signOut": "Abmelden",
-    "signInUp": "Anmelden / Registrieren"
+    "signInUp": "Anmelden / Registrieren",
+    "adminDashboard": "Admin-Dashboard",
+    "features": "Funktionen"
   },
   "footer": {
     "refundPolicy": "Rückgaberichtlinie",
@@ -961,7 +976,8 @@
       "content": "Content",
       "commerce": "Commerce",
       "engagement": "Engagement",
-      "system": "System"
+      "system": "System",
+      "activity": "Aktivität"
     },
     "layout": {
       "accessDenied": "Access denied",

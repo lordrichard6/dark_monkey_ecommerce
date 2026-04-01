@@ -59,7 +59,16 @@
     "errorPageBody": "Une erreur s'est produite lors du chargement de cette page. C'est généralement temporaire — veuillez réessayer.",
     "errorProductBody": "Nous n'avons pas pu charger ce produit. Veuillez réessayer ou parcourir nos autres produits.",
     "errorGalleryBody": "Une erreur s'est produite lors du chargement de la galerie. Veuillez réessayer.",
-    "backToShop": "Retour à la boutique"
+    "backToShop": "Retour à la boutique",
+    "adminManagement": "Admin",
+    "language": "Langue",
+    "customers": "Clients",
+    "newsletter": "Newsletter",
+    "announcements": "Annonces",
+    "reviews": "Avis",
+    "activity": "Activité",
+    "gallery": "Galerie",
+    "features": "Fonctionnalités"
   },
   "search": {
     "placeholder": "Rechercher des produits...",
@@ -82,7 +91,11 @@
     "browseCategories": "Parcourir les catégories",
     "trendingHoodies": "Sweats à capuche Premium",
     "trendingArt": "Art Exclusif",
-    "trendingAccessories": "Accessoires de Luxe"
+    "trendingAccessories": "Accessoires de Luxe",
+    "products": "Produits",
+    "trending": "Tendances",
+    "noResultsFor": "Aucun résultat pour « {query} »",
+    "searching": "Recherche…"
   },
   "filters": {
     "filters": "Filtres",
@@ -262,7 +275,9 @@
     "orders": "Commandes",
     "wishlist": "Liste d'envies",
     "signOut": "Déconnexion",
-    "signInUp": "Connexion / Inscription"
+    "signInUp": "Connexion / Inscription",
+    "adminDashboard": "Tableau de bord Admin",
+    "features": "Fonctionnalités"
   },
   "footer": {
     "refundPolicy": "Politique de remboursement",
@@ -961,7 +976,8 @@
       "content": "Content",
       "commerce": "Commerce",
       "engagement": "Engagement",
-      "system": "System"
+      "system": "System",
+      "activity": "Activité"
     },
     "layout": {
       "accessDenied": "Access denied",

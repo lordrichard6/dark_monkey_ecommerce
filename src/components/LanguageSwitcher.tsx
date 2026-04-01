@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { usePathname } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 
@@ -49,6 +49,9 @@ function ChevronIcon({ className }: { className?: string }) {
   )
 }
 
+// GlobeIcon is kept for potential future use
+void GlobeIcon
+
 type Props = {
   variant?: 'desktop' | 'mobile'
   showName?: boolean
@@ -57,6 +60,7 @@ type Props = {
 export function LanguageSwitcher({ variant = 'desktop', showName = true }: Props) {
   const locale = useLocale()
   const pathname = usePathname()
+  const t = useTranslations('common')
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -67,6 +71,17 @@ export function LanguageSwitcher({ variant = 'desktop', showName = true }: Props
     if (open) {
       document.addEventListener('click', handleClickOutside)
       return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [open])
+
+  // Close on Escape
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
     }
   }, [open])
 
@@ -82,7 +97,7 @@ export function LanguageSwitcher({ variant = 'desktop', showName = true }: Props
     return (
       <div className="border-t border-white/10 px-4 py-3">
         <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
-          Language
+          {t('language')}
         </p>
         <div className="flex flex-wrap gap-2">
           {routing.locales.map((loc) => (
@@ -90,10 +105,11 @@ export function LanguageSwitcher({ variant = 'desktop', showName = true }: Props
               key={loc}
               type="button"
               onClick={() => switchLocale(loc)}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-center text-sm font-medium transition ${loc === locale
-                ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
-                : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
-                }`}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-center text-sm font-medium transition ${
+                loc === locale
+                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                  : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-50'
+              }`}
             >
               <span className="text-base">{LOCALE_DATA[loc]?.flag}</span>
               <span>{loc.toUpperCase()}</span>
@@ -114,7 +130,6 @@ export function LanguageSwitcher({ variant = 'desktop', showName = true }: Props
         aria-haspopup="true"
         aria-label="Choose language"
       >
-
         <span className="text-base">{LOCALE_DATA[locale]?.flag}</span>
         {showName && (
           <span className="max-w-[80px] truncate">{LOCALE_DATA[locale]?.name ?? locale}</span>
@@ -133,10 +148,11 @@ export function LanguageSwitcher({ variant = 'desktop', showName = true }: Props
               key={loc}
               type="button"
               onClick={() => switchLocale(loc)}
-              className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition ${loc === locale
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
-                }`}
+              className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition ${
+                loc === locale
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
+              }`}
               role="menuitem"
             >
               <span className="mr-3 text-base">{LOCALE_DATA[loc]?.flag}</span>

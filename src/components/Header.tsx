@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { createClient, getUserSafe } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { getCategories, type Category } from '@/actions/admin-categories'
@@ -7,6 +8,73 @@ import { DesktopTopBar } from '@/components/DesktopTopBar'
 
 type NavCategory = Category & { subcategories: Category[] }
 
+/**
+ * Badge counts are cached for 60 seconds across all requests.
+ * The admin client uses the service-role key (env var) so it's safe inside
+ * an unstable_cache function — no per-request state needed.
+ */
+const getCachedAdminBadgeCounts = unstable_cache(
+  async () => {
+    const client = getAdminClient()
+    if (!client) return null
+
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+
+    const [
+      taskRes,
+      ideaRes,
+      openTicketsRes,
+      inProgressTicketsRes,
+      newUsersRes,
+      paidOrdersRes,
+      processingOrdersRes,
+      shippedOrdersRes,
+    ] = await Promise.all([
+      client
+        .from('admin_board_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('type', 'task')
+        .in('status', ['open', 'in_progress']),
+      client
+        .from('admin_board_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('type', 'idea')
+        .neq('status', 'archived'),
+      client
+        .from('support_tickets')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'open'),
+      client
+        .from('support_tickets')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'in_progress'),
+      client
+        .from('user_profiles')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', twoDaysAgo),
+      client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
+      client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'processing'),
+      client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'shipped'),
+    ])
+
+    return {
+      boardCounts: { tasks: taskRes.count ?? 0, ideas: ideaRes.count ?? 0 },
+      supportCounts: {
+        open: openTicketsRes.count ?? 0,
+        inProgress: inProgressTicketsRes.count ?? 0,
+      },
+      orderCounts: {
+        paid: paidOrdersRes.count ?? 0,
+        processing: processingOrdersRes.count ?? 0,
+        shipped: shippedOrdersRes.count ?? 0,
+      },
+      newUsersCount: newUsersRes.count ?? 0,
+    }
+  },
+  ['admin-nav-badge-counts'],
+  { revalidate: 60 } // refresh at most once per minute
+)
+
 export async function Header() {
   let user: { email?: string | null; user_metadata?: { avatar_url?: string } } | null = null
   let displayName: string | null = null
@@ -14,14 +82,16 @@ export async function Header() {
   let isAdmin = false
   let navCategories: NavCategory[] = []
 
+  // Single getAdminClient() call — reused for profile + badge queries
+  const adminClient = getAdminClient()
+
   try {
     const supabase = await createClient()
     const userData = await getUserSafe(supabase)
 
     if (userData) {
       user = userData
-      const admin = getAdminClient()
-      const client = admin ?? supabase
+      const client = adminClient ?? supabase
       const { data: profile } = await client
         .from('user_profiles')
         .select('display_name, avatar_url, is_admin')
@@ -51,59 +121,13 @@ export async function Header() {
 
   if (isAdmin) {
     try {
-      const admin = getAdminClient()
-      const client = admin ?? (await createClient())
-      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-      const [
-        taskRes,
-        ideaRes,
-        openTicketsRes,
-        inProgressTicketsRes,
-        newUsersRes,
-        paidOrdersRes,
-        processingOrdersRes,
-        shippedOrdersRes,
-      ] = await Promise.all([
-        client
-          .from('admin_board_items')
-          .select('*', { count: 'exact', head: true })
-          .eq('type', 'task')
-          .in('status', ['open', 'in_progress']),
-        client
-          .from('admin_board_items')
-          .select('*', { count: 'exact', head: true })
-          .eq('type', 'idea')
-          .neq('status', 'archived'),
-        client
-          .from('support_tickets')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'open'),
-        client
-          .from('support_tickets')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'in_progress'),
-        client
-          .from('user_profiles')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', twoDaysAgo),
-        client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
-        client
-          .from('orders')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'processing'),
-        client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'shipped'),
-      ])
-      boardCounts = { tasks: taskRes.count ?? 0, ideas: ideaRes.count ?? 0 }
-      supportCounts = {
-        open: openTicketsRes.count ?? 0,
-        inProgress: inProgressTicketsRes.count ?? 0,
+      const cached = await getCachedAdminBadgeCounts()
+      if (cached) {
+        boardCounts = cached.boardCounts
+        supportCounts = cached.supportCounts
+        orderCounts = cached.orderCounts
+        newUsersCount = cached.newUsersCount
       }
-      orderCounts = {
-        paid: paidOrdersRes.count ?? 0,
-        processing: processingOrdersRes.count ?? 0,
-        shipped: shippedOrdersRes.count ?? 0,
-      }
-      newUsersCount = newUsersRes.count ?? 0
     } catch {
       // non-critical — badges just won't show
     }

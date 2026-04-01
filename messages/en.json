@@ -59,7 +59,16 @@
     "errorPageBody": "Something went wrong loading this page. This is usually temporary — please try again.",
     "errorProductBody": "We couldn't load this product. Please try again or browse our other products.",
     "errorGalleryBody": "Something went wrong while loading the gallery. Please try again.",
-    "backToShop": "Back to shop"
+    "backToShop": "Back to shop",
+    "adminManagement": "Admin",
+    "language": "Language",
+    "customers": "Customers",
+    "newsletter": "Newsletter",
+    "announcements": "Announcements",
+    "reviews": "Reviews",
+    "activity": "Activity",
+    "gallery": "Gallery",
+    "features": "Features"
   },
   "search": {
     "placeholder": "Search products...",
@@ -82,7 +91,11 @@
     "browseCategories": "Browse categories",
     "trendingHoodies": "Premium Hoodies",
     "trendingArt": "Exclusive Art",
-    "trendingAccessories": "Luxury Accessories"
+    "trendingAccessories": "Luxury Accessories",
+    "products": "Products",
+    "trending": "Trending",
+    "noResultsFor": "No results for \"{query}\"",
+    "searching": "Searching…"
   },
   "filters": {
     "filters": "Filters",
@@ -262,7 +275,9 @@
     "orders": "Orders",
     "wishlist": "Wishlist",
     "signOut": "Sign out",
-    "signInUp": "Sign in/up"
+    "signInUp": "Sign in/up",
+    "adminDashboard": "Admin Dashboard",
+    "features": "Features"
   },
   "footer": {
     "refundPolicy": "Refund policy",
@@ -961,7 +976,8 @@
       "content": "Content",
       "commerce": "Commerce",
       "engagement": "Engagement",
-      "system": "System"
+      "system": "System",
+      "activity": "Activity"
     },
     "board": {
       "title": "Board",

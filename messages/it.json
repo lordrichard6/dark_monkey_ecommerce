@@ -59,7 +59,16 @@
     "errorPageBody": "Si è verificato un errore durante il caricamento di questa pagina. Di solito è temporaneo — riprova.",
     "errorProductBody": "Non siamo riusciti a caricare questo prodotto. Riprova o sfoglia gli altri prodotti.",
     "errorGalleryBody": "Si è verificato un errore durante il caricamento della galleria. Riprova.",
-    "backToShop": "Torna al negozio"
+    "backToShop": "Torna al negozio",
+    "adminManagement": "Admin",
+    "language": "Lingua",
+    "customers": "Clienti",
+    "newsletter": "Newsletter",
+    "announcements": "Annunci",
+    "reviews": "Recensioni",
+    "activity": "Attività",
+    "gallery": "Galleria",
+    "features": "Funzionalità"
   },
   "search": {
     "placeholder": "Cerca prodotti...",
@@ -82,7 +91,11 @@
     "browseCategories": "Sfoglia categorie",
     "trendingHoodies": "Felpe con cappuccio Premium",
     "trendingArt": "Arte Esclusiva",
-    "trendingAccessories": "Accessori di Lusso"
+    "trendingAccessories": "Accessori di Lusso",
+    "products": "Prodotti",
+    "trending": "Di tendenza",
+    "noResultsFor": "Nessun risultato per \"{query}\"",
+    "searching": "Ricerca…"
   },
   "filters": {
     "filters": "Filtri",
@@ -262,7 +275,9 @@
     "orders": "Ordini",
     "wishlist": "Lista dei desideri",
     "signOut": "Esci",
-    "signInUp": "Accedi / Registrati"
+    "signInUp": "Accedi / Registrati",
+    "adminDashboard": "Dashboard Admin",
+    "features": "Funzionalità"
   },
   "footer": {
     "refundPolicy": "Politica di rimborso",
@@ -961,7 +976,8 @@
       "content": "Content",
       "commerce": "Commerce",
       "engagement": "Engagement",
-      "system": "System"
+      "system": "System",
+      "activity": "Attività"
     },
     "layout": {
       "accessDenied": "Access denied",
