@@ -277,12 +277,15 @@
     "newsletterButton": "Join Now",
     "newsletterSuccess": "Welcome to the tribe!",
     "customerService": "Customer Service",
-    "operatingHours": "Mon - Fri: 09:00 - 18:00 (CET)",
+    "operatingHours": "Usually replies within 24–48 hours.",
+    "faqDescription": "Instant answers to common questions.",
     "contactUs": "Contact Us",
     "email": "Email",
     "followUs": "Follow Us",
     "supportDescription": "We're here to help you with anything.",
-    "visitFaq": "Visit FAQ"
+    "visitFaq": "Visit FAQ",
+    "openTicket": "Open a ticket",
+    "ticketDesc": "Track your issue, we'll respond fast."
   },
   "store": {
     "categoriesTitle": "Categories",
@@ -495,7 +498,9 @@
     "featured": "Featured",
     "seasonDrops": "Season Drops",
     "creative": "Creative",
-    "artGallery": "Art Gallery"
+    "artGallery": "Art Gallery",
+    "support": "Support",
+    "viewSupport": "My support tickets"
   },
   "gdpr": {
     "pageTitle": "Privacy & Data",
@@ -1260,7 +1265,7 @@
       "status": "Status",
       "total": "Total",
       "date": "Date",
-      "searchByEmail": "Search by email…",
+      "searchByEmail": "Search by email or order ID…",
       "search": "Search",
       "allStatuses": "All statuses",
       "clearFilters": "✕ Clear filters",
@@ -1269,7 +1274,24 @@
       "prev": "← Prev",
       "next": "Next →",
       "pageOf": "Page {current} of {total}",
-      "ordersCount": "{start}–{end} of {total} orders"
+      "ordersCount": "{start}–{end} of {total} orders",
+      "items": "Items",
+      "exportCsv": "Export CSV",
+      "today": "Today",
+      "thisWeek": "This week",
+      "thisMonth": "This month",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "revenueTotal": "Total revenue",
+      "revenueAvg": "Avg. order",
+      "discounted": "Discount applied",
+      "status_pending": "Pending",
+      "status_paid": "Paid",
+      "status_processing": "Processing",
+      "status_shipped": "Shipped",
+      "status_delivered": "Delivered",
+      "status_cancelled": "Cancelled",
+      "status_refunded": "Refunded"
     },
     "customers": {
       "title": "Customers",
@@ -1287,7 +1309,8 @@
       "previous": "← Previous",
       "next": "Next →",
       "pageOf": "Page {current} of {totalPages}",
-      "noCustomers": "No customers found."
+      "noCustomers": "No customers found.",
+      "noResults": "No customers match your search."
     },
     "discounts": {
       "title": "Discounts",

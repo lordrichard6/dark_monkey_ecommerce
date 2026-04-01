@@ -12,12 +12,22 @@ type Props = {
   isAdmin?: boolean
   categories: NavCategory[]
   boardCounts?: { tasks: number; ideas: number }
+  supportCounts?: { open: number; inProgress: number }
+  orderCounts?: { paid: number; processing: number; shipped: number }
+  newUsersCount?: number
 }
 
 const SIDEBAR_COLLAPSED = 64
 const SIDEBAR_EXPANDED = 240
 
-export function SideNav({ isAdmin, categories, boardCounts }: Props) {
+export function SideNav({
+  isAdmin,
+  categories,
+  boardCounts,
+  supportCounts,
+  orderCounts,
+  newUsersCount = 0,
+}: Props) {
   const t = useTranslations('common')
   const pathname = usePathname()
   const [expanded, setExpanded] = useState(false)
@@ -38,7 +48,7 @@ export function SideNav({ isAdmin, categories, boardCounts }: Props) {
         { href: '/admin/products', label: t('products'), icon: BoxIcon },
         { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
         { href: '/admin/customers', label: 'Users', icon: UsersIcon },
-        { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon },
+        { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon, disabled: true },
         { href: '/admin/support', label: 'Support', icon: LifeBuoyIcon },
         { href: '/admin/board', label: 'Board', icon: KanbanIcon },
         { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
@@ -177,13 +187,155 @@ export function SideNav({ isAdmin, categories, boardCounts }: Props) {
                 {t('admin')}
               </p>
             )}
-            {adminItems.map(({ href, label, icon: Icon }) => {
+            {adminItems.map(({ href, label, icon: Icon, disabled }) => {
               const isActive =
-                pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
+                !disabled &&
+                (pathname === href || (href !== '/' && pathname.startsWith(href + '/')))
+
               const isBoard = href === '/admin/board'
               const taskCount = isBoard ? (boardCounts?.tasks ?? 0) : 0
               const ideaCount = isBoard ? (boardCounts?.ideas ?? 0) : 0
-              const hasBadges = isBoard && (taskCount > 0 || ideaCount > 0)
+              const hasBoardBadges = isBoard && (taskCount > 0 || ideaCount > 0)
+
+              const isSupport = href === '/admin/support'
+              const openCount = isSupport ? (supportCounts?.open ?? 0) : 0
+              const inProgressCount = isSupport ? (supportCounts?.inProgress ?? 0) : 0
+              const hasSupportBadges = isSupport && (openCount > 0 || inProgressCount > 0)
+
+              const isOrders = href === '/admin/orders'
+              const paidCount = isOrders ? (orderCounts?.paid ?? 0) : 0
+              const processingCount = isOrders ? (orderCounts?.processing ?? 0) : 0
+              const shippedCount = isOrders ? (orderCounts?.shipped ?? 0) : 0
+              const hasOrderBadges =
+                isOrders && (paidCount > 0 || processingCount > 0 || shippedCount > 0)
+
+              const isCustomers = href === '/admin/customers'
+              const hasCustomerBadge = isCustomers && newUsersCount > 0
+
+              const hasBadges =
+                hasBoardBadges || hasSupportBadges || hasOrderBadges || hasCustomerBadge
+
+              const inner = (
+                <>
+                  {/* Icon — with badge dots when collapsed */}
+                  <div className="relative shrink-0">
+                    <Icon className="h-5 w-5" />
+                    {hasBadges && !expanded && (
+                      <>
+                        {hasBoardBadges && taskCount > 0 && (
+                          <span className="absolute -left-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {taskCount > 9 ? '9+' : taskCount}
+                          </span>
+                        )}
+                        {hasBoardBadges && ideaCount > 0 && (
+                          <span className="absolute -bottom-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-green-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {ideaCount > 9 ? '9+' : ideaCount}
+                          </span>
+                        )}
+                        {hasSupportBadges && openCount > 0 && (
+                          <span className="absolute -left-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-amber-400 px-0.5 text-[7px] font-bold leading-none text-black">
+                            {openCount > 9 ? '9+' : openCount}
+                          </span>
+                        )}
+                        {hasSupportBadges && inProgressCount > 0 && (
+                          <span className="absolute -bottom-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {inProgressCount > 9 ? '9+' : inProgressCount}
+                          </span>
+                        )}
+                        {/* Orders: blue (paid) top-left, amber (processing) top-right, purple (shipped) bottom-right */}
+                        {hasOrderBadges && paidCount > 0 && (
+                          <span className="absolute -left-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {paidCount > 9 ? '9+' : paidCount}
+                          </span>
+                        )}
+                        {hasOrderBadges && processingCount > 0 && (
+                          <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-amber-400 px-0.5 text-[7px] font-bold leading-none text-black">
+                            {processingCount > 9 ? '9+' : processingCount}
+                          </span>
+                        )}
+                        {hasOrderBadges && shippedCount > 0 && (
+                          <span className="absolute -bottom-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-purple-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {shippedCount > 9 ? '9+' : shippedCount}
+                          </span>
+                        )}
+                        {/* Customers: emerald (new users in last 2 days) top-right */}
+                        {hasCustomerBadge && (
+                          <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-500 px-0.5 text-[7px] font-bold leading-none text-white">
+                            {newUsersCount > 9 ? '9+' : newUsersCount}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Label + inline badges when expanded */}
+                  {expanded && (
+                    <>
+                      <span className="truncate">{label}</span>
+                      {disabled && (
+                        <span className="ml-auto rounded px-1 py-0.5 text-[8px] font-medium uppercase tracking-wider text-zinc-600 ring-1 ring-zinc-700/50">
+                          Soon
+                        </span>
+                      )}
+                      {hasBadges && (
+                        <div className="ml-auto flex items-center gap-1">
+                          {hasBoardBadges && taskCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {taskCount > 9 ? '9+' : taskCount}
+                            </span>
+                          )}
+                          {hasBoardBadges && ideaCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {ideaCount > 9 ? '9+' : ideaCount}
+                            </span>
+                          )}
+                          {hasSupportBadges && openCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-bold leading-none text-black">
+                              {openCount > 9 ? '9+' : openCount}
+                            </span>
+                          )}
+                          {hasSupportBadges && inProgressCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {inProgressCount > 9 ? '9+' : inProgressCount}
+                            </span>
+                          )}
+                          {hasOrderBadges && paidCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {paidCount > 9 ? '9+' : paidCount}
+                            </span>
+                          )}
+                          {hasOrderBadges && processingCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-bold leading-none text-black">
+                              {processingCount > 9 ? '9+' : processingCount}
+                            </span>
+                          )}
+                          {hasOrderBadges && shippedCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-purple-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {shippedCount > 9 ? '9+' : shippedCount}
+                            </span>
+                          )}
+                          {hasCustomerBadge && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold leading-none text-white">
+                              {newUsersCount > 9 ? '9+' : newUsersCount}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )
+
+              if (disabled) {
+                return (
+                  <span
+                    key={href}
+                    className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm opacity-35"
+                  >
+                    {inner}
+                  </span>
+                )
+              }
 
               return (
                 <Link
@@ -195,45 +347,7 @@ export function SideNav({ isAdmin, categories, boardCounts }: Props) {
                       : 'text-amber-500/60 hover:bg-amber-500/10 hover:text-amber-400 focus:text-amber-400'
                   }`}
                 >
-                  {/* Icon — with badge dots when collapsed */}
-                  <div className="relative shrink-0">
-                    <Icon className="h-5 w-5" />
-                    {hasBadges && !expanded && (
-                      <>
-                        {taskCount > 0 && (
-                          <span className="absolute -left-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[7px] font-bold leading-none text-white">
-                            {taskCount > 9 ? '9+' : taskCount}
-                          </span>
-                        )}
-                        {ideaCount > 0 && (
-                          <span className="absolute -bottom-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-green-500 px-0.5 text-[7px] font-bold leading-none text-white">
-                            {ideaCount > 9 ? '9+' : ideaCount}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Label + inline badges when expanded */}
-                  {expanded && (
-                    <>
-                      <span className="truncate">{label}</span>
-                      {hasBadges && (
-                        <div className="ml-auto flex items-center gap-1">
-                          {taskCount > 0 && (
-                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
-                              {taskCount > 9 ? '9+' : taskCount}
-                            </span>
-                          )}
-                          {ideaCount > 0 && (
-                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[9px] font-bold leading-none text-white">
-                              {ideaCount > 9 ? '9+' : ideaCount}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
+                  {inner}
                 </Link>
               )
             })}

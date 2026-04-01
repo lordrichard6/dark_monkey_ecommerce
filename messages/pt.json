@@ -277,12 +277,15 @@
     "newsletterButton": "Aderir Agora",
     "newsletterSuccess": "Bem-vindo à tribo!",
     "customerService": "Serviço ao Cliente",
-    "operatingHours": "Seg - Sex: 09:00 - 18:00 (CET)",
+    "operatingHours": "Normalmente responde em 24 a 48 horas.",
+    "faqDescription": "Respostas imediatas às perguntas mais comuns.",
     "contactUs": "Contacte-nos",
     "email": "E-mail",
     "followUs": "Siga-nos",
     "supportDescription": "Estamos aqui para ajudar com qualquer coisa.",
-    "visitFaq": "Visite as FAQ"
+    "visitFaq": "Visite as FAQ",
+    "openTicket": "Abrir ticket",
+    "ticketDesc": "Acompanhe o seu pedido, respondemos rapidamente."
   },
   "store": {
     "categoriesTitle": "Categorias",
@@ -495,7 +498,9 @@
     "pushSendTest": "Enviar teste",
     "pushTestSent": "Notificação de teste enviada!",
     "pushTestFailed": "Falha ao enviar notificação de teste",
-    "pushDeviceNote": "As notificações push são armazenadas por dispositivo. Se usar vários dispositivos, ative as notificações em cada um separadamente."
+    "pushDeviceNote": "As notificações push são armazenadas por dispositivo. Se usar vários dispositivos, ative as notificações em cada um separadamente.",
+    "support": "Suporte",
+    "viewSupport": "Os meus tickets de suporte"
   },
   "gdpr": {
     "pageTitle": "Privacidade & Dados",
@@ -1260,7 +1265,7 @@
       "status": "Estado",
       "total": "Total",
       "date": "Data",
-      "searchByEmail": "Pesquisar por email…",
+      "searchByEmail": "Pesquisar por email ou ID…",
       "search": "Pesquisar",
       "allStatuses": "Todos os estados",
       "clearFilters": "✕ Limpar filtros",
@@ -1269,7 +1274,24 @@
       "prev": "← Ant",
       "next": "Próx →",
       "pageOf": "Página {current} de {total}",
-      "ordersCount": "{start}–{end} de {total} encomendas"
+      "ordersCount": "{start}–{end} de {total} encomendas",
+      "items": "Itens",
+      "exportCsv": "Exportar CSV",
+      "today": "Hoje",
+      "thisWeek": "Esta semana",
+      "thisMonth": "Este mês",
+      "dateFrom": "De",
+      "dateTo": "Até",
+      "revenueTotal": "Receita total",
+      "revenueAvg": "Média por encomenda",
+      "discounted": "Desconto aplicado",
+      "status_pending": "Pendente",
+      "status_paid": "Pago",
+      "status_processing": "Em processamento",
+      "status_shipped": "Enviado",
+      "status_delivered": "Entregue",
+      "status_cancelled": "Cancelado",
+      "status_refunded": "Reembolsado"
     },
     "customers": {
       "title": "Clientes",
@@ -1287,7 +1309,8 @@
       "previous": "← Anterior",
       "next": "Próximo →",
       "pageOf": "Página {current} de {totalPages}",
-      "noCustomers": "Nenhum cliente encontrado."
+      "noCustomers": "Nenhum cliente encontrado.",
+      "noResults": "Nenhum cliente corresponde à sua pesquisa."
     },
     "discounts": {
       "title": "Descontos",

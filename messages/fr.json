@@ -280,9 +280,12 @@
     "newsletterPlaceholder": "Entrez votre email",
     "newsletterSuccess": "Bienvenue dans la tribu !",
     "newsletterTitle": "Rejoignez le mouvement",
-    "operatingHours": "Lun - Ven : 09h00 - 18h00 (CET)",
+    "operatingHours": "Répond généralement sous 24 à 48 heures.",
+    "faqDescription": "Réponses instantanées aux questions fréquentes.",
     "supportDescription": "Nous sommes là pour vous aider avec tout.",
-    "visitFaq": "Consulter la FAQ"
+    "visitFaq": "Consulter la FAQ",
+    "openTicket": "Ouvrir un ticket",
+    "ticketDesc": "Suivez votre demande, nous répondons vite."
   },
   "store": {
     "categoriesTitle": "Catégories",
@@ -495,7 +498,9 @@
     "featured": "En vedette",
     "seasonDrops": "Drops de saison",
     "creative": "Créatif",
-    "artGallery": "Galerie d'art"
+    "artGallery": "Galerie d'art",
+    "support": "Support",
+    "viewSupport": "Mes tickets de support"
   },
   "gdpr": {
     "pageTitle": "Confidentialité & Données",
@@ -1189,22 +1194,39 @@
       "copied": "Copied!"
     },
     "orders": {
-      "title": "Orders",
-      "order": "Order",
-      "customer": "Customer",
-      "status": "Status",
+      "title": "Commandes",
+      "order": "Commande",
+      "customer": "Client",
+      "status": "Statut",
       "total": "Total",
       "date": "Date",
-      "searchByEmail": "Search by email…",
+      "searchByEmail": "Rechercher par email ou ID…",
       "search": "Search",
-      "allStatuses": "All statuses",
-      "clearFilters": "✕ Clear filters",
-      "noOrdersFiltered": "No orders match your filters.",
-      "noOrdersYet": "No orders yet.",
-      "prev": "← Prev",
-      "next": "Next →",
-      "pageOf": "Page {current} of {total}",
-      "ordersCount": "{start}–{end} of {total} orders"
+      "allStatuses": "Tous les statuts",
+      "clearFilters": "✕ Effacer les filtres",
+      "noOrdersFiltered": "Aucune commande ne correspond aux filtres.",
+      "noOrdersYet": "Aucune commande pour l’instant.",
+      "prev": "← Préc.",
+      "next": "Suiv. →",
+      "pageOf": "Page {current} sur {total}",
+      "ordersCount": "{start}–{end} sur {total} commandes",
+      "items": "Articles",
+      "exportCsv": "Exporter CSV",
+      "today": "Aujourd’hui",
+      "thisWeek": "Cette semaine",
+      "thisMonth": "Ce mois",
+      "dateFrom": "Du",
+      "dateTo": "Au",
+      "revenueTotal": "Revenu total",
+      "revenueAvg": "Commande moy.",
+      "discounted": "Remise appliquée",
+      "status_pending": "En attente",
+      "status_paid": "Payé",
+      "status_processing": "En traitement",
+      "status_shipped": "Expédié",
+      "status_delivered": "Livré",
+      "status_cancelled": "Annulé",
+      "status_refunded": "Remboursé"
     },
     "customers": {
       "title": "Customers",
@@ -1220,9 +1242,10 @@
       "unverified": "✗ Unverified",
       "orders": "{count} orders",
       "previous": "← Previous",
-      "next": "Next →",
-      "pageOf": "Page {current} of {totalPages}",
-      "noCustomers": "No customers found."
+      "next": "Suivant →",
+      "pageOf": "Page {current} sur {totalPages}",
+      "noCustomers": "Aucun client trouvé.",
+      "noResults": "Aucun client ne correspond à votre recherche."
     },
     "discounts": {
       "title": "Discounts",

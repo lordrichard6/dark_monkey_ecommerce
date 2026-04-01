@@ -122,6 +122,7 @@ function mapProducts(data: ProductRow[], wishlistProductIds: string[], bestselle
       productId: p.id,
       slug: p.slug,
       name: p.name,
+      categoryId: undefined,
       priceCents,
       compareAtPriceCents,
       imageUrl: primary?.url ?? '',
@@ -130,6 +131,13 @@ function mapProducts(data: ProductRow[], wishlistProductIds: string[], bestselle
       dualImageMode: p.dual_image_mode && !!second,
       isInWishlist: wishlistProductIds.includes(p.id),
       isBestseller: bestsellerIds.has(p.id),
+      isOnSale: false,
+      upvotes: 0,
+      publicUp: 0,
+      publicDown: 0,
+      timesBought: 0,
+      reviewCount: 0,
+      avgRating: null,
     }
   })
 }

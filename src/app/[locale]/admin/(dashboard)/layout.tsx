@@ -66,8 +66,10 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
 
   return (
     <AdminProviders>
-      {children}
-      <AdminFooter />
+      <div className="flex min-h-[calc(100vh-56px)] flex-col">
+        <div className="flex-1">{children}</div>
+        <AdminFooter />
+      </div>
     </AdminProviders>
   )
 }

@@ -71,3 +71,27 @@ export async function updateUserDisplayName(
   revalidatePath('/admin/customers')
   return { ok: true }
 }
+
+export async function generateCustomerSignInLink(
+  userId: string
+): Promise<{ ok: boolean; link?: string; error?: string }> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Not authorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin client not configured' }
+
+  const { data: authUser, error: fetchError } = await supabase.auth.admin.getUserById(userId)
+  if (fetchError || !authUser?.user?.email)
+    return { ok: false, error: 'No email found for this user' }
+
+  const { data, error } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email: authUser.user.email,
+  })
+
+  if (error || !data?.properties?.action_link)
+    return { ok: false, error: error?.message ?? 'Failed to generate link' }
+
+  return { ok: true, link: data.properties.action_link }
+}

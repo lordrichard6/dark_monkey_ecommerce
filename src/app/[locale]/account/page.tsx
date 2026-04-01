@@ -39,6 +39,7 @@ export default async function AccountPage() {
     { data: userAchievements },
     { data: wishlistItems, count: wishlistCount },
     { data: orders, count: ordersCount },
+    { count: openTicketsCount },
   ] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).single(),
     supabase
@@ -62,6 +63,11 @@ export default async function AccountPage() {
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
       .in('status', ['paid', 'processing', 'shipped', 'delivered']),
+    supabase
+      .from('support_tickets')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .in('status', ['open', 'in_progress']),
   ])
 
   const unlockedAchievementIds = new Set(userAchievements?.map((ua) => ua.achievement_id) || [])
@@ -267,9 +273,16 @@ export default async function AccountPage() {
                 <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
                   <LifeBuoy className="h-5 w-5" />
                 </span>
-                <div>
-                  <p className="font-medium text-zinc-50">Support</p>
-                  <p className="text-sm text-zinc-500">My support tickets</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-zinc-50">{t('support')}</p>
+                    {(openTicketsCount ?? 0) > 0 && (
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500/20 px-1.5 text-xs font-bold text-blue-400">
+                        {openTicketsCount}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-zinc-500">{t('viewSupport')}</p>
                 </div>
               </Link>
 

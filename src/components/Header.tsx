@@ -45,12 +45,25 @@ export async function Header() {
   }
 
   let boardCounts: { tasks: number; ideas: number } | undefined
+  let supportCounts: { open: number; inProgress: number } | undefined
+  let orderCounts: { paid: number; processing: number; shipped: number } | undefined
+  let newUsersCount = 0
 
   if (isAdmin) {
     try {
       const admin = getAdminClient()
       const client = admin ?? (await createClient())
-      const [taskRes, ideaRes] = await Promise.all([
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      const [
+        taskRes,
+        ideaRes,
+        openTicketsRes,
+        inProgressTicketsRes,
+        newUsersRes,
+        paidOrdersRes,
+        processingOrdersRes,
+        shippedOrdersRes,
+      ] = await Promise.all([
         client
           .from('admin_board_items')
           .select('*', { count: 'exact', head: true })
@@ -61,8 +74,36 @@ export async function Header() {
           .select('*', { count: 'exact', head: true })
           .eq('type', 'idea')
           .neq('status', 'archived'),
+        client
+          .from('support_tickets')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'open'),
+        client
+          .from('support_tickets')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'in_progress'),
+        client
+          .from('user_profiles')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', twoDaysAgo),
+        client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
+        client
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'processing'),
+        client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'shipped'),
       ])
       boardCounts = { tasks: taskRes.count ?? 0, ideas: ideaRes.count ?? 0 }
+      supportCounts = {
+        open: openTicketsRes.count ?? 0,
+        inProgress: inProgressTicketsRes.count ?? 0,
+      }
+      orderCounts = {
+        paid: paidOrdersRes.count ?? 0,
+        processing: processingOrdersRes.count ?? 0,
+        shipped: shippedOrdersRes.count ?? 0,
+      }
+      newUsersCount = newUsersRes.count ?? 0
     } catch {
       // non-critical — badges just won't show
     }
@@ -74,7 +115,14 @@ export async function Header() {
 
   return (
     <>
-      <SideNav isAdmin={isAdmin} categories={navCategories} boardCounts={boardCounts} />
+      <SideNav
+        isAdmin={isAdmin}
+        categories={navCategories}
+        boardCounts={boardCounts}
+        supportCounts={supportCounts}
+        orderCounts={orderCounts}
+        newUsersCount={newUsersCount}
+      />
       <DesktopTopBar {...userInfo} />
       <MobileHeader {...userInfo} categories={navCategories} />
     </>
