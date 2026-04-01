@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Link, usePathname, useRouter } from '@/i18n/navigation'
+import { Link, usePathname } from '@/i18n/navigation'
 import { CartTrigger } from '@/components/cart/CartTrigger'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { signOut } from '@/actions/auth'
-import { Search } from 'lucide-react'
 
 import { type Category } from '@/actions/admin-categories'
 
@@ -25,30 +24,49 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
   const t = useTranslations('common')
   const tUser = useTranslations('userMenu')
   const tAdmin = useTranslations('admin')
-  const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null)
   const pathname = usePathname()
 
+  const anyOpen = open || adminOpen
+
   function closeMenu() {
     setOpen(false)
-    setShowCategories(false) // reset here — no need for a separate useEffect
+    setShowCategories(false)
     setOpenCategoryId(null)
   }
 
+  function closeAdmin() {
+    setAdminOpen(false)
+  }
+
+  function closeAll() {
+    closeMenu()
+    closeAdmin()
+  }
+
+  // Lock body scroll whenever any drawer is open
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : 'unset'
+    document.body.style.overflow = anyOpen ? 'hidden' : 'unset'
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [open])
+  }, [anyOpen])
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/'
     if (path === '/account') return pathname === '/account'
     return pathname.startsWith(path)
   }
+
+  const navLinkClass = (path: string) =>
+    `flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+      isActive(path)
+        ? 'bg-amber-500/20 text-amber-400'
+        : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+    }`
 
   const adminLinkClass = (path: string) =>
     `flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
@@ -59,44 +77,63 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
 
   return (
     <>
+      {/* ── Top bar ─────────────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/60 backdrop-blur-xl md:hidden">
         <nav className="flex h-14 items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/5 transition hover:bg-white/10 hover:border-white/30"
-            aria-label="Open menu"
-          >
-            <BurgerIcon className="h-5 w-5 text-zinc-50" />
-          </button>
-          <Link href="/" className="flex flex-1 justify-center" onClick={closeMenu}>
-            <DarkMonkeyLogo size="sm" noLink />
-          </Link>
-          <div className="flex items-center gap-1">
+          {/* Left side: burger + admin toggle */}
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => router.push('/search')}
+              onClick={() => {
+                closeAdmin()
+                setOpen(true)
+              }}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/5 transition hover:bg-white/10 hover:border-white/30"
-              aria-label="Search"
+              aria-label="Open menu"
             >
-              <Search className="h-5 w-5 text-zinc-50" />
+              <BurgerIcon className="h-5 w-5 text-zinc-50" />
             </button>
-            <CartTrigger />
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu()
+                  setAdminOpen(true)
+                }}
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
+                  adminOpen
+                    ? 'border-amber-500/60 bg-amber-500/20 text-amber-400'
+                    : 'border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'
+                }`}
+                aria-label="Open admin menu"
+              >
+                <ShieldIcon className="h-4.5 w-4.5" />
+              </button>
+            )}
           </div>
+
+          {/* Centre: logo */}
+          <Link href="/" className="flex flex-1 justify-center" onClick={closeAll}>
+            <DarkMonkeyLogo size="sm" noLink />
+          </Link>
+
+          {/* Right side: cart only */}
+          <CartTrigger />
         </nav>
       </header>
 
-      {/* Overlay */}
+      {/* ── Shared overlay ──────────────────────────────────────────────────── */}
       <div
         role="presentation"
         className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
+          anyOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
-        onClick={closeMenu}
-        aria-hidden={!open}
+        onClick={closeAll}
+        aria-hidden={!anyOpen}
       />
 
-      {/* Slide-out menu */}
+      {/* ── Normal menu drawer ──────────────────────────────────────────────── */}
       <aside
         role="dialog"
         aria-modal="true"
@@ -106,6 +143,7 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
+        {/* Drawer header */}
         <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
           <button
             type="button"
@@ -138,15 +176,7 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
               className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <Link
-                href="/"
-                onClick={closeMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
-                  isActive('/')
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                }`}
-              >
+              <Link href="/" onClick={closeMenu} className={navLinkClass('/')}>
                 <HomeIcon className="h-5 w-5 shrink-0" />
                 {t('shop')}
               </Link>
@@ -154,11 +184,7 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
               <Link
                 href="/account/wishlist"
                 onClick={closeMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
-                  isActive('/account/wishlist')
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                }`}
+                className={navLinkClass('/account/wishlist')}
               >
                 <HeartIcon className="h-5 w-5 shrink-0" />
                 {t('wishlist')}
@@ -177,122 +203,10 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
                 <span className="flex-1 text-left">{t('categories')}</span>
                 <ChevronIcon className="h-4 w-4 shrink-0" />
               </button>
-
-              {isAdmin && (
-                <div className="mt-4 pt-4 border-t border-white/5 space-y-1">
-                  <p className="px-4 py-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                    {t('adminManagement')}
-                  </p>
-                  <Link
-                    href="/admin/dashboard"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/dashboard')}
-                  >
-                    <LayoutDashboardIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.dashboard')}
-                  </Link>
-                  <Link
-                    href="/admin/products"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/products')}
-                  >
-                    <BoxIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.products')}
-                  </Link>
-                  <Link
-                    href="/admin/orders"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/orders')}
-                  >
-                    <PackageIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.orders')}
-                  </Link>
-                  <Link
-                    href="/admin/customers"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/customers')}
-                  >
-                    <UsersIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.customers')}
-                  </Link>
-                  <Link
-                    href="/admin/newsletter"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/newsletter')}
-                  >
-                    <MailIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.newsletter')}
-                  </Link>
-                  <Link
-                    href="/admin/discounts"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/discounts')}
-                  >
-                    <TagIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.discounts')}
-                  </Link>
-                  <Link
-                    href="/admin/gallery"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/gallery')}
-                  >
-                    <ImageIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.gallery')}
-                  </Link>
-                  <Link
-                    href="/admin/announcements"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/announcements')}
-                  >
-                    <MegaphoneIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.announcements')}
-                  </Link>
-                  <Link
-                    href="/admin/reviews"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/reviews')}
-                  >
-                    <StarIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.reviews')}
-                  </Link>
-                  <Link
-                    href="/admin/activity"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/activity')}
-                  >
-                    <ActivityIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.activity')}
-                  </Link>
-                  <Link
-                    href="/admin/accounting"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/accounting')}
-                  >
-                    <ReceiptIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.accounting')}
-                  </Link>
-                  <Link
-                    href="/admin/features"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/features')}
-                  >
-                    <SparklesIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.features')}
-                  </Link>
-                  <Link
-                    href="/admin/settings"
-                    onClick={closeMenu}
-                    className={adminLinkClass('/admin/settings')}
-                  >
-                    <SettingsIcon className="h-5 w-5 shrink-0" />
-                    {tAdmin('nav.settings')}
-                  </Link>
-                </div>
-              )}
             </nav>
           </div>
 
-          {/* Categories view */}
+          {/* Categories panel */}
           <div
             className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${
               showCategories
@@ -404,11 +318,6 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
                     <p className="truncate text-sm font-medium text-zinc-50">
                       {displayName ?? user.email?.split('@')[0] ?? tUser('account')}
                     </p>
-                    {isAdmin && (
-                      <span className="mt-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500 ring-1 ring-inset ring-amber-500/20">
-                        Admin
-                      </span>
-                    )}
                   </div>
                 </div>
                 {user.email && (
@@ -461,6 +370,160 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
           )}
         </div>
       </aside>
+
+      {/* ── Admin menu drawer ───────────────────────────────────────────────── */}
+      {isAdmin && (
+        <aside
+          role="dialog"
+          aria-modal="true"
+          aria-label="Admin menu"
+          aria-hidden={!adminOpen}
+          className={`fixed top-0 right-0 z-[70] flex h-full w-[min(300px,85vw)] flex-col border-l border-amber-500/20 bg-zinc-950/98 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out md:hidden ${
+            adminOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          {/* Admin drawer header */}
+          <div className="flex h-14 items-center justify-between border-b border-amber-500/20 px-4">
+            <div className="flex items-center gap-2">
+              <ShieldIcon className="h-4 w-4 text-amber-400" />
+              <span className="text-sm font-bold uppercase tracking-widest text-amber-400">
+                {t('adminManagement')}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={closeAdmin}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/10 hover:text-zinc-50"
+              aria-label="Close admin menu"
+            >
+              <CloseIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Admin links */}
+          <nav
+            className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <Link
+              href="/admin/dashboard"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/dashboard')}
+            >
+              <LayoutDashboardIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.dashboard')}
+            </Link>
+            <Link
+              href="/admin/products"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/products')}
+            >
+              <BoxIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.products')}
+            </Link>
+            <Link
+              href="/admin/orders"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/orders')}
+            >
+              <PackageIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.orders')}
+            </Link>
+            <Link
+              href="/admin/customers"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/customers')}
+            >
+              <UsersIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.customers')}
+            </Link>
+            <Link
+              href="/admin/newsletter"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/newsletter')}
+            >
+              <MailIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.newsletter')}
+            </Link>
+            <Link
+              href="/admin/discounts"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/discounts')}
+            >
+              <TagIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.discounts')}
+            </Link>
+            <Link
+              href="/admin/gallery"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/gallery')}
+            >
+              <ImageIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.gallery')}
+            </Link>
+            <Link
+              href="/admin/announcements"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/announcements')}
+            >
+              <MegaphoneIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.announcements')}
+            </Link>
+            <Link
+              href="/admin/reviews"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/reviews')}
+            >
+              <StarIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.reviews')}
+            </Link>
+            <Link
+              href="/admin/activity"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/activity')}
+            >
+              <ActivityIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.activity')}
+            </Link>
+            <Link
+              href="/admin/accounting"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/accounting')}
+            >
+              <ReceiptIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.accounting')}
+            </Link>
+            <Link
+              href="/admin/features"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/features')}
+            >
+              <SparklesIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.features')}
+            </Link>
+            <Link
+              href="/admin/settings"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/settings')}
+            >
+              <SettingsIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.settings')}
+            </Link>
+          </nav>
+
+          {/* View store link */}
+          <div className="shrink-0 border-t border-amber-500/10 p-4">
+            <Link
+              href="/"
+              onClick={closeAdmin}
+              className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-zinc-600 transition hover:bg-white/5 hover:text-zinc-400"
+            >
+              <HomeIcon className="h-4 w-4 shrink-0" />
+              {tAdmin('nav.viewStore')}
+            </Link>
+          </div>
+        </aside>
+      )}
     </>
   )
 }
@@ -767,7 +830,23 @@ function SparklesIcon({ className }: { className?: string }) {
   )
 }
 
-// New icons for the added admin links
+function ShieldIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    </svg>
+  )
+}
+
 function UsersIcon({ className }: { className?: string }) {
   return (
     <svg
