@@ -148,7 +148,14 @@ export async function Header() {
         newUsersCount={newUsersCount}
       />
       <DesktopTopBar {...userInfo} />
-      <MobileHeader {...userInfo} categories={navCategories} />
+      <MobileHeader
+        {...userInfo}
+        categories={navCategories}
+        boardCounts={boardCounts}
+        supportCounts={supportCounts}
+        orderCounts={orderCounts}
+        newUsersCount={newUsersCount}
+      />
     </>
   )
 }

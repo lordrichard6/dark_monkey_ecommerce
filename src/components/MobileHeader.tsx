@@ -18,9 +18,33 @@ type Props = {
   avatarUrl: string | null
   isAdmin: boolean
   categories: NavCategory[]
+  boardCounts?: { tasks: number; ideas: number }
+  supportCounts?: { open: number; inProgress: number }
+  orderCounts?: { paid: number; processing: number; shipped: number }
+  newUsersCount?: number
 }
 
-export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories }: Props) {
+export function MobileHeader({
+  user,
+  displayName,
+  avatarUrl,
+  isAdmin,
+  categories,
+  boardCounts,
+  supportCounts,
+  orderCounts,
+  newUsersCount = 0,
+}: Props) {
+  const totalBadge = isAdmin
+    ? (boardCounts?.tasks ?? 0) +
+      (boardCounts?.ideas ?? 0) +
+      (supportCounts?.open ?? 0) +
+      (supportCounts?.inProgress ?? 0) +
+      (orderCounts?.paid ?? 0) +
+      (orderCounts?.processing ?? 0) +
+      (orderCounts?.shipped ?? 0) +
+      newUsersCount
+    : 0
   const t = useTranslations('common')
   const tUser = useTranslations('userMenu')
   const tAdmin = useTranslations('admin')
@@ -101,14 +125,19 @@ export function MobileHeader({ user, displayName, avatarUrl, isAdmin, categories
                   closeMenu()
                   setAdminOpen(true)
                 }}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
+                className={`relative flex h-10 w-10 items-center justify-center rounded-lg border transition ${
                   adminOpen
                     ? 'border-amber-500/60 bg-amber-500/20 text-amber-400'
                     : 'border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'
                 }`}
-                aria-label="Open admin menu"
+                aria-label={`Open admin menu${totalBadge > 0 ? `, ${totalBadge} notifications` : ''}`}
               >
-                <ShieldIcon className="h-4.5 w-4.5" />
+                <ShieldIcon className="h-4 w-4" />
+                {totalBadge > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold leading-none text-white ring-1 ring-black">
+                    {totalBadge > 99 ? '99+' : totalBadge}
+                  </span>
+                )}
               </button>
             )}
           </div>
