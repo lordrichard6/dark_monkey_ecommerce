@@ -18,6 +18,7 @@ export default async function AdminOrdersPage({
     dir?: string
     from?: string
     to?: string
+    archived?: string
   }>
 }) {
   const supabase = getAdminClient()
@@ -37,7 +38,11 @@ export default async function AdminOrdersPage({
     dir,
     from,
     to,
+    archived,
   } = await searchParams
+
+  // When archived=1 we show only archived orders; otherwise only non-archived
+  const showArchived = archived === '1'
 
   const limit = Math.min(Math.max(parseInt(limitParam || '20', 10) || 20, 10), 100)
   const page = parseInt(pageParam || '1', 10) || 1
@@ -54,12 +59,14 @@ export default async function AdminOrdersPage({
   // ── Main paginated query ──────────────────────────────────────────────────
   let query = supabase
     .from('orders')
-    .select('id, status, total_cents, guest_email, created_at, discount_cents, order_items(id)', {
-      count: 'exact',
-    })
+    .select(
+      'id, status, total_cents, guest_email, created_at, discount_cents, is_archived, order_items(id)',
+      { count: 'exact' }
+    )
+    .eq('is_archived', showArchived)
 
   // ── Aggregate query (same filters, no pagination) for revenue stats ───────
-  let aggQuery = supabase.from('orders').select('total_cents')
+  let aggQuery = supabase.from('orders').select('total_cents').eq('is_archived', showArchived)
 
   // Filters — applied identically to both queries
   if (s) {
@@ -98,6 +105,7 @@ export default async function AdminOrdersPage({
     guest_email: o.guest_email,
     created_at: o.created_at,
     discount_cents: (o as { discount_cents?: number | null }).discount_cents ?? null,
+    is_archived: (o as { is_archived?: boolean | null }).is_archived ?? false,
     item_count: Array.isArray((o as { order_items?: unknown[] }).order_items)
       ? (o as { order_items: unknown[] }).order_items.length
       : 0,
@@ -128,6 +136,7 @@ export default async function AdminOrdersPage({
           to={to ?? ''}
           totalRevenue={totalRevenue}
           avgOrderValue={avgOrderValue}
+          showArchived={showArchived}
         />
       </div>
     </div>

@@ -1348,7 +1348,15 @@
       "status_shipped": "Shipped",
       "status_delivered": "Delivered",
       "status_cancelled": "Cancelled",
-      "status_refunded": "Refunded"
+      "status_refunded": "Refunded",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "archiving": "Archiving…",
+      "archiveFailed": "Failed to archive order",
+      "showArchived": "Show archived",
+      "showActive": "Show active",
+      "archivedBadge": "Archived",
+      "noArchivedOrders": "No archived orders."
     },
     "customers": {
       "title": "Customers",

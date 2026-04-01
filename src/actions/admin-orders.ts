@@ -150,6 +150,30 @@ export async function updateOrderStatus(orderId: string, status: string) {
 }
 
 /**
+ * Archive (or unarchive) an order.
+ * Archived orders are excluded from accounting and statistics.
+ */
+export async function archiveOrder(
+  orderId: string,
+  archive: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { error } = await supabase.from('orders').update({ is_archived: archive }).eq('id', orderId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin/accounting')
+  revalidatePath('/admin/dashboard')
+  return { ok: true }
+}
+
+/**
  * Retry Printful fulfillment for an order that failed to create a Printful order.
  * Only works for orders where printful_order_id IS NULL.
  */

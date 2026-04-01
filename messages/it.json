@@ -1283,7 +1283,15 @@
       "status_shipped": "Spedito",
       "status_delivered": "Consegnato",
       "status_cancelled": "Annullato",
-      "status_refunded": "Rimborsato"
+      "status_refunded": "Rimborsato",
+      "archive": "Archivia",
+      "unarchive": "Ripristina",
+      "archiving": "Archiviazione…",
+      "archiveFailed": "Archiviazione fallita",
+      "showArchived": "Mostra archiviate",
+      "showActive": "Mostra attive",
+      "archivedBadge": "Archiviato",
+      "noArchivedOrders": "Nessun ordine archiviato."
     },
     "customers": {
       "title": "Customers",

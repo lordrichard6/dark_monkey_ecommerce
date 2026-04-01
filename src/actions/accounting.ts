@@ -47,6 +47,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
     `
     )
     .in('status', ['paid', 'processing', 'shipped', 'delivered'])
+    .eq('is_archived', false)
     .order('created_at', { ascending: false })
 
   if (error || !orders) {

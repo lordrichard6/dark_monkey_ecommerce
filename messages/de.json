@@ -1283,7 +1283,15 @@
       "status_shipped": "Versandt",
       "status_delivered": "Geliefert",
       "status_cancelled": "Storniert",
-      "status_refunded": "Erstattet"
+      "status_refunded": "Erstattet",
+      "archive": "Archivieren",
+      "unarchive": "Wiederherstellen",
+      "archiving": "Archivieren…",
+      "archiveFailed": "Archivierung fehlgeschlagen",
+      "showArchived": "Archivierte anzeigen",
+      "showActive": "Aktive anzeigen",
+      "archivedBadge": "Archiviert",
+      "noArchivedOrders": "Keine archivierten Bestellungen."
     },
     "customers": {
       "title": "Customers",

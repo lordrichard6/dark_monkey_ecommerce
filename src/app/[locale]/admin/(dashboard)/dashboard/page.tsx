@@ -119,7 +119,8 @@ export default async function AdminDashboardPage() {
     supabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
-      .in('status', ['paid', 'processing', 'shipped', 'delivered']),
+      .in('status', ['paid', 'processing', 'shipped', 'delivered'])
+      .eq('is_archived', false),
     supabase
       .from('orders')
       .select('id, status, total_cents, created_at, guest_email, user_id, shipping_address_id')
@@ -129,6 +130,7 @@ export default async function AdminDashboardPage() {
       .from('orders')
       .select('total_cents, created_at')
       .in('status', ['paid', 'processing', 'shipped', 'delivered'])
+      .eq('is_archived', false)
       .gte('created_at', thirtyDaysAgo.toISOString())
       .order('created_at', { ascending: true }),
     supabase
@@ -150,7 +152,8 @@ export default async function AdminDashboardPage() {
         )
       `
       )
-      .in('status', ['paid', 'processing', 'shipped', 'delivered']),
+      .in('status', ['paid', 'processing', 'shipped', 'delivered'])
+      .eq('is_archived', false),
   ])
 
   // Compute all-time revenue directly from the data we already have — no extra DB round-trip

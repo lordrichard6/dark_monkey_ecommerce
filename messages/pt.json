@@ -1348,7 +1348,15 @@
       "status_shipped": "Enviado",
       "status_delivered": "Entregue",
       "status_cancelled": "Cancelado",
-      "status_refunded": "Reembolsado"
+      "status_refunded": "Reembolsado",
+      "archive": "Arquivar",
+      "unarchive": "Restaurar",
+      "archiving": "Arquivando…",
+      "archiveFailed": "Erro ao arquivar",
+      "showArchived": "Ver arquivados",
+      "showActive": "Ver ativos",
+      "archivedBadge": "Arquivado",
+      "noArchivedOrders": "Nenhum pedido arquivado."
     },
     "customers": {
       "title": "Clientes",

@@ -2,9 +2,20 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useCallback, useRef, useTransition } from 'react'
+import { useCallback, useRef, useTransition, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, X, Download, Tag, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
+import {
+  Search,
+  X,
+  Download,
+  Tag,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  Archive,
+  ArchiveRestore,
+} from 'lucide-react'
+import { archiveOrder } from '@/actions/admin-orders'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Order = {
@@ -14,6 +25,7 @@ type Order = {
   guest_email: string | null
   created_at: string
   discount_cents: number | null
+  is_archived: boolean
   item_count: number
 }
 
@@ -31,6 +43,7 @@ type Props = {
   to: string
   totalRevenue: number
   avgOrderValue: number
+  showArchived: boolean
 }
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -125,6 +138,51 @@ function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   )
 }
 
+// ─── Archive button ───────────────────────────────────────────────────────────
+function ArchiveButton({
+  orderId,
+  isArchived,
+  onDone,
+}: {
+  orderId: string
+  isArchived: boolean
+  onDone: () => void
+}) {
+  const t = useTranslations('admin')
+  const [pending, setPending] = useState(false)
+
+  async function handleClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    e.preventDefault()
+    setPending(true)
+    const result = await archiveOrder(orderId, !isArchived)
+    if (!result.ok) {
+      alert(t('orders.archiveFailed'))
+    }
+    setPending(false)
+    onDone()
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={pending}
+      title={isArchived ? t('orders.unarchive') : t('orders.archive')}
+      className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors disabled:opacity-50 ${
+        isArchived
+          ? 'border-amber-700/50 bg-amber-950/40 text-amber-500 hover:border-amber-500/60 hover:text-amber-400'
+          : 'border-zinc-700 bg-zinc-800/60 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300'
+      }`}
+    >
+      {isArchived ? (
+        <ArchiveRestore className="h-3.5 w-3.5" />
+      ) : (
+        <Archive className="h-3.5 w-3.5" />
+      )}
+    </button>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export function OrdersTable({
   orders,
@@ -140,6 +198,7 @@ export function OrdersTable({
   to,
   totalRevenue,
   avgOrderValue,
+  showArchived,
 }: Props) {
   const router = useRouter()
   const t = useTranslations('admin')
@@ -227,6 +286,20 @@ export function OrdersTable({
             >
               <Download className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t('orders.exportCsv')}</span>
+            </button>
+            {/* Archived toggle */}
+            <button
+              onClick={() => pushParams({ archived: showArchived ? undefined : '1', page: '1' })}
+              className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+                showArchived
+                  ? 'border-amber-700/60 bg-amber-950/40 text-amber-400 hover:border-amber-600/60'
+                  : 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+              }`}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                {showArchived ? t('orders.showActive') : t('orders.showArchived')}
+              </span>
             </button>
             {/* Per-page */}
             <select
@@ -408,7 +481,7 @@ export function OrdersTable({
                   <StatusBadge status={order.status} label={statusLabel} />
                 </div>
 
-                {/* Bottom row: items + discount + total */}
+                {/* Bottom row: items + discount + total + archive */}
                 <div className="mt-3 flex items-center justify-between border-t border-zinc-800 pt-3">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-700/60 px-1.5 text-[10px] font-semibold text-zinc-400">
@@ -421,14 +494,21 @@ export function OrdersTable({
                       </span>
                     )}
                   </div>
-                  <span
-                    suppressHydrationWarning
-                    className={`text-sm font-bold tabular-nums ${
-                      isHighValue ? 'text-amber-300' : 'text-zinc-100'
-                    }`}
-                  >
-                    {formatPrice(order.total_cents)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      suppressHydrationWarning
+                      className={`text-sm font-bold tabular-nums ${
+                        isHighValue ? 'text-amber-300' : 'text-zinc-100'
+                      }`}
+                    >
+                      {formatPrice(order.total_cents)}
+                    </span>
+                    <ArchiveButton
+                      orderId={order.id}
+                      isArchived={order.is_archived}
+                      onDone={() => router.refresh()}
+                    />
+                  </div>
                 </div>
               </div>
             </Link>
@@ -436,7 +516,11 @@ export function OrdersTable({
         })}
         {orders.length === 0 && (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-10 text-center text-sm text-zinc-500">
-            {hasFilters ? t('orders.noOrdersFiltered') : t('orders.noOrdersYet')}
+            {showArchived
+              ? t('orders.noArchivedOrders')
+              : hasFilters
+                ? t('orders.noOrdersFiltered')
+                : t('orders.noOrdersYet')}
           </div>
         )}
       </div>
@@ -462,6 +546,7 @@ export function OrdersTable({
                   {t('orders.date')}
                   <SortIcon active={sortBy === 'created_at'} dir={sortDir} />
                 </th>
+                <th className={thStatic} />
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
@@ -548,13 +633,29 @@ export function OrdersTable({
                     >
                       {dateOnly}
                     </td>
+
+                    {/* Archive */}
+                    <td
+                      className="whitespace-nowrap px-3 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ArchiveButton
+                        orderId={order.id}
+                        isArchived={order.is_archived}
+                        onDone={() => router.refresh()}
+                      />
+                    </td>
                   </tr>
                 )
               })}
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
-                    {hasFilters ? t('orders.noOrdersFiltered') : t('orders.noOrdersYet')}
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
+                    {showArchived
+                      ? t('orders.noArchivedOrders')
+                      : hasFilters
+                        ? t('orders.noOrdersFiltered')
+                        : t('orders.noOrdersYet')}
                   </td>
                 </tr>
               )}
