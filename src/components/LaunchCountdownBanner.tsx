@@ -48,39 +48,42 @@ export function LaunchCountdownBanner({ position }: Props) {
 
   const pill = (
     <div
-      className="rounded-full p-px"
+      className="rounded-2xl p-px sm:rounded-full"
       style={{
         background:
           'linear-gradient(135deg, rgba(251,191,36,0.5) 0%, rgba(251,191,36,0.08) 50%, rgba(251,191,36,0.4) 100%)',
         boxShadow: '0 0 20px rgba(251,191,36,0.18)',
       }}
     >
-      <div className="flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 backdrop-blur-xl sm:gap-3 sm:px-5 sm:py-2.5">
-        {/* Rocket icon */}
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/20 ring-1 ring-amber-500/30">
-          <Rocket className="h-3 w-3 text-amber-400" />
+      <div className="flex flex-col items-center gap-2 rounded-2xl bg-black/70 px-4 py-3 backdrop-blur-xl sm:flex-row sm:gap-3 sm:rounded-full sm:px-5 sm:py-2.5">
+        {/* Row 1 on mobile: icon + label + dot + countdown */}
+        <div className="flex items-center gap-2">
+          {/* Rocket icon */}
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/20 ring-1 ring-amber-500/30">
+            <Rocket className="h-3 w-3 text-amber-400" />
+          </div>
+
+          {/* Label */}
+          <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400 sm:text-xs">
+            Free Shipping
+          </span>
+
+          {/* Dot */}
+          <span className="text-zinc-600">·</span>
+
+          {/* Countdown — numbers stand out large, labels tiny */}
+          <span className="flex items-baseline gap-1 font-mono tabular-nums">
+            <CountUnit value={days} label="d" />
+            <CountUnit value={hours} label="h" />
+            <CountUnit value={minutes} label="m" />
+            <CountUnit value={seconds} label="s" />
+          </span>
         </div>
 
-        {/* Label */}
-        <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400 sm:text-xs">
-          Free Shipping
-        </span>
+        {/* Separator dot — desktop only */}
+        <span className="hidden text-zinc-600 sm:inline">·</span>
 
-        {/* Dot */}
-        <span className="text-zinc-600">·</span>
-
-        {/* Countdown — numbers stand out large, labels tiny */}
-        <span className="flex items-baseline gap-1 font-mono tabular-nums">
-          <CountUnit value={days} label="d" />
-          <CountUnit value={hours} label="h" />
-          <CountUnit value={minutes} label="m" />
-          <CountUnit value={seconds} label="s" />
-        </span>
-
-        {/* Dot */}
-        <span className="text-zinc-600">·</span>
-
-        {/* Promo code */}
+        {/* Row 2 on mobile: promo code button */}
         <button
           onClick={handleCopy}
           className="group flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 transition-all hover:border-amber-400/50 hover:bg-amber-500/20 active:scale-95"
@@ -143,7 +146,9 @@ function CountUnit({ value, label }: { value: number; label: string }) {
       >
         {pad(value)}
       </span>
-      <span className="text-[9px] font-bold uppercase tracking-wider text-amber-500/50">{label}</span>
+      <span className="text-[9px] font-bold uppercase tracking-wider text-amber-500/50">
+        {label}
+      </span>
     </span>
   )
 }
