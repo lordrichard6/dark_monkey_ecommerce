@@ -404,19 +404,18 @@ export function ProductListTable({
     <div>
       {/* ── Filter Bar ─────────────────────────────────────────────────────── */}
       <div
-        className={`mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between transition-opacity ${isPending ? 'opacity-60' : ''}`}
+        className={`mb-4 flex flex-col gap-2.5 transition-opacity ${isPending ? 'opacity-60' : ''}`}
       >
-        {/* Left: search + filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Search */}
-          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+        {/* Row 1: Search + View Toggle */}
+        <div className="flex items-center gap-2">
+          <form onSubmit={handleSearchSubmit} className="relative flex flex-1 items-center">
             <Search className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-zinc-500" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('products.searchProducts')}
-              className="h-8 w-48 rounded-lg border border-zinc-700 bg-zinc-900 pl-8 pr-8 text-sm text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30 sm:w-56"
+              className="h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 pl-8 pr-8 text-sm text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
             />
             {searchInput && (
               <button
@@ -428,138 +427,165 @@ export function ProductListTable({
               </button>
             )}
           </form>
-
-          {/* Status filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => pushParams({ status: e.target.value || null })}
-            className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
-          >
-            <option value="">{t('products.allStatus')}</option>
-            <option value="active">{t('products.active')}</option>
-            <option value="inactive">{t('products.inactive')}</option>
-          </select>
-
-          {/* Category filter */}
-          <select
-            value={categoryFilter}
-            onChange={(e) => pushParams({ category: e.target.value || null })}
-            className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
-          >
-            <option value="">{t('products.allCategories')}</option>
-            {parentCategories.map((cat) => {
-              const subs = categories.filter((c) => c.parent_id === cat.id)
-              if (subs.length === 0) {
-                return (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                )
-              }
-              return (
-                <optgroup key={cat.id} label={cat.name}>
-                  <option value={cat.id}>{t('fields.allOf', { name: cat.name })}</option>
-                  {subs.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </option>
-                  ))}
-                </optgroup>
-              )
-            })}
-          </select>
-
-          {/* Tag filter */}
-          <select
-            value={tagFilter}
-            onChange={(e) => pushParams({ tag: e.target.value || null })}
-            className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
-          >
-            <option value="">{t('products.allTags')}</option>
-            {allTags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Active filter chips */}
-          {(search || statusFilter || categoryFilter || tagFilter) && (
-            <button
-              onClick={() => {
-                setSearchInput('')
-                pushParams({ search: null, status: null, category: null, tag: null })
-              }}
-              className="flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-            >
-              <X className="h-3 w-3" />
-              {t('products.clearFilters')}
-            </button>
-          )}
-        </div>
-
-        {/* Right: view toggle + per-page + count */}
-        <div className="flex items-center gap-3 text-sm text-zinc-500">
-          <span className="whitespace-nowrap">
-            {totalCount === 0
-              ? t('products.noProducts')
-              : t('products.productsCount', { start: pageStart, end: pageEnd, total: totalCount })}
-          </span>
-          {/* View toggle */}
-          <div className="flex items-center rounded-lg border border-zinc-700 bg-zinc-900 p-0.5">
+          {/* View toggle — always visible right of search */}
+          <div className="flex shrink-0 items-center rounded-lg border border-zinc-700 bg-zinc-900 p-0.5">
             <button
               onClick={() => setView('list')}
               title="List view"
-              className={`rounded p-1.5 transition-colors ${viewMode === 'list' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`rounded p-2 transition-colors ${viewMode === 'list' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               <LayoutList className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => setView('grid')}
               title="Grid view"
-              className={`rounded p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`rounded p-2 transition-colors ${viewMode === 'grid' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
             </button>
           </div>
-          <select
-            value={limit}
-            onChange={(e) => pushParams({ limit: e.target.value, page: '1' })}
-            className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-400 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
-          >
-            <option value="20">20 / page</option>
-            <option value="50">50 / page</option>
-            <option value="100">100 / page</option>
-          </select>
         </div>
+
+        {/* Row 2: Filter selects (scrollable) + per-page */}
+        <div className="flex items-center gap-2">
+          {/* Horizontally scrollable filter row */}
+          <div className="flex flex-1 items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
+            {/* Status filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => pushParams({ status: e.target.value || null })}
+              className="h-8 shrink-0 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+            >
+              <option value="">{t('products.allStatus')}</option>
+              <option value="active">{t('products.active')}</option>
+              <option value="inactive">{t('products.inactive')}</option>
+            </select>
+
+            {/* Category filter */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => pushParams({ category: e.target.value || null })}
+              className="h-8 shrink-0 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+            >
+              <option value="">{t('products.allCategories')}</option>
+              {parentCategories.map((cat) => {
+                const subs = categories.filter((c) => c.parent_id === cat.id)
+                if (subs.length === 0) {
+                  return (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  )
+                }
+                return (
+                  <optgroup key={cat.id} label={cat.name}>
+                    <option value={cat.id}>{t('fields.allOf', { name: cat.name })}</option>
+                    {subs.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )
+              })}
+            </select>
+
+            {/* Tag filter */}
+            <select
+              value={tagFilter}
+              onChange={(e) => pushParams({ tag: e.target.value || null })}
+              className="h-8 shrink-0 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+            >
+              <option value="">{t('products.allTags')}</option>
+              {allTags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Clear filters */}
+            {(search || statusFilter || categoryFilter || tagFilter) && (
+              <button
+                onClick={() => {
+                  setSearchInput('')
+                  pushParams({ search: null, status: null, category: null, tag: null })
+                }}
+                className="flex shrink-0 items-center gap-1 rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+              >
+                <X className="h-3 w-3" />
+                {t('products.clearFilters')}
+              </button>
+            )}
+          </div>
+
+          {/* Per-page + count */}
+          <div className="flex shrink-0 items-center gap-2 text-sm text-zinc-500">
+            <span className="hidden whitespace-nowrap sm:block">
+              {totalCount === 0
+                ? t('products.noProducts')
+                : t('products.productsCount', {
+                    start: pageStart,
+                    end: pageEnd,
+                    total: totalCount,
+                  })}
+            </span>
+            <select
+              value={limit}
+              onChange={(e) => pushParams({ limit: e.target.value, page: '1' })}
+              className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-400 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+            >
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Row 3: Count — mobile only */}
+        <p className="text-xs text-zinc-500 sm:hidden">
+          {totalCount === 0
+            ? t('products.noProducts')
+            : t('products.productsCount', { start: pageStart, end: pageEnd, total: totalCount })}
+        </p>
       </div>
 
       {/* ── Bulk Actions Toolbar ─────────────────────────────────────────────── */}
       {selectedIds.size > 0 && (
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 shadow-lg">
-          <span className="text-sm text-zinc-300 font-medium">
-            {t('products.selected', { count: selectedIds.size })}
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="mb-4 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 shadow-lg">
+          <div className="mb-2.5 flex items-center justify-between">
+            <span className="text-sm font-medium text-zinc-300">
+              {t('products.selected', { count: selectedIds.size })}
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-zinc-500 hover:text-zinc-300"
+              title="Clear selection"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {/* Scrollable actions row */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
             <button
               onClick={() => handleBulkStatus(true)}
               disabled={loading !== null}
-              className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+              className="shrink-0 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
               {t('products.setActive')}
             </button>
             <button
               onClick={() => handleBulkStatus(false)}
               disabled={loading !== null}
-              className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+              className="shrink-0 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
               {t('products.setInactive')}
             </button>
-            <div className="mx-2 hidden h-4 w-px bg-zinc-600 sm:block" />
+            <div className="mx-1 h-4 w-px shrink-0 bg-zinc-600" />
             <button
               onClick={() => handleBulkFeatured(true)}
               disabled={loading !== null}
-              className="flex items-center gap-1.5 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+              className="flex shrink-0 items-center gap-1.5 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
               {t('products.setFeatured')}
@@ -567,16 +593,16 @@ export function ProductListTable({
             <button
               onClick={() => handleBulkFeatured(false)}
               disabled={loading !== null}
-              className="flex items-center gap-1.5 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+              className="flex shrink-0 items-center gap-1.5 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
               <Star className="h-3 w-3 fill-none text-zinc-400" />
               {t('products.unsetFeatured')}
             </button>
-            <div className="mx-2 hidden h-4 w-px bg-zinc-600 sm:block" />
+            <div className="mx-1 h-4 w-px shrink-0 bg-zinc-600" />
             <button
               onClick={() => setBulkDeleteOpen(true)}
               disabled={loading !== null}
-              className="rounded bg-red-900/30 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-900/50 disabled:opacity-50"
+              className="shrink-0 rounded bg-red-900/30 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-900/50 disabled:opacity-50"
             >
               {t('products.deleteSelected')}
             </button>
@@ -585,8 +611,8 @@ export function ProductListTable({
       )}
 
       {/* ── Mobile Select All ────────────────────────────────────────────────── */}
-      <div className="mb-2 flex items-center justify-end px-1 md:hidden">
-        <label className="flex items-center gap-2 text-sm text-zinc-400">
+      <div className="mb-3 flex items-center justify-between px-1 md:hidden">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400 hover:text-zinc-200">
           <input
             type="checkbox"
             className="rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
@@ -598,6 +624,11 @@ export function ProductListTable({
           />
           {t('products.selectAll')}
         </label>
+        {selectedIds.size > 0 && (
+          <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 ring-1 ring-amber-500/30">
+            {selectedIds.size} selected
+          </span>
+        )}
       </div>
 
       {/* ── Desktop Table View ───────────────────────────────────────────────── */}
@@ -955,7 +986,7 @@ export function ProductListTable({
 
       {/* ── Mobile Card View ─────────────────────────────────────────────────── */}
       {viewMode === 'list' && (
-        <div className="grid grid-cols-1 gap-4 md:hidden">
+        <div className="grid grid-cols-1 gap-3 md:hidden">
           {displayProducts.map((p) => {
             const variants = p.product_variants ?? []
             const images = (p.product_images ?? []).sort(
@@ -974,114 +1005,129 @@ export function ProductListTable({
             return (
               <div
                 key={p.id}
-                className={`relative flex flex-col gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 transition-colors ${
-                  isSelected ? 'border-amber-500/50 bg-amber-500/5' : ''
+                className={`relative overflow-hidden rounded-xl border transition-all ${
+                  isSelected
+                    ? 'border-amber-500/50 bg-amber-500/5'
+                    : 'border-zinc-800 bg-zinc-900/60'
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <Link href={`/admin/products/${p.id}`} className="block shrink-0">
-                      {thumbnailUrl ? (
-                        <div className="relative h-16 w-16 overflow-hidden rounded-md ring-1 ring-zinc-700">
-                          <Image
-                            src={thumbnailUrl}
-                            alt=""
-                            fill
-                            sizes="64px"
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded-md bg-zinc-800 ring-1 ring-zinc-700">
-                          <AlertTriangle className="h-5 w-5 text-amber-500" />
-                        </div>
-                      )}
-                    </Link>
-                    <div className="min-w-0">
+                {/* Amber accent line when selected */}
+                {isSelected && <div className="absolute left-0 top-0 h-full w-0.5 bg-amber-500" />}
+
+                {/* Card header: thumbnail + info + checkbox */}
+                <div className="flex items-start gap-3 p-3">
+                  {/* Thumbnail */}
+                  <Link href={`/admin/products/${p.id}`} className="block shrink-0">
+                    {thumbnailUrl ? (
+                      <div className="relative h-20 w-20 overflow-hidden rounded-lg ring-1 ring-zinc-700">
+                        <Image
+                          src={thumbnailUrl}
+                          alt=""
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-zinc-800 ring-1 ring-zinc-700">
+                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      </div>
+                    )}
+                  </Link>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    {/* Name + featured star */}
+                    <div className="flex items-start justify-between gap-2">
                       <Link
                         href={`/admin/products/${p.id}`}
-                        className="font-medium text-zinc-50 hover:text-amber-400 line-clamp-2"
+                        className="line-clamp-2 flex-1 text-sm font-medium leading-snug text-zinc-50 hover:text-amber-400"
                       >
                         {p.name}
                       </Link>
-                      <div className="mt-1 flex flex-wrap gap-2 text-xs">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
-                          }
-                          className="flex items-center gap-1 transition-colors hover:text-amber-400"
-                        >
-                          {p.categories ? (
-                            <>
-                              <span className="text-zinc-400">{p.categories.name}</span>
-                              <Pencil className="h-2.5 w-2.5 text-zinc-600" />
-                            </>
-                          ) : (
-                            <>
-                              <AlertTriangle className="h-3 w-3 text-amber-500" />
-                              <span className="text-amber-500">
-                                {t('products.missingCategoryFull')}
-                              </span>
-                              <Pencil className="h-2.5 w-2.5 text-amber-600" />
-                            </>
-                          )}
-                        </button>
-                        {p.is_customizable && (
-                          <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
-                            {t('products.customizable')}
-                          </span>
-                        )}
+                      <div className="flex shrink-0 items-center gap-1.5">
                         <ToggleFeaturedButton productId={p.id} isFeatured={p.is_featured} />
-                      </div>
-                      {/* Tags */}
-                      {tags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {tags.slice(0, 4).map((tag) => (
-                            <span
-                              key={tag.id}
-                              className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 ring-1 ring-zinc-700"
-                            >
-                              {tag.name}
-                            </span>
-                          ))}
-                          {tags.length > 4 && (
-                            <span className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500 ring-1 ring-zinc-700">
-                              +{tags.length - 4}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <div className="mt-2 text-sm font-medium text-zinc-300">{priceRange}</div>
-                      <div className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
-                        {images.length === 0 && (
-                          <AlertTriangle className="h-3 w-3 text-amber-500" />
-                        )}
-                        {images.length === 0 ? (
-                          <span className="text-amber-500">{t('products.noImages')}</span>
-                        ) : (
-                          <span>{t('products.imagesCount', { count: images.length })}</span>
-                        )}
-                        <span>·</span>
-                        <span>
-                          {t('products.addedDate')} {formatDate(p.created_at)}
-                        </span>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(p.id)}
+                        />
                       </div>
                     </div>
-                  </div>
-                  <div className="shrink-0">
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/20"
-                      checked={isSelected}
-                      onChange={() => toggleSelect(p.id)}
-                    />
+
+                    {/* Price */}
+                    <div className="mt-1 text-sm font-semibold text-amber-400">{priceRange}</div>
+
+                    {/* Meta chips */}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      {/* Category */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPickerTarget({ id: p.id, name: p.name, categoryId: p.category_id })
+                        }
+                        className="flex items-center gap-1 text-xs text-zinc-400 transition-colors hover:text-amber-400"
+                      >
+                        {p.categories ? (
+                          <>
+                            <span>{p.categories.name}</span>
+                            <Pencil className="h-2.5 w-2.5 text-zinc-600" />
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="h-3 w-3 text-amber-500" />
+                            <span className="text-amber-500">{t('products.missingCategory')}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {variants.length > 0 && (
+                        <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-500">
+                          {t('products.variantsCount', { count: variants.length })}
+                        </span>
+                      )}
+                      {p.is_customizable && (
+                        <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-[10px] text-amber-400">
+                          {t('products.customizable')}
+                        </span>
+                      )}
+                      {images.length === 0 && (
+                        <span className="flex items-center gap-0.5 rounded bg-red-900/30 px-1.5 py-0.5 text-[10px] text-red-400">
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          {t('products.noImages')}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Tags */}
+                    {tags.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-zinc-700"
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                        {tags.length > 3 && (
+                          <span className="inline-flex rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 ring-1 ring-zinc-700">
+                            +{tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center justify-between border-t border-zinc-800/50 pt-3">
-                  <ToggleStatusButton productId={p.id} isActive={p.is_active} />
-                  <div className="flex items-center gap-2">
+                {/* Card footer: status + votes + actions */}
+                <div className="flex items-center justify-between border-t border-zinc-800/60 bg-zinc-900/40 px-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <ToggleStatusButton productId={p.id} isActive={p.is_active} />
+                    <span className="text-[10px] text-zinc-600">{formatDate(p.created_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
                     <ProductVoteButtons
                       productId={p.id}
                       currentUserId={currentUserId}
