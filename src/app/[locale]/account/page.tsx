@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import { AccountAvatar } from '@/components/account/AccountAvatar'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
@@ -135,25 +135,7 @@ export default async function AccountPage() {
           <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-5">
               {/* Avatar — larger, glowing ring */}
-              {avatarUrl ? (
-                <div
-                  className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-amber-500/40 bg-zinc-900"
-                  style={{
-                    boxShadow: '0 0 0 4px rgba(251,191,36,0.08), 0 0 24px rgba(251,191,36,0.15)',
-                  }}
-                >
-                  <Image src={avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
-                </div>
-              ) : (
-                <div
-                  className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-full border-2 border-amber-500/40 bg-gradient-to-br from-amber-500 to-amber-700 text-3xl font-bold text-white"
-                  style={{
-                    boxShadow: '0 0 0 4px rgba(251,191,36,0.08), 0 0 24px rgba(251,191,36,0.2)',
-                  }}
-                >
-                  {getInitials()}
-                </div>
-              )}
+              <AccountAvatar avatarUrl={avatarUrl} initials={getInitials()} />
 
               <div>
                 <h1 className="text-3xl font-bold text-zinc-50 drop-shadow-sm">
