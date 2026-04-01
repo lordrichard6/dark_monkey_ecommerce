@@ -434,6 +434,7 @@ export function MobileHeader({
             className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
+            {/* 1. Dashboard */}
             <Link
               href="/admin/dashboard"
               onClick={closeAdmin}
@@ -442,6 +443,16 @@ export function MobileHeader({
               <LayoutDashboardIcon className="h-5 w-5 shrink-0" />
               {tAdmin('nav.dashboard')}
             </Link>
+            {/* 2. Activity */}
+            <Link
+              href="/admin/activity"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/activity')}
+            >
+              <ActivityIcon className="h-5 w-5 shrink-0" />
+              {tAdmin('nav.activity')}
+            </Link>
+            {/* 3. Products */}
             <Link
               href="/admin/products"
               onClick={closeAdmin}
@@ -450,6 +461,7 @@ export function MobileHeader({
               <BoxIcon className="h-5 w-5 shrink-0" />
               {tAdmin('nav.products')}
             </Link>
+            {/* 4. Orders */}
             <Link
               href="/admin/orders"
               onClick={closeAdmin}
@@ -479,6 +491,29 @@ export function MobileHeader({
                 </div>
               )}
             </Link>
+            {/* 5. Customers */}
+            <Link
+              href="/admin/customers"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/customers')}
+            >
+              <UsersIcon className="h-5 w-5 shrink-0" />
+              <span className="flex-1">{tAdmin('nav.customers')}</span>
+              {newUsersCount > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold leading-none text-white">
+                  {newUsersCount > 9 ? '9+' : newUsersCount}
+                </span>
+              )}
+            </Link>
+            {/* 6. Gallery — disabled, not launched yet */}
+            <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium opacity-35 text-amber-500/60">
+              <ImageIcon className="h-5 w-5 shrink-0" />
+              <span className="flex-1">{tAdmin('nav.gallery')}</span>
+              <span className="rounded px-1 py-0.5 text-[8px] font-medium uppercase tracking-wider text-zinc-600 ring-1 ring-zinc-700/50">
+                Soon
+              </span>
+            </span>
+            {/* 7. Support */}
             <Link
               href="/admin/support"
               onClick={closeAdmin}
@@ -501,6 +536,7 @@ export function MobileHeader({
                 </div>
               )}
             </Link>
+            {/* 8. Board */}
             <Link
               href="/admin/board"
               onClick={closeAdmin}
@@ -523,35 +559,7 @@ export function MobileHeader({
                 </div>
               )}
             </Link>
-            <Link
-              href="/admin/customers"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/customers')}
-            >
-              <UsersIcon className="h-5 w-5 shrink-0" />
-              <span className="flex-1">{tAdmin('nav.customers')}</span>
-              {newUsersCount > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold leading-none text-white">
-                  {newUsersCount > 9 ? '9+' : newUsersCount}
-                </span>
-              )}
-            </Link>
-            {/* Gallery — disabled, not launched yet */}
-            <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium opacity-35 text-amber-500/60">
-              <ImageIcon className="h-5 w-5 shrink-0" />
-              <span className="flex-1">{tAdmin('nav.gallery')}</span>
-              <span className="rounded px-1 py-0.5 text-[8px] font-medium uppercase tracking-wider text-zinc-600 ring-1 ring-zinc-700/50">
-                Soon
-              </span>
-            </span>
-            <Link
-              href="/admin/activity"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/activity')}
-            >
-              <ActivityIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.activity')}
-            </Link>
+            {/* 9. Accounting */}
             <Link
               href="/admin/accounting"
               onClick={closeAdmin}
@@ -560,6 +568,7 @@ export function MobileHeader({
               <ReceiptIcon className="h-5 w-5 shrink-0" />
               {tAdmin('nav.accounting')}
             </Link>
+            {/* 10. Settings */}
             <Link
               href="/admin/settings"
               onClick={closeAdmin}
