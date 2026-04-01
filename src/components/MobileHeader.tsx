@@ -456,7 +456,72 @@ export function MobileHeader({
               className={adminLinkClass('/admin/orders')}
             >
               <PackageIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.orders')}
+              <span className="flex-1">{tAdmin('nav.orders')}</span>
+              {((orderCounts?.paid ?? 0) > 0 ||
+                (orderCounts?.processing ?? 0) > 0 ||
+                (orderCounts?.shipped ?? 0) > 0) && (
+                <div className="flex items-center gap-1">
+                  {(orderCounts?.paid ?? 0) > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[9px] font-bold leading-none text-white">
+                      {(orderCounts?.paid ?? 0) > 9 ? '9+' : orderCounts!.paid}
+                    </span>
+                  )}
+                  {(orderCounts?.processing ?? 0) > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-bold leading-none text-black">
+                      {(orderCounts?.processing ?? 0) > 9 ? '9+' : orderCounts!.processing}
+                    </span>
+                  )}
+                  {(orderCounts?.shipped ?? 0) > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-purple-500 px-1 text-[9px] font-bold leading-none text-white">
+                      {(orderCounts?.shipped ?? 0) > 9 ? '9+' : orderCounts!.shipped}
+                    </span>
+                  )}
+                </div>
+              )}
+            </Link>
+            <Link
+              href="/admin/support"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/support')}
+            >
+              <LifeBuoyIcon className="h-5 w-5 shrink-0" />
+              <span className="flex-1">{tAdmin('nav.support')}</span>
+              {((supportCounts?.open ?? 0) > 0 || (supportCounts?.inProgress ?? 0) > 0) && (
+                <div className="flex items-center gap-1">
+                  {(supportCounts?.open ?? 0) > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-bold leading-none text-black">
+                      {(supportCounts?.open ?? 0) > 9 ? '9+' : supportCounts!.open}
+                    </span>
+                  )}
+                  {(supportCounts?.inProgress ?? 0) > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[9px] font-bold leading-none text-white">
+                      {(supportCounts?.inProgress ?? 0) > 9 ? '9+' : supportCounts!.inProgress}
+                    </span>
+                  )}
+                </div>
+              )}
+            </Link>
+            <Link
+              href="/admin/board"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/board')}
+            >
+              <KanbanIcon className="h-5 w-5 shrink-0" />
+              <span className="flex-1">{tAdmin('nav.board')}</span>
+              {((boardCounts?.tasks ?? 0) > 0 || (boardCounts?.ideas ?? 0) > 0) && (
+                <div className="flex items-center gap-1">
+                  {(boardCounts?.tasks ?? 0) > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
+                      {(boardCounts?.tasks ?? 0) > 9 ? '9+' : boardCounts!.tasks}
+                    </span>
+                  )}
+                  {(boardCounts?.ideas ?? 0) > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[9px] font-bold leading-none text-white">
+                      {(boardCounts?.ideas ?? 0) > 9 ? '9+' : boardCounts!.ideas}
+                    </span>
+                  )}
+                </div>
+              )}
             </Link>
             <Link
               href="/admin/customers"
@@ -464,7 +529,12 @@ export function MobileHeader({
               className={adminLinkClass('/admin/customers')}
             >
               <UsersIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.customers')}
+              <span className="flex-1">{tAdmin('nav.customers')}</span>
+              {newUsersCount > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold leading-none text-white">
+                  {newUsersCount > 9 ? '9+' : newUsersCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/admin/newsletter"
@@ -981,6 +1051,47 @@ function ReceiptIcon({ className }: { className?: string }) {
       <path d="M14 8H8" />
       <path d="M16 12H8" />
       <path d="M13 16H8" />
+    </svg>
+  )
+}
+
+function LifeBuoyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="4" />
+      <line x1="4.93" y1="4.93" x2="9.17" y2="9.17" />
+      <line x1="14.83" y1="14.83" x2="19.07" y2="19.07" />
+      <line x1="14.83" y1="9.17" x2="19.07" y2="4.93" />
+      <line x1="4.93" y1="19.07" x2="9.17" y2="14.83" />
+    </svg>
+  )
+}
+
+function KanbanIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="5" height="14" x="2" y="5" rx="1" />
+      <rect width="5" height="9" x="9.5" y="5" rx="1" />
+      <rect width="5" height="11" x="17" y="5" rx="1" />
     </svg>
   )
 }
