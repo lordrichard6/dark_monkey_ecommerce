@@ -3,10 +3,9 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {
-  updateProductStatus,
-  deleteProduct,
-} from '@/actions/admin-products'
+import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
+import { updateProductStatus, deleteProduct, duplicateProduct } from '@/actions/admin-products'
 
 type Props = {
   productId: string
@@ -15,16 +14,12 @@ type Props = {
   isActive: boolean
 }
 
-export function ProductActionsDropdown({
-  productId,
-  productName,
-  productSlug,
-  isActive,
-}: Props) {
+export function ProductActionsDropdown({ productId, productName, productSlug, isActive }: Props) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [open, setOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
+  const [loading, setLoading] = useState<'status' | 'delete' | 'duplicate' | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -45,6 +40,19 @@ export function ProductActionsDropdown({
     if (result.ok) router.refresh()
   }
 
+  async function handleDuplicate() {
+    setLoading('duplicate')
+    setOpen(false)
+    const result = await duplicateProduct(productId)
+    setLoading(null)
+    if (result.ok && result.newProductId) {
+      toast.success(t('products.duplicated'))
+      router.push(`/admin/products/${result.newProductId}`)
+    } else {
+      toast.error(t('products.duplicateFailed'))
+    }
+  }
+
   async function handleDeleteConfirm() {
     setLoading('delete')
     const result = await deleteProduct(productId)
@@ -53,6 +61,8 @@ export function ProductActionsDropdown({
     setOpen(false)
     if (result.ok) router.refresh()
   }
+
+  const isLoading = loading !== null
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -81,14 +91,14 @@ export function ProductActionsDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-10 mt-1 min-w-[180px] rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-xl">
+        <div className="absolute right-0 top-full z-10 mt-1 min-w-[190px] rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-xl">
           <Link
             href={`/admin/products/${productId}`}
             onClick={() => setOpen(false)}
             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800"
           >
             <ViewIcon className="h-4 w-4" />
-            View product
+            {t('products.viewProduct')}
           </Link>
           <Link
             href={`/products/${productSlug}`}
@@ -98,27 +108,45 @@ export function ProductActionsDropdown({
             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800"
           >
             <ExternalIcon className="h-4 w-4" />
-            View on store
+            {t('products.viewOnStore')}
           </Link>
+
+          <div className="my-1 border-t border-zinc-800" />
+
           <button
             type="button"
             onClick={handleSetStatus}
-            disabled={loading !== null}
+            disabled={isLoading}
             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800 disabled:opacity-50"
           >
             <StatusIcon className="h-4 w-4" />
-            {loading === 'status' ? 'Updating…' : isActive ? 'Set inactive' : 'Set active'}
+            {loading === 'status'
+              ? t('products.updating')
+              : isActive
+                ? t('products.setInactiveAction')
+                : t('products.setActiveAction')}
           </button>
           <button
             type="button"
-            onClick={() => {
-              setDeleteDialogOpen(true)
-            }}
-            disabled={loading !== null}
+            onClick={handleDuplicate}
+            disabled={isLoading}
+            title={t('products.duplicateTooltip')}
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800 disabled:opacity-50"
+          >
+            <DuplicateIcon className="h-4 w-4" />
+            {loading === 'duplicate' ? t('products.duplicating') : t('products.duplicate')}
+          </button>
+
+          <div className="my-1 border-t border-zinc-800" />
+
+          <button
+            type="button"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={isLoading}
             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-400 transition hover:bg-zinc-800 hover:text-red-300 disabled:opacity-50"
           >
             <TrashIcon className="h-4 w-4" />
-            Delete product
+            {t('products.deleteProduct')}
           </button>
         </div>
       )}
@@ -132,27 +160,27 @@ export function ProductActionsDropdown({
         >
           <div className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
             <h2 id="delete-dialog-title" className="text-lg font-semibold text-zinc-50">
-              Delete product
+              {t('products.confirmDeleteTitle')}
             </h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Are you sure you want to delete &quot;{productName}&quot;? This action cannot be undone.
+              {t('products.confirmDeleteDesc', { name: productName })}
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setDeleteDialogOpen(false)}
-                disabled={loading !== null}
+                disabled={isLoading}
                 className="rounded-lg border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleDeleteConfirm}
-                disabled={loading !== null}
+                disabled={isLoading}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:opacity-50"
               >
-                {loading === 'delete' ? 'Deleting…' : 'Delete'}
+                {loading === 'delete' ? t('products.deleting') : t('products.deleteProduct')}
               </button>
             </div>
           </div>
@@ -214,6 +242,24 @@ function ExternalIcon({ className }: { className?: string }) {
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <polyline points="15 3 21 3 21 9" />
       <line x1="10" x2="21" y1="14" y2="3" />
+    </svg>
+  )
+}
+
+function DuplicateIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
     </svg>
   )
 }

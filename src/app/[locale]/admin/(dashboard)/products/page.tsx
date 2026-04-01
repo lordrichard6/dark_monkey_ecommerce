@@ -177,16 +177,21 @@ export default async function AdminProductsPage({
 
       <div className="mt-8">
         <ProductListTable
-          products={
-            (products || []).map((p) => ({
+          products={(products || []).map((p) => {
+            const cats = p.categories
+            const category = Array.isArray(cats) ? (cats[0] ?? null) : cats
+            const tags = (p.product_tags ?? [])
+              .map((pt) => {
+                const t = pt.tags
+                return t ? (Array.isArray(t) ? (t[0] ?? null) : t) : null
+              })
+              .filter((t): t is { id: string; name: string } => t !== null)
+            return {
               ...p,
-              categories: Array.isArray(p.categories) ? p.categories[0] : p.categories,
-              product_tags: (p.product_tags ?? [])
-                .map((pt) => (pt.tags ? (Array.isArray(pt.tags) ? pt.tags[0] : pt.tags) : null))
-                .filter(Boolean),
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            })) as any
-          }
+              categories: category as { id: string; name: string } | null,
+              product_tags: tags,
+            }
+          })}
           currentPage={page}
           totalPages={totalPages}
           totalCount={count ?? 0}

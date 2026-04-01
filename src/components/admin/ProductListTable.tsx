@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
@@ -25,6 +25,7 @@ import {
   bulkUpdateProductStatus,
   bulkUpdateProductFeatured,
   updateProductStatus,
+  updateProductFeatured,
 } from '@/actions/admin-products'
 import { CategoryPickerDialog, type PickerCategory } from './CategoryPickerDialog'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
@@ -126,6 +127,58 @@ function ToggleStatusButton({ productId, isActive }: { productId: string; isActi
   )
 }
 
+// ─── Inline Featured Toggle ──────────────────────────────────────────────────
+function ToggleFeaturedButton({
+  productId,
+  isFeatured,
+}: {
+  productId: string
+  isFeatured: boolean
+}) {
+  const router = useRouter()
+  const t = useTranslations('admin')
+  const [optimistic, setOptimistic] = useState(isFeatured)
+  const [loading, setLoading] = useState(false)
+
+  async function handleToggle(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const next = !optimistic
+    setOptimistic(next)
+    setLoading(true)
+    const result = await updateProductFeatured(productId, next)
+    setLoading(false)
+    if (!result.ok) {
+      setOptimistic(!next)
+      toast.error(result.error ?? t('products.failedToUpdateFeatured'))
+    } else {
+      toast.success(
+        next
+          ? t('products.featuredSuccess', { count: 1 })
+          : t('products.unfeaturedSuccess', { count: 1 })
+      )
+      router.refresh()
+    }
+  }
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={loading}
+      title={optimistic ? t('products.unsetFeatured') : t('products.setFeatured')}
+      className={`inline-flex items-center transition-all disabled:opacity-50 ${loading ? 'opacity-50' : ''}`}
+    >
+      <Star
+        className={`h-3.5 w-3.5 transition-colors ${
+          optimistic
+            ? 'fill-amber-400 text-amber-400'
+            : 'fill-none text-zinc-600 hover:text-amber-400'
+        }`}
+      />
+    </button>
+  )
+}
+
 // ─── Sort Icon ───────────────────────────────────────────────────────────────
 function SortIcon({
   col,
@@ -169,6 +222,7 @@ export function ProductListTable({
   const router = useRouter()
   const pathname = usePathname()
   const t = useTranslations('admin')
+  const [isPending, startTransition] = useTransition()
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
@@ -241,7 +295,9 @@ export function ProductListTable({
     }
     // Reset to page 1 when filters change
     if (!('page' in updates)) params.delete('page')
-    router.push(`${pathname}?${params.toString()}`)
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`)
+    })
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -283,11 +339,13 @@ export function ProductListTable({
 
   // ── Bulk Actions ──────────────────────────────────────────────────────────
   async function handleBulkDeleteConfirm() {
+    const count = selectedIds.size
     setLoading('delete')
     const result = await bulkDeleteProducts(Array.from(selectedIds))
     setLoading(null)
     setBulkDeleteOpen(false)
     if (result.ok) {
+      toast.success(t('products.deletedBulkSuccess', { count }))
       setSelectedIds(new Set())
       router.refresh()
     } else {
@@ -296,10 +354,16 @@ export function ProductListTable({
   }
 
   async function handleBulkStatus(isActive: boolean) {
+    const count = selectedIds.size
     setLoading('status')
     const result = await bulkUpdateProductStatus(Array.from(selectedIds), isActive)
     setLoading(null)
     if (result.ok) {
+      toast.success(
+        isActive
+          ? t('products.activatedSuccess', { count })
+          : t('products.deactivatedSuccess', { count })
+      )
       setSelectedIds(new Set())
       router.refresh()
     } else {
@@ -308,14 +372,20 @@ export function ProductListTable({
   }
 
   async function handleBulkFeatured(isFeatured: boolean) {
+    const count = selectedIds.size
     setLoading('status')
     const result = await bulkUpdateProductFeatured(Array.from(selectedIds), isFeatured)
     setLoading(null)
     if (result.ok) {
+      toast.success(
+        isFeatured
+          ? t('products.featuredSuccess', { count })
+          : t('products.unfeaturedSuccess', { count })
+      )
       setSelectedIds(new Set())
       router.refresh()
     } else {
-      toast.error(result.error ?? 'Failed to update featured status')
+      toast.error(result.error ?? t('products.failedToUpdateFeatured'))
     }
   }
 
@@ -333,7 +403,9 @@ export function ProductListTable({
   return (
     <div>
       {/* ── Filter Bar ─────────────────────────────────────────────────────── */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        className={`mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between transition-opacity ${isPending ? 'opacity-60' : ''}`}
+      >
         {/* Left: search + filters */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Search */}
@@ -403,7 +475,7 @@ export function ProductListTable({
             onChange={(e) => pushParams({ tag: e.target.value || null })}
             className="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-200 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
           >
-            <option value="">All Tags</option>
+            <option value="">{t('products.allTags')}</option>
             {allTags.map((tag) => (
               <option key={tag.id} value={tag.id}>
                 {tag.name}
@@ -431,7 +503,7 @@ export function ProductListTable({
           <span className="whitespace-nowrap">
             {totalCount === 0
               ? t('products.noProducts')
-              : `${pageStart}–${pageEnd} of ${totalCount}`}
+              : t('products.productsCount', { start: pageStart, end: pageEnd, total: totalCount })}
           </span>
           {/* View toggle */}
           <div className="flex items-center rounded-lg border border-zinc-700 bg-zinc-900 p-0.5">
@@ -487,16 +559,18 @@ export function ProductListTable({
             <button
               onClick={() => handleBulkFeatured(true)}
               disabled={loading !== null}
-              className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
-              ★ Set Featured
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              {t('products.setFeatured')}
             </button>
             <button
               onClick={() => handleBulkFeatured(false)}
               disabled={loading !== null}
-              className="rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-600 disabled:opacity-50"
             >
-              ☆ Unset Featured
+              <Star className="h-3 w-3 fill-none text-zinc-400" />
+              {t('products.unsetFeatured')}
             </button>
             <div className="mx-2 hidden h-4 w-px bg-zinc-600 sm:block" />
             <button
@@ -575,7 +649,7 @@ export function ProductListTable({
                     onClick={() => handleSortClick('created_at')}
                     className="flex items-center whitespace-nowrap hover:text-zinc-200"
                   >
-                    {t('orders.date')}
+                    {t('products.date')}
                     <SortIcon col="created_at" sortBy={sortBy} sortDir={sortDir} />
                   </button>
                 </th>
@@ -594,7 +668,7 @@ export function ProductListTable({
                     onClick={() => handleSortClick('votes')}
                     className="flex items-center whitespace-nowrap hover:text-zinc-200"
                   >
-                    Votes
+                    {t('products.votes')}
                     <SortIcon col="votes" sortBy={sortBy} sortDir={sortDir} />
                   </button>
                 </th>
@@ -661,22 +735,27 @@ export function ProductListTable({
                     </td>
                     {/* Name */}
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/products/${p.id}`}
-                        className="font-medium text-zinc-50 hover:text-amber-400"
-                      >
-                        {p.name}
-                      </Link>
-                      {p.is_customizable && (
-                        <span className="ml-2 rounded bg-amber-900/40 px-2 py-0.5 text-xs text-amber-400">
-                          Customizable
-                        </span>
-                      )}
-                      {p.is_featured && (
-                        <span className="ml-1.5 inline-flex items-center">
-                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        <Link
+                          href={`/admin/products/${p.id}`}
+                          className="font-medium text-zinc-50 hover:text-amber-400"
+                        >
+                          {p.name}
+                        </Link>
+                        <ToggleFeaturedButton productId={p.id} isFeatured={p.is_featured} />
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        {variants.length > 0 && (
+                          <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-500">
+                            {t('products.variantsCount', { count: variants.length })}
+                          </span>
+                        )}
+                        {p.is_customizable && (
+                          <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-[10px] text-amber-400">
+                            {t('products.customizable')}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     {/* Category */}
                     <td
@@ -837,14 +916,15 @@ export function ProductListTable({
 
                   {/* Meta row */}
                   <div className="flex flex-wrap gap-1 text-[10px]">
+                    <ToggleFeaturedButton productId={p.id} isFeatured={p.is_featured} />
                     {p.is_featured && (
-                      <span className="flex items-center gap-0.5 rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
-                        <Star className="h-2.5 w-2.5 fill-amber-400" /> Featured
+                      <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
+                        {t('products.featured')}
                       </span>
                     )}
                     {p.is_customizable && (
                       <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-400">
-                        Custom
+                        {t('products.customizable')}
                       </span>
                     )}
                     {images.length === 0 && (
@@ -949,9 +1029,10 @@ export function ProductListTable({
                         </button>
                         {p.is_customizable && (
                           <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-400">
-                            Customizable
+                            {t('products.customizable')}
                           </span>
                         )}
+                        <ToggleFeaturedButton productId={p.id} isFeatured={p.is_featured} />
                       </div>
                       {/* Tags */}
                       {tags.length > 0 && (
