@@ -20,7 +20,7 @@ export function HeroLogo() {
           alt="DarkMonkey"
           width={196}
           height={196}
-          className="relative z-10 mx-auto rounded-full object-contain drop-shadow-[0_8px_32px_rgba(251,191,36,0.25)]"
+          className="relative z-10 mx-auto h-24 w-24 rounded-full object-contain drop-shadow-[0_8px_32px_rgba(251,191,36,0.25)] sm:h-36 sm:w-36 md:h-[196px] md:w-[196px]"
           priority
           unoptimized
         />

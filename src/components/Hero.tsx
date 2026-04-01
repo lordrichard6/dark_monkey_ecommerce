@@ -65,20 +65,19 @@ export function Hero() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-zinc-950 via-black/50 to-black/30" />
 
       <div className="mx-auto max-w-4xl text-center">
-
         {/* 1 — Badge */}
-        <FadeUp delay={0} className="mb-8 mt-12 flex justify-center md:mt-8">
+        <FadeUp delay={0} className="mb-4 mt-6 flex justify-center md:mb-8 md:mt-8">
           <LaunchCountdownBanner position="inline" />
         </FadeUp>
 
         {/* 2 — Logo */}
-        <FadeUp delay={150}>
+        <FadeUp delay={150} className="mb-0 md:mb-2">
           <HeroLogo />
         </FadeUp>
 
         {/* 3 — Title */}
         <FadeUp delay={300}>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="text-xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl lg:text-6xl">
             {locale === 'pt' ? (
               <>
                 {t('quality')}{' '}
@@ -110,19 +109,24 @@ export function Hero() {
 
         {/* 4 — Subtitle */}
         <FadeUp delay={450}>
-          <p className="mt-6 text-base text-zinc-400 sm:text-lg md:text-xl">{t('heroSubtitle')}</p>
+          <p className="mt-3 text-sm text-zinc-400 sm:mt-6 sm:text-lg md:text-xl">
+            {t('heroSubtitle')}
+          </p>
         </FadeUp>
 
         {/* 5 — Buttons */}
-        <FadeUp delay={600} className="mt-10 flex flex-col sm:flex-row justify-center gap-4 px-4">
+        <FadeUp
+          delay={600}
+          className="mt-6 flex flex-col sm:flex-row justify-center gap-3 px-2 sm:mt-10 sm:gap-4 sm:px-4"
+        >
           <button
             type="button"
             onClick={scrollToProducts}
             aria-label={t('shopPremiumCollection')}
-            className="group relative flex w-full sm:w-auto items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 px-6 py-3 text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-[0.98] md:px-10 md:py-5"
+            className="group relative flex w-full sm:w-auto items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 px-5 py-2.5 text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-[0.98] sm:px-6 sm:py-3 md:px-10 md:py-5"
           >
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-            <span className="relative text-xl font-black uppercase tracking-tight">
+            <span className="relative text-base font-black uppercase tracking-tight sm:text-xl">
               {t('shopPremiumCollection')}
             </span>
           </button>
@@ -130,13 +134,12 @@ export function Hero() {
           <Link
             href="/categories"
             aria-label={t('exploreByCategory')}
-            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/20 bg-black/20 px-5 py-3 text-zinc-200 transition-all hover:border-white/40 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm md:px-8 md:py-4"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/20 bg-black/20 px-4 py-2.5 text-zinc-200 transition-all hover:border-white/40 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm sm:px-5 sm:py-3 md:px-8 md:py-4"
           >
-            <span className="text-lg font-medium">{t('exploreByCategory')}</span>
-            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            <span className="text-sm font-medium sm:text-lg">{t('exploreByCategory')}</span>
+            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </FadeUp>
-
       </div>
     </section>
   )
