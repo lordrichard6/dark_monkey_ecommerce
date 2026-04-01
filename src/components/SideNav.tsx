@@ -183,11 +183,6 @@ export function SideNav({
         {adminItems.length > 0 && (
           <>
             <div className="my-2 border-t border-white/10" role="separator" />
-            {expanded && (
-              <p className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                {t('admin')}
-              </p>
-            )}
             {adminItems.map(({ href, label, icon: Icon, disabled }) => {
               const isActive =
                 !disabled &&
