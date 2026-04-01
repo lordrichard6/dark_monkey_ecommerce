@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/navigation'
 import { CartTrigger } from '@/components/cart/CartTrigger'
+import { NotificationBell } from '@/components/admin/NotificationBell'
 import { DarkMonkeyLogo } from '@/components/DarkMonkeyLogo'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { signOut } from '@/actions/auth'
@@ -35,16 +36,6 @@ export function MobileHeader({
   orderCounts,
   newUsersCount = 0,
 }: Props) {
-  const totalBadge = isAdmin
-    ? (boardCounts?.tasks ?? 0) +
-      (boardCounts?.ideas ?? 0) +
-      (supportCounts?.open ?? 0) +
-      (supportCounts?.inProgress ?? 0) +
-      (orderCounts?.paid ?? 0) +
-      (orderCounts?.processing ?? 0) +
-      (orderCounts?.shipped ?? 0) +
-      newUsersCount
-    : 0
   const t = useTranslations('common')
   const tUser = useTranslations('userMenu')
   const tAdmin = useTranslations('admin')
@@ -125,19 +116,14 @@ export function MobileHeader({
                   closeMenu()
                   setAdminOpen(true)
                 }}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-lg border transition ${
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
                   adminOpen
                     ? 'border-amber-500/60 bg-amber-500/20 text-amber-400'
                     : 'border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50'
                 }`}
-                aria-label={`Open admin menu${totalBadge > 0 ? `, ${totalBadge} notifications` : ''}`}
+                aria-label="Open admin menu"
               >
                 <ShieldIcon className="h-4 w-4" />
-                {totalBadge > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold leading-none text-white ring-1 ring-black">
-                    {totalBadge > 99 ? '99+' : totalBadge}
-                  </span>
-                )}
               </button>
             )}
           </div>
@@ -147,8 +133,11 @@ export function MobileHeader({
             <DarkMonkeyLogo size="sm" noLink />
           </Link>
 
-          {/* Right side: cart only */}
-          <CartTrigger />
+          {/* Right side: bell (admin only) + cart */}
+          <div className="flex items-center gap-1">
+            {isAdmin && <NotificationBell />}
+            <CartTrigger />
+          </div>
         </nav>
       </header>
 
