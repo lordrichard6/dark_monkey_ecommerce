@@ -80,7 +80,11 @@ export default async function LocaleLayout({ children, params }: Props) {
           </a>
           <AnnouncementBar announcements={announcements} />
           <Header />
-          <main id="main-content" className="relative flex min-h-screen flex-col pt-14 md:pl-16">
+          <main
+            id="main-content"
+            className="relative flex min-h-screen flex-col md:pl-16"
+            style={{ paddingTop: 'calc(3.5rem + var(--ann-bar-h, 0rem))' }}
+          >
             {children}
           </main>
           <StorefrontShell />

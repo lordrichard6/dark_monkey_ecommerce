@@ -24,10 +24,15 @@ export function AnnouncementBar({ announcements = [] }: Props) {
   // Persistent dismiss via localStorage fingerprint
 
   useEffect(() => {
-    if (!hasAnnouncements) return
+    if (!hasAnnouncements) {
+      document.documentElement.style.setProperty('--ann-bar-h', '0rem')
+      return
+    }
     const fingerprint = JSON.stringify(announcements.map((a) => a.id).sort())
     const dismissed = localStorage.getItem('dm_ann_dismissed')
-    setIsVisible(dismissed !== fingerprint)
+    const visible = dismissed !== fingerprint
+    setIsVisible(visible)
+    document.documentElement.style.setProperty('--ann-bar-h', visible ? '2.5rem' : '0rem')
   }, [announcements, hasAnnouncements])
 
   useEffect(() => {
@@ -42,6 +47,7 @@ export function AnnouncementBar({ announcements = [] }: Props) {
     const fingerprint = JSON.stringify(announcements.map((a) => a.id).sort())
     localStorage.setItem('dm_ann_dismissed', fingerprint)
     setIsVisible(false)
+    document.documentElement.style.setProperty('--ann-bar-h', '0rem')
   }
 
   if (!isVisible || !hasAnnouncements) return null
@@ -51,7 +57,7 @@ export function AnnouncementBar({ announcements = [] }: Props) {
   const styles = variantStyles[variant] ?? variantStyles.default
 
   return (
-    <div className={`relative z-50 py-2.5 md:ml-16 ${styles.bar}`}>
+    <div className={`fixed top-0 left-0 right-0 z-[60] py-2.5 md:left-16 ${styles.bar}`}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex flex-1 items-center justify-center">
           <div className="relative h-5 w-full overflow-hidden">

@@ -26,9 +26,10 @@ export function DesktopTopBar({ user, displayName, avatarUrl, isAdmin }: UserInf
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-30 hidden h-14 border-b border-white/10 backdrop-blur-xl transition-colors duration-300 md:flex md:pl-16 ${
+      className={`fixed left-0 right-0 z-30 hidden h-14 border-b border-white/10 backdrop-blur-xl transition-[top,background-color] duration-300 md:flex md:pl-16 ${
         scrolled ? 'bg-black/70' : 'bg-black/40'
       }`}
+      style={{ top: 'var(--ann-bar-h, 0rem)' }}
     >
       <div className="flex flex-1 items-center justify-between px-4">
         {/* Left side – Logo */}

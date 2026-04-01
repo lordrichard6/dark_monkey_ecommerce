@@ -94,7 +94,10 @@ export function MobileHeader({
   return (
     <>
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/60 backdrop-blur-xl md:hidden">
+      <header
+        className="fixed left-0 right-0 z-50 border-b border-white/10 bg-black/60 backdrop-blur-xl md:hidden"
+        style={{ top: 'var(--ann-bar-h, 0rem)' }}
+      >
         <nav className="flex h-14 items-center justify-between px-4">
           {/* Left side: burger + admin toggle */}
           <div className="flex items-center gap-1.5">
