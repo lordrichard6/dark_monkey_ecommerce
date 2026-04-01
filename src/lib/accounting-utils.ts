@@ -11,9 +11,9 @@ export const FIXED_COSTS = [
 
 export const TOTAL_FIXED_MONTHLY = FIXED_COSTS.reduce((s, c) => s + c.amount, 0)
 
-// Stripe fee: 2.9% + CHF 0.30 per transaction (Swiss domestic)
+// Stripe fee: 1.5% + CHF 0.30 per transaction (Swiss domestic/EU cards rate)
 export function calcStripeFee(totalCents: number): number {
-  return Math.round(totalCents * 0.029 + 30)
+  return Math.round(totalCents * 0.015 + 30)
 }
 
 export type AccountingOrderItem = {
@@ -67,6 +67,8 @@ export type AccountingData = {
   orders: AccountingOrder[]
   products: ProductProfit[]
   monthly: MonthlyData[]
+  /** Orders that have a printful_order_id but no cached printful_cost_cents yet */
+  unsyncedCount: number
   allTime: {
     revenue: number
     shipping: number
@@ -75,6 +77,8 @@ export type AccountingData = {
     printfulCosts: number
     grossProfit: number
     netProfit: number
+    fixedCosts: number
+    activeMonths: number
     orderCount: number
     avgOrderRevenue: number
     avgOrderProfit: number

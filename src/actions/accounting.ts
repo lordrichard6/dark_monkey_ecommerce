@@ -12,11 +12,13 @@ import {
   type MonthlyData,
 } from '@/lib/accounting-utils'
 
+const PRINTFUL_BATCH_SIZE = 5
+
 export async function getAccountingData(): Promise<AccountingData | null> {
   const supabase = getAdminClient()
   if (!supabase) return null
 
-  // Fetch all paid orders with their items and variant details
+  // Fetch all paid orders with their items and variant details.
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
@@ -47,7 +49,29 @@ export async function getAccountingData(): Promise<AccountingData | null> {
     .in('status', ['paid', 'processing', 'shipped', 'delivered'])
     .order('created_at', { ascending: false })
 
-  if (error || !orders) return null
+  if (error || !orders) {
+    console.error('[accounting] orders query failed:', error)
+    return null
+  }
+
+  // Fetch cached Printful costs in a separate resilient query.
+  // Separated so that a schema-cache miss never breaks the main page load.
+  const printfulCostMap = new Map<string, number>()
+  try {
+    const { data: costRows } = await supabase
+      .from('orders')
+      .select('id, printful_cost_cents')
+      .in(
+        'id',
+        orders.map((o) => o.id)
+      )
+    for (const row of costRows ?? []) {
+      const cost = (row as { printful_cost_cents?: number | null }).printful_cost_cents
+      if (cost != null) printfulCostMap.set(row.id, cost)
+    }
+  } catch {
+    // Schema cache not refreshed yet — costs will be 0 until next sync
+  }
 
   // Fetch user profiles for logged-in customers
   const userIds = [
@@ -64,19 +88,11 @@ export async function getAccountingData(): Promise<AccountingData | null> {
     }
   }
 
-  // Fetch actual Printful order costs (includes shipping, digitization, VAT)
-  // These are the real amounts Printful charges, not just the catalog base price
-  const printfulCostMap = new Map<string, number>() // order.id → total cost in cents
-  await Promise.all(
-    orders.map(async (order) => {
-      const printfulOrderId = (order as { printful_order_id?: number }).printful_order_id
-      if (!printfulOrderId) return
-      const result = await fetchStoreOrder(printfulOrderId)
-      if (result.ok && result.order?.costs?.total) {
-        printfulCostMap.set(order.id, Math.round(parseFloat(result.order.costs.total) * 100))
-      }
-    })
-  )
+  // Count orders that have a printful_order_id but no cached cost yet
+  const unsyncedCount = orders.filter(
+    (o) =>
+      (o as { printful_order_id?: number }).printful_order_id != null && !printfulCostMap.has(o.id)
+  ).length
 
   // Build per-order data
   const accountingOrders: AccountingOrder[] = []
@@ -99,10 +115,17 @@ export async function getAccountingData(): Promise<AccountingData | null> {
     const stripeFee = calcStripeFee(order.total_cents)
     const items: AccountingOrderItem[] = []
 
-    // Use actual Printful order cost if available
+    // Use cached Printful cost from the separate cost map
     const orderPrintfulCost = printfulCostMap.get(order.id) ?? 0
 
-    for (const item of order.order_items ?? []) {
+    // Calculate total item revenue for proportional cost allocation
+    const orderItems = order.order_items ?? []
+    const totalOrderItemRevenue = orderItems.reduce(
+      (s, item) => s + item.price_cents * item.quantity,
+      0
+    )
+
+    for (const item of orderItems) {
       const pv = item.product_variants as unknown as {
         id: string
         name: string
@@ -116,23 +139,30 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       const productName = (pv?.products as { name?: string } | null)?.name ?? 'Unknown'
       const variantName = pv?.name ?? 'Unknown'
 
+      // Proportional Printful cost allocation for this line item
+      const allocatedPrintfulCost =
+        totalOrderItemRevenue > 0 && orderPrintfulCost > 0
+          ? Math.round((totalItemRevenue / totalOrderItemRevenue) * orderPrintfulCost)
+          : 0
+
       items.push({
         variantId: item.variant_id,
         productName,
         variantName,
         quantity: item.quantity,
         salePriceCents: item.price_cents,
-        printfulCostCents: 0, // line-item cost not available without catalog API; use order-level total
-        itemProfit: totalItemRevenue, // profit allocated at order level below
+        printfulCostCents: allocatedPrintfulCost,
+        itemProfit: totalItemRevenue - allocatedPrintfulCost,
       })
 
-      // Aggregate per-product (revenue side only; cost is at order level)
+      // Aggregate per-product with proportional cost allocation
       if (printfulVariantId) {
         const key = `${pv?.id}`
         const existing = productMap.get(key)
         if (existing) {
           existing.unitsSold += item.quantity
           existing.totalRevenue += totalItemRevenue
+          existing.totalCost += allocatedPrintfulCost
         } else {
           productMap.set(key, {
             productId: (pv?.products as { id?: string } | null)?.id ?? '',
@@ -140,10 +170,10 @@ export async function getAccountingData(): Promise<AccountingData | null> {
             variantName,
             printfulVariantId,
             salePriceCents: item.price_cents,
-            printfulCostCents: 0, // filled below from printfulCostMap
+            printfulCostCents: 0, // filled below from totalCost / unitsSold
             unitsSold: item.quantity,
             totalRevenue: totalItemRevenue,
-            totalCost: 0,
+            totalCost: allocatedPrintfulCost,
           })
         }
       }
@@ -169,34 +199,43 @@ export async function getAccountingData(): Promise<AccountingData | null> {
     })
   }
 
-  // Build products array sorted by total profit
-  // Use per-order printful costs distributed proportionally where possible
+  // Build products array — set printfulCostCents as avg cost per unit
   const products: ProductProfit[] = Array.from(productMap.values())
-    .map((p) => ({
-      productId: p.productId,
-      productName: p.productName,
-      variantName: p.variantName,
-      printfulVariantId: p.printfulVariantId,
-      salePriceCents: p.salePriceCents,
-      printfulCostCents: p.printfulCostCents,
-      marginCents: p.salePriceCents - p.printfulCostCents,
-      marginPercent:
-        p.salePriceCents > 0 && p.printfulCostCents > 0
-          ? Math.round(((p.salePriceCents - p.printfulCostCents) / p.salePriceCents) * 100)
-          : 0,
-      unitsSold: p.unitsSold,
-      totalRevenue: p.totalRevenue,
-      totalCost: p.totalCost,
-      totalProfit: p.totalRevenue - p.totalCost,
-    }))
+    .map((p) => {
+      const printfulCostCents = p.unitsSold > 0 ? Math.round(p.totalCost / p.unitsSold) : 0
+      return {
+        productId: p.productId,
+        productName: p.productName,
+        variantName: p.variantName,
+        printfulVariantId: p.printfulVariantId,
+        salePriceCents: p.salePriceCents,
+        printfulCostCents,
+        marginCents: p.salePriceCents - printfulCostCents,
+        marginPercent:
+          p.salePriceCents > 0 && printfulCostCents > 0
+            ? Math.round(((p.salePriceCents - printfulCostCents) / p.salePriceCents) * 100)
+            : 0,
+        unitsSold: p.unitsSold,
+        totalRevenue: p.totalRevenue,
+        totalCost: p.totalCost,
+        totalProfit: p.totalRevenue - p.totalCost,
+      }
+    })
     .sort((a, b) => b.totalProfit - a.totalProfit)
 
-  // Build monthly data
+  // Build monthly data using Europe/Zurich timezone
   const monthlyMap = new Map<string, MonthlyData>()
   for (const order of accountingOrders) {
-    const d = new Date(order.date)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+    const localDate = new Date(order.date).toLocaleDateString('en-CA', {
+      timeZone: 'Europe/Zurich',
+    })
+    const [year, month] = localDate.split('-').map(Number)
+    const key = `${year}-${String(month).padStart(2, '0')}`
+    const label = new Date(order.date).toLocaleDateString('en-GB', {
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'Europe/Zurich',
+    })
     const existing = monthlyMap.get(key)
     if (existing) {
       existing.revenue += order.revenueCents
@@ -228,11 +267,17 @@ export async function getAccountingData(): Promise<AccountingData | null> {
   const allTimeDiscounts = accountingOrders.reduce((s, o) => s + o.discountCents, 0)
   const orderCount = accountingOrders.length
 
-  // This month
-  const now = new Date()
+  // All-time net profit = gross profit minus all fixed costs over active months
+  const allTimeFixedCosts = monthlyMap.size * TOTAL_FIXED_MONTHLY
+  const allTimeNetProfit = allTimeGrossProfit - allTimeFixedCosts
+
+  // This month — filtered using Europe/Zurich timezone
+  const nowZurich = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Zurich' })
+  const [thisYear, thisMonthNum] = nowZurich.split('-').map(Number)
   const thisMonthOrders = accountingOrders.filter((o) => {
-    const d = new Date(o.date)
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    const d = new Date(o.date).toLocaleDateString('en-CA', { timeZone: 'Europe/Zurich' })
+    const [y, m] = d.split('-').map(Number)
+    return y === thisYear && m === thisMonthNum
   })
   const thisMonthRevenue = thisMonthOrders.reduce((s, o) => s + o.revenueCents, 0)
   const thisMonthStripeFees = thisMonthOrders.reduce((s, o) => s + o.stripeFee, 0)
@@ -249,6 +294,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
     orders: accountingOrders,
     products,
     monthly,
+    unsyncedCount,
     allTime: {
       revenue: allTimeRevenue,
       shipping: allTimeShipping,
@@ -256,7 +302,9 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       stripeFees: allTimeStripeFees,
       printfulCosts: allTimePrintfulCosts,
       grossProfit: allTimeGrossProfit,
-      netProfit: allTimeGrossProfit,
+      netProfit: allTimeNetProfit,
+      fixedCosts: allTimeFixedCosts,
+      activeMonths: monthlyMap.size,
       orderCount,
       avgOrderRevenue: orderCount > 0 ? Math.round(allTimeRevenue / orderCount) : 0,
       avgOrderProfit: avgProfitPerOrder,
@@ -274,4 +322,58 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       avgProfitPerOrder,
     },
   }
+}
+
+/**
+ * Backfills printful_cost_cents for orders that have a printful_order_id but
+ * no cached cost yet. Called from the admin sync button — not during page render.
+ * Returns { synced, failed } counts.
+ */
+export async function syncPrintfulCosts(): Promise<{ synced: number; failed: number }> {
+  const supabase = getAdminClient()
+  if (!supabase) return { synced: 0, failed: 0 }
+
+  // Find orders that have a Printful order ID but haven't been costed yet
+  const { data: pending, error } = await supabase
+    .from('orders')
+    .select('id, printful_order_id')
+    .not('printful_order_id', 'is', null)
+    .is('printful_cost_cents', null)
+    .in('status', ['paid', 'processing', 'shipped', 'delivered'])
+
+  if (error || !pending || pending.length === 0) return { synced: 0, failed: 0 }
+
+  let synced = 0
+  let failed = 0
+
+  for (let i = 0; i < pending.length; i += PRINTFUL_BATCH_SIZE) {
+    const batch = pending.slice(i, i + PRINTFUL_BATCH_SIZE)
+    await Promise.all(
+      batch.map(async (order) => {
+        const printfulOrderId = (order as { printful_order_id?: number }).printful_order_id
+        if (!printfulOrderId) {
+          failed++
+          return
+        }
+
+        const result = await fetchStoreOrder(printfulOrderId)
+        if (result.ok && result.order?.costs?.total) {
+          const costCents = Math.round(parseFloat(result.order.costs.total) * 100)
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({ printful_cost_cents: costCents })
+            .eq('id', order.id)
+          if (updateError) {
+            failed++
+          } else {
+            synced++
+          }
+        } else {
+          failed++
+        }
+      })
+    )
+  }
+
+  return { synced, failed }
 }

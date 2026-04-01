@@ -51,6 +51,7 @@ export function SideNav({
         { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon, disabled: true },
         { href: '/admin/support', label: 'Support', icon: LifeBuoyIcon },
         { href: '/admin/board', label: 'Board', icon: KanbanIcon },
+        { href: '/admin/accounting', label: t('accounting'), icon: ReceiptIcon },
         { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
       ]
     : []
@@ -445,6 +446,26 @@ function ChevronIcon({ className }: { className?: string }) {
       className={className}
     >
       <path d="m9 18 6-6-6-6" />
+    </svg>
+  )
+}
+
+function ReceiptIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+      <path d="M16 8H8" />
+      <path d="M16 12H8" />
+      <path d="M12 16H8" />
     </svg>
   )
 }
