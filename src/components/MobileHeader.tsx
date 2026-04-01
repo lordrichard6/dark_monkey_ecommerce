@@ -536,46 +536,14 @@ export function MobileHeader({
                 </span>
               )}
             </Link>
-            <Link
-              href="/admin/newsletter"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/newsletter')}
-            >
-              <MailIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.newsletter')}
-            </Link>
-            <Link
-              href="/admin/discounts"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/discounts')}
-            >
-              <TagIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.discounts')}
-            </Link>
-            <Link
-              href="/admin/gallery"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/gallery')}
-            >
+            {/* Gallery — disabled, not launched yet */}
+            <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium opacity-35 text-amber-500/60">
               <ImageIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.gallery')}
-            </Link>
-            <Link
-              href="/admin/announcements"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/announcements')}
-            >
-              <MegaphoneIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.announcements')}
-            </Link>
-            <Link
-              href="/admin/reviews"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/reviews')}
-            >
-              <StarIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.reviews')}
-            </Link>
+              <span className="flex-1">{tAdmin('nav.gallery')}</span>
+              <span className="rounded px-1 py-0.5 text-[8px] font-medium uppercase tracking-wider text-zinc-600 ring-1 ring-zinc-700/50">
+                Soon
+              </span>
+            </span>
             <Link
               href="/admin/activity"
               onClick={closeAdmin}
@@ -591,14 +559,6 @@ export function MobileHeader({
             >
               <ReceiptIcon className="h-5 w-5 shrink-0" />
               {tAdmin('nav.accounting')}
-            </Link>
-            <Link
-              href="/admin/features"
-              onClick={closeAdmin}
-              className={adminLinkClass('/admin/features')}
-            >
-              <SparklesIcon className="h-5 w-5 shrink-0" />
-              {tAdmin('nav.features')}
             </Link>
             <Link
               href="/admin/settings"

@@ -977,7 +977,8 @@
       "commerce": "Commerce",
       "engagement": "Engagement",
       "system": "System",
-      "activity": "Activité"
+      "activity": "Activité",
+      "support": "Support"
     },
     "layout": {
       "accessDenied": "Access denied",
