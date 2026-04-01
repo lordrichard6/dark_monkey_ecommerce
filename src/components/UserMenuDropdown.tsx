@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import Image from 'next/image'
 import { signOut } from '@/actions/auth'
 
 type Props = {
@@ -150,6 +149,7 @@ function SparklesIcon({ className }: { className?: string }) {
 export function UserMenuDropdown({ user, displayName, avatarUrl, isAdmin }: Props) {
   const t = useTranslations('userMenu')
   const [open, setOpen] = useState(false)
+  const [imgBroken, setImgBroken] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   // Close on outside click
@@ -187,7 +187,7 @@ export function UserMenuDropdown({ user, displayName, avatarUrl, isAdmin }: Prop
         aria-haspopup="true"
         aria-label="Account menu"
       >
-        {imgSrc ? (
+        {imgSrc && !imgBroken ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imgSrc}
@@ -195,18 +195,13 @@ export function UserMenuDropdown({ user, displayName, avatarUrl, isAdmin }: Prop
             width={28}
             height={28}
             className="h-7 w-7 rounded-full object-cover ring-1 ring-white/10"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-              e.currentTarget.nextElementSibling?.removeAttribute('style')
-            }}
+            onError={() => setImgBroken(true)}
           />
-        ) : null}
-        <span
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10"
-          style={imgSrc ? { display: 'none' } : undefined}
-        >
-          <UserIcon className="h-4 w-4" />
-        </span>
+        ) : (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10">
+            <UserIcon className="h-4 w-4" />
+          </span>
+        )}
         {user && (
           <div className="flex flex-col items-start leading-none">
             <span className="max-w-[120px] truncate text-sm text-zinc-300">{label}</span>

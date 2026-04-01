@@ -41,6 +41,7 @@ export function MobileHeader({
   const tAdmin = useTranslations('admin')
   const [open, setOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
+  const [avatarBroken, setAvatarBroken] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null)
   const pathname = usePathname()
@@ -318,7 +319,7 @@ export function MobileHeader({
             <>
               <div className="mb-2 px-4 py-2">
                 <div className="flex items-center gap-3">
-                  {avatarUrl ? (
+                  {avatarUrl && !avatarBroken ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={avatarUrl}
@@ -326,6 +327,7 @@ export function MobileHeader({
                       width={32}
                       height={32}
                       className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-white/10"
+                      onError={() => setAvatarBroken(true)}
                     />
                   ) : (
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10">
