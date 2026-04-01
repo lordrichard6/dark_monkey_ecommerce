@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition, Fragment } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { Search, X, RefreshCw, Download, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -144,83 +144,83 @@ function EventRow({ event }: { event: ActivityEvent }) {
   const t = useTranslations('admin')
 
   return (
-    <div className="flex items-start gap-3 border-b border-zinc-800/40 py-3.5 last:border-b-0">
+    <div className="flex items-start gap-3 border-b border-zinc-800/40 py-3 last:border-b-0 sm:py-3.5">
       <EventIcon type={event.type} />
+
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-sm">
-          {/* Email / customer link */}
+        {/* ── Email + action — always on own line on mobile ── */}
+        <div className="mb-0.5">
+          {/* Email: break-all prevents long addresses from overflowing */}
           {event.userId ? (
             <Link
               href={`/admin/customers/${event.userId}`}
-              className="font-medium text-zinc-200 transition-colors hover:text-amber-400"
+              className="break-all text-sm font-medium text-zinc-200 transition-colors hover:text-amber-400"
             >
               {event.email}
             </Link>
           ) : (
-            <span className="font-medium text-zinc-400">{event.email}</span>
+            <span className="break-all text-sm font-medium text-zinc-400">{event.email}</span>
           )}
 
-          {/* Signup */}
+          {/* Action label — inline on desktop, new line on very small screens via flex-wrap */}
           {event.type === 'signup' && (
-            <span className="text-zinc-500">{t('activity.createdAccount')}</span>
+            <span className="ml-1.5 text-sm text-zinc-500">{t('activity.createdAccount')}</span>
           )}
-
-          {/* Verified */}
           {event.type === 'verified' && (
-            <span className="text-zinc-500">{t('activity.verifiedEmail')}</span>
+            <span className="ml-1.5 text-sm text-zinc-500">{t('activity.verifiedEmail')}</span>
           )}
+        </div>
 
-          {/* Purchase */}
-          {event.type === 'purchase' && (
-            <>
-              <span className="text-zinc-500">{t('activity.purchased')}</span>
-
-              {event.productNames && event.productNames.length > 0 && (
-                <span className="text-zinc-200">
-                  {event.productNames.slice(0, 2).map((name, i) => {
-                    // FIX: use productIds (not slugs) — admin detail page uses [id] not [slug]
-                    const productId = event.productIds?.[i]
-                    return (
-                      <span key={i}>
-                        {i > 0 && ', '}
-                        {productId ? (
-                          <Link
-                            href={`/admin/products/${productId}`}
-                            className="transition-colors hover:text-amber-400"
-                          >
-                            {name}
-                          </Link>
-                        ) : (
-                          name
-                        )}
-                      </span>
-                    )
-                  })}
-                  {event.productNames.length > 2 && (
-                    <span className="text-zinc-500">
-                      {' '}
-                      {t('activity.moreProducts', { count: event.productNames.length - 2 })}
+        {/* ── Purchase details ── */}
+        {event.type === 'purchase' && (
+          <div className="mt-0.5">
+            {/* Products line */}
+            {event.productNames && event.productNames.length > 0 && (
+              <p className="break-words text-sm text-zinc-400">
+                <span className="text-zinc-500">{t('activity.purchased')} </span>
+                {event.productNames.slice(0, 2).map((name, i) => {
+                  const productId = event.productIds?.[i]
+                  return (
+                    <span key={i}>
+                      {i > 0 && ', '}
+                      {productId ? (
+                        <Link
+                          href={`/admin/products/${productId}`}
+                          className="text-zinc-300 transition-colors hover:text-amber-400"
+                        >
+                          {name}
+                        </Link>
+                      ) : (
+                        <span className="text-zinc-300">{name}</span>
+                      )}
                     </span>
-                  )}
-                </span>
-              )}
+                  )
+                })}
+                {event.productNames.length > 2 && (
+                  <span className="text-zinc-500">
+                    {' '}
+                    {t('activity.moreProducts', { count: event.productNames.length - 2 })}
+                  </span>
+                )}
+              </p>
+            )}
 
-              <span className="text-zinc-500">{t('activity.for')}</span>
-              <span className="font-semibold text-amber-400">
+            {/* Price row — prominent on mobile */}
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold text-amber-400 sm:text-sm">
                 {formatPrice(event.totalCents ?? 0, event.currency ?? 'CHF')}
               </span>
-
               {event.isGuest && (
                 <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
                   {t('activity.guest')}
                 </span>
               )}
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
 
-        {/* Timestamp + order link */}
-        <div className="mt-0.5 flex items-center gap-2">
+        {/* ── Meta: timestamp + order link ── */}
+        <div className="mt-1 flex flex-wrap items-center gap-2">
           <p
             className="cursor-default text-xs text-zinc-600"
             title={formatTimestamp(event.timestamp)}
@@ -445,7 +445,7 @@ export function ActivityFeed({ events, isTruncatedOrders, isTruncatedUsers }: Pr
             {search ? t('activity.noEventsMatching', { query: search }) : t('activity.noEvents')}
           </p>
         ) : (
-          <div className="px-4">
+          <div className="px-3 sm:px-4">
             {/* Date-grouped events */}
             {(() => {
               let lastKey = ''
@@ -466,7 +466,7 @@ export function ActivityFeed({ events, isTruncatedOrders, isTruncatedUsers }: Pr
                   items.push(
                     <div
                       key={`group-${key}`}
-                      className="flex items-center gap-3 pb-1 pt-5 first:pt-3"
+                      className="flex items-center gap-3 pb-1 pt-4 first:pt-3"
                     >
                       <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                         {label}
@@ -485,10 +485,10 @@ export function ActivityFeed({ events, isTruncatedOrders, isTruncatedUsers }: Pr
 
         {/* Load more button */}
         {hasMore && (
-          <div className="border-t border-zinc-800 px-4 py-4 text-center">
+          <div className="border-t border-zinc-800 px-3 py-3 text-center sm:px-4 sm:py-4">
             <button
               onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-              className="rounded-lg border border-zinc-700 px-5 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800"
+              className="w-full rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 sm:w-auto"
             >
               {t('activity.loadMore', { count: Math.min(PAGE_SIZE, remaining) })}
             </button>
@@ -498,7 +498,7 @@ export function ActivityFeed({ events, isTruncatedOrders, isTruncatedUsers }: Pr
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       {visible.length > 0 && (
-        <div className="border-t border-zinc-800 px-4 py-3">
+        <div className="border-t border-zinc-800 px-3 py-3 sm:px-4">
           <p className="text-xs text-zinc-600">
             {t('activity.showingCount', { count: filtered.length })}
             {search && ` ${t('activity.matchingQuery', { query: search })}`}{' '}

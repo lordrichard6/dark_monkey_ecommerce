@@ -157,57 +157,67 @@ export default async function AdminActivityPage() {
       {/* Stats — today + 30-day context */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {/* Signups */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/15">
-              <Users className="h-3.5 w-3.5 text-blue-400" />
+        <div className="rounded-xl border border-zinc-800 border-t-2 border-t-blue-500/50 bg-zinc-900/50 p-3 sm:p-4">
+          <div className="mb-2.5 flex items-center gap-1.5 sm:gap-2">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/15 sm:h-7 sm:w-7">
+              <Users className="h-3 w-3 text-blue-400 sm:h-3.5 sm:w-3.5" />
             </div>
-            <p className="text-xs text-zinc-500">{t('activity.signupsToday')}</p>
+            <p className="text-[11px] leading-tight text-zinc-500 sm:text-xs">
+              {t('activity.signupsToday')}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-zinc-50">{todaySignups}</p>
-          <p className="mt-1 text-xs text-zinc-600">
+          <p className="text-xl font-bold text-zinc-50 sm:text-2xl">{todaySignups}</p>
+          <p className="mt-1 text-[11px] text-zinc-600 sm:text-xs">
             {t('activity.inThirtyDays', { n: thirtyDaySignups })}
           </p>
         </div>
 
         {/* Verifications */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/15">
-              <UserCheck className="h-3.5 w-3.5 text-emerald-400" />
+        <div className="rounded-xl border border-zinc-800 border-t-2 border-t-emerald-500/50 bg-zinc-900/50 p-3 sm:p-4">
+          <div className="mb-2.5 flex items-center gap-1.5 sm:gap-2">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 sm:h-7 sm:w-7">
+              <UserCheck className="h-3 w-3 text-emerald-400 sm:h-3.5 sm:w-3.5" />
             </div>
-            <p className="text-xs text-zinc-500">{t('activity.verificationsToday')}</p>
+            <p className="text-[11px] leading-tight text-zinc-500 sm:text-xs">
+              {t('activity.verificationsToday')}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-zinc-50">{todayVerifications}</p>
-          <p className="mt-1 text-xs text-zinc-600">
+          <p className="text-xl font-bold text-zinc-50 sm:text-2xl">{todayVerifications}</p>
+          <p className="mt-1 text-[11px] text-zinc-600 sm:text-xs">
             {t('activity.inThirtyDays', { n: thirtyDayVerifications })}
           </p>
         </div>
 
         {/* Purchases */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
-              <ShoppingBag className="h-3.5 w-3.5 text-amber-400" />
+        <div className="rounded-xl border border-zinc-800 border-t-2 border-t-amber-500/50 bg-zinc-900/50 p-3 sm:p-4">
+          <div className="mb-2.5 flex items-center gap-1.5 sm:gap-2">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 sm:h-7 sm:w-7">
+              <ShoppingBag className="h-3 w-3 text-amber-400 sm:h-3.5 sm:w-3.5" />
             </div>
-            <p className="text-xs text-zinc-500">{t('activity.purchasesToday')}</p>
+            <p className="text-[11px] leading-tight text-zinc-500 sm:text-xs">
+              {t('activity.purchasesToday')}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-zinc-50">{todayPurchases}</p>
-          <p className="mt-1 text-xs text-zinc-600">
+          <p className="text-xl font-bold text-zinc-50 sm:text-2xl">{todayPurchases}</p>
+          <p className="mt-1 text-[11px] text-zinc-600 sm:text-xs">
             {t('activity.inThirtyDays', { n: thirtyDayPurchases })}
           </p>
         </div>
 
         {/* Revenue */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
-              <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
+        <div className="rounded-xl border border-zinc-800 border-t-2 border-t-amber-400/60 bg-zinc-900/50 p-3 sm:p-4">
+          <div className="mb-2.5 flex items-center gap-1.5 sm:gap-2">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 sm:h-7 sm:w-7">
+              <TrendingUp className="h-3 w-3 text-amber-400 sm:h-3.5 sm:w-3.5" />
             </div>
-            <p className="text-xs text-zinc-500">{t('activity.revenueToday')}</p>
+            <p className="text-[11px] leading-tight text-zinc-500 sm:text-xs">
+              {t('activity.revenueToday')}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-amber-400">{formatCHF(todayRevenueCents)}</p>
-          <p className="mt-1 text-xs text-zinc-600">
+          <p className="break-all text-xl font-bold text-amber-400 sm:text-2xl">
+            {formatCHF(todayRevenueCents)}
+          </p>
+          <p className="mt-1 text-[11px] text-zinc-600 sm:text-xs">
             {t('activity.inThirtyDays', { n: formatCHF(thirtyDayRevenueCents) })}
           </p>
         </div>
