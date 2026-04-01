@@ -96,15 +96,21 @@ export function ProductReviews({
   userId,
 }: Props) {
   const t = useTranslations('reviews')
-  const [rating, setRating] = useState(userReview?.rating ?? 5)
+  const [rating, setRating] = useState(userReview?.rating ?? 0)
+  const [hoverRating, setHoverRating] = useState(0)
   const [comment, setComment] = useState(userReview?.comment ?? '')
   const [photos, setPhotos] = useState<PhotoUploadResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [isEditing, setIsEditing] = useState(!userReview)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (rating === 0) {
+      setError('Please select a star rating.')
+      return
+    }
     setLoading(true)
     setError(null)
     const photoUrls = photos.map(p => p.url)
@@ -195,72 +201,112 @@ export function ProductReviews({
 
       {canSubmit ? (
         <div className="mt-8">
-          <h3 className="text-lg font-medium text-zinc-50">
-            {userReview ? t('yourReview') : t('writeReview')}
-          </h3>
-          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-400">
-                {t('rating')}
-              </label>
-              <div className="mt-2 flex gap-1">
-                {[1, 2, 3, 4, 5].map((i) => (
+          {/* Divider before user's own section */}
+          <div className="mb-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-zinc-800" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-zinc-600">
+              {t('yourReview')}
+            </span>
+            <div className="h-px flex-1 bg-zinc-800" />
+          </div>
+
+          {/* User already has a review — show it with an Edit button */}
+          {userReview && !isEditing ? (
+            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 relative overflow-hidden">
+              {/* Amber left accent bar */}
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-500/60 rounded-l-lg" />
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400 ring-1 ring-amber-500/20">
+                    You
+                  </span>
+                  <StarRating rating={userReview.rating} />
+                </div>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                >
+                  {t('editReview')}
+                </button>
+              </div>
+              {userReview.comment && (
+                <p className="mt-2 text-zinc-300 text-sm">{userReview.comment}</p>
+              )}
+            </div>
+          ) : (
+            /* Write or edit form */
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-zinc-50">
+                  {userReview ? t('yourReview') : t('writeReview')}
+                </h3>
+                {userReview && (
                   <button
-                    key={i}
-                    type="button"
-                    onClick={() => setRating(i)}
-                    className="rounded p-1 text-2xl transition hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-                    aria-label={`${i} stars`}
+                    onClick={() => { setIsEditing(false); setError(null) }}
+                    className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                   >
-                    <span className={i <= rating ? 'text-amber-400' : 'text-zinc-600'}>
-                      ★
-                    </span>
+                    {t('cancel')}
                   </button>
-                ))}
+                )}
               </div>
-            </div>
-            <div>
-              <label htmlFor="review-comment" className="block text-sm font-medium text-zinc-400">
-                {t('comment')}
-              </label>
-              <textarea
-                id="review-comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={4}
-                className="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                placeholder="Share your experience with this product..."
-              />
-            </div>
-            {/* Photo Upload */}
-            {userId && (
-              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">
-                  {t('photos')} (Optional)
-                </label>
-                <PhotoUpload
-                  userId={userId}
-                  onPhotosChange={setPhotos}
-                />
-                <p className="mt-2 text-xs text-zinc-500">
-                  Add photos to help others see how the product looks
-                </p>
-              </div>
-            )}
-            {error && (
-              <p className="text-sm text-red-400">{error}</p>
-            )}
-            {success && (
-              <p className="text-sm text-emerald-400">Thank you! Your review has been saved.</p>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
-            >
-              {loading ? t('submitting') : t('submit')}
-            </button>
-          </form>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400">
+                    {t('rating')}
+                  </label>
+                  <div className="mt-2 flex gap-0.5" onMouseLeave={() => setHoverRating(0)}>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setRating(i)}
+                        onMouseEnter={() => setHoverRating(i)}
+                        className="cursor-pointer rounded p-1 text-2xl focus:outline-none"
+                        aria-label={`${i} stars`}
+                      >
+                        <span className={`transition-colors ${i <= (hoverRating || rating) ? 'text-amber-400' : 'text-zinc-600'}`}>
+                          ★
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="review-comment" className="block text-sm font-medium text-zinc-400">
+                    {t('comment')}
+                  </label>
+                  <textarea
+                    id="review-comment"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={4}
+                    className="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                    placeholder="Share your experience with this product..."
+                  />
+                </div>
+                {userId && (
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-400 mb-2">
+                      {t('photos')} (Optional)
+                    </label>
+                    <PhotoUpload userId={userId} onPhotosChange={setPhotos} />
+                    <p className="mt-2 text-xs text-zinc-500">
+                      Add photos to help others see how the product looks
+                    </p>
+                  </div>
+                )}
+                {error && <p className="text-sm text-red-400">{error}</p>}
+                {success && <p className="text-sm text-emerald-400">Thank you! Your review has been saved.</p>}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
+                >
+                  {loading ? t('submitting') : t('submit')}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       ) : (
         <p className="mt-6 text-zinc-500">

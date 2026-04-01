@@ -3,27 +3,13 @@
 import { useState, useRef } from 'react'
 import { Link } from '@/i18n/navigation'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
+import type { HomeProduct } from '@/actions/products'
 type Category = { id: string; name: string; slug: string; subcategories?: { id: string }[] }
 import { useTranslations } from 'next-intl'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
 
-type Product = {
-  productId: string
-  slug: string
-  name: string
-  priceCents: number
-  compareAtPriceCents?: number | null
-  imageUrl: string
-  imageAlt: string
-  imageUrl2?: string | null
-  dualImageMode?: boolean
-  isInWishlist: boolean
-  isBestseller: boolean
-  categoryId?: string
-}
-
 type Props = {
-  products: Product[]
+  products: HomeProduct[]
   categories: Category[]
 }
 
@@ -159,12 +145,13 @@ export function NewArrivals({ products, categories }: Props) {
           className={`grid grid-cols-2 gap-3 sm:gap-4 md:flex md:gap-6 overflow-x-auto pb-8 md:pb-12 md:[&::-webkit-scrollbar]:hidden md:[ms-overflow-style:none] md:[scrollbar-width:none] md:cursor-grab md:active:cursor-grabbing md:select-none md:scroll-smooth ${isDragging ? 'md:scroll-auto' : ''}`}
         >
           {displayedProducts.length > 0 ? (
-            displayedProducts.map((product) => (
+            displayedProducts.map((product, i) => (
               <div
                 key={product.slug}
                 className="md:min-w-[280px] md:w-[280px] flex-shrink-0 transition-transform hover:-translate-y-1"
               >
                 <ProductCardWithWishlist
+                  index={i}
                   productId={product.productId}
                   slug={product.slug}
                   name={product.name}
@@ -176,6 +163,13 @@ export function NewArrivals({ products, categories }: Props) {
                   dualImageMode={product.dualImageMode}
                   isInWishlist={product.isInWishlist}
                   isBestseller={product.isBestseller}
+                  isOnSale={product.isOnSale}
+                  upvotes={product.upvotes}
+                  publicUp={product.publicUp}
+                  publicDown={product.publicDown}
+                  timesBought={product.timesBought}
+                  reviewCount={product.reviewCount}
+                  avgRating={product.avgRating}
                 />
               </div>
             ))

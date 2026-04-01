@@ -48,7 +48,7 @@ export function ProductRatingSummary({ reviews }: ProductRatingSummaryProps) {
           }}
           className="text-sm font-medium text-zinc-400 underline underline-offset-4 hover:text-amber-400 transition-colors"
         >
-          {count} {t('reviewsCount')}
+          {t('reviewsCount', { count })}
         </button>
         <button
           onClick={() => setShowDistribution((v) => !v)}

@@ -142,7 +142,6 @@ export default async function ProductPage({ params, searchParams }: Props) {
     bestsellerIds,
     shipmentInfo,
     gpsrInfo,
-    purchaseCheck,
   ] = await Promise.all([
     product.is_customizable ? getProductCustomizationRule(product.id) : Promise.resolve(null),
     user?.id ? isProductInWishlist(product.id, user.id) : Promise.resolve(false),
@@ -151,19 +150,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     getBestsellerProductIds(),
     getStoreSetting('shipment_info'),
     getStoreSetting('gpsr_info'),
-    // Only buyers can submit reviews — check if user has a paid order with this product
-    user?.id
-      ? supabase
-          .from('order_items')
-          .select('id, orders!inner(user_id, status)')
-          .eq('product_id', product.id)
-          .eq('orders.user_id', user.id)
-          .eq('orders.status', 'paid')
-          .limit(1)
-      : Promise.resolve({ data: [] }),
   ])
-
-  const hasPurchased = (purchaseCheck?.data?.length ?? 0) > 0
 
   const isBestseller = bestsellerIds.has(product.id)
 
@@ -309,7 +296,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           userReview={userReview}
           isBestseller={isBestseller}
           isInWishlist={userIsInWishlist}
-          canSubmitReview={hasPurchased || !!orderIdFromQuery}
+          canSubmitReview={!!user?.id || !!orderIdFromQuery}
           orderIdFromQuery={orderIdFromQuery}
           primaryImageUrl={primaryImage?.url}
           userId={user?.id}

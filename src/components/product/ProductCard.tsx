@@ -8,6 +8,7 @@ import { useCurrency } from '@/components/currency/CurrencyContext'
 import { QuickViewModal } from './QuickViewModal'
 import { useCompare } from '@/lib/store/use-compare'
 import { Product } from '@/types'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 type ProductCardProps = {
   id: string
@@ -20,6 +21,8 @@ type ProductCardProps = {
   imageUrl2?: string | null
   dualImageMode?: boolean
   fullProduct?: Product
+  /** Grid position index — used to stagger the entrance delay (0-based) */
+  index?: number
 }
 
 export function ProductCard({
@@ -33,10 +36,14 @@ export function ProductCard({
   imageUrl2,
   dualImageMode = false,
   fullProduct,
+  index = 0,
 }: ProductCardProps) {
   const { format } = useCurrency()
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
   const { addProduct, removeProduct, isInCompare } = useCompare()
+  const { ref, visible } = useScrollReveal()
+  // Cap stagger at 4 so rows far down don't wait too long
+  const delay = Math.min(index % 4, 3) * 80
 
   const isComparing = isInCompare(id)
   const showDual = dualImageMode && !!imageUrl2
@@ -66,7 +73,18 @@ export function ProductCard({
 
   return (
     <>
-      <div className="group block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20">
+      <div
+        ref={ref}
+        className="group block overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm transition hover:border-white/20"
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(28px)',
+          transitionProperty: 'opacity, transform',
+          transitionDuration: '0.55s',
+          transitionTimingFunction: 'ease',
+          transitionDelay: `${delay}ms`,
+        }}
+      >
         <Link href={`/products/${slug}`} className="block">
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
             {showDual ? (

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Link } from '@/i18n/navigation'
 import { ArrowRight } from 'lucide-react'
 import { FeaturedCategoryCard, type CategoryItem } from './FeaturedCategoryCard'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 type Props = {
   categories: CategoryItem[]
@@ -45,9 +46,9 @@ export function CategoryStripClient({
       {/* Featured gold card — full width, above the regular strip */}
       {featured.length > 0 && (
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:gap-5">
-          {featured.map((cat) => (
+          {featured.map((cat, i) => (
             <div key={cat.id} className="sm:col-span-2" style={{ minHeight: '240px' }}>
-              <FeaturedCategoryCard category={cat} />
+              <FeaturedCategoryCard category={cat} index={i} />
             </div>
           ))}
         </div>
@@ -57,11 +58,46 @@ export function CategoryStripClient({
       {regular.length > 0 && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4 lg:gap-5">
           {regular.map((cat, index) => (
-            <Link
+            <RegularCategoryCard
               key={cat.id}
+              cat={cat}
+              index={index}
+              exploreLabel={exploreLabel}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function RegularCategoryCard({
+  cat,
+  index,
+  exploreLabel,
+}: {
+  cat: CategoryItem
+  index: number
+  exploreLabel: string
+}) {
+  const { ref, visible } = useScrollReveal()
+  const delay = Math.min(index % 4, 3) * 80
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(28px)',
+        transitionProperty: 'opacity, transform',
+        transitionDuration: '0.55s',
+        transitionTimingFunction: 'ease',
+        transitionDelay: `${delay}ms`,
+      }}
+    >
+            <Link
               href={`/categories/${cat.slug}`}
-              className="group relative overflow-hidden rounded-2xl"
-              style={{ animationDelay: `${index * 40}ms` }}
+              className="group relative overflow-hidden rounded-2xl block"
             >
               {/* Card aspect ratio container */}
               <div className="relative aspect-[3/4] w-full overflow-hidden">
@@ -111,9 +147,6 @@ export function CategoryStripClient({
                 </div>
               </div>
             </Link>
-          ))}
-        </div>
-      )}
-    </section>
+    </div>
   )
 }

@@ -4,24 +4,11 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { useSearchParams } from 'next/navigation'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
+import type { HomeProduct } from '@/actions/products'
 import { PackageOpen } from 'lucide-react'
 
-type Product = {
-  productId?: string
-  slug: string
-  name: string
-  priceCents: number
-  compareAtPriceCents?: number | null
-  imageUrl: string
-  imageAlt: string
-  imageUrl2?: string | null
-  dualImageMode?: boolean
-  isInWishlist?: boolean
-  isBestseller?: boolean
-}
-
 type ProductGridProps = {
-  products: Product[]
+  products: HomeProduct[]
   title: string
   sort?: string
   hideHeader?: boolean
@@ -76,10 +63,11 @@ export function ProductGrid({
 
       {products.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 md:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
+          {products.map((product, i) => (
             <ProductCardWithWishlist
               key={product.slug}
-              productId={product.productId!}
+              index={i}
+              productId={product.productId}
               slug={product.slug}
               name={product.name}
               priceCents={product.priceCents}
@@ -88,9 +76,15 @@ export function ProductGrid({
               imageAlt={product.imageAlt}
               imageUrl2={product.imageUrl2}
               dualImageMode={product.dualImageMode}
-              isInWishlist={product.isInWishlist ?? false}
-              isBestseller={product.isBestseller ?? false}
-              showWishlist={!!product.productId}
+              isInWishlist={product.isInWishlist}
+              isBestseller={product.isBestseller}
+              isOnSale={product.isOnSale}
+              upvotes={product.upvotes}
+              publicUp={product.publicUp}
+              publicDown={product.publicDown}
+              timesBought={product.timesBought}
+              reviewCount={product.reviewCount}
+              avgRating={product.avgRating}
             />
           ))}
         </div>
