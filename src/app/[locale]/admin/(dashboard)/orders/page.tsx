@@ -56,62 +56,91 @@ export default async function AdminOrdersPage({
 
   const s = search?.trim()
 
-  // ── Main paginated query ──────────────────────────────────────────────────
-  let query = supabase
+  // ── Resilient is_archived probe (separate query — safe if schema cache stale) ─
+  // Same pattern as printful_cost_cents in accounting.ts.
+  const archivedSet = new Set<string>()
+  let schemaReady = false
+  try {
+    const { data: archivedRows, error: archivedErr } = await supabase
+      .from('orders')
+      .select('id, is_archived')
+      .eq('is_archived', true)
+    if (!archivedErr) {
+      schemaReady = true
+      for (const r of archivedRows ?? []) archivedSet.add(r.id)
+    }
+  } catch {
+    // Schema cache not refreshed yet — all orders treated as non-archived
+  }
+
+  // ── Build queries (typed as any to allow conditional .eq on new column) ──
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = supabase
     .from('orders')
-    .select(
-      'id, status, total_cents, guest_email, created_at, discount_cents, is_archived, order_items(id)',
-      { count: 'exact' }
-    )
-    .eq('is_archived', showArchived)
+    .select('id, status, total_cents, guest_email, created_at, discount_cents, order_items(id)', {
+      count: 'exact',
+    })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let agg: any = supabase.from('orders').select('total_cents')
 
-  // ── Aggregate query (same filters, no pagination) for revenue stats ───────
-  let aggQuery = supabase.from('orders').select('total_cents').eq('is_archived', showArchived)
+  // Apply archive filter only when the schema cache knows the column
+  if (schemaReady) {
+    q = q.eq('is_archived', showArchived)
+    agg = agg.eq('is_archived', showArchived)
+  }
 
-  // Filters — applied identically to both queries
   if (s) {
     const orFilter = `guest_email.ilike.%${s}%,id.ilike.${s}%`
-    query = query.or(orFilter)
-    aggQuery = aggQuery.or(orFilter)
+    q = q.or(orFilter)
+    agg = agg.or(orFilter)
   }
   if (status && status !== 'all') {
-    query = query.eq('status', status)
-    aggQuery = aggQuery.eq('status', status)
+    q = q.eq('status', status)
+    agg = agg.eq('status', status)
   }
   if (from) {
-    query = query.gte('created_at', from)
-    aggQuery = aggQuery.gte('created_at', from)
+    q = q.gte('created_at', from)
+    agg = agg.gte('created_at', from)
   }
   if (to) {
     const toEnd = to + 'T23:59:59.999Z'
-    query = query.lte('created_at', toEnd)
-    aggQuery = aggQuery.lte('created_at', toEnd)
+    q = q.lte('created_at', toEnd)
+    agg = agg.lte('created_at', toEnd)
   }
 
-  query = query.order(sortCol, { ascending: sortAsc }).range(start, end)
+  q = q.order(sortCol, { ascending: sortAsc }).range(start, end)
 
-  const [{ data: rawOrders, count, error }, { data: allForStats }] = await Promise.all([
-    query,
-    aggQuery,
-  ])
+  const [{ data: rawOrders, count, error }, { data: allForStats }] = await Promise.all([q, agg])
 
   if (error) console.error('[AdminOrdersPage] Database error:', error)
 
-  // Transform: flatten item_count from joined order_items array
-  const orders = (rawOrders ?? []).map((o) => ({
-    id: o.id,
-    status: o.status,
-    total_cents: o.total_cents,
-    guest_email: o.guest_email,
-    created_at: o.created_at,
-    discount_cents: (o as { discount_cents?: number | null }).discount_cents ?? null,
-    is_archived: (o as { is_archived?: boolean | null }).is_archived ?? false,
-    item_count: Array.isArray((o as { order_items?: unknown[] }).order_items)
-      ? (o as { order_items: unknown[] }).order_items.length
-      : 0,
-  }))
+  // Transform: flatten item_count; derive is_archived from the resilient probe set
+  const orders = (rawOrders ?? []).map(
+    (o: {
+      id: string
+      status: string
+      total_cents: number
+      guest_email: string | null
+      created_at: string
+      discount_cents?: number | null
+      order_items?: unknown[]
+    }) => ({
+      id: o.id,
+      status: o.status,
+      total_cents: o.total_cents,
+      guest_email: o.guest_email,
+      created_at: o.created_at,
+      discount_cents: o.discount_cents ?? null,
+      is_archived: archivedSet.has(o.id),
+      item_count: Array.isArray(o.order_items) ? o.order_items.length : 0,
+    })
+  )
 
-  const totalRevenue = allForStats?.reduce((sum, o) => sum + (o.total_cents ?? 0), 0) ?? 0
+  const totalRevenue =
+    (allForStats as Array<{ total_cents?: number | null }> | null)?.reduce(
+      (sum, o) => sum + (o.total_cents ?? 0),
+      0
+    ) ?? 0
   const avgOrderValue =
     allForStats && allForStats.length > 0 ? Math.round(totalRevenue / allForStats.length) : 0
 
