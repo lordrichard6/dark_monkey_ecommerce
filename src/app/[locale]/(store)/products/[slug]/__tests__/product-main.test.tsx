@@ -1,10 +1,35 @@
- 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ProductMain } from '../product-main'
 import type { Variant } from '../add-to-cart-form'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: {
+    href: string
+    children: React.ReactNode
+    onClick?: () => void
+    className?: string
+    'aria-label'?: string
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  usePathname: () => '/',
+  useParams: () => ({}),
+}))
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string, params?: Record<string, unknown>) => {
@@ -160,7 +185,7 @@ describe('ProductMain', () => {
       variants: [{ ...baseVariant, stock: 3 }],
     }
     render(<ProductMain {...props} />)
-    expect(screen.getAllByText('Only 3 left').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Only 3 left/).length).toBeGreaterThan(0)
   })
 
   it('renders "outOfStock" text when all variants are out of stock', () => {
