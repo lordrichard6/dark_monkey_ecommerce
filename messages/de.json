@@ -268,7 +268,9 @@
     "exclusiveOffers": "Zeitlich begrenzte Angebote",
     "upsellPitch": "Zu Ihrer Bestellung hinzufügen zum Sonderpreis",
     "off": "RABATT",
-    "addToOrder": "Zur Bestellung hinzufügen"
+    "addToOrder": "Zur Bestellung hinzufügen",
+    "name": "Name",
+    "namePlaceholder": "Dein Name"
   },
   "userMenu": {
     "account": "Konto",

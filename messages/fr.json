@@ -190,7 +190,9 @@
     "exclusiveOffers": "Offres à temps limité",
     "upsellPitch": "Ajoutez à votre commande pour un prix spécial",
     "off": "DE RÉDUCTION",
-    "addToOrder": "Ajouter à la commande"
+    "addToOrder": "Ajouter à la commande",
+    "name": "Nom",
+    "namePlaceholder": "Votre nom"
   },
   "home": {
     "metaDescription": "E-commerce premium gamifié — commerce, personnalisation et progression. Parcourez notre collection.",

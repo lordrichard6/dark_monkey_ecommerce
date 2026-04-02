@@ -28,6 +28,7 @@ export function SignupForm({ initialEmail = '' }: Props) {
   const locale = useLocale()
   const t = useTranslations('auth')
 
+  const [name, setName] = useState('')
   const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -234,7 +235,7 @@ export function SignupForm({ initialEmail = '' }: Props) {
 
     try {
       trackEvent('sign_up', { method: 'email' })
-      const result = await signUpWithEmail(trimmedEmail, password, locale)
+      const result = await signUpWithEmail(trimmedEmail, password, locale, name.trim())
       if (!result.ok) {
         const parsed = parseAuthError({ message: result.error ?? '', code: result.code })
         setMessage(parsed)
@@ -406,6 +407,25 @@ export function SignupForm({ initialEmail = '' }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name */}
+          <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-medium text-zinc-300">
+              {t('name')}
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              autoComplete="name"
+              placeholder={t('namePlaceholder')}
+              aria-label={t('name')}
+              aria-required="true"
+              className="block w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 py-3 px-4 text-zinc-100 placeholder-zinc-500 transition focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+            />
+          </div>
+
           {/* Email */}
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium text-zinc-300">

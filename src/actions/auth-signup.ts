@@ -19,7 +19,8 @@ export type SignUpResult =
 export async function signUpWithEmail(
   email: string,
   password: string,
-  locale: string
+  locale: string,
+  name?: string
 ): Promise<SignUpResult> {
   const supabase = getAdminClient()
   if (!supabase) return { ok: false, error: 'Service not configured', code: 'SERVER_ERROR' }
@@ -49,6 +50,12 @@ export async function signUpWithEmail(
   const confirmationUrl = data?.properties?.action_link
   if (!confirmationUrl) {
     return { ok: false, error: 'Failed to generate confirmation link', code: 'SERVER_ERROR' }
+  }
+
+  // Persist display name on the profile if provided
+  const userId = data?.user?.id
+  if (userId && name) {
+    await supabase.from('user_profiles').upsert({ id: userId, display_name: name }).eq('id', userId)
   }
 
   const result = await sendConfirmationEmail({ to: email, confirmationUrl, locale })
