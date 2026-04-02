@@ -6,7 +6,7 @@ import { usePathname } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 
 const LOCALE_DATA: Record<string, { name: string; flag: string }> = {
-  en: { name: 'English', flag: '🇺🇸' },
+  en: { name: 'English', flag: '🇬🇧' },
   pt: { name: 'Português', flag: '🇵🇹' },
   de: { name: 'Deutsch', flag: '🇩🇪' },
   it: { name: 'Italiano', flag: '🇮🇹' },

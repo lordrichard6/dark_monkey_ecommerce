@@ -58,31 +58,31 @@ export function AnnouncementBar({ announcements = [] }: Props) {
   const styles = variantStyles[variant] ?? variantStyles.default
 
   return (
-    <div className={`fixed top-0 left-0 right-0 z-[60] py-2.5 md:left-16 ${styles.bar}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-1 items-center justify-center">
-          <div className="relative h-5 w-full overflow-hidden">
+    <div className={`fixed top-0 left-0 right-0 z-[60] py-2 md:py-2.5 md:left-16 ${styles.bar}`}>
+      <div className="mx-auto flex max-w-7xl items-center px-3 sm:px-6 lg:px-8 gap-2">
+        {/* Text area */}
+        <div className="flex flex-1 items-center justify-center min-w-0">
+          <div className="relative w-full overflow-hidden" style={{ minHeight: '1.25rem' }}>
             {announcements.map((announcement, index) => (
               <div
                 key={announcement.id}
-                className={`absolute inset-0 flex items-center justify-center gap-2 transition-all duration-500 ease-in-out ${
+                className={`flex items-center justify-center gap-1.5 transition-all duration-500 ease-in-out ${
                   index === currentIndex
-                    ? 'translate-y-0 opacity-100'
-                    : index < currentIndex
-                      ? '-translate-y-full opacity-0'
-                      : 'translate-y-full opacity-0'
+                    ? 'relative opacity-100'
+                    : 'absolute inset-0 opacity-0 pointer-events-none ' +
+                      (index < currentIndex ? '-translate-y-full' : 'translate-y-full')
                 }`}
               >
-                <Sparkles className={`h-4 w-4 ${styles.icon}`} />
+                <Sparkles className={`h-3.5 w-3.5 shrink-0 ${styles.icon}`} />
                 {announcement.url ? (
                   <a
                     href={announcement.url}
-                    className="text-xs font-medium tracking-wide text-zinc-300 hover:text-white hover:underline sm:text-sm"
+                    className="text-xs font-medium tracking-wide text-zinc-300 hover:text-white hover:underline leading-snug text-center"
                   >
                     {announcement.text}
                   </a>
                 ) : (
-                  <span className="text-xs font-medium tracking-wide text-zinc-300 sm:text-sm">
+                  <span className="text-xs font-medium tracking-wide text-zinc-300 leading-snug text-center">
                     {announcement.text}
                   </span>
                 )}
@@ -91,7 +91,8 @@ export function AnnouncementBar({ announcements = [] }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        {/* Controls — arrows hidden on mobile */}
+        <div className="flex shrink-0 items-center gap-0.5">
           {announcements.length > 1 && (
             <>
               <button
@@ -100,14 +101,14 @@ export function AnnouncementBar({ announcements = [] }: Props) {
                     (prev) => (prev - 1 + announcements.length) % announcements.length
                   )
                 }
-                className="rounded-full p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+                className="hidden sm:flex rounded-full p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
                 aria-label="Previous announcement"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setCurrentIndex((prev) => (prev + 1) % announcements.length)}
-                className="rounded-full p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+                className="hidden sm:flex rounded-full p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
                 aria-label="Next announcement"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -116,7 +117,7 @@ export function AnnouncementBar({ announcements = [] }: Props) {
           )}
           <button
             onClick={handleDismiss}
-            className="ml-2 rounded-full p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+            className="rounded-full p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />

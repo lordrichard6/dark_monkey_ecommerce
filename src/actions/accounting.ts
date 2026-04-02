@@ -37,6 +37,7 @@ export async function getAccountingData(): Promise<AccountingData | null> {
         quantity,
         price_cents,
         variant_id,
+        printful_item_cost_cents,
         product_variants (
           id,
           name,
@@ -68,7 +69,9 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       )
     for (const row of costRows ?? []) {
       const cost = (row as { printful_cost_cents?: number | null }).printful_cost_cents
-      if (cost != null) printfulCostMap.set(row.id, cost)
+      // Only treat as "synced" if cost is a positive number — 0 means it was saved
+      // before Printful had priced the order (draft state) and needs re-syncing.
+      if (cost != null && cost > 0) printfulCostMap.set(row.id, cost)
     }
   } catch {
     // Schema cache not refreshed yet — costs will be 0 until next sync
@@ -140,11 +143,17 @@ export async function getAccountingData(): Promise<AccountingData | null> {
       const productName = (pv?.products as { name?: string } | null)?.name ?? 'Unknown'
       const variantName = pv?.name ?? 'Unknown'
 
-      // Proportional Printful cost allocation for this line item
+      // Use per-item Printful cost if synced (items[].price from Printful API).
+      // This is the pure fulfillment cost per unit, excluding shipping and VAT.
+      // Fall back to proportional allocation of the order-level cost if not available.
+      const storedItemCost = (item as unknown as { printful_item_cost_cents?: number | null })
+        .printful_item_cost_cents
       const allocatedPrintfulCost =
-        totalOrderItemRevenue > 0 && orderPrintfulCost > 0
-          ? Math.round((totalItemRevenue / totalOrderItemRevenue) * orderPrintfulCost)
-          : 0
+        storedItemCost != null && storedItemCost > 0
+          ? storedItemCost * item.quantity
+          : totalOrderItemRevenue > 0 && orderPrintfulCost > 0
+            ? Math.round((totalItemRevenue / totalOrderItemRevenue) * orderPrintfulCost)
+            : 0
 
       items.push({
         variantId: item.variant_id,
@@ -171,7 +180,8 @@ export async function getAccountingData(): Promise<AccountingData | null> {
             variantName,
             printfulVariantId,
             salePriceCents: item.price_cents,
-            printfulCostCents: 0, // filled below from totalCost / unitsSold
+            // storedItemCost is per-unit; use it directly if available so the avg stays accurate
+            printfulCostCents: storedItemCost != null && storedItemCost > 0 ? storedItemCost : 0,
             unitsSold: item.quantity,
             totalRevenue: totalItemRevenue,
             totalCost: allocatedPrintfulCost,
@@ -334,12 +344,13 @@ export async function syncPrintfulCosts(): Promise<{ synced: number; failed: num
   const supabase = getAdminClient()
   if (!supabase) return { synced: 0, failed: 0 }
 
-  // Find orders that have a Printful order ID but haven't been costed yet
+  // Find orders that have a Printful order ID but no valid cost yet.
+  // Also re-sync orders where cost is 0 — that means they were saved while still a draft.
   const { data: pending, error } = await supabase
     .from('orders')
     .select('id, printful_order_id')
     .not('printful_order_id', 'is', null)
-    .is('printful_cost_cents', null)
+    .or('printful_cost_cents.is.null,printful_cost_cents.eq.0')
     .in('status', ['paid', 'processing', 'shipped', 'delivered'])
 
   if (error || !pending || pending.length === 0) return { synced: 0, failed: 0 }
@@ -366,9 +377,46 @@ export async function syncPrintfulCosts(): Promise<{ synced: number; failed: num
             .eq('id', order.id)
           if (updateError) {
             failed++
-          } else {
-            synced++
+            return
           }
+
+          // --- Per-item cost sync ---
+          // Fetch local order items with their variant's Printful IDs so we can match
+          // to the Printful order items by sync_variant_id / variant_id.
+          const { data: localItems } = await supabase
+            .from('order_items')
+            .select('id, product_variants(printful_variant_id, printful_sync_variant_id)')
+            .eq('order_id', order.id)
+
+          if (localItems && result.order.items?.length) {
+            // Build lookup: printful variant id → local order_item.id
+            const variantToItemId = new Map<number, string>()
+            for (const li of localItems) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const pv = (li as any).product_variants
+              const syncId: number | null = pv?.printful_sync_variant_id ?? null
+              const varId: number | null = pv?.printful_variant_id ?? null
+              if (syncId) variantToItemId.set(syncId, li.id)
+              else if (varId) variantToItemId.set(varId, li.id)
+            }
+
+            // Match each Printful item to a local order item and write per-item cost
+            await Promise.all(
+              result.order.items.map(async (pItem) => {
+                const pfVariantId = pItem.sync_variant_id ?? pItem.variant_id
+                if (!pfVariantId || !pItem.price) return
+                const localItemId = variantToItemId.get(pfVariantId)
+                if (!localItemId) return
+                const itemCostCents = Math.round(parseFloat(pItem.price) * 100)
+                await supabase
+                  .from('order_items')
+                  .update({ printful_item_cost_cents: itemCostCents })
+                  .eq('id', localItemId)
+              })
+            )
+          }
+
+          synced++
         } else {
           failed++
         }

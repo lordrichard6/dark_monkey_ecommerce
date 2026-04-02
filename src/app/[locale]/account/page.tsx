@@ -107,7 +107,7 @@ export default async function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen py-12" style={{ background: 'transparent' }}>
+    <div className="min-h-screen pb-12" style={{ background: 'transparent' }}>
       {/* ── Hero banner ── */}
       <div className="relative mb-10 overflow-hidden">
         {/* Amber glow base */}
