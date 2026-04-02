@@ -28,7 +28,8 @@ export function AnnouncementBar({ announcements = [] }: Props) {
       document.documentElement.style.setProperty('--ann-bar-h', '0rem')
       return
     }
-    const fingerprint = JSON.stringify(announcements.map((a) => a.id).sort())
+    // Fingerprint includes text so editing an announcement resets dismissal
+    const fingerprint = JSON.stringify(announcements.map((a) => `${a.id}:${a.text}`).sort())
     const dismissed = localStorage.getItem('dm_ann_dismissed')
     const visible = dismissed !== fingerprint
     setIsVisible(visible)
@@ -44,7 +45,7 @@ export function AnnouncementBar({ announcements = [] }: Props) {
   }, [announcements.length, hasAnnouncements])
 
   function handleDismiss() {
-    const fingerprint = JSON.stringify(announcements.map((a) => a.id).sort())
+    const fingerprint = JSON.stringify(announcements.map((a) => `${a.id}:${a.text}`).sort())
     localStorage.setItem('dm_ann_dismissed', fingerprint)
     setIsVisible(false)
     document.documentElement.style.setProperty('--ann-bar-h', '0rem')

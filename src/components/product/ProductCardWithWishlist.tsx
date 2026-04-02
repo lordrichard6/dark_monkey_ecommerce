@@ -67,7 +67,6 @@ export function ProductCardWithWishlist({
   const { format } = useCurrency()
   const t = useTranslations('product')
 
-
   // Check if product is new (created within last 3 days)
   const isNew = createdAt
     ? new Date().getTime() - new Date(createdAt).getTime() < 3 * 24 * 60 * 60 * 1000
@@ -114,25 +113,29 @@ export function ProductCardWithWishlist({
           transitionDelay: `${delay}ms`,
         }}
       >
+        {/* Badges + vote — outside <Link> so button-inside-anchor invalid HTML is avoided.
+            pointer-events-none on the wrapper lets clicks on badges fall through to the Link;
+            pointer-events-auto on the vote button restores its own interactivity. */}
+        <div className="pointer-events-none absolute left-2 top-2 z-30 flex flex-col gap-1">
+          {badges.map((badge) => (
+            <ProductBadge
+              key={badge}
+              type={badge as 'new' | 'featured' | 'sale' | 'bestseller'}
+              label={badgeLabels[badge]}
+            />
+          ))}
+          <div className="pointer-events-auto">
+            <ProductVoteButtons
+              productId={productId}
+              initialUp={publicUp}
+              initialDown={publicDown}
+              variant="overlay"
+            />
+          </div>
+        </div>
+
         <Link href={`/products/${slug}`} className="flex flex-col flex-1">
           <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
-            {/* Top-left: badges + vote pill stacked in a column */}
-            <div className="absolute left-2 top-2 z-30 flex flex-col gap-1">
-              {badges.map((badge) => (
-                <ProductBadge
-                  key={badge}
-                  type={badge as 'new' | 'featured' | 'sale' | 'bestseller'}
-                  label={badgeLabels[badge]}
-                />
-              ))}
-              <ProductVoteButtons
-                productId={productId}
-                initialUp={publicUp}
-                initialDown={publicDown}
-                variant="overlay"
-              />
-            </div>
-
             {showDual ? (
               /* ── Dual-image diagonal cut ── */
               <>
