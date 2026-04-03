@@ -65,14 +65,14 @@ export async function submitCustomProductRequest(input: {
 
   if (error || !data) return { ok: false, error: error?.message ?? 'Failed to submit request' }
 
-  // Get user email for notification
+  // Get user display name for notification
   const { data: profile } = await admin
     .from('user_profiles')
-    .select('display_name, email')
+    .select('display_name')
     .eq('id', userData.user.id)
     .single()
 
-  const userEmail = userData.user.email ?? (profile?.email as string | undefined)
+  const userEmail = userData.user.email
   const userName = (profile?.display_name as string | undefined) ?? userEmail ?? 'Customer'
 
   // Admin notification
@@ -280,7 +280,7 @@ export async function getAdminCustomRequests(
 
   let query = admin
     .from('custom_product_requests')
-    .select('*, user_profiles(display_name, email)')
+    .select('*, user_profiles(display_name)')
     .order('created_at', { ascending: false })
 
   if (status && status !== 'all') {
@@ -288,12 +288,23 @@ export async function getAdminCustomRequests(
   }
 
   const { data } = await query
+  if (!data) return []
 
-  return (data ?? []).map((r) => {
-    const profile = r.user_profiles as { display_name?: string; email?: string } | null
+  // Batch-fetch emails from auth.users for all unique user_ids
+  const userIds = [...new Set(data.map((r) => r.user_id as string))]
+  const emailMap: Record<string, string> = {}
+  await Promise.all(
+    userIds.map(async (uid) => {
+      const { data: authUser } = await admin.auth.admin.getUserById(uid)
+      if (authUser.user?.email) emailMap[uid] = authUser.user.email
+    })
+  )
+
+  return data.map((r) => {
+    const profile = r.user_profiles as { display_name?: string } | null
     return {
       ...(r as CustomProductRequest),
-      user_email: profile?.email ?? undefined,
+      user_email: emailMap[r.user_id as string] ?? undefined,
       user_name: profile?.display_name ?? undefined,
     }
   })
@@ -341,15 +352,13 @@ export async function updateCustomRequestStatus(input: {
       .update({ is_exclusive: true, exclusive_user_id: req.user_id })
       .eq('id', input.productId)
 
-    // Get user email to notify them
-    const { data: profile } = await admin
-      .from('user_profiles')
-      .select('display_name, email')
-      .eq('id', req.user_id)
-      .single()
+    // Get user display name and auth email to notify them
+    const [{ data: profile }, { data: authUser }] = await Promise.all([
+      admin.from('user_profiles').select('display_name').eq('id', req.user_id).single(),
+      admin.auth.admin.getUserById(req.user_id),
+    ])
 
-    // Get the user auth email as fallback
-    const userEmail = profile?.email as string | undefined
+    const userEmail = authUser.user?.email
     const userName = (profile?.display_name as string | undefined) ?? userEmail ?? 'Customer'
 
     if (userEmail) {
