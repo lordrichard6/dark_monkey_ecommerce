@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { updateCustomRequestStatus } from '@/actions/custom-products'
-import type { CustomProductRequest } from '@/actions/custom-products'
+import type { CustomProductRequest } from '@/lib/custom-products-config'
 import { ChevronDown, ChevronUp, Loader2, CheckCircle, XCircle, Eye } from 'lucide-react'
 
 type Request = CustomProductRequest & { user_email?: string; user_name?: string }
