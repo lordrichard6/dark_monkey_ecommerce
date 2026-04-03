@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { useLocale } from 'next-intl'
@@ -84,6 +84,7 @@ export function CustomizeStudio({ userId }: { userId: string }) {
 
   const [images, setImages] = useState<UploadedImage[]>([])
   const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const [artStyle, setArtStyle] = useState<ArtStyle | null>(null)
   const [articleType, setArticleType] = useState<ArticleType | null>(null)
   const [description, setDescription] = useState('')
@@ -91,6 +92,14 @@ export function CustomizeStudio({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Revoke all object URLs on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      images.forEach((img) => URL.revokeObjectURL(img.preview))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const estimatedPrice = articleType ? ARTICLE_PRICES_CENTS[articleType] : null
 
@@ -236,14 +245,28 @@ export function CustomizeStudio({ userId }: { userId: string }) {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/10 bg-zinc-800/50 text-zinc-500 transition hover:border-amber-500/40 hover:bg-zinc-800 hover:text-amber-400 disabled:opacity-50"
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setDragging(true)
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setDragging(false)
+                  handleFiles(e.dataTransfer.files)
+                }}
+                className={`flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed bg-zinc-800/50 text-zinc-500 transition disabled:opacity-50 ${
+                  dragging
+                    ? 'border-amber-500/70 bg-amber-500/10 text-amber-400'
+                    : 'border-white/10 hover:border-amber-500/40 hover:bg-zinc-800 hover:text-amber-400'
+                }`}
               >
                 {uploading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
                     <Upload className="h-5 w-5" />
-                    <span className="text-xs">{t('uploadBtn')}</span>
+                    <span className="text-xs">{dragging ? 'Drop here' : t('uploadBtn')}</span>
                   </>
                 )}
               </button>
@@ -256,7 +279,11 @@ export function CustomizeStudio({ userId }: { userId: string }) {
             accept="image/jpeg,image/png,image/webp,image/heic"
             multiple
             className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
+            onChange={(e) => {
+              handleFiles(e.target.files)
+              // Reset input so the same file can be re-selected after removal
+              e.target.value = ''
+            }}
           />
           <p className="text-xs text-zinc-600">{t('imagesHint')}</p>
         </div>

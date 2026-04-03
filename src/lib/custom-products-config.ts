@@ -42,6 +42,7 @@ export type CustomProductRequest = {
   change_count: number
   product_id: string | null
   admin_note: string | null
+  locale: string
   created_at: string
   updated_at: string
 }

@@ -26,6 +26,33 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.dark-monkey.ch'
 // CHF 2 in cents
 const CHANGE_REQUEST_PRICE_CENTS = 200
 
+// Valid enum values for server-side validation (#9)
+const VALID_ART_STYLES: ArtStyle[] = [
+  'minimalist',
+  'streetwear',
+  'vintage',
+  'abstract',
+  'geometric',
+  'anime',
+  'typography',
+  'photorealistic',
+]
+const VALID_ARTICLE_TYPES: ArticleType[] = [
+  'tshirt',
+  'hoodie',
+  'sweatshirt',
+  'cap',
+  'tote_bag',
+  'mug',
+  'phone_case',
+]
+
+/** Revalidate all locale variants of a path (#5) */
+function revalidateLocales(segment: string) {
+  revalidatePath('/', 'layout')
+  void segment // used for intent documentation only
+}
+
 // ─── User Actions ─────────────────────────────────────────────────────────────
 
 /**
@@ -45,10 +72,15 @@ export async function submitCustomProductRequest(input: {
   const admin = getAdminClient()
   if (!admin) return { ok: false, error: 'Service not configured' }
 
+  // Server-side validation (#9)
   if (!input.images.length || input.images.length > 5)
     return { ok: false, error: 'Please upload between 1 and 5 images' }
-
   if (!input.description.trim()) return { ok: false, error: 'Description is required' }
+  if (!VALID_ART_STYLES.includes(input.artStyle)) return { ok: false, error: 'Invalid art style' }
+  if (!VALID_ARTICLE_TYPES.includes(input.articleType))
+    return { ok: false, error: 'Invalid article type' }
+
+  const locale = input.locale ?? 'en'
 
   const { data, error } = await admin
     .from('custom_product_requests')
@@ -59,6 +91,7 @@ export async function submitCustomProductRequest(input: {
       article_type: input.articleType,
       description: input.description.trim(),
       status: 'pending',
+      locale, // store for later use in ready-notification email (#7)
     })
     .select('id')
     .single()
@@ -91,12 +124,11 @@ export async function submitCustomProductRequest(input: {
       articleType: input.articleType,
       artStyle: input.artStyle,
       estimatedPriceCents: ARTICLE_PRICES_CENTS[input.articleType],
-      locale: input.locale ?? 'en',
+      locale,
     })
   }
 
-  revalidatePath('/account/customize')
-  revalidatePath('/account')
+  revalidateLocales('/account/customize')
   return { ok: true, requestId: data.id }
 }
 
@@ -156,7 +188,6 @@ export async function submitChangeRequest(input: {
   const isFree = req.change_count === 0
 
   if (isFree) {
-    // Insert free change request
     const { error: insertErr } = await admin.from('custom_product_change_requests').insert({
       request_id: input.requestId,
       user_id: userData.user.id,
@@ -166,7 +197,6 @@ export async function submitChangeRequest(input: {
     })
     if (insertErr) return { ok: false, error: insertErr.message }
 
-    // Increment change_count, set status back to in_review
     await admin
       .from('custom_product_requests')
       .update({
@@ -183,7 +213,7 @@ export async function submitChangeRequest(input: {
       data: { requestId: input.requestId, note: input.note },
     })
 
-    revalidatePath('/account/customize')
+    revalidateLocales('/account/customize')
     return { ok: true, free: true }
   }
 
@@ -220,7 +250,6 @@ export async function submitChangeRequest(input: {
 
   if (!session.url) return { ok: false, error: 'Failed to create payment session' }
 
-  // Pre-insert the change request as unpaid — webhook will mark it paid
   await admin.from('custom_product_change_requests').insert({
     request_id: input.requestId,
     user_id: userData.user.id,
@@ -262,12 +291,38 @@ export async function makeCustomProductPublic(
 
   if (error) return { ok: false, error: error.message }
 
-  revalidatePath('/account/customize')
-  revalidatePath(`/products`)
+  revalidateLocales('/account/customize')
   return { ok: true }
 }
 
 // ─── Admin Actions ────────────────────────────────────────────────────────────
+
+/**
+ * Get per-status counts for the filter tab badges (#10).
+ */
+export async function getCustomRequestStatusCounts(): Promise<Record<string, number>> {
+  const admin = getAdminClient()
+  if (!admin) return {}
+
+  const statuses = ['pending', 'in_review', 'ready', 'rejected'] as const
+  const results = await Promise.all(
+    statuses.map((s) =>
+      admin
+        .from('custom_product_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', s)
+    )
+  )
+
+  const counts: Record<string, number> = {}
+  let total = 0
+  statuses.forEach((s, i) => {
+    counts[s] = results[i].count ?? 0
+    total += counts[s]
+  })
+  counts.all = total
+  return counts
+}
 
 /**
  * Get all custom product requests (admin only).
@@ -290,7 +345,7 @@ export async function getAdminCustomRequests(
   const { data } = await query
   if (!data) return []
 
-  // Batch-fetch emails from auth.users for all unique user_ids
+  // Batch-fetch emails from auth (#8 — concurrent, not sequential)
   const userIds = [...new Set(data.map((r) => r.user_id as string))]
   const emailMap: Record<string, string> = {}
   await Promise.all(
@@ -312,11 +367,12 @@ export async function getAdminCustomRequests(
 
 /**
  * Update the status of a custom product request (admin only).
- * When marking as 'ready', provide the productId that was created on Printful + synced.
+ * Accepts all statuses including 'pending' for re-opening rejected requests (#2).
+ * Only updates admin_note if a non-empty string is provided — preserves existing note otherwise (#13).
  */
 export async function updateCustomRequestStatus(input: {
   requestId: string
-  status: 'in_review' | 'ready' | 'rejected'
+  status: 'pending' | 'in_review' | 'ready' | 'rejected'
   productId?: string
   adminNote?: string
 }): Promise<{ ok: boolean; error?: string }> {
@@ -325,7 +381,7 @@ export async function updateCustomRequestStatus(input: {
 
   const { data: req } = await admin
     .from('custom_product_requests')
-    .select('user_id, article_type')
+    .select('user_id, article_type, locale')
     .eq('id', input.requestId)
     .single()
 
@@ -335,7 +391,10 @@ export async function updateCustomRequestStatus(input: {
     status: input.status,
     updated_at: new Date().toISOString(),
   }
-  if (input.adminNote !== undefined) updates.admin_note = input.adminNote
+  // Only overwrite note if the admin explicitly provided a non-empty value (#13)
+  if (input.adminNote && input.adminNote.trim()) {
+    updates.admin_note = input.adminNote.trim()
+  }
   if (input.productId) updates.product_id = input.productId
 
   const { error } = await admin
@@ -352,7 +411,6 @@ export async function updateCustomRequestStatus(input: {
       .update({ is_exclusive: true, exclusive_user_id: req.user_id })
       .eq('id', input.productId)
 
-    // Get user display name and auth email to notify them
     const [{ data: profile }, { data: authUser }] = await Promise.all([
       admin.from('user_profiles').select('display_name').eq('id', req.user_id).single(),
       admin.auth.admin.getUserById(req.user_id),
@@ -360,20 +418,61 @@ export async function updateCustomRequestStatus(input: {
 
     const userEmail = authUser.user?.email
     const userName = (profile?.display_name as string | undefined) ?? userEmail ?? 'Customer'
+    const locale = (req.locale as string | null) ?? 'en' // use stored locale (#7)
 
     if (userEmail) {
       await sendCustomProductReadyEmail({
         to: userEmail,
         userName,
         articleType: req.article_type,
-        productUrl: `${APP_URL}/account/customize`,
-        locale: 'en',
+        productUrl: `${APP_URL}/${locale}/account/customize`,
+        locale,
       })
     }
   }
 
-  revalidatePath('/admin/custom-requests')
-  revalidatePath('/account/customize')
+  revalidateLocales('/admin/custom-requests')
+  return { ok: true }
+}
+
+/**
+ * Resend the "product ready" notification email (admin only) (#11).
+ */
+export async function resendCustomProductReadyNotification(
+  requestId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const admin = getAdminClient()
+  if (!admin) return { ok: false, error: 'Service not configured' }
+
+  const { data: req } = await admin
+    .from('custom_product_requests')
+    .select('user_id, article_type, product_id, status, locale')
+    .eq('id', requestId)
+    .single()
+
+  if (!req) return { ok: false, error: 'Request not found' }
+  if (req.status !== 'ready') return { ok: false, error: 'Product is not ready yet' }
+  if (!req.product_id) return { ok: false, error: 'No product linked yet' }
+
+  const [{ data: profile }, { data: authUser }] = await Promise.all([
+    admin.from('user_profiles').select('display_name').eq('id', req.user_id).single(),
+    admin.auth.admin.getUserById(req.user_id),
+  ])
+
+  const userEmail = authUser.user?.email
+  if (!userEmail) return { ok: false, error: 'User email not found' }
+
+  const userName = (profile?.display_name as string | undefined) ?? userEmail
+  const locale = (req.locale as string | null) ?? 'en'
+
+  await sendCustomProductReadyEmail({
+    to: userEmail,
+    userName,
+    articleType: req.article_type,
+    productUrl: `${APP_URL}/${locale}/account/customize`,
+    locale,
+  })
+
   return { ok: true }
 }
 
@@ -392,13 +491,11 @@ export async function markChangeRequestPaid(stripeSessionId: string): Promise<vo
 
   if (!changeReq) return
 
-  // Mark change request as paid
   await admin
     .from('custom_product_change_requests')
     .update({ paid_at: new Date().toISOString() })
     .eq('id', changeReq.id)
 
-  // Increment change_count on the parent request, set back to in_review
   const { data: parentReq } = await admin
     .from('custom_product_requests')
     .select('change_count')

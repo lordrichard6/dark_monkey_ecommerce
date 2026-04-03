@@ -47,6 +47,7 @@ function RequestCard({ request, userId }: { request: CustomProductRequest; userI
   const [showChangeForm, setShowChangeForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmPublic, setConfirmPublic] = useState(false)
 
   const status = STATUS_STYLES[request.status] ?? STATUS_STYLES.pending
   const articleLabel = ARTICLE_LABELS[request.article_type as ArticleType] ?? request.article_type
@@ -185,15 +186,37 @@ function RequestCard({ request, userId }: { request: CustomProductRequest; userI
                 {isFreeChange ? t('requestChangeFree') : t('requestChangePaid')}
               </button>
 
-              <button
-                type="button"
-                onClick={handleMakePublic}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-white/10 disabled:opacity-50"
-              >
-                <Globe className="h-4 w-4" />
-                {t('makePublicBtn')}
-              </button>
+              {/* Make public — requires 2-step confirmation (#6) */}
+              {!confirmPublic ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmPublic(true)}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-white/10 disabled:opacity-50"
+                >
+                  <Globe className="h-4 w-4" />
+                  {t('makePublicBtn')}
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                  <p className="text-xs text-amber-300">Make product visible to everyone?</p>
+                  <button
+                    type="button"
+                    onClick={handleMakePublic}
+                    disabled={loading}
+                    className="rounded-lg bg-amber-500 px-2.5 py-1 text-xs font-bold text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmPublic(false)}
+                    className="text-xs text-zinc-400 hover:text-zinc-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
