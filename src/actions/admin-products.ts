@@ -984,3 +984,59 @@ export async function updateProductFeatured(
   revalidatePath('/')
   return { ok: true }
 }
+
+export async function updateProductExclusive(
+  productId: string,
+  isExclusive: boolean,
+  exclusiveUserId: string | null
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  const { error } = await supabase
+    .from('products')
+    .update({
+      is_exclusive: isExclusive,
+      exclusive_user_id: isExclusive ? exclusiveUserId : null,
+    })
+    .eq('id', productId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/admin/products/${productId}`)
+  revalidatePath('/', 'layout')
+  return { ok: true }
+}
+
+export async function getAdminUsersList(): Promise<
+  { id: string; email: string; displayName: string | null }[]
+> {
+  const adminUser = await getAdminUser()
+  if (!adminUser) return []
+
+  const supabase = getAdminClient()
+  if (!supabase) return []
+
+  // Fetch auth users list (up to 1000)
+  const { data, error } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  if (error || !data) return []
+
+  // Fetch display names from user_profiles
+  const ids = data.users.map((u) => u.id)
+  const { data: profiles } = await supabase
+    .from('user_profiles')
+    .select('id, display_name')
+    .in('id', ids)
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name])
+  )
+
+  return data.users.map((u) => ({
+    id: u.id,
+    email: u.email ?? '',
+    displayName: (profileMap.get(u.id) as string | null) ?? null,
+  }))
+}

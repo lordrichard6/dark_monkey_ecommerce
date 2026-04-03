@@ -40,6 +40,8 @@ type Product = {
   is_active: boolean
   is_featured: boolean
   is_customizable: boolean
+  is_exclusive: boolean
+  exclusive_user_id: string | null
   category_id: string | null
   categories: { id: string; name: string } | null
   product_images: { id: string; url: string; sort_order?: number }[]
@@ -784,6 +786,18 @@ export function ProductListTable({
                         {p.is_customizable && (
                           <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-[10px] text-amber-400">
                             {t('products.customizable')}
+                          </span>
+                        )}
+                        {p.is_exclusive && (
+                          <span
+                            className="rounded bg-rose-900/40 px-1.5 py-0.5 text-[10px] text-rose-400 ring-1 ring-rose-500/20"
+                            title={
+                              p.exclusive_user_id
+                                ? `Exclusive to user ${p.exclusive_user_id}`
+                                : 'Exclusive'
+                            }
+                          >
+                            Exclusive
                           </span>
                         )}
                       </div>

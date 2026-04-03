@@ -9,6 +9,7 @@ import { ReferralCard } from '@/components/profile/ReferralCard'
 import { AchievementGrid } from '@/components/profile/AchievementBadge'
 import { Edit, ShoppingBag, Heart, Shield, Bell, LifeBuoy, Palette } from 'lucide-react'
 import { NotificationsBadge } from '@/components/account/NotificationsBadge'
+import { ExclusiveProductShowcase } from '@/components/account/ExclusiveProductShowcase'
 import md5 from 'md5'
 
 export default async function AccountPage() {
@@ -40,6 +41,7 @@ export default async function AccountPage() {
     { data: wishlistItems, count: wishlistCount },
     { data: orders, count: ordersCount },
     { count: openTicketsCount },
+    { data: exclusiveProducts },
   ] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('id', user.id).single(),
     supabase
@@ -68,9 +70,31 @@ export default async function AccountPage() {
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .in('status', ['open', 'in_progress']),
+    supabase
+      .from('products')
+      .select(
+        `id, name, slug, created_at, dual_image_mode, is_featured,
+         product_images (url, alt, sort_order),
+         product_variants (price_cents, compare_at_price_cents)`
+      )
+      .eq('is_exclusive', true)
+      .eq('exclusive_user_id', user.id)
+      .eq('is_active', true),
   ])
 
   const unlockedAchievementIds = new Set(userAchievements?.map((ua) => ua.achievement_id) || [])
+
+  // Wishlist set for exclusive products
+  const exclusiveProductIds = (exclusiveProducts ?? []).map((p) => p.id)
+  let exclusiveWishlistSet = new Set<string>()
+  if (exclusiveProductIds.length > 0) {
+    const { data: wl } = await supabase
+      .from('user_wishlist')
+      .select('product_id')
+      .eq('user_id', user.id)
+      .in('product_id', exclusiveProductIds)
+    exclusiveWishlistSet = new Set((wl ?? []).map((w) => w.product_id))
+  }
 
   // Get Gravatar URL
   const getGravatarUrl = (email: string) => {
@@ -181,6 +205,41 @@ export default async function AccountPage() {
                 </div>
               </section>
             )}
+
+            {/* ── Exclusive Products Showcase ── */}
+            <ExclusiveProductShowcase
+              products={(exclusiveProducts ?? []).map((p) => {
+                const imgs = (
+                  p.product_images as { url: string; alt: string | null; sort_order: number }[]
+                ).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                const variants = p.product_variants as {
+                  price_cents: number
+                  compare_at_price_cents: number | null
+                }[]
+                const minPrice = variants?.length
+                  ? Math.min(...variants.map((v) => v.price_cents))
+                  : 0
+                const compareAt =
+                  variants?.find(
+                    (v) => v.compare_at_price_cents && v.compare_at_price_cents > v.price_cents
+                  )?.compare_at_price_cents ?? null
+                return {
+                  id: p.id,
+                  slug: p.slug,
+                  name: p.name,
+                  priceCents: minPrice,
+                  compareAtPriceCents: compareAt,
+                  imageUrl: imgs[0]?.url ?? '',
+                  imageAlt: imgs[0]?.alt ?? p.name,
+                  imageUrl2: imgs[1]?.url ?? null,
+                  dualImageMode:
+                    ((p as Record<string, unknown>).dual_image_mode as boolean) ?? false,
+                  isFeatured: ((p as Record<string, unknown>).is_featured as boolean) ?? false,
+                  isInWishlist: exclusiveWishlistSet.has(p.id),
+                  createdAt: p.created_at,
+                }
+              })}
+            />
 
             {/* Quick Links */}
             <section className="grid gap-3 sm:grid-cols-2">

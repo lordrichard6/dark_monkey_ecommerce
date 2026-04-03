@@ -295,6 +295,42 @@ export async function makeCustomProductPublic(
   return { ok: true }
 }
 
+/**
+ * Make an exclusive product public directly by product ID.
+ * Validates that the calling user is the exclusive owner.
+ */
+export async function makeExclusiveProductPublic(
+  productId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) return { ok: false, error: 'Unauthorized' }
+
+  const admin = getAdminClient()
+  if (!admin) return { ok: false, error: 'Service not configured' }
+
+  // Verify this product actually belongs to this user
+  const { data: product } = await admin
+    .from('products')
+    .select('id, is_exclusive, exclusive_user_id')
+    .eq('id', productId)
+    .eq('exclusive_user_id', userData.user.id)
+    .eq('is_exclusive', true)
+    .single()
+
+  if (!product) return { ok: false, error: 'Product not found or not yours' }
+
+  const { error } = await admin
+    .from('products')
+    .update({ is_exclusive: false, exclusive_user_id: null })
+    .eq('id', productId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidateLocales('/account')
+  return { ok: true }
+}
+
 // ─── Admin Actions ────────────────────────────────────────────────────────────
 
 /**

@@ -14,6 +14,7 @@ import { ProductTagsField } from './product-tags-field'
 import { ProductToggleStatus } from './product-toggle-status'
 import { ProductToggleDualImage } from './product-toggle-dual-image'
 import { ProductToggleFeatured } from './product-toggle-featured'
+import { ProductToggleExclusive } from './product-toggle-exclusive'
 import { ProductDangerZone } from './product-danger-zone'
 import { ProductInfoFields } from './product-info-fields'
 import { CopyIdButton } from './copy-id-button'
@@ -44,7 +45,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
       </div>
     )
 
-  const [productRes, tagsRes, productTagsRes, allCategories, shipmentInfo, gpsrInfo] =
+  const [productRes, tagsRes, productTagsRes, allCategories, shipmentInfo, gpsrInfo, usersRpcRes] =
     await Promise.all([
       supabase
         .from('products')
@@ -58,6 +59,8 @@ export default async function AdminProductDetailPage({ params }: Props) {
         is_active,
         is_featured,
         is_customizable,
+        is_exclusive,
+        exclusive_user_id,
         dual_image_mode,
         printful_sync_product_id,
         material_info,
@@ -85,7 +88,18 @@ export default async function AdminProductDetailPage({ params }: Props) {
       getCategories(),
       getStoreSetting('shipment_info'),
       getStoreSetting('gpsr_info'),
+      // Use rpc instead of auth.admin.listUsers() — avoids GoTrue JWT issues in local dev
+      supabase.rpc('get_users_list'),
     ])
+
+  // Build user list for the exclusive dropdown
+  const adminUsers = (
+    (usersRpcRes.data ?? []) as { id: string; email: string; display_name: string | null }[]
+  ).map((u) => ({
+    id: u.id,
+    email: u.email,
+    displayName: u.display_name,
+  }))
 
   const { data: product, error } = productRes
 
@@ -240,6 +254,16 @@ export default async function AdminProductDetailPage({ params }: Props) {
                 initialIsFeatured={
                   ((product as Record<string, unknown>).is_featured as boolean) ?? false
                 }
+              />
+              <ProductToggleExclusive
+                productId={product.id}
+                initialIsExclusive={
+                  ((product as Record<string, unknown>).is_exclusive as boolean) ?? false
+                }
+                initialExclusiveUserId={
+                  ((product as Record<string, unknown>).exclusive_user_id as string | null) ?? null
+                }
+                users={adminUsers}
               />
               {product.is_customizable && (
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-900/40 px-3 py-1.5 text-xs font-medium text-amber-400 ring-1 ring-amber-500/20">

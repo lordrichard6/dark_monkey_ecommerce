@@ -65,6 +65,8 @@ export default async function AdminProductsPage({
       is_active,
       is_featured,
       is_customizable,
+      is_exclusive,
+      exclusive_user_id,
       category_id,
       categories (id, name),
       product_images (id, url, sort_order),

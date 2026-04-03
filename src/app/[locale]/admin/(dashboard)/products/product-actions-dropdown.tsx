@@ -20,6 +20,13 @@ export function ProductActionsDropdown({ productId, productName, productSlug, is
   const [open, setOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [loading, setLoading] = useState<'status' | 'delete' | 'duplicate' | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  function handleCopyId() {
+    navigator.clipboard.writeText(productId)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -110,6 +117,15 @@ export function ProductActionsDropdown({ productId, productName, productSlug, is
             <ExternalIcon className="h-4 w-4" />
             {t('products.viewOnStore')}
           </Link>
+
+          <button
+            type="button"
+            onClick={handleCopyId}
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800"
+          >
+            <CopyIcon className="h-4 w-4" />
+            {copied ? 'Copied!' : 'Copy ID'}
+          </button>
 
           <div className="my-1 border-t border-zinc-800" />
 
@@ -260,6 +276,24 @@ function DuplicateIcon({ className }: { className?: string }) {
     >
       <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
       <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  )
+}
+
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
     </svg>
   )
 }
