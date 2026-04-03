@@ -176,6 +176,7 @@ export async function Header() {
         supportCounts={supportCounts}
         orderCounts={orderCounts}
         newUsersCount={newUsersCount}
+        customRequestsCount={customRequestsCount}
       />
     </>
   )

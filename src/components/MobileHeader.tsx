@@ -23,6 +23,7 @@ type Props = {
   supportCounts?: { open: number; inProgress: number }
   orderCounts?: { paid: number; processing: number; shipped: number }
   newUsersCount?: number
+  customRequestsCount?: number
 }
 
 export function MobileHeader({
@@ -35,6 +36,7 @@ export function MobileHeader({
   supportCounts,
   orderCounts,
   newUsersCount = 0,
+  customRequestsCount = 0,
 }: Props) {
   const t = useTranslations('common')
   const tUser = useTranslations('userMenu')
@@ -571,6 +573,20 @@ export function MobileHeader({
               <SettingsIcon className="h-5 w-5 shrink-0" />
               {tAdmin('nav.settings')}
             </Link>
+            {/* 11. Custom Requests */}
+            <Link
+              href="/admin/custom-requests"
+              onClick={closeAdmin}
+              className={adminLinkClass('/admin/custom-requests')}
+            >
+              <PaletteIcon className="h-5 w-5 shrink-0" />
+              <span className="flex-1">Custom</span>
+              {customRequestsCount > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/20 px-1.5 text-xs font-bold text-amber-400">
+                  {customRequestsCount}
+                </span>
+              )}
+            </Link>
           </nav>
 
           {/* View store link */}
@@ -977,6 +993,27 @@ function StarIcon({ className }: { className?: string }) {
       className={className}
     >
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  )
+}
+
+function PaletteIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
     </svg>
   )
 }
