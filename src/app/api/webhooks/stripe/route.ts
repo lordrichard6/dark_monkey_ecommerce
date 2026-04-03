@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { processSuccessfulCheckout } from '@/lib/orders'
+import { markChangeRequestPaid } from '@/actions/custom-products'
 
 // Allow up to 60s — Stripe requires a response within 30s, and we need time for
 // Stripe API + DB writes + Printful API calls. Default Vercel timeout (10s) is too short.
@@ -34,11 +35,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  const session = eventBytes.data.object as { id: string; status: string; payment_status: string }
+  const session = eventBytes.data.object as {
+    id: string
+    status: string
+    payment_status: string
+    metadata?: Record<string, string>
+  }
   // Log only non-PII fields — never log shipping_details (customer name/address)
   console.log(
     `[Stripe Webhook] checkout.session.completed — session: ${session.id}, status: ${session.status}, payment: ${session.payment_status}`
   )
+
+  // Custom change request payment — handled separately from normal orders
+  if (session.metadata?.type === 'custom_change_request') {
+    try {
+      await markChangeRequestPaid(session.id)
+      return NextResponse.json({ received: true, type: 'custom_change_request' })
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown error'
+      console.error('[Stripe Webhook] Custom change request processing failed:', errMsg)
+      return NextResponse.json({ error: errMsg }, { status: 500 })
+    }
+  }
 
   try {
     const result = await processSuccessfulCheckout(session.id)

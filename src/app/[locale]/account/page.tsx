@@ -7,7 +7,7 @@ import { ProfileStats } from '@/components/profile/ProfileStats'
 import { PointsDisplay } from '@/components/profile/PointsDisplay'
 import { ReferralCard } from '@/components/profile/ReferralCard'
 import { AchievementGrid } from '@/components/profile/AchievementBadge'
-import { Edit, ShoppingBag, Heart, Shield, Bell, LifeBuoy } from 'lucide-react'
+import { Edit, ShoppingBag, Heart, Shield, Bell, LifeBuoy, Palette } from 'lucide-react'
 import { NotificationsBadge } from '@/components/account/NotificationsBadge'
 import md5 from 'md5'
 
@@ -265,6 +265,20 @@ export default async function AccountPage() {
                     )}
                   </div>
                   <p className="text-sm text-zinc-500">{t('viewSupport')}</p>
+                </div>
+              </Link>
+
+              {/* Custom Products */}
+              <Link
+                href="/account/customize"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
+              >
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <Palette className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-medium text-zinc-50">{t('customProducts')}</p>
+                  <p className="text-sm text-zinc-500">{t('viewCustomProducts')}</p>
                 </div>
               </Link>
 

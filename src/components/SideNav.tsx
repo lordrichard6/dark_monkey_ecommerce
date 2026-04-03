@@ -15,6 +15,7 @@ type Props = {
   supportCounts?: { open: number; inProgress: number }
   orderCounts?: { paid: number; processing: number; shipped: number }
   newUsersCount?: number
+  customRequestsCount?: number
 }
 
 const SIDEBAR_COLLAPSED = 64
@@ -27,6 +28,7 @@ export function SideNav({
   supportCounts,
   orderCounts,
   newUsersCount = 0,
+  customRequestsCount = 0,
 }: Props) {
   const t = useTranslations('common')
   const pathname = usePathname()
@@ -50,6 +52,7 @@ export function SideNav({
         { href: '/admin/customers', label: 'Users', icon: UsersIcon },
         { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon, disabled: true },
         { href: '/admin/support', label: 'Support', icon: LifeBuoyIcon },
+        { href: '/admin/custom-requests', label: 'Custom', icon: PaletteIcon },
         { href: '/admin/board', label: 'Board', icon: KanbanIcon },
         { href: '/admin/accounting', label: t('accounting'), icon: ReceiptIcon },
         { href: '/admin/settings', label: t('settings'), icon: SettingsIcon },
@@ -58,7 +61,7 @@ export function SideNav({
 
   return (
     <aside
-      className="fixed left-0 top-0 z-40 hidden h-screen flex-col overflow-hidden border-r border-white/10 bg-black/60 backdrop-blur-xl transition-[width] duration-200 ease-out md:flex"
+      className="fixed left-0 top-0 z-[65] hidden h-screen flex-col overflow-hidden border-r border-white/10 bg-black/60 backdrop-blur-xl transition-[width] duration-200 ease-out md:flex"
       style={{ width: expanded ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => {
@@ -208,8 +211,16 @@ export function SideNav({
               const isCustomers = href === '/admin/customers'
               const hasCustomerBadge = isCustomers && newUsersCount > 0
 
+              const isCustomRequests = href === '/admin/custom-requests'
+              const customReqCount = isCustomRequests ? customRequestsCount : 0
+              const hasCustomReqBadge = isCustomRequests && customReqCount > 0
+
               const hasBadges =
-                hasBoardBadges || hasSupportBadges || hasOrderBadges || hasCustomerBadge
+                hasBoardBadges ||
+                hasSupportBadges ||
+                hasOrderBadges ||
+                hasCustomerBadge ||
+                hasCustomReqBadge
 
               const inner = (
                 <>
@@ -258,6 +269,12 @@ export function SideNav({
                         {hasCustomerBadge && (
                           <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-500 px-0.5 text-[7px] font-bold leading-none text-white">
                             {newUsersCount > 9 ? '9+' : newUsersCount}
+                          </span>
+                        )}
+                        {/* Custom requests: amber top-left */}
+                        {hasCustomReqBadge && (
+                          <span className="absolute -left-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-amber-500 px-0.5 text-[7px] font-bold leading-none text-black">
+                            {customReqCount > 9 ? '9+' : customReqCount}
                           </span>
                         )}
                       </>
@@ -313,6 +330,11 @@ export function SideNav({
                           {hasCustomerBadge && (
                             <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold leading-none text-white">
                               {newUsersCount > 9 ? '9+' : newUsersCount}
+                            </span>
+                          )}
+                          {hasCustomReqBadge && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold leading-none text-black">
+                              {customReqCount > 9 ? '9+' : customReqCount}
                             </span>
                           )}
                         </div>
@@ -651,6 +673,27 @@ function LifeBuoyIcon({ className }: { className?: string }) {
       <line x1="14.83" y1="9.17" x2="19.07" y2="4.93" />
       <line x1="14.83" y1="9.17" x2="18.36" y2="5.64" />
       <line x1="4.93" y1="19.07" x2="9.17" y2="14.83" />
+    </svg>
+  )
+}
+
+function PaletteIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
     </svg>
   )
 }

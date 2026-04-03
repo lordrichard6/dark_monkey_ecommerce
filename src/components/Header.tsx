@@ -29,6 +29,7 @@ const getCachedAdminBadgeCounts = unstable_cache(
       paidOrdersRes,
       processingOrdersRes,
       shippedOrdersRes,
+      pendingCustomRequestsRes,
     ] = await Promise.all([
       client
         .from('admin_board_items')
@@ -52,9 +53,25 @@ const getCachedAdminBadgeCounts = unstable_cache(
         .from('user_profiles')
         .select('id', { count: 'exact', head: true })
         .gte('created_at', twoDaysAgo),
-      client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
-      client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'processing'),
-      client.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'shipped'),
+      client
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'paid')
+        .eq('is_archived', false),
+      client
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'processing')
+        .eq('is_archived', false),
+      client
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'shipped')
+        .eq('is_archived', false),
+      client
+        .from('custom_product_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending'),
     ])
 
     return {
@@ -69,6 +86,7 @@ const getCachedAdminBadgeCounts = unstable_cache(
         shipped: shippedOrdersRes.count ?? 0,
       },
       newUsersCount: newUsersRes.count ?? 0,
+      customRequestsCount: pendingCustomRequestsRes.count ?? 0,
     }
   },
   ['admin-nav-badge-counts'],
@@ -118,6 +136,7 @@ export async function Header() {
   let supportCounts: { open: number; inProgress: number } | undefined
   let orderCounts: { paid: number; processing: number; shipped: number } | undefined
   let newUsersCount = 0
+  let customRequestsCount = 0
 
   if (isAdmin) {
     try {
@@ -127,6 +146,7 @@ export async function Header() {
         supportCounts = cached.supportCounts
         orderCounts = cached.orderCounts
         newUsersCount = cached.newUsersCount
+        customRequestsCount = cached.customRequestsCount
       }
     } catch {
       // non-critical — badges just won't show
@@ -146,6 +166,7 @@ export async function Header() {
         supportCounts={supportCounts}
         orderCounts={orderCounts}
         newUsersCount={newUsersCount}
+        customRequestsCount={customRequestsCount}
       />
       <DesktopTopBar {...userInfo} />
       <MobileHeader

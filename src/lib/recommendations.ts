@@ -36,6 +36,7 @@ export async function getRelatedProducts(
     )
     .neq('id', productId)
     .eq('is_active', true)
+    .eq('is_exclusive', false)
     .limit(limit * 2)
 
   if (excludeId) query = query.neq('id', excludeId)

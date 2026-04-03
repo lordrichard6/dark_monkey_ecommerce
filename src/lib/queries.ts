@@ -260,6 +260,7 @@ export const getCategoryBySlug = cache(async (slug: string) => {
     .in('category_id', categoryIds)
     .eq('is_active', true)
     .is('deleted_at', null)
+    .eq('is_exclusive', false)
     .order('created_at', { ascending: false })
 
   return {

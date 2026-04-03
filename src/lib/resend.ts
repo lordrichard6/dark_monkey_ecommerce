@@ -547,3 +547,99 @@ export async function sendReviewRequestEmail(payload: ReviewRequestPayload): Pro
     return false
   }
 }
+
+// ─── Custom product request received ─────────────────────────────────────────
+
+export interface CustomRequestReceivedPayload {
+  to: string
+  userName: string
+  articleType: string
+  artStyle: string
+  estimatedPriceCents: number
+  locale?: string
+}
+
+export async function sendCustomRequestReceivedEmail(
+  payload: CustomRequestReceivedPayload
+): Promise<{ ok: boolean; error?: string }> {
+  const client = getResendClient()
+  if (!client) return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
+
+  const { to, userName, articleType, artStyle, estimatedPriceCents, locale = 'en' } = payload
+
+  const priceFormatted = new Intl.NumberFormat('de-CH', {
+    style: 'currency',
+    currency: 'CHF',
+    minimumFractionDigits: 2,
+  }).format(estimatedPriceCents / 100)
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.dark-monkey.ch'
+
+  try {
+    const html = generateEmailHtml(locale, 'customRequestReceived', {
+      previewText: `We received your custom product request, ${userName}!`,
+      title: '🎨 Your Custom Product Request Is In!',
+      body: `Hi ${userName},<br><br>We've received your request for a custom <strong>${articleType}</strong> in <strong>${artStyle}</strong> style. Our team will review your design and get back to you shortly.<br><br>Estimated starting price: <strong>${priceFormatted}</strong>`,
+      details: [
+        { label: 'Article', value: articleType },
+        { label: 'Style', value: artStyle },
+        { label: 'Est. Price', value: priceFormatted },
+      ],
+      ctaText: 'View My Requests',
+      ctaUrl: `${appUrl}/${locale}/account/customize`,
+    })
+    const { error } = await client.emails.send({
+      from: getDefaultFrom(),
+      to,
+      subject: '🎨 Custom Product Request Received — Dark Monkey',
+      html,
+    })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[sendCustomRequestReceivedEmail]', err)
+    return { ok: false, error: message }
+  }
+}
+
+// ─── Custom product ready notification ───────────────────────────────────────
+
+export interface CustomProductReadyPayload {
+  to: string
+  userName: string
+  articleType: string
+  productUrl: string
+  locale?: string
+}
+
+export async function sendCustomProductReadyEmail(
+  payload: CustomProductReadyPayload
+): Promise<{ ok: boolean; error?: string }> {
+  const client = getResendClient()
+  if (!client) return { ok: false, error: 'RESEND_NOT_CONFIGURED' }
+
+  const { to, userName, articleType, productUrl, locale = 'en' } = payload
+
+  try {
+    const html = generateEmailHtml(locale, 'customProductReady', {
+      previewText: `Your custom ${articleType} is ready to order!`,
+      title: '🚀 Your Custom Product Is Ready!',
+      body: `Hi ${userName},<br><br>Great news! Your custom <strong>${articleType}</strong> has been created and is now available exclusively for you.<br><br>You can buy it, request one free design change, or make it public for everyone to purchase.`,
+      ctaText: 'View My Custom Product',
+      ctaUrl: productUrl,
+    })
+    const { error } = await client.emails.send({
+      from: getDefaultFrom(),
+      to,
+      subject: '🚀 Your Custom Product Is Ready — Dark Monkey',
+      html,
+    })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[sendCustomProductReadyEmail]', err)
+    return { ok: false, error: message }
+  }
+}

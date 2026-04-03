@@ -20,10 +20,7 @@ export async function getProductCardStatsMap(
 
   const [reviewData, orderItemData] = await Promise.all([
     // reviews: rating + count per product
-    supabase
-      .from('product_reviews')
-      .select('product_id, rating')
-      .in('product_id', productIds),
+    supabase.from('product_reviews').select('product_id, rating').in('product_id', productIds),
     // order_items joined with paid orders via product_variants for product_id
     supabase
       .from('order_items')
@@ -36,10 +33,12 @@ export async function getProductCardStatsMap(
 
   // Build review stats
   for (const row of reviewData.data ?? []) {
-    if (!result[row.product_id]) result[row.product_id] = { timesBought: 0, reviewCount: 0, avgRating: null }
+    if (!result[row.product_id])
+      result[row.product_id] = { timesBought: 0, reviewCount: 0, avgRating: null }
     result[row.product_id].reviewCount++
     result[row.product_id].avgRating =
-      ((result[row.product_id].avgRating ?? 0) * (result[row.product_id].reviewCount - 1) + row.rating) /
+      ((result[row.product_id].avgRating ?? 0) * (result[row.product_id].reviewCount - 1) +
+        row.rating) /
       result[row.product_id].reviewCount
   }
 
@@ -130,6 +129,7 @@ export async function fetchHomeProducts(
       )
       .eq('is_active', true)
       .is('deleted_at', null)
+      .eq('is_exclusive', false)
       .eq('product_tags.tags.slug', resolvedTag)
   } else {
     query = supabase
@@ -141,6 +141,7 @@ export async function fetchHomeProducts(
       )
       .eq('is_active', true)
       .is('deleted_at', null)
+      .eq('is_exclusive', false)
   }
 
   if (featured !== undefined) {

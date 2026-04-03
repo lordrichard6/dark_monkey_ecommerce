@@ -74,6 +74,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     )
     .eq('is_active', true)
     .is('deleted_at', null)
+    .eq('is_exclusive', false)
 
   if (error || !products) {
     return (

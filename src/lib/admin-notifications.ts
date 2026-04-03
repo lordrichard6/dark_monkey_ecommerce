@@ -1,6 +1,6 @@
 import { getAdminClient } from './supabase/admin'
 
-export type AdminNotificationType = 'order' | 'signup' | 'support'
+export type AdminNotificationType = 'order' | 'signup' | 'support' | 'custom_request'
 
 export interface CreateNotificationPayload {
   type: AdminNotificationType
