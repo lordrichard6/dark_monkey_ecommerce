@@ -4,6 +4,13 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { useTranslations, useLocale } from 'next-intl'
+import { enUS } from 'date-fns/locale/en-US'
+import { pt } from 'date-fns/locale/pt'
+import { de } from 'date-fns/locale/de'
+import { fr } from 'date-fns/locale/fr'
+import { it } from 'date-fns/locale/it'
+import type { Locale } from 'date-fns'
 import LikeButton from './LikeButton'
 import CommentSection from './CommentSection'
 import type {
@@ -11,6 +18,8 @@ import type {
   FeedPostType as PostType,
   FeedComment,
 } from '@/actions/feed'
+
+const DATE_LOCALES: Record<string, Locale> = { en: enUS, pt, de, fr, it }
 
 // ---------------------------------------------------------------------------
 // ExpandableBody — client sub-component
@@ -23,20 +32,19 @@ interface ExpandableBodyProps {
 
 function ExpandableBody({ html }: ExpandableBodyProps) {
   const [expanded, setExpanded] = useState(false)
+  const t = useTranslations('feed')
 
   return (
     <div>
       <div
-        className={`prose prose-sm prose-invert max-w-none text-zinc-300 ${
-          !expanded ? 'line-clamp-3' : ''
-        }`}
+        className={`blog-body ${!expanded ? 'line-clamp-3' : ''}`}
         dangerouslySetInnerHTML={{ __html: html }}
       />
       <button
         onClick={() => setExpanded((v) => !v)}
         className="mt-1 text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors"
       >
-        {expanded ? 'Show less' : 'Read more'}
+        {expanded ? t('showLess') : t('readMore')}
       </button>
     </div>
   )
@@ -113,36 +121,13 @@ export { CommentToggle }
 // Type badge config
 // ---------------------------------------------------------------------------
 
-interface BadgeConfig {
-  label: string
-  className: string
-}
-
-const TYPE_BADGE: Record<PostType, BadgeConfig> = {
-  drop: {
-    label: 'New Drop',
-    className: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  },
-  new_product: {
-    label: 'New Product',
-    className: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  },
-  promo: {
-    label: 'Promotion',
-    className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  },
-  story: {
-    label: 'Story',
-    className: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  },
-  community: {
-    label: 'Community',
-    className: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  },
-  sale: {
-    label: 'Sale',
-    className: 'bg-red-500/20 text-red-400 border-red-500/30',
-  },
+const TYPE_CLASSES: Record<PostType, string> = {
+  drop: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  new_product: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  promo: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  story: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  community: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  sale: 'bg-red-500/20 text-red-400 border-red-500/30',
 }
 
 // ---------------------------------------------------------------------------
@@ -155,7 +140,6 @@ interface FeedPostProps {
   isAdmin: boolean
   userHasLiked: boolean
   initialComments: FeedComment[]
-  locale: string
 }
 
 export default function FeedPost({
@@ -165,7 +149,10 @@ export default function FeedPost({
   userHasLiked,
   initialComments,
 }: FeedPostProps) {
-  const badge = TYPE_BADGE[post.type]
+  const t = useTranslations('feed')
+  const locale = useLocale()
+
+  const badgeClassName = TYPE_CLASSES[post.type]
   const authorName = post.author?.display_name ?? 'Dark Monkey'
   const authorInitial = authorName.trim().charAt(0).toUpperCase()
   const displayDate = post.published_at ?? post.created_at
@@ -195,9 +182,9 @@ export default function FeedPost({
         {/* Type badge */}
         <div>
           <span
-            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${badge.className}`}
+            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${badgeClassName}`}
           >
-            {badge.label}
+            {t(`types.${post.type}`)}
           </span>
         </div>
 
@@ -228,7 +215,7 @@ export default function FeedPost({
               <p className="truncate text-sm font-semibold text-zinc-200 group-hover:text-amber-400 transition-colors">
                 {post.product.name}
               </p>
-              <p className="text-xs text-zinc-500">View product →</p>
+              <p className="text-xs text-zinc-500">{t('viewProduct')} →</p>
             </div>
           </Link>
         )}
@@ -241,7 +228,10 @@ export default function FeedPost({
           <span className="text-zinc-400">{authorName}</span>
           <span>·</span>
           <span suppressHydrationWarning>
-            {formatDistanceToNow(new Date(displayDate), { addSuffix: true })}
+            {formatDistanceToNow(new Date(displayDate), {
+              locale: DATE_LOCALES[locale] ?? enUS,
+              addSuffix: true,
+            })}
           </span>
         </div>
 

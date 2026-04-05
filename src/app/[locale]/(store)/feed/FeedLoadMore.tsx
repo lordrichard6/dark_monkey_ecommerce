@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import FeedPost from '@/components/feed/FeedPost'
-import { getFeedPosts } from '@/actions/feed'
+import { getFeedPosts, getUserLikedPosts } from '@/actions/feed'
 import type { FeedPost as FeedPostType, FeedComment } from '@/actions/feed'
 
 interface FeedLoadMoreProps {
@@ -11,7 +12,6 @@ interface FeedLoadMoreProps {
   isAdmin: boolean
   userLikedIds: string[]
   commentsMap: Record<string, FeedComment[]>
-  locale: string
 }
 
 export default function FeedLoadMore({
@@ -20,8 +20,8 @@ export default function FeedLoadMore({
   isAdmin,
   userLikedIds,
   commentsMap,
-  locale,
 }: FeedLoadMoreProps) {
+  const t = useTranslations('feed')
   const [posts, setPosts] = useState<FeedPostType[]>(initialPosts)
   const [localCommentsMap, setLocalCommentsMap] =
     useState<Record<string, FeedComment[]>>(commentsMap)
@@ -47,6 +47,11 @@ export default function FeedLoadMore({
         setPosts((prev) => [...prev, ...newPosts])
         setLocalCommentsMap((prev) => ({ ...prev, ...newCommentsMap }))
         setPage(nextPage)
+
+        // Fetch liked state for newly loaded posts
+        const newPostIds = newPosts.map((p) => p.id)
+        const newLikedIds = await getUserLikedPosts(newPostIds)
+        setLikedIds((prev) => [...prev, ...newLikedIds])
       }
 
       if (newPosts.length < 10) {
@@ -69,7 +74,6 @@ export default function FeedLoadMore({
           isAdmin={isAdmin}
           userHasLiked={likedIds.includes(post.id)}
           initialComments={localCommentsMap[post.id] ?? []}
-          locale={locale}
         />
       ))}
 
@@ -80,7 +84,7 @@ export default function FeedLoadMore({
             disabled={loading}
             className="rounded-full border border-zinc-700 bg-zinc-800/60 px-6 py-2.5 text-sm font-medium text-zinc-300 hover:border-amber-500/50 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Loading…' : 'Load more'}
+            {loading ? t('loading') : t('loadMore')}
           </button>
         </div>
       )}

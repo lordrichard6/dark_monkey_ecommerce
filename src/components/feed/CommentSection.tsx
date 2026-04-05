@@ -3,8 +3,17 @@
 import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { useTranslations, useLocale } from 'next-intl'
+import { enUS } from 'date-fns/locale/en-US'
+import { pt } from 'date-fns/locale/pt'
+import { de } from 'date-fns/locale/de'
+import { fr } from 'date-fns/locale/fr'
+import { it } from 'date-fns/locale/it'
+import type { Locale } from 'date-fns'
 import { addComment, deleteComment } from '@/actions/feed'
 import type { FeedComment } from '@/actions/feed'
+
+const DATE_LOCALES: Record<string, Locale> = { en: enUS, pt, de, fr, it }
 
 interface CommentSectionProps {
   postId: string
@@ -28,6 +37,9 @@ export default function CommentSection({
   currentUserId,
   isAdmin,
 }: CommentSectionProps) {
+  const t = useTranslations('feed')
+  const locale = useLocale()
+
   const [comments, setComments] = useState<FeedComment[]>(initialComments)
   const [body, setBody] = useState('')
   const [submitPending, startSubmitTransition] = useTransition()
@@ -78,11 +90,11 @@ export default function CommentSection({
     <div className="border-t border-zinc-800 pt-4">
       {/* Comment list */}
       {comments.length === 0 ? (
-        <p className="py-4 text-center text-sm text-zinc-500">Be the first to comment</p>
+        <p className="py-4 text-center text-sm text-zinc-500">{t('beFirstToComment')}</p>
       ) : (
         <ul className="space-y-3 pb-4">
           {comments.map((comment) => {
-            const displayName = comment.author?.display_name ?? 'Anonymous'
+            const displayName = comment.author?.display_name ?? t('anonymous')
             const canDelete =
               isAdmin || (currentUserId !== null && comment.user_id === currentUserId)
             const isBeingDeleted = deletingId === comment.id
@@ -97,7 +109,10 @@ export default function CommentSection({
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-semibold text-zinc-200">{displayName}</span>
                     <span className="text-xs text-zinc-500" suppressHydrationWarning>
-                      {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(comment.created_at), {
+                        locale: DATE_LOCALES[locale] ?? enUS,
+                        addSuffix: true,
+                      })}
                     </span>
                     {canDelete && (
                       <button
@@ -105,7 +120,7 @@ export default function CommentSection({
                         disabled={isBeingDeleted}
                         className="ml-auto text-xs text-zinc-600 hover:text-red-400 transition-colors"
                       >
-                        Delete
+                        {t('delete')}
                       </button>
                     )}
                   </div>
@@ -124,9 +139,9 @@ export default function CommentSection({
             href="/login"
             className="text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors"
           >
-            Log in
+            {t('login')}
           </Link>{' '}
-          to leave a comment.
+          {t('toComment')}
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
@@ -134,7 +149,7 @@ export default function CommentSection({
             ref={textareaRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Write a comment…"
+            placeholder={t('addComment')}
             maxLength={2000}
             rows={2}
             disabled={submitPending}
@@ -142,14 +157,14 @@ export default function CommentSection({
           />
           <div className="flex items-center justify-between">
             <span className={`text-xs ${charsLeft < 100 ? 'text-amber-400' : 'text-zinc-600'}`}>
-              {charsLeft} characters left
+              {t('charsLeft', { count: charsLeft })}
             </span>
             <button
               type="submit"
               disabled={submitPending || body.trim().length === 0}
               className="rounded-lg bg-amber-500 px-4 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {submitPending ? 'Posting…' : 'Post'}
+              {submitPending ? t('posting') : t('submit')}
             </button>
           </div>
         </form>

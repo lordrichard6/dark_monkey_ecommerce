@@ -1,23 +1,29 @@
 import { type Metadata } from 'next'
-import { setRequestLocale } from 'next-intl/server'
+import { setRequestLocale, getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { getFeedPosts, getUserLikedPosts, getComments } from '@/actions/feed'
 import FeedLoadMore from './FeedLoadMore'
 
 export const revalidate = 60
 
-export const metadata: Metadata = {
-  title: 'Feed | Dark Monkey',
-  description: 'Latest drops, promotions, and stories from Dark Monkey',
-}
-
 interface Props {
   params: Promise<{ locale: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'feed' })
+  return {
+    title: `${t('title')} | Dark Monkey`,
+    description: t('subtitle'),
+  }
 }
 
 export default async function FeedPage({ params }: Props) {
   const { locale } = await params
   setRequestLocale(locale)
+
+  const t = await getTranslations({ locale, namespace: 'feed' })
 
   // Auth + admin check
   const supabase = await createClient()
@@ -44,9 +50,9 @@ export default async function FeedPage({ params }: Props) {
     return (
       <main className="min-h-screen bg-zinc-950">
         <div className="mx-auto max-w-2xl px-4 py-12">
-          <PageHeader />
+          <PageHeader title={t('title')} subtitle={t('subtitle')} />
           <div className="mt-16 flex flex-col items-center gap-3 text-center">
-            <p className="text-zinc-400">Nothing here yet. Check back soon.</p>
+            <p className="text-zinc-400">{t('noPosts')}</p>
           </div>
         </div>
       </main>
@@ -69,7 +75,7 @@ export default async function FeedPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-zinc-950">
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <PageHeader />
+        <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
         <div className="mt-10">
           <FeedLoadMore
@@ -78,7 +84,6 @@ export default async function FeedPage({ params }: Props) {
             isAdmin={isAdmin}
             userLikedIds={likedIds}
             commentsMap={commentsMap}
-            locale={locale}
           />
         </div>
       </div>
@@ -86,13 +91,11 @@ export default async function FeedPage({ params }: Props) {
   )
 }
 
-function PageHeader() {
+function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="mb-2">
-      <h1 className="text-3xl font-bold tracking-tight text-zinc-100">Feed</h1>
-      <p className="mt-2 text-sm text-zinc-400">
-        Stay up to date with drops, stories, and community highlights
-      </p>
+      <h1 className="text-3xl font-bold tracking-tight text-zinc-100">{title}</h1>
+      <p className="mt-2 text-sm text-zinc-400">{subtitle}</p>
     </div>
   )
 }

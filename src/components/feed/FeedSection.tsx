@@ -60,7 +60,6 @@ export default async function FeedSection({ locale }: FeedSectionProps) {
             isAdmin={isAdmin}
             userHasLiked={likedIds.includes(post.id)}
             initialComments={commentsPerPost[i]}
-            locale={locale}
           />
         ))}
       </div>
