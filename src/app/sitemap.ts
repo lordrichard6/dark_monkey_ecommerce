@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { routing } from '@/i18n/routing'
+import { getAllSlugs } from '@/content/blog'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
 const locales = routing.locales
@@ -18,6 +19,13 @@ function localizedUrls(path: string, lastModified?: Date): MetadataRoute.Sitemap
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = getAdminClient()
 
+  // Blog pages
+  const blogSlugs = getAllSlugs()
+  const blogPages: MetadataRoute.Sitemap = [
+    ...localizedUrls('/blog'),
+    ...blogSlugs.flatMap((slug) => localizedUrls(`/blog/${slug}`)),
+  ]
+
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     ...localizedUrls('/'),
@@ -32,6 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localizedUrls('/terms'),
     ...localizedUrls('/refund'),
     ...localizedUrls('/shipping'),
+    ...blogPages,
   ]
 
   if (!supabase) {

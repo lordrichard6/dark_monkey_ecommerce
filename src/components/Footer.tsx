@@ -42,6 +42,7 @@ const COUNTRY_REGION_OPTIONS = [
 ] as const
 
 const FOOTER_LINKS = [
+  { href: '/blog', key: 'blog' },
   { href: '/refund', key: 'refundPolicy' },
   { href: '/privacy', key: 'privacyPolicy' },
   { href: '/terms', key: 'termsOfService' },
@@ -434,7 +435,11 @@ export function Footer() {
               className="rounded grayscale opacity-30 transition-all duration-300 group-hover:opacity-70 group-hover:grayscale-0"
             />
             <span className="text-[11px] font-bold tracking-widest text-zinc-700 transition-colors duration-300 group-hover:text-zinc-300">
-              LOPES<span className="text-amber-500/60 group-hover:text-amber-400 transition-colors duration-300">2</span>TECH
+              LOPES
+              <span className="text-amber-500/60 group-hover:text-amber-400 transition-colors duration-300">
+                2
+              </span>
+              TECH
             </span>
           </a>
         </div>

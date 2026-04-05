@@ -68,7 +68,8 @@
     "reviews": "Avis",
     "activity": "Activité",
     "gallery": "Galerie",
-    "features": "Fonctionnalités"
+    "features": "Fonctionnalités",
+    "blog": "Blog"
   },
   "search": {
     "placeholder": "Rechercher des produits...",
@@ -303,7 +304,8 @@
     "supportDescription": "Nous sommes là pour vous aider avec tout.",
     "visitFaq": "Consulter la FAQ",
     "openTicket": "Ouvrir un ticket",
-    "ticketDesc": "Suivez votre demande, nous répondons vite."
+    "ticketDesc": "Suivez votre demande, nous répondons vite.",
+    "blog": "Blog"
   },
   "store": {
     "categoriesTitle": "Catégories",
