@@ -37,13 +37,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return { title: 'Product' }
 
-  // Strip HTML tags from description for meta
-  const description = product.description
-    ? product.description
-        .replace(/<[^>]+>/g, '')
-        .trim()
-        .slice(0, 160)
-    : `Shop ${product.name} at Dark Monkey`
+  // Use meta_description override if set, otherwise derive from the locale-aware description
+  const translations = (product as Record<string, unknown>).description_translations as Record<
+    string,
+    string
+  > | null
+  const localeDescription =
+    locale && translations?.[locale] ? translations[locale] : product.description
+  const metaDescriptionOverride = (
+    (product as Record<string, unknown>).meta_description as string | null
+  )?.trim()
+  const description =
+    metaDescriptionOverride ||
+    (localeDescription
+      ? localeDescription
+          .replace(/<[^>]+>/g, '')
+          .trim()
+          .slice(0, 160)
+      : `Shop ${product.name} at Dark Monkey`)
 
   const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
 
@@ -262,13 +273,14 @@ export default async function ProductPage({ params, searchParams }: Props) {
         <ProductMain
           product={{
             ...product,
-            // Sanitize HTML server-side before it reaches the client component.
-            // Prevents XSS if product descriptions contain malicious markup
-            // from a compromised data source.
-            // Parse Printful plain-text descriptions to HTML for existing products
-            // (new syncs already store parsed HTML; this is a backwards-compat pass)
+            // Pick locale-aware description: use translation if available, fall back to EN
             description: sanitizeProductHtml(
-              parsePrintfulDescription(product.description) ?? product.description
+              (() => {
+                const trans = (product as Record<string, unknown>)
+                  .description_translations as Record<string, string> | null
+                const localized = locale && trans?.[locale] ? trans[locale] : product.description
+                return parsePrintfulDescription(localized) ?? localized
+              })()
             ),
             categories: category,
             images: sortedImages,

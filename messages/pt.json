@@ -180,16 +180,16 @@
     "socialPerk3": "Bastidores",
     "customEyebrow": "Encomendas Personalizadas",
     "customTitle": "a tua visão. o nosso talento.",
-    "customSubtitle": "Tens um design em mente? Envia-nos as tuas imagens, esboços ou referências e nós imprimimos a tua ideia em peças de roupa premium — exatamente como quiseres.",
-    "customStep1Title": "Prepara o teu design",
-    "customStep1Desc": "Reúne as tuas imagens, esboços ou referências visuais. Quanto mais detalhe partilhares, mais próximo o resultado estará da tua visão.",
-    "customStep2Title": "Envia-nos um email",
-    "customStep2Desc": "Envia um email para support@dark-monkey.ch com os teus ficheiros e uma descrição do que pretendes — tipo de peça, cores, posicionamento e quantidade.",
-    "customStep3Title": "Nós damos-lhe vida",
-    "customStep3Desc": "A nossa equipa analisa o teu pedido, confirma os detalhes e produz as tuas peças personalizadas com a mesma qualidade da nossa coleção regular.",
-    "customCta": "Envia o teu design",
+    "customSubtitle": "Cria uma conta, envia o teu pedido com imagens de referência e nós criamos uma peça personalizada exclusivamente para ti — estilo artístico, tipo de artigo, cada detalhe é teu.",
+    "customStep1Title": "Envia o teu pedido",
+    "customStep1Desc": "Carrega as tuas imagens de referência, escolhe o teu estilo artístico e o tipo de artigo, e descreve a tua visão. Quanto mais detalhe partilhares, mais próximo o resultado.",
+    "customStep2Title": "Nós criamos exclusivamente para ti",
+    "customStep2Desc": "A nossa equipa analisa o teu pedido e cria a tua peça personalizada. Quando estiver pronta, aparece exclusivamente na tua conta e recebes uma notificação por email.",
+    "customStep3Title": "Aprova ou pede alterações",
+    "customStep3Desc": "A primeira alteração é sempre gratuita. Adoraste o resultado? Mantém-no exclusivo ou torna-o público para que todos o possam encomendar.",
+    "customCta": "Iniciar pedido",
     "customEmailSubject": "Pedido de Design Personalizado",
-    "customEmailBody": "Olá equipa Dark Monkey,\n\nGostaria de encomendar um design personalizado. Aqui estão os detalhes:\n\n- Tipo de peça:\n- Cores:\n- Posicionamento:\n- Quantidade:\n- Descrição:\n\n[Anexa as tuas imagens aqui]\n\nObrigado!"
+    "customEmailBody": ""
   },
   "cookie": {
     "message": "Usamos cookies para persistência do carrinho, autenticação e uma melhor experiência de compra.",
@@ -1534,6 +1534,26 @@
       "syncing": "A sincronizar…",
       "syncedOk": "{n, plural, one {# sincronizado} other {# sincronizados}}",
       "syncedFailed": "{n, plural, one {# falhado} other {# falhados}}"
+    }
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Últimos lançamentos, histórias e destaques da comunidade",
+    "whatsHappening": "O que está a acontecer",
+    "viewAll": "Ver tudo",
+    "loadMore": "Carregar mais",
+    "noPosts": "Ainda não há nada aqui. Volta em breve.",
+    "loginToComment": "Entra para comentar",
+    "addComment": "Adiciona um comentário…",
+    "submit": "Publicar",
+    "delete": "Eliminar",
+    "types": {
+      "drop": "Novo Lançamento",
+      "promo": "Promoção",
+      "story": "História",
+      "community": "Comunidade",
+      "new_product": "Novo Produto",
+      "sale": "Saldo"
     }
   }
 }

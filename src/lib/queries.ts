@@ -30,6 +30,8 @@ export const getProductBySlug = cache(async (slug: string) => {
       name,
       slug,
       description,
+      description_translations,
+      meta_description,
       is_customizable,
       category_id,
       story_content,
@@ -71,7 +73,9 @@ export const getProductMetadata = cache(async (slug: string) => {
 
   const { data: product } = await supabase
     .from('products')
-    .select('name, description, categories (name, slug), product_images (url, sort_order)')
+    .select(
+      'name, description, description_translations, meta_description, categories (name, slug), product_images (url, sort_order)'
+    )
     .eq('slug', slug)
     .eq('is_active', true)
     .single()

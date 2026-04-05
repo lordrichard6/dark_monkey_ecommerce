@@ -55,6 +55,8 @@ export default async function AdminProductDetailPage({ params }: Props) {
         name,
         slug,
         description,
+        description_translations,
+        meta_description,
         category_id,
         is_active,
         is_featured,
@@ -67,6 +69,8 @@ export default async function AdminProductDetailPage({ params }: Props) {
         care_instructions,
         print_method,
         size_guide_url,
+        origin_country,
+        avg_fulfillment_time,
         created_at,
         updated_at,
         product_images (id, url, alt, sort_order, color, source),
@@ -287,7 +291,16 @@ export default async function AdminProductDetailPage({ params }: Props) {
           </div>
         }
         descriptionSlot={
-          <ProductDescriptionField productId={product.id} description={product.description} />
+          <ProductDescriptionField
+            productId={product.id}
+            description={product.description}
+            descriptionTranslations={
+              (product as Record<string, unknown>).description_translations as Record<
+                string,
+                string
+              > | null
+            }
+          />
         }
       />
 
@@ -303,6 +316,11 @@ export default async function AdminProductDetailPage({ params }: Props) {
           careInstructions={(product as Record<string, unknown>).care_instructions as string | null}
           printMethod={(product as Record<string, unknown>).print_method as string | null}
           sizeGuideUrl={(product as Record<string, unknown>).size_guide_url as string | null}
+          metaDescription={(product as Record<string, unknown>).meta_description as string | null}
+          originCountry={(product as Record<string, unknown>).origin_country as string | null}
+          avgFulfillmentTime={
+            (product as Record<string, unknown>).avg_fulfillment_time as string | null
+          }
           shipmentInfo={shipmentInfo}
           gpsrInfo={gpsrInfo}
         />

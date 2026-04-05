@@ -24,6 +24,9 @@ type Props = {
   careInstructions: string | null
   printMethod: string | null
   sizeGuideUrl: string | null
+  metaDescription: string | null
+  originCountry: string | null
+  avgFulfillmentTime: string | null
   shipmentInfo: string | null
   gpsrInfo: string | null
 }
@@ -34,6 +37,9 @@ export function ProductInfoFields({
   careInstructions: initialCare,
   printMethod: initialPrintMethod,
   sizeGuideUrl: initialSizeGuideUrl,
+  metaDescription: initialMetaDescription,
+  originCountry: initialOriginCountry,
+  avgFulfillmentTime: initialAvgFulfillmentTime,
   shipmentInfo: initialShipment,
   gpsrInfo: initialGpsr,
 }: Props) {
@@ -42,6 +48,19 @@ export function ProductInfoFields({
 
   return (
     <div className="space-y-6">
+      <TextField
+        label="SEO Description"
+        hint="Overrides the auto-generated meta description in Google (max 160 chars). Leave empty to use the main description."
+        initialValue={initialMetaDescription ?? ''}
+        maxLength={160}
+        onSave={(val) =>
+          updateProduct(productId, { meta_description: val || null }).then((r) => {
+            if (r.ok) router.refresh()
+            return r
+          })
+        }
+      />
+
       <TextField
         label={t('fields.printMethod')}
         hint={t('fields.printMethodHint')}
@@ -60,6 +79,30 @@ export function ProductInfoFields({
         initialValue={initialSizeGuideUrl ?? ''}
         onSave={(val) =>
           updateProduct(productId, { size_guide_url: val || null }).then((r) => {
+            if (r.ok) router.refresh()
+            return r
+          })
+        }
+      />
+
+      <TextField
+        label="Origin Country"
+        hint="Where this product is manufactured (e.g. Portugal, Bangladesh). Auto-filled from Printful on sync."
+        initialValue={initialOriginCountry ?? ''}
+        onSave={(val) =>
+          updateProduct(productId, { origin_country: val || null }).then((r) => {
+            if (r.ok) router.refresh()
+            return r
+          })
+        }
+      />
+
+      <TextField
+        label="Avg. Fulfillment Time"
+        hint="Displayed in the Shipment tab (e.g. 2–5 business days). Auto-filled from Printful on sync."
+        initialValue={initialAvgFulfillmentTime ?? ''}
+        onSave={(val) =>
+          updateProduct(productId, { avg_fulfillment_time: val || null }).then((r) => {
             if (r.ok) router.refresh()
             return r
           })
@@ -118,11 +161,13 @@ function TextField({
   hint,
   initialValue,
   onSave,
+  maxLength,
 }: {
   label: string
   hint?: string
   initialValue: string
   onSave: (val: string) => Promise<{ ok: boolean; error?: string }>
+  maxLength?: number
 }) {
   const t = useTranslations('admin')
   const [value, setValue] = useState(initialValue)
@@ -147,12 +192,22 @@ function TextField({
       </label>
       {hint && <p className="mb-2 text-xs text-zinc-600">{hint}</p>}
       <div className="flex gap-2">
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
-        />
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            maxLength={maxLength}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+          />
+          {maxLength && (
+            <span
+              className={`absolute right-2 top-1/2 -translate-y-1/2 text-[10px] ${value.length >= maxLength ? 'text-rose-400' : 'text-zinc-600'}`}
+            >
+              {value.length}/{maxLength}
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={handleSave}

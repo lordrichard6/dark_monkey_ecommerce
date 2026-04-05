@@ -39,10 +39,10 @@ export function SupportWidget() {
   }, [])
 
   return (
-    <div className="fixed bottom-8 left-8 z-40" ref={widgetRef}>
+    <div className="fixed bottom-8 right-8 z-[70]" ref={widgetRef}>
       {/* Popover */}
       {isOpen && (
-        <div className="absolute bottom-14 left-0 w-72 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2zl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div className="absolute bottom-14 right-0 w-72 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-200">
           <div className="border-b border-white/5 bg-white/5 p-4">
             <h3 className="font-bold text-white">{t('customerService')}</h3>
             <p className="mt-1 text-xs text-zinc-400">

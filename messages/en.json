@@ -261,16 +261,16 @@
     "socialPerk3": "Behind the scenes",
     "customEyebrow": "Custom Orders",
     "customTitle": "your vision. our craft.",
-    "customSubtitle": "Have a design in mind? Send us your images, sketches or references and we'll print your vision on premium clothing — exactly the way you want it.",
-    "customStep1Title": "Prepare your design",
-    "customStep1Desc": "Gather your images, sketches or visual references. The more detail you share, the closer the result will be to your vision.",
-    "customStep2Title": "Send us an email",
-    "customStep2Desc": "Email us at support@dark-monkey.ch with your files and a description of what you want — garment type, colors, placement and quantity.",
-    "customStep3Title": "We bring it to life",
-    "customStep3Desc": "Our team reviews your request, confirms details and produces your custom pieces with the same quality as our regular collection.",
-    "customCta": "Send your design",
+    "customSubtitle": "Create an account, submit your request with reference images and we'll design a custom piece exclusively for you — art style, article type, every detail is yours to choose.",
+    "customStep1Title": "Submit your request",
+    "customStep1Desc": "Upload your reference images, pick your art style and article type, and describe your vision. The more detail you share, the closer the result.",
+    "customStep2Title": "We design it exclusively for you",
+    "customStep2Desc": "Our team reviews your request and creates your custom piece. Once ready, it appears exclusively in your account and you get notified by email.",
+    "customStep3Title": "Approve or request changes",
+    "customStep3Desc": "Your first change is always free. Love the result? Keep it exclusive to you or make it public so everyone can order it too.",
+    "customCta": "Start your request",
     "customEmailSubject": "Custom Design Request",
-    "customEmailBody": "Hi Dark Monkey team,\n\nI'd like to order a custom design. Here are the details:\n\n- Garment type:\n- Colors:\n- Placement:\n- Quantity:\n- Description:\n\n[Attach your images here]\n\nThank you!"
+    "customEmailBody": ""
   },
   "userMenu": {
     "account": "Account",
@@ -1534,6 +1534,26 @@
       "syncing": "Syncing…",
       "syncedOk": "{n, plural, one {# synced} other {# synced}}",
       "syncedFailed": "{n, plural, one {# failed} other {# failed}}"
+    }
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Latest drops, stories, and community highlights",
+    "whatsHappening": "What's happening",
+    "viewAll": "View all",
+    "loadMore": "Load more",
+    "noPosts": "Nothing here yet. Check back soon.",
+    "loginToComment": "Login to comment",
+    "addComment": "Add a comment…",
+    "submit": "Post",
+    "delete": "Delete",
+    "types": {
+      "drop": "New Drop",
+      "promo": "Promotion",
+      "story": "Story",
+      "community": "Community",
+      "new_product": "New Product",
+      "sale": "Sale"
     }
   }
 }

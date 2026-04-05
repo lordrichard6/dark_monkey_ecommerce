@@ -10,6 +10,7 @@ import { GalleryPreviewSection } from '@/components/gallery/GalleryPreviewSectio
 import { AuthCTASection } from '@/components/auth/AuthCTASection'
 import { SocialSection } from '@/components/social/SocialSection'
 import { CustomDesignSection } from '@/components/custom/CustomDesignSection'
+import FeedSection from '@/components/feed/FeedSection'
 import { CategoryStrip } from '@/components/category/CategoryStrip'
 import { fetchHomeProducts } from '@/actions/products'
 import { createClient } from '@/lib/supabase/server'
@@ -46,7 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ISR: Revalidate home page every 10 minutes
 export const revalidate = 600
 
-export default async function HomePage({ params: _params }: Props) {
+export default async function HomePage({ params }: Props) {
+  const { locale } = await params
   const t = await getTranslations('home')
   const supabase = await createClient()
 
@@ -75,7 +77,7 @@ export default async function HomePage({ params: _params }: Props) {
       <Hero />
 
       <Suspense fallback={<ProductCarouselSkeleton />}>
-        <NewArrivalsSection />
+        <FeaturedProductsSection />
       </Suspense>
 
       {/* Diagonal slash transition — dark → gradient */}
@@ -87,17 +89,12 @@ export default async function HomePage({ params: _params }: Props) {
           xmlns="http://www.w3.org/2000/svg"
         >
           <polygon points="0,0 1440,0 1440,20 0,80" fill="#09090b" />
-          <line
-            x1="0" y1="80"
-            x2="1440" y2="20"
-            stroke="rgba(251,191,36,0.15)"
-            strokeWidth="2"
-          />
+          <line x1="0" y1="80" x2="1440" y2="20" stroke="rgba(251,191,36,0.15)" strokeWidth="2" />
         </svg>
       </div>
 
       <Suspense fallback={null}>
-        <FeaturedProductsSection />
+        <NewArrivalsSection />
       </Suspense>
 
       <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-12 h-64 animate-pulse" />}>
@@ -105,14 +102,14 @@ export default async function HomePage({ params: _params }: Props) {
       </Suspense>
 
       <div id="products" className="mx-auto max-w-6xl px-4 py-16 scroll-mt-4">
-        <AllProductsSection
-          initialProducts={initialProducts}
-          tags={tagsData ?? []}
-        />
+        <AllProductsSection initialProducts={initialProducts} tags={tagsData ?? []} />
       </div>
 
       <GalleryPreviewSection />
       <CustomDesignSection />
+      <Suspense fallback={null}>
+        <FeedSection locale={locale} />
+      </Suspense>
       <SocialSection />
       <AuthCTASection />
     </div>

@@ -1,21 +1,30 @@
 import { getTranslations } from 'next-intl/server'
-
-const CUSTOM_EMAIL = 'support@dark-monkey.ch'
-
-function MailtoLink({ subject, body }: { subject: string; body: string }) {
-  const href = `mailto:${CUSTOM_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  return href
-}
+import { Link } from '@/i18n/navigation'
+import { getUserSafe } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function CustomDesignSection() {
   const t = await getTranslations('home')
+  const supabase = await createClient()
+  const user = await getUserSafe(supabase)
+  const ctaHref = user ? '/account/customize' : '/signup?redirectTo=/account/customize'
 
   const steps = [
     {
       number: '01',
       icon: (
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+        <svg
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+          />
         </svg>
       ),
       title: t('customStep1Title'),
@@ -24,8 +33,18 @@ export async function CustomDesignSection() {
     {
       number: '02',
       icon: (
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+        <svg
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
+          />
         </svg>
       ),
       title: t('customStep2Title'),
@@ -34,8 +53,18 @@ export async function CustomDesignSection() {
     {
       number: '03',
       icon: (
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.091ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+        <svg
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+          />
         </svg>
       ),
       title: t('customStep3Title'),
@@ -43,16 +72,16 @@ export async function CustomDesignSection() {
     },
   ]
 
-  const mailtoHref = MailtoLink({
-    subject: t('customEmailSubject'),
-    body: t('customEmailBody'),
-  })
-
   return (
     <section className="relative overflow-hidden bg-zinc-900 py-24">
       {/* Geometric accent lines */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <svg className="absolute -right-20 top-0 h-full w-1/2 opacity-[0.03]" viewBox="0 0 600 800" fill="none" preserveAspectRatio="xMidYMid slice">
+        <svg
+          className="absolute -right-20 top-0 h-full w-1/2 opacity-[0.03]"
+          viewBox="0 0 600 800"
+          fill="none"
+          preserveAspectRatio="xMidYMid slice"
+        >
           <line x1="600" y1="0" x2="0" y2="800" stroke="white" strokeWidth="1" />
           <line x1="500" y1="0" x2="0" y2="640" stroke="white" strokeWidth="1" />
           <line x1="400" y1="0" x2="0" y2="480" stroke="white" strokeWidth="1" />
@@ -62,7 +91,6 @@ export async function CustomDesignSection() {
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-16 lg:grid-cols-2">
-
           {/* Left — copy */}
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-amber-400">
@@ -73,23 +101,27 @@ export async function CustomDesignSection() {
               {t('customTitle')}
             </h2>
 
-            <p className="mt-5 text-base leading-relaxed text-zinc-400">
-              {t('customSubtitle')}
-            </p>
+            <p className="mt-5 text-base leading-relaxed text-zinc-400">{t('customSubtitle')}</p>
 
-            <a
-              href={mailtoHref}
+            <Link
+              href={ctaHref}
               className="mt-8 inline-flex items-center gap-3 rounded-xl bg-amber-500 px-7 py-4 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400 hover:shadow-amber-400/30 active:scale-95"
             >
-              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+              <svg
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
+                />
               </svg>
               {t('customCta')}
-            </a>
-
-            <p className="mt-3 text-xs text-zinc-600">
-              {CUSTOM_EMAIL}
-            </p>
+            </Link>
           </div>
 
           {/* Right — steps */}

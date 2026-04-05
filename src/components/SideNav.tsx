@@ -47,6 +47,7 @@ export function SideNav({
     ? [
         { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutDashboardIcon },
         { href: '/admin/activity', label: 'Activity', icon: ActivityIcon },
+        { href: '/admin/feed', label: 'Feed', icon: RssIcon },
         { href: '/admin/products', label: t('products'), icon: BoxIcon },
         { href: '/admin/orders', label: t('orders'), icon: PackageIcon },
         { href: '/admin/customers', label: 'Users', icon: UsersIcon },
@@ -650,6 +651,24 @@ function ActivityIcon({ className }: { className?: string }) {
       className={className}
     >
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  )
+}
+
+function RssIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7M6 17a1 1 0 110 2 1 1 0 010-2z"
+      />
     </svg>
   )
 }

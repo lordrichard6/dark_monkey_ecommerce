@@ -306,6 +306,23 @@ export default async function AccountPage() {
                 </div>
               </Link>
 
+              {/* Notifications */}
+              <Link
+                href="/account/notifications"
+                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
+              >
+                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
+                  <Bell className="h-5 w-5" />
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-zinc-50">{t('notifications')}</p>
+                    <NotificationsBadge />
+                  </div>
+                  <p className="text-sm text-zinc-500">{t('viewNotifications')}</p>
+                </div>
+              </Link>
+
               {/* Support */}
               <Link
                 href="/account/support"
@@ -327,34 +344,41 @@ export default async function AccountPage() {
                 </div>
               </Link>
 
-              {/* Custom Products */}
+              {/* Custom Products — full-width golden featured card */}
               <Link
                 href="/account/customize"
-                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
+                className="custom-products-shimmer group relative col-span-2 overflow-hidden rounded-xl border border-amber-500/25 p-px transition-all duration-300 hover:border-amber-400/50 hover:shadow-[0_0_28px_rgba(251,191,36,0.12)]"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgba(120,80,10,0.55) 0%, rgba(60,40,5,0.6) 40%, rgba(100,65,8,0.55) 100%)',
+                }}
               >
-                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
-                  <Palette className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-medium text-zinc-50">{t('customProducts')}</p>
-                  <p className="text-sm text-zinc-500">{t('viewCustomProducts')}</p>
-                </div>
-              </Link>
+                {/* inner surface */}
+                <div className="flex items-center gap-4 rounded-[11px] bg-zinc-950/60 px-5 py-4 backdrop-blur-sm">
+                  {/* icon with golden glow ring */}
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.25)] ring-1 ring-amber-500/30 transition-all duration-300 group-hover:bg-amber-500/25 group-hover:shadow-[0_0_20px_rgba(251,191,36,0.4)]">
+                    <Palette className="h-5 w-5" />
+                  </span>
 
-              {/* Notifications */}
-              <Link
-                href="/account/notifications"
-                className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-4 backdrop-blur-sm transition-all hover:border-amber-500/20 hover:bg-amber-500/5"
-              >
-                <span className="text-zinc-500 transition-colors group-hover:text-amber-400">
-                  <Bell className="h-5 w-5" />
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-zinc-50">{t('notifications')}</p>
-                    <NotificationsBadge />
+                  <div className="flex-1">
+                    <p className="font-semibold text-amber-100 transition-colors group-hover:text-amber-50">
+                      {t('customProducts')}
+                    </p>
+                    <p className="text-sm text-amber-400/60 transition-colors group-hover:text-amber-400/80">
+                      {t('viewCustomProducts')}
+                    </p>
                   </div>
-                  <p className="text-sm text-zinc-500">{t('viewNotifications')}</p>
+
+                  {/* arrow */}
+                  <svg
+                    className="h-4 w-4 shrink-0 text-amber-500/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-amber-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
+                  </svg>
                 </div>
               </Link>
             </section>

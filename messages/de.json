@@ -180,16 +180,16 @@
     "socialPerk3": "Hinter den Kulissen",
     "customEyebrow": "Individuelle Bestellungen",
     "customTitle": "deine vision. unser handwerk.",
-    "customSubtitle": "Hast du ein Design im Kopf? Schick uns deine Bilder, Skizzen oder Referenzen und wir drucken deine Vision auf Premium-Kleidung — genau so, wie du es dir vorstellst.",
-    "customStep1Title": "Bereite dein Design vor",
-    "customStep1Desc": "Sammle deine Bilder, Skizzen oder visuellen Referenzen. Je mehr Details du teilst, desto näher wird das Ergebnis deiner Vorstellung sein.",
-    "customStep2Title": "Schick uns eine E-Mail",
-    "customStep2Desc": "Sende eine E-Mail an support@dark-monkey.ch mit deinen Dateien und einer Beschreibung — Kleidungsstück, Farben, Platzierung und Menge.",
-    "customStep3Title": "Wir setzen es um",
-    "customStep3Desc": "Unser Team prüft deine Anfrage, bestätigt die Details und produziert deine individuellen Stücke in der gleichen Qualität wie unsere reguläre Kollektion.",
-    "customCta": "Design einsenden",
+    "customSubtitle": "Erstelle ein Konto, reiche deine Anfrage mit Referenzbildern ein und wir entwerfen ein individuelles Stück exklusiv für dich — Kunststil, Artikeltyp, jedes Detail liegt bei dir.",
+    "customStep1Title": "Anfrage einreichen",
+    "customStep1Desc": "Lade deine Referenzbilder hoch, wähle deinen Kunststil und Artikeltyp und beschreibe deine Vision. Je mehr Details du teilst, desto näher das Ergebnis.",
+    "customStep2Title": "Wir gestalten es exklusiv für dich",
+    "customStep2Desc": "Unser Team prüft deine Anfrage und erstellt dein individuelles Stück. Sobald es fertig ist, erscheint es exklusiv in deinem Konto und du wirst per E-Mail benachrichtigt.",
+    "customStep3Title": "Genehmigen oder Änderungen anfragen",
+    "customStep3Desc": "Die erste Änderung ist immer kostenlos. Liebst du das Ergebnis? Behalte es exklusiv oder mache es öffentlich, damit alle es bestellen können.",
+    "customCta": "Anfrage starten",
     "customEmailSubject": "Anfrage für individuelles Design",
-    "customEmailBody": "Hallo Dark Monkey Team,\n\nIch möchte ein individuelles Design bestellen. Hier sind die Details:\n\n- Kleidungsstücktyp:\n- Farben:\n- Platzierung:\n- Menge:\n- Beschreibung:\n\n[Bilder hier anhängen]\n\nVielen Dank!"
+    "customEmailBody": ""
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",
@@ -1534,6 +1534,26 @@
       "unarchive": "Wiederherstellen",
       "archivedIdeas": "Archivierte Ideen",
       "noArchivedIdeas": "Noch keine archivierten Ideen"
+    }
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Neueste Drops, Geschichten und Community-Highlights",
+    "whatsHappening": "Was passiert",
+    "viewAll": "Alle anzeigen",
+    "loadMore": "Mehr laden",
+    "noPosts": "Noch nichts hier. Schau bald wieder vorbei.",
+    "loginToComment": "Anmelden zum Kommentieren",
+    "addComment": "Kommentar hinzufügen…",
+    "submit": "Posten",
+    "delete": "Löschen",
+    "types": {
+      "drop": "Neuer Drop",
+      "promo": "Aktion",
+      "story": "Geschichte",
+      "community": "Community",
+      "new_product": "Neues Produkt",
+      "sale": "Sale"
     }
   }
 }
