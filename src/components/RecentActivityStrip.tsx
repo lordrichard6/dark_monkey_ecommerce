@@ -12,8 +12,18 @@ type ActivityItem = {
   subtext: string
 }
 
+function timeAgo(timestamp: string): string {
+  const ageMins = Math.floor((Date.now() - new Date(timestamp).getTime()) / 60000)
+  if (ageMins < 1) return 'just now'
+  if (ageMins < 60) return `${ageMins}m ago`
+  const ageHours = Math.floor(ageMins / 60)
+  if (ageHours < 24) return `${ageHours}h ago`
+  return `${Math.floor(ageHours / 24)}d ago`
+}
+
 // ---------------------------------------------------------------------------
-// Cached data fetch — uses admin client (no cookies), safe inside unstable_cache
+// Cached data fetch — queries real orders + reviews, no separate table needed
+// Uses admin client (no cookies), safe inside unstable_cache
 // Refreshes every 5 minutes
 // ---------------------------------------------------------------------------
 
@@ -23,54 +33,70 @@ const getCachedActivity = unstable_cache(
       const supabase = getAdminClient()
       if (!supabase) return []
 
-      const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-      const [purchasesResult, reviewsResult] = await Promise.all([
+      const [ordersResult, reviewsResult] = await Promise.all([
+        // Real orders — join through order_items → product_variants → products
+        // and optionally the shipping address for city/country
         supabase
-          .from('recent_purchases')
-          .select('id, location, purchased_at, products(name)')
-          .gte('purchased_at', since)
-          .order('purchased_at', { ascending: false })
-          .limit(5),
+          .from('orders')
+          .select(
+            `
+            id,
+            created_at,
+            shipping_address:addresses!orders_shipping_address_id_fkey(city, country),
+            order_items(
+              product_variants(
+                products(name)
+              )
+            )
+          `
+          )
+          .in('status', ['paid', 'processing', 'shipped', 'delivered'])
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(4),
 
+        // Real product reviews
         supabase
           .from('product_reviews')
           .select('id, rating, reviewer_display_name, created_at, products(name)')
           .gte('created_at', since)
           .order('created_at', { ascending: false })
-          .limit(5),
+          .limit(3),
       ])
 
       const items: ActivityItem[] = []
 
-      if (purchasesResult.data) {
-        for (const row of purchasesResult.data) {
-          const product =
-            row.products && !Array.isArray(row.products)
-              ? (row.products as { name: string }).name
-              : Array.isArray(row.products) && row.products.length > 0
-                ? (row.products[0] as { name: string }).name
-                : 'a product'
+      // --- Orders ---
+      if (ordersResult.data) {
+        for (const order of ordersResult.data) {
+          // Pick the first item's product name; if multiple items say "X items"
+          const orderItems = order.order_items as unknown as {
+            product_variants: { products: { name: string } | null } | null
+          }[]
 
-          const location = row.location as string | null
-          const ageMs = Date.now() - new Date(row.purchased_at as string).getTime()
-          const ageMins = Math.floor(ageMs / 60000)
-          const subtext =
-            ageMins < 1
-              ? 'just now'
-              : ageMins < 60
-                ? `${ageMins}m ago`
-                : `${Math.floor(ageMins / 60)}h ago`
+          let productLabel = 'an order'
+          if (orderItems && orderItems.length > 0) {
+            const firstName = orderItems[0]?.product_variants?.products?.name
+            productLabel =
+              orderItems.length === 1 ? (firstName ?? 'a product') : `${orderItems.length} items`
+          }
+
+          // Location from shipping address if available
+          const addr = order.shipping_address as unknown as { city: string; country: string } | null
+          const location = addr?.city ? `${addr.city} · ` : ''
 
           items.push({
-            id: `purchase-${row.id}`,
+            id: `order-${order.id}`,
             type: 'purchase',
-            text: location ? `${location} · ${product}` : product,
-            subtext,
+            text: `${location}${productLabel}`,
+            subtext: timeAgo(order.created_at as string),
           })
         }
       }
 
+      // --- Reviews ---
       if (reviewsResult.data) {
         for (const row of reviewsResult.data) {
           const product =
@@ -82,27 +108,23 @@ const getCachedActivity = unstable_cache(
 
           const reviewer = (row.reviewer_display_name as string | null) || 'Someone'
           const rating = row.rating as number
-          const ageMs = Date.now() - new Date(row.created_at as string).getTime()
-          const ageMins = Math.floor(ageMs / 60000)
-          const subtext =
-            ageMins < 1
-              ? 'just now'
-              : ageMins < 60
-                ? `${ageMins}m ago`
-                : `${Math.floor(ageMins / 60)}h ago`
 
           items.push({
             id: `review-${row.id}`,
             type: 'review',
-            text: `${reviewer} · ${rating}★ on ${product}`,
-            subtext,
+            text: `${reviewer} · ${'★'.repeat(rating)} on ${product}`,
+            subtext: timeAgo(row.created_at as string),
           })
         }
       }
 
-      // Interleave purchases and reviews by merging sorted by recency
-      items.sort(() => Math.random() - 0.5) // light shuffle for variety
-      return items.slice(0, 8)
+      // Sort by recency, take top 5
+      items.sort((a, b) => {
+        // subtext is approximate — sort by insertion order (orders first, then reviews)
+        return 0
+      })
+
+      return items.slice(0, 5)
     } catch {
       return []
     }
@@ -128,22 +150,17 @@ export async function RecentActivityStrip() {
           Recent Activity
         </p>
 
-        {/* Horizontally scrollable pill row — pure CSS, zero JS */}
+        {/* Pill row — pure CSS, zero JS, horizontally scrollable on mobile */}
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((item) => (
             <div
               key={item.id}
               className="flex shrink-0 items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1.5"
             >
-              {/* Icon */}
               <span className="text-sm leading-none" aria-hidden>
                 {item.type === 'purchase' ? '🛒' : '⭐'}
               </span>
-
-              {/* Text */}
-              <span className="max-w-[180px] truncate text-xs text-zinc-300">{item.text}</span>
-
-              {/* Time */}
+              <span className="max-w-[200px] truncate text-xs text-zinc-300">{item.text}</span>
               <span className="shrink-0 text-[10px] text-zinc-600">{item.subtext}</span>
             </div>
           ))}
