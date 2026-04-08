@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion } from 'motion/react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/navigation'
 import { CartTrigger } from '@/components/cart/CartTrigger'
@@ -73,6 +74,15 @@ export function MobileHeader({
     }
   }, [anyOpen])
 
+  // Close all drawers on Escape key
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeAll()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/'
     if (path === '/account') return pathname === '/account'
@@ -97,7 +107,7 @@ export function MobileHeader({
     <>
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
       <header
-        className="fixed left-0 right-0 z-50 border-b border-white/10 bg-black/60 backdrop-blur-xl md:hidden"
+        className="fixed left-0 right-0 z-50 border-b border-white/10 bg-zinc-950/60 backdrop-blur-xl md:hidden"
         style={{ top: 'var(--ann-bar-h, 0rem)' }}
       >
         <nav className="flex h-14 items-center justify-between px-4">
@@ -106,13 +116,22 @@ export function MobileHeader({
             <button
               type="button"
               onClick={() => {
-                closeAdmin()
-                setOpen(true)
+                if (open) {
+                  closeMenu()
+                } else {
+                  closeAdmin()
+                  setOpen(true)
+                }
               }}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/5 transition hover:bg-white/10 hover:border-white/30"
-              aria-label="Open menu"
+              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-expanded={open}
+              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                open
+                  ? 'border-white/30 bg-white/10 text-zinc-50'
+                  : 'border-white/20 bg-white/5 text-zinc-50 hover:bg-white/10 hover:border-white/30'
+              }`}
             >
-              <BurgerIcon className="h-5 w-5 text-zinc-50" />
+              {open ? <CloseIcon className="h-5 w-5" /> : <BurgerIcon className="h-5 w-5" />}
             </button>
 
             {isAdmin && (
@@ -150,7 +169,7 @@ export function MobileHeader({
       {/* ── Shared overlay ──────────────────────────────────────────────────── */}
       <div
         role="presentation"
-        className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+        className={`fixed inset-0 z-[60] bg-zinc-950/70 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
           anyOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={closeAll}
@@ -163,7 +182,7 @@ export function MobileHeader({
         aria-modal="true"
         aria-label="Navigation menu"
         aria-hidden={!open}
-        className={`fixed top-0 right-0 z-[70] flex h-full w-[min(320px,85vw)] flex-col border-l border-white/10 bg-zinc-950/98 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out md:hidden ${
+        className={`fixed top-0 right-0 z-[70] flex h-full w-[min(320px,85vw)] flex-col border-l border-white/10 bg-zinc-950/98 shadow-2xl shadow-zinc-950/60 transition-transform duration-300 ease-out md:hidden ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -190,7 +209,7 @@ export function MobileHeader({
         <div className="relative flex-1 overflow-hidden">
           {/* Main view */}
           <div
-            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${
+            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
               showCategories
                 ? '-translate-y-full opacity-0 pointer-events-none'
                 : 'translate-y-0 opacity-100'
@@ -200,39 +219,57 @@ export function MobileHeader({
               className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <Link href="/" onClick={closeMenu} className={navLinkClass('/')}>
-                <HomeIcon className="h-5 w-5 shrink-0" />
-                {t('shop')}
-              </Link>
-
-              <Link
-                href="/account/wishlist"
-                onClick={closeMenu}
-                className={navLinkClass('/account/wishlist')}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={open ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                transition={{ duration: 0.3, delay: open ? 0 : 0, ease: [0.32, 0.72, 0, 1] }}
               >
-                <HeartIcon className="h-5 w-5 shrink-0" />
-                {t('wishlist')}
-              </Link>
+                <Link href="/" onClick={closeMenu} className={navLinkClass('/')}>
+                  <HomeIcon className="h-5 w-5 shrink-0" />
+                  {t('shop')}
+                </Link>
+              </motion.div>
 
-              <button
-                type="button"
-                onClick={() => setShowCategories(true)}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
-                  showCategories
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
-                }`}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={open ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                transition={{ duration: 0.3, delay: open ? 0.06 : 0, ease: [0.32, 0.72, 0, 1] }}
               >
-                <GridIcon className="h-5 w-5 shrink-0" />
-                <span className="flex-1 text-left">{t('categories')}</span>
-                <ChevronIcon className="h-4 w-4 shrink-0" />
-              </button>
+                <Link
+                  href="/account/wishlist"
+                  onClick={closeMenu}
+                  className={navLinkClass('/account/wishlist')}
+                >
+                  <HeartIcon className="h-5 w-5 shrink-0" />
+                  {t('wishlist')}
+                </Link>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={open ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                transition={{ duration: 0.3, delay: open ? 0.12 : 0, ease: [0.32, 0.72, 0, 1] }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowCategories(true)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition ${
+                    showCategories
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-zinc-300 hover:bg-white/10 hover:text-zinc-50'
+                  }`}
+                >
+                  <GridIcon className="h-5 w-5 shrink-0" />
+                  <span className="flex-1 text-left">{t('categories')}</span>
+                  <ChevronIcon className="h-4 w-4 shrink-0" />
+                </button>
+              </motion.div>
             </nav>
           </div>
 
           {/* Categories panel */}
           <div
-            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${
+            className={`absolute inset-0 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
               showCategories
                 ? 'translate-y-0 opacity-100'
                 : 'translate-y-full opacity-0 pointer-events-none'
@@ -283,13 +320,13 @@ export function MobileHeader({
                         )}
                       </button>
                       <div
-                        className={`grid transition-all duration-200 ease-in-out ${
+                        className={`grid transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                           isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
                         }`}
                       >
                         <div className="overflow-hidden">
                           {cat.subcategories && (
-                            <div className="space-y-1 bg-black/20 px-2 py-1 ml-2 sm:ml-4 rounded-lg">
+                            <div className="space-y-1 bg-zinc-950/50 px-2 py-1 ml-2 sm:ml-4 rounded-lg">
                               {cat.subcategories.map((sub) => (
                                 <Link
                                   key={sub.id}
@@ -403,7 +440,7 @@ export function MobileHeader({
           aria-modal="true"
           aria-label="Admin menu"
           aria-hidden={!adminOpen}
-          className={`fixed top-0 right-0 z-[70] flex h-full w-[min(300px,85vw)] flex-col border-l border-amber-500/20 bg-zinc-950/98 shadow-2xl shadow-black/50 transition-transform duration-300 ease-out md:hidden ${
+          className={`fixed top-0 right-0 z-[70] flex h-full w-[min(300px,85vw)] flex-col border-l border-amber-500/20 bg-zinc-950/98 shadow-2xl shadow-zinc-950/60 transition-transform duration-300 ease-out md:hidden ${
             adminOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
@@ -615,7 +652,7 @@ function BurgerIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -634,7 +671,7 @@ function CloseIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -652,7 +689,7 @@ function HomeIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -670,7 +707,7 @@ function ImageIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -689,7 +726,7 @@ function GridIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -709,7 +746,7 @@ function ChevronIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -726,7 +763,7 @@ function UserIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -744,7 +781,7 @@ function OrdersIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -763,7 +800,7 @@ function LogOutIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -782,7 +819,7 @@ function LayoutDashboardIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -802,7 +839,7 @@ function BoxIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -821,7 +858,7 @@ function PackageIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -841,7 +878,7 @@ function TagIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -859,7 +896,7 @@ function SettingsIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -877,7 +914,7 @@ function HeartIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -894,7 +931,7 @@ function SparklesIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -915,7 +952,7 @@ function ShieldIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -932,7 +969,7 @@ function UsersIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -952,7 +989,7 @@ function MailIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -970,7 +1007,7 @@ function MegaphoneIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -987,7 +1024,7 @@ function StarIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -1004,7 +1041,7 @@ function PaletteIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -1025,7 +1062,7 @@ function ActivityIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -1042,7 +1079,7 @@ function ReceiptIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -1062,7 +1099,7 @@ function LifeBuoyIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -1084,7 +1121,7 @@ function KanbanIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}

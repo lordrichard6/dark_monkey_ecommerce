@@ -63,7 +63,7 @@ export function SideNav({
 
   return (
     <aside
-      className="fixed left-0 top-0 z-[65] hidden h-screen flex-col overflow-hidden border-r border-white/10 bg-black/60 backdrop-blur-xl transition-[width] duration-200 ease-out md:flex"
+      className="fixed left-0 top-0 z-[65] hidden h-screen flex-col overflow-hidden border-r border-white/10 bg-zinc-950/60 backdrop-blur-xl transition-[width] duration-200 ease-out md:flex"
       style={{ width: expanded ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => {
@@ -99,6 +99,7 @@ export function SideNav({
           <button
             type="button"
             onClick={() => setCategoriesOpen(!categoriesOpen)}
+            aria-expanded={categoriesOpen}
             className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
               pathname.startsWith('/categories')
                 ? 'bg-white/10 text-zinc-50'
@@ -116,7 +117,7 @@ export function SideNav({
             )}
           </button>
           <div
-            className={`grid transition-all duration-300 ease-in-out ${
+            className={`grid transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
               categoriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
             }`}
           >
@@ -153,7 +154,7 @@ export function SideNav({
                         )}
                       </button>
                       <div
-                        className={`grid transition-all duration-200 ease-in-out ${
+                        className={`grid transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                           isCatOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
                         }`}
                       >
@@ -385,7 +386,7 @@ function HomeIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -403,7 +404,7 @@ function ImageIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -422,7 +423,7 @@ function HeartIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -439,7 +440,7 @@ function GridIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -459,7 +460,7 @@ function ChevronIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -476,7 +477,7 @@ function ReceiptIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -496,7 +497,7 @@ function LayoutDashboardIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -516,7 +517,7 @@ function BoxIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -535,7 +536,7 @@ function PackageIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -555,7 +556,7 @@ function TagIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -573,7 +574,7 @@ function SettingsIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -590,7 +591,7 @@ function MessageSquareIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -607,7 +608,7 @@ function UsersIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -627,7 +628,7 @@ function KanbanIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -646,7 +647,7 @@ function ActivityIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -663,7 +664,7 @@ function BookOpenIcon({ className }: { className?: string }) {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
     >
       <path
         strokeLinecap="round"
@@ -681,7 +682,7 @@ function RssIcon({ className }: { className?: string }) {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
     >
       <path
         strokeLinecap="round"
@@ -699,7 +700,7 @@ function LifeBuoyIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -722,7 +723,7 @@ function PaletteIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
