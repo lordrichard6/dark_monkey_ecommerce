@@ -1,59 +1,75 @@
 'use client'
 
+import { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'motion/react'
 import { Link } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { useEffect, useState } from 'react'
 import { HeroLogo } from './HeroLogo'
 import { ArrowRight } from 'lucide-react'
 import { LaunchCountdownBanner } from './LaunchCountdownBanner'
 
-// Staggered entrance — fires after mount with a per-element delay
-function FadeUp({
+// Custom spring cubic-bezier — physical, snappy, premium
+const SPRING = [0.32, 0.72, 0, 1] as const
+
+/**
+ * Animates a word/phrase inline with blur-fade-up.
+ * Each instance is independently timed via `delay`.
+ */
+function AnimatedWord({
   children,
   delay,
   className,
+  style,
 }: {
   children: React.ReactNode
   delay: number
   className?: string
+  style?: React.CSSProperties
 }) {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay)
-    return () => clearTimeout(t)
-  }, [delay])
-
   return (
-    <div
+    <motion.span
+      initial={{ opacity: 0, y: 22, filter: 'blur(8px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 0.75, delay, ease: SPRING }}
       className={className}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0px)' : 'translateY(24px)',
-        transitionProperty: 'opacity, transform',
-        transitionDuration: '0.7s',
-        transitionTimingFunction: 'ease',
-      }}
+      style={{ display: 'inline-block', ...style }}
     >
       {children}
-    </div>
+    </motion.span>
   )
 }
 
 export function Hero() {
   const t = useTranslations('home')
+  const locale = useLocale()
+  const heroRef = useRef<HTMLElement>(null)
+
+  // Scroll-linked parallax — tracked against this section only
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  })
+
+  // Video scales up and fades out as user scrolls past the hero
+  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.12])
+  const videoOpacity = useTransform(scrollYProgress, [0, 0.75], [0.75, 0])
+
+  // Content drifts upward at a slower rate — classic parallax depth cue
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, 90])
 
   function scrollToProducts() {
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const locale = useLocale()
-
   return (
-    <section className="relative flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center overflow-hidden px-4">
-      {/* Background video */}
-      <video
-        className="absolute inset-0 -z-20 h-full w-full object-cover object-center opacity-70"
+    <section
+      ref={heroRef}
+      className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4"
+    >
+      {/* ── Video background with scroll-linked scale + fade ── */}
+      <motion.video
+        className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
+        style={{ scale: videoScale, opacity: videoOpacity }}
         src="/videos/dm_hero.mp4"
         autoPlay
         muted
@@ -61,86 +77,128 @@ export function Hero() {
         playsInline
         preload="auto"
       />
-      {/* Dark Overlay/Gradient */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-zinc-950 via-black/50 to-black/30" />
 
-      <div className="mx-auto max-w-4xl text-center">
-        {/* 1 — Badge */}
-        <FadeUp delay={0} className="mb-4 mt-6 flex justify-center md:mb-8 md:mt-8">
-          <LaunchCountdownBanner position="inline" />
-        </FadeUp>
+      {/* ── Gradient vignette ── */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-zinc-950 via-black/60 to-black/20" />
 
-        {/* 2 — Logo */}
-        <FadeUp delay={150} className="mb-0 md:mb-2">
-          <HeroLogo />
-        </FadeUp>
+      {/* ── Film grain overlay — fixed, pointer-events-none, GPU-safe ── */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[1] opacity-[0.028]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '128px 128px',
+        }}
+        aria-hidden
+      />
 
-        {/* 3 — Title */}
-        <FadeUp delay={300}>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl lg:text-6xl">
-            {locale === 'pt' ? (
-              <>
-                {t('quality')}{' '}
-                <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
-                  {t('premium')}
-                </span>{' '}
-                {t('craftedFor')}{' '}
-              </>
-            ) : (
-              <>
-                <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">
-                  {t('premium')}
-                </span>{' '}
-                {t('qualityCraftedFor')}{' '}
-              </>
-            )}
-            <span
-              className="font-[family-name:var(--font-pacifico)] font-normal"
-              style={{
-                fontFamily: 'var(--font-pacifico), cursive',
-                color: '#ff2d55',
-                textShadow: '0 0 5px #ff2d55, 0 0 10px #ff2d55, 0 0 20px #ff2d55, 0 0 40px #ff2d55',
-              }}
-            >
-              {t('you')}
-            </span>
-          </h1>
-        </FadeUp>
-
-        {/* 4 — Subtitle */}
-        <FadeUp delay={450}>
-          <p className="mt-3 text-sm text-zinc-400 sm:mt-6 sm:text-lg md:text-xl">
-            {t('heroSubtitle')}
-          </p>
-        </FadeUp>
-
-        {/* 5 — Buttons */}
-        <FadeUp
-          delay={600}
-          className="mt-6 flex flex-col sm:flex-row justify-center gap-3 px-2 sm:mt-10 sm:gap-4 sm:px-4"
+      {/* ── Content with subtle upward parallax ── */}
+      <motion.div className="relative z-10 mx-auto max-w-4xl text-center" style={{ y: contentY }}>
+        {/* Badge / countdown */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0, ease: SPRING }}
+          className="mb-8 mt-8 flex justify-center"
         >
+          <LaunchCountdownBanner position="inline" />
+        </motion.div>
+
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 0.85, delay: 0.15, ease: SPRING }}
+          className="mb-3 md:mb-5"
+        >
+          <HeroLogo />
+        </motion.div>
+
+        {/* ── Headline — word-level stagger ── */}
+        <h1 className="text-xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl lg:text-6xl">
+          {locale === 'pt' ? (
+            <>
+              <AnimatedWord delay={0.3}>{t('quality')}</AnimatedWord>{' '}
+              <AnimatedWord
+                delay={0.4}
+                className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
+              >
+                {t('premium')}
+              </AnimatedWord>{' '}
+              <AnimatedWord delay={0.5}>{t('craftedFor')}</AnimatedWord>{' '}
+            </>
+          ) : (
+            <>
+              <AnimatedWord
+                delay={0.3}
+                className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
+              >
+                {t('premium')}
+              </AnimatedWord>{' '}
+              <AnimatedWord delay={0.4}>{t('qualityCraftedFor')}</AnimatedWord>{' '}
+            </>
+          )}
+          <AnimatedWord
+            delay={0.5}
+            style={{
+              fontFamily: 'var(--font-pacifico), cursive',
+              color: '#ff2d55',
+              textShadow: '0 0 5px #ff2d55, 0 0 10px #ff2d55, 0 0 20px #ff2d55, 0 0 40px #ff2d55',
+            }}
+          >
+            {t('you')}
+          </AnimatedWord>
+        </h1>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 18, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.8, delay: 0.62, ease: SPRING }}
+          className="mt-4 text-sm text-zinc-400 sm:mt-6 sm:text-lg md:text-xl"
+        >
+          {t('heroSubtitle')}
+        </motion.p>
+
+        {/* ── CTAs — rounded-full pills with button-in-button arrow ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 22, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.8, delay: 0.76, ease: SPRING }}
+          className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row sm:gap-4"
+        >
+          {/* Primary — amber gradient pill */}
           <button
             type="button"
             onClick={scrollToProducts}
             aria-label={t('shopPremiumCollection')}
-            className="group relative flex w-full sm:w-auto items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 px-5 py-2.5 text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] active:scale-[0.98] sm:px-6 sm:py-3 md:px-10 md:py-5"
+            className="group relative flex w-full items-center justify-between overflow-hidden rounded-full bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 py-2 pl-7 pr-2 text-zinc-950 shadow-[0_0_30px_rgba(251,191,36,0.2)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_55px_rgba(251,191,36,0.45)] active:scale-[0.97] sm:w-auto"
           >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-            <span className="relative text-base font-black uppercase tracking-tight sm:text-xl">
+            {/* Hover gloss */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            <span className="relative pr-4 text-base font-black uppercase tracking-tight sm:text-lg">
               {t('shopPremiumCollection')}
             </span>
+            {/* Button-in-button arrow */}
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/20 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+              <ArrowRight className="h-4 w-4" />
+            </div>
           </button>
 
+          {/* Secondary — ghost pill */}
           <Link
             href="/categories"
             aria-label={t('exploreByCategory')}
-            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/20 bg-black/20 px-4 py-2.5 text-zinc-200 transition-all hover:border-white/40 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm sm:px-5 sm:py-3 md:px-8 md:py-4"
+            className="group flex w-full items-center justify-between rounded-full border border-white/20 bg-black/20 py-2 pl-7 pr-2 text-zinc-200 backdrop-blur-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/40 hover:bg-white/10 active:scale-[0.97] sm:w-auto"
           >
-            <span className="text-sm font-medium sm:text-lg">{t('exploreByCategory')}</span>
-            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
+            <span className="pr-4 text-sm font-medium sm:text-base">{t('exploreByCategory')}</span>
+            {/* Button-in-button arrow */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+              <ArrowRight className="h-4 w-4" />
+            </div>
           </Link>
-        </FadeUp>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   )
 }
