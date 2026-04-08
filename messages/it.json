@@ -271,7 +271,10 @@
     "customStep3Desc": "La prima modifica è sempre gratuita. Ami il risultato? Tienilo esclusivo o rendilo pubblico così tutti possono ordinarlo.",
     "customCta": "Inizia la tua richiesta",
     "customEmailSubject": "Richiesta Design Personalizzato",
-    "customEmailBody": ""
+    "customEmailBody": "",
+    "heroStatReviews": "4.9 · 120+ recensioni",
+    "heroStatShipping": "Spedizione gratuita CH",
+    "heroStatCheckout": "Pagamento sicuro"
   },
   "userMenu": {
     "account": "Account",

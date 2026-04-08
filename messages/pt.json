@@ -190,7 +190,10 @@
     "customStep3Desc": "A primeira alteração é sempre gratuita. Adoraste o resultado? Mantém-no exclusivo ou torna-o público para que todos o possam encomendar.",
     "customCta": "Iniciar pedido",
     "customEmailSubject": "Pedido de Design Personalizado",
-    "customEmailBody": ""
+    "customEmailBody": "",
+    "heroStatReviews": "4.9 · 120+ avaliações",
+    "heroStatShipping": "Envio grátis CH",
+    "heroStatCheckout": "Checkout seguro"
   },
   "cookie": {
     "message": "Usamos cookies para persistência do carrinho, autenticação e uma melhor experiência de compra.",

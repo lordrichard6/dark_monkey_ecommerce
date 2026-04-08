@@ -1,11 +1,11 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'motion/react'
+import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import { Link } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { HeroLogo } from './HeroLogo'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, ChevronDown } from 'lucide-react'
 import { LaunchCountdownBanner } from './LaunchCountdownBanner'
 
 // Custom spring cubic-bezier — physical, snappy, premium
@@ -14,6 +14,7 @@ const SPRING = [0.32, 0.72, 0, 1] as const
 /**
  * Animates a word/phrase inline with blur-fade-up.
  * Each instance is independently timed via `delay`.
+ * Respects prefers-reduced-motion via useReducedMotion().
  */
 function AnimatedWord({
   children,
@@ -26,11 +27,13 @@ function AnimatedWord({
   className?: string
   style?: React.CSSProperties
 }) {
+  const shouldReduceMotion = useReducedMotion()
+
   return (
     <motion.span
-      initial={{ opacity: 0, y: 22, filter: 'blur(8px)' }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 22, filter: 'blur(8px)' }}
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      transition={{ duration: 0.75, delay, ease: SPRING }}
+      transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.75, delay, ease: SPRING }}
       className={className}
       style={{ display: 'inline-block', ...style }}
     >
@@ -43,6 +46,7 @@ export function Hero() {
   const t = useTranslations('home')
   const locale = useLocale()
   const heroRef = useRef<HTMLElement>(null)
+  const shouldReduceMotion = useReducedMotion()
 
   // Scroll-linked parallax — tracked against this section only
   const { scrollYProgress } = useScroll({
@@ -50,12 +54,10 @@ export function Hero() {
     offset: ['start start', 'end start'],
   })
 
-  // Video scales up and fades out as user scrolls past the hero
-  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.12])
-  const videoOpacity = useTransform(scrollYProgress, [0, 0.75], [0.75, 0])
-
-  // Content drifts upward at a slower rate — classic parallax depth cue
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, 90])
+  // Scroll transforms — disabled when reduced-motion is preferred
+  const videoScaleRaw = useTransform(scrollYProgress, [0, 1], [1, 1.12])
+  const videoOpacityRaw = useTransform(scrollYProgress, [0, 0.75], [0.75, 0])
+  const contentYRaw = useTransform(scrollYProgress, [0, 1], [0, 90])
 
   function scrollToProducts() {
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })
@@ -69,7 +71,11 @@ export function Hero() {
       {/* ── Video background with scroll-linked scale + fade ── */}
       <motion.video
         className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
-        style={{ scale: videoScale, opacity: videoOpacity }}
+        style={
+          shouldReduceMotion
+            ? { opacity: 0.75 }
+            : { scale: videoScaleRaw, opacity: videoOpacityRaw }
+        }
         src="/videos/dm_hero.mp4"
         autoPlay
         muted
@@ -78,8 +84,8 @@ export function Hero() {
         preload="auto"
       />
 
-      {/* ── Gradient vignette ── */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-zinc-950 via-black/60 to-black/20" />
+      {/* ── Gradient vignette — brand-tinted (zinc-950), not pure black ── */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-zinc-950/15" />
 
       {/* ── Film grain overlay — fixed, pointer-events-none, GPU-safe ── */}
       <div
@@ -93,12 +99,17 @@ export function Hero() {
       />
 
       {/* ── Content with subtle upward parallax ── */}
-      <motion.div className="relative z-10 mx-auto max-w-4xl text-center" style={{ y: contentY }}>
+      <motion.div
+        className="relative z-10 mx-auto max-w-4xl text-center"
+        style={shouldReduceMotion ? undefined : { y: contentYRaw }}
+      >
         {/* Badge / countdown */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0, ease: SPRING }}
+          transition={
+            shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0, ease: SPRING }
+          }
           className="mb-8 mt-8 flex justify-center"
         >
           <LaunchCountdownBanner position="inline" />
@@ -106,16 +117,18 @@ export function Hero() {
 
         {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, filter: 'blur(10px)' }}
+          initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.96, filter: 'blur(10px)' }}
           animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          transition={{ duration: 0.85, delay: 0.15, ease: SPRING }}
+          transition={
+            shouldReduceMotion ? { duration: 0 } : { duration: 0.85, delay: 0.15, ease: SPRING }
+          }
           className="mb-3 md:mb-5"
         >
           <HeroLogo />
         </motion.div>
 
-        {/* ── Headline — word-level stagger ── */}
-        <h1 className="text-xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl lg:text-6xl">
+        {/* ── Headline — fluid type, tight tracking, word-level stagger ── */}
+        <h1 className="font-bold tracking-tight text-zinc-50 [font-size:clamp(1.75rem,5.5vw,4.5rem)] tracking-[-0.025em]">
           {locale === 'pt' ? (
             <>
               <AnimatedWord delay={0.3}>{t('quality')}</AnimatedWord>{' '}
@@ -152,9 +165,11 @@ export function Hero() {
 
         {/* Subtitle */}
         <motion.p
-          initial={{ opacity: 0, y: 18, filter: 'blur(4px)' }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 18, filter: 'blur(4px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8, delay: 0.62, ease: SPRING }}
+          transition={
+            shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.62, ease: SPRING }
+          }
           className="mt-4 text-sm text-zinc-400 sm:mt-6 sm:text-lg md:text-xl"
         >
           {t('heroSubtitle')}
@@ -162,9 +177,11 @@ export function Hero() {
 
         {/* ── CTAs — rounded-full pills with button-in-button arrow ── */}
         <motion.div
-          initial={{ opacity: 0, y: 22, filter: 'blur(4px)' }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 22, filter: 'blur(4px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8, delay: 0.76, ease: SPRING }}
+          transition={
+            shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.76, ease: SPRING }
+          }
           className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row sm:gap-4"
         >
           {/* Primary — amber gradient pill */}
@@ -197,6 +214,43 @@ export function Hero() {
               <ArrowRight className="h-4 w-4" />
             </div>
           </Link>
+        </motion.div>
+
+        {/* ── Social proof micro-stats ── */}
+        <motion.div
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={
+            shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.92, ease: SPRING }
+          }
+          className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:gap-5"
+        >
+          <span className="flex items-center gap-1.5">
+            <span className="text-amber-400">★</span>
+            <span>{t('heroStatReviews')}</span>
+          </span>
+          <span className="hidden h-1 w-1 rounded-full bg-zinc-700 sm:block" aria-hidden />
+          <span>{t('heroStatShipping')}</span>
+          <span className="hidden h-1 w-1 rounded-full bg-zinc-700 sm:block" aria-hidden />
+          <span>{t('heroStatCheckout')}</span>
+        </motion.div>
+      </motion.div>
+
+      {/* ── Scroll indicator — pulsing chevron ── */}
+      <motion.div
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={
+          shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 1.3, ease: SPRING }
+        }
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+        aria-hidden
+      >
+        <motion.div
+          animate={shouldReduceMotion ? {} : { y: [0, 8, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <ChevronDown className="h-5 w-5 text-zinc-500" />
         </motion.div>
       </motion.div>
     </section>
