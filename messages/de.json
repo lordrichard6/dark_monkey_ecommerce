@@ -69,7 +69,8 @@
     "activity": "Aktivität",
     "gallery": "Galerie",
     "features": "Funktionen",
-    "blog": "Blog"
+    "blog": "Blog",
+    "home": "Startseite"
   },
   "search": {
     "placeholder": "Produkte suchen...",
@@ -308,7 +309,12 @@
     "visitFaq": "FAQ besuchen",
     "openTicket": "Ticket öffnen",
     "ticketDesc": "Ihr Anliegen verfolgen – wir antworten schnell.",
-    "blog": "Blog"
+    "blog": "Blog",
+    "weAccept": "Wir akzeptieren",
+    "countryRegion": "Land / Region",
+    "language": "Sprache",
+    "currency": "Währung",
+    "newsletterEyebrow": "Bleib auf dem Laufenden"
   },
   "store": {
     "categoriesTitle": "Kategorien",

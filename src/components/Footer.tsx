@@ -10,6 +10,7 @@ import { SUPPORTED_CURRENCIES, SupportedCurrency } from '@/lib/currency'
 import Image from 'next/image'
 import { Instagram, Facebook, Send, Loader2, Mail, Clock } from 'lucide-react'
 import { subscribeToNewsletter } from '@/actions/newsletter'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 const COUNTRY_FLAGS: Record<string, string> = {
   CH: '🇨🇭',
@@ -61,7 +62,7 @@ function ChevronIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -72,6 +73,7 @@ function ChevronIcon({ className }: { className?: string }) {
 }
 
 function CurrencySelector() {
+  const t = useTranslations('footer')
   const { currency, setCurrency } = useCurrency()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -88,18 +90,29 @@ function CurrencySelector() {
     }
   }, [open])
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   return (
     <div className="flex flex-col gap-2" ref={ref}>
-      <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Currency</span>
+      <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+        {t('currency')}
+      </span>
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex min-w-[100px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition hover:border-white/20"
+          aria-expanded={open}
+          className="flex min-w-[100px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition-[border-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/20"
         >
           <span>{currency}</span>
           <ChevronIcon
-            className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${open ? 'rotate-180' : ''}`}
           />
         </button>
         {open && (
@@ -112,7 +125,7 @@ function CurrencySelector() {
                     setCurrency(c)
                     setOpen(false)
                   }}
-                  className={`block w-full px-4 py-2.5 text-left text-sm transition ${
+                  className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                     currency === c
                       ? 'bg-amber-500/20 text-amber-400'
                       : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
@@ -158,6 +171,14 @@ export function Footer() {
     }
   }, [countryOpen])
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setCountryOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   const { setCurrency } = useCurrency()
 
   function selectCountry(value: (typeof COUNTRY_REGION_OPTIONS)[number]['value']) {
@@ -195,17 +216,24 @@ export function Footer() {
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-20">
           <div className="flex flex-col items-center justify-between gap-12 lg:flex-row">
             <div className="max-w-md text-center lg:text-left">
-              <h2 className="text-2xl font-bold text-white md:text-3xl lg:text-4xl">
-                {t('newsletterTitle')}
-              </h2>
-              <p className="mt-4 text-zinc-400">{t('newsletterDescription')}</p>
+              <ScrollReveal>
+                <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium uppercase tracking-widest text-amber-400">
+                  {t('newsletterEyebrow')}
+                </span>
+              </ScrollReveal>
+              <ScrollReveal delay={0.06}>
+                <h2 className="text-2xl font-bold text-white md:text-3xl lg:text-4xl">
+                  {t('newsletterTitle')}
+                </h2>
+                <p className="mt-4 text-zinc-400">{t('newsletterDescription')}</p>
+              </ScrollReveal>
             </div>
 
-            <div className="w-full max-w-md">
+            <ScrollReveal delay={0.12} className="w-full max-w-md">
               {isSubscribed ? (
                 <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-emerald-400">
                   <div className="rounded-full bg-emerald-500/20 p-2 text-emerald-500">
-                    <Send className="h-4 w-4" />
+                    <Send className="h-4 w-4" strokeWidth={1.5} />
                   </div>
                   <span className="font-medium">{t('newsletterSuccess')}</span>
                 </div>
@@ -216,22 +244,22 @@ export function Footer() {
                     name="email"
                     required
                     placeholder={t('newsletterPlaceholder')}
-                    className="w-full rounded-full border border-white/10 bg-zinc-900 px-6 py-4 text-sm text-white placeholder-zinc-500 transition-all focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 group-hover:border-white/20"
+                    className="w-full rounded-full border border-white/10 bg-zinc-900 px-6 py-4 text-sm text-white placeholder-zinc-500 transition-[border-color,box-shadow] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 group-hover:border-white/20"
                   />
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="absolute right-2 top-2 bottom-2 rounded-full bg-white px-6 text-sm font-bold text-zinc-950 transition-all hover:bg-zinc-200 active:scale-95 disabled:opacity-50"
+                    className="absolute right-2 top-2 bottom-2 rounded-full bg-white px-6 text-sm font-bold text-zinc-950 transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-200 active:scale-95 disabled:opacity-50"
                   >
                     {submitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
                     ) : (
                       t('newsletterButton')
                     )}
                   </button>
                 </form>
               )}
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </div>
@@ -240,54 +268,56 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Logo & Info */}
-          <div className="flex flex-col gap-6">
-            <Link href="/" className="shrink-0">
-              <DarkMonkeyLogo size="lg" className="text-zinc-50" noLink />
-            </Link>
+          <ScrollReveal>
+            <div className="flex flex-col gap-6">
+              <Link href="/" className="shrink-0">
+                <DarkMonkeyLogo size="lg" className="text-zinc-50" noLink />
+              </Link>
 
-            {/* Customer Service Info */}
-            <div className="flex flex-col gap-4 pt-4 border-t border-white/5">
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                {t('customerService')}
-              </span>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3 text-sm text-zinc-400">
-                  <Clock className="h-4 w-4 text-zinc-500" />
-                  <span>{t('operatingHours')}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-zinc-400">
-                  <Mail className="h-4 w-4 text-zinc-500" />
-                  <a
-                    href="mailto:support@dark-monkey.ch"
-                    className="hover:text-amber-400 transition-colors"
-                  >
-                    support@dark-monkey.ch
-                  </a>
+              {/* Customer Service Info */}
+              <div className="flex flex-col gap-4 pt-4 border-t border-white/5">
+                <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  {t('customerService')}
+                </span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3 text-sm text-zinc-400">
+                    <Clock className="h-4 w-4 text-zinc-500" strokeWidth={1.5} />
+                    <span>{t('operatingHours')}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-zinc-400">
+                    <Mail className="h-4 w-4 text-zinc-500" strokeWidth={1.5} />
+                    <a
+                      href="mailto:support@dark-monkey.ch"
+                      className="transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-amber-400"
+                    >
+                      support@dark-monkey.ch
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* Configuration block */}
-          <div className="flex flex-col gap-8 lg:col-span-2">
+          <ScrollReveal delay={0.08} className="flex flex-col gap-8 lg:col-span-2">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-12">
               <div className="flex flex-col gap-2" ref={countryRef}>
                 <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Country / region
+                  {t('countryRegion')}
                 </span>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setCountryOpen(!countryOpen)}
-                    className="flex min-w-[200px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition hover:border-white/20"
                     aria-expanded={countryOpen}
+                    className="flex min-w-[200px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition-[border-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/20"
                   >
                     <span className="flex items-center gap-2 truncate">
                       <span>{COUNTRY_FLAGS[countryValue] || '🌐'}</span>
                       <span>{currentCountry?.label ?? 'Switzerland'}</span>
                     </span>
                     <ChevronIcon
-                      className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${countryOpen ? 'rotate-180' : ''}`}
+                      className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${countryOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
                   {countryOpen && (
@@ -304,7 +334,7 @@ export function Footer() {
                           <button
                             type="button"
                             onClick={() => selectCountry(opt.value)}
-                            className={`block w-full px-4 py-2.5 text-left text-sm transition ${
+                            className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                               countryValue === opt.value
                                 ? 'bg-amber-500/20 text-amber-400'
                                 : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
@@ -325,7 +355,7 @@ export function Footer() {
               <CurrencySelector />
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Language
+                  {t('language')}
                 </span>
                 <div className="min-w-[200px]">
                   <LanguageSwitcher variant="desktop" />
@@ -333,10 +363,10 @@ export function Footer() {
               </div>
             </div>
 
-            {/* Payment icons (right on desktop) */}
+            {/* Payment icons */}
             <div className="flex flex-col gap-2">
               <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                We accept
+                {t('weAccept')}
               </span>
               <div className="flex flex-wrap items-center gap-2">
                 {[
@@ -348,7 +378,7 @@ export function Footer() {
                 ].map(({ name, src, width, height }) => (
                   <div
                     key={name}
-                    className="flex h-8 w-[50px] items-center justify-center rounded bg-white px-1 py-1 transition-opacity hover:opacity-80"
+                    className="flex h-8 w-[50px] items-center justify-center rounded bg-white px-1 py-1 transition-opacity duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:opacity-80"
                     aria-label={name}
                   >
                     <Image
@@ -367,34 +397,34 @@ export function Footer() {
             {/* Social Links */}
             <div className="flex flex-col gap-4">
               <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                Follow Us
+                {t('followUs')}
               </span>
               <div className="flex gap-4">
                 <a
                   href="https://www.instagram.com/dark_monkey_store/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded text-zinc-400 transition hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  className="rounded text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                   aria-label="Instagram"
                 >
-                  <Instagram className="h-5 w-5" />
+                  <Instagram className="h-5 w-5" strokeWidth={1.5} />
                 </a>
                 <a
                   href="https://www.facebook.com/profile.php?id=61574367719121"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded text-zinc-400 transition hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  className="rounded text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                   aria-label="Facebook"
                 >
-                  <Facebook className="h-5 w-5" />
+                  <Facebook className="h-5 w-5" strokeWidth={1.5} />
                 </a>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
 
-      {/* Bottom: copyright + policy links (horizontal, bullet-separated) */}
+      {/* Bottom: copyright + policy links */}
       <div className="border-t border-white/5 px-4 py-5">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 text-center text-sm text-zinc-500 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-1 sm:gap-y-0">
           <span>© {new Date().getFullYear()}, DarkMonkey</span>
@@ -405,7 +435,7 @@ export function Footer() {
               </span>
               <Link
                 href={link.href as '/'}
-                className="rounded text-zinc-500 transition hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950"
+                className="rounded text-zinc-500 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950"
               >
                 {t(link.key)}
               </Link>
@@ -421,22 +451,22 @@ export function Footer() {
             href="https://www.lopes2tech.ch"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-2.5 transition-all duration-300"
+            className="group flex items-center gap-2.5 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
           >
-            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-700 transition-colors duration-300 group-hover:text-zinc-500">
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-700 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:text-zinc-500">
               Crafted by
             </span>
-            <span className="h-px w-6 bg-zinc-800 transition-all duration-300 group-hover:w-3 group-hover:bg-zinc-600" />
+            <span className="h-px w-6 bg-zinc-800 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:w-3 group-hover:bg-zinc-600" />
             <Image
               src="/images/lopes2tech_logo.png"
               alt="Lopes2Tech"
               width={18}
               height={18}
-              className="rounded grayscale opacity-30 transition-all duration-300 group-hover:opacity-70 group-hover:grayscale-0"
+              className="rounded grayscale opacity-30 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-70 group-hover:grayscale-0"
             />
-            <span className="text-[11px] font-bold tracking-widest text-zinc-700 transition-colors duration-300 group-hover:text-zinc-300">
+            <span className="text-[11px] font-bold tracking-widest text-zinc-700 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:text-zinc-300">
               LOPES
-              <span className="text-amber-500/60 group-hover:text-amber-400 transition-colors duration-300">
+              <span className="text-amber-500/60 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:text-amber-400">
                 2
               </span>
               TECH

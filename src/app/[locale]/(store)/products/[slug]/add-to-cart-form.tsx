@@ -1,6 +1,6 @@
 'use client'
 
-import { CreditCard, Plus, Minus } from 'lucide-react'
+import { CreditCard, ShoppingBag, Plus, Minus } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { addToCart } from '@/actions/cart'
 import { useRouter } from 'next/navigation'
@@ -67,17 +67,17 @@ export function ProductQuantitySelector({
         <button
           type="button"
           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          className="flex h-full w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/5 hover:text-zinc-100 transition-colors"
+          className="flex h-full w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/5 hover:text-zinc-100"
         >
-          <Minus className="h-4 w-4" />
+          <Minus className="h-4 w-4" strokeWidth={1.5} />
         </button>
         <div className="flex w-8 justify-center font-bold text-zinc-100 text-sm">{quantity}</div>
         <button
           type="button"
           onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-          className="flex h-full w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/5 hover:text-zinc-100 transition-colors"
+          className="flex h-full w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/5 hover:text-zinc-100"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4" strokeWidth={1.5} />
         </button>
       </div>
     </div>
@@ -103,28 +103,38 @@ export function ProductActionButtons({
   if (stock === 0) return null
 
   return (
-    <div className="grid grid-cols-2 gap-3 w-full">
-      {/* Add to cart — primary amber, turns green on success */}
+    <div className="flex flex-col gap-3 w-full">
+      {/* Add to cart — full width, primary amber pill, button-in-button */}
       <button
         type="button"
         disabled={disabled || isAdding}
         onClick={onSubmit}
-        className={`h-12 flex items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed ${
+        className={`group flex h-13 w-full items-center justify-between rounded-full py-2 pl-7 pr-2 font-black transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
           isSuccess
-            ? 'bg-green-500 text-white scale-95'
-            : 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
+            ? 'bg-green-500 text-white shadow-[0_0_40px_rgba(34,197,94,0.25)]'
+            : 'bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-[0_0_40px_rgba(251,191,36,0.15)] hover:shadow-[0_0_55px_rgba(251,191,36,0.3)]'
         }`}
       >
-        {isSuccess ? '✓ ' + t('added') : isAdding ? t('adding') : t('addToCart')}
+        <span className="text-[10px] uppercase tracking-[0.15em]">
+          {isSuccess ? '✓ ' + t('added') : isAdding ? t('adding') : t('addToCart')}
+        </span>
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5 ${isSuccess ? 'bg-white/20' : 'bg-black/15'}`}
+        >
+          <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
+        </div>
       </button>
-      {/* Buy now — ghost white outline */}
+      {/* Buy now — full width, ghost pill, secondary */}
       <button
         type="button"
         onClick={onBuyNow}
         disabled={disabled || isAdding}
-        className="h-12 flex items-center justify-center rounded-xl border border-white/20 bg-white/5 text-[10px] font-black uppercase tracking-[0.15em] text-white transition-all hover:bg-white/10 hover:border-white/40 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+        className="group flex h-13 w-full items-center justify-between rounded-full border border-white/15 bg-white/5 py-2 pl-7 pr-2 font-black text-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/30 hover:bg-white/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {t('buyNow')}
+        <span className="text-[10px] uppercase tracking-[0.15em]">{t('buyNow')}</span>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5">
+          <CreditCard className="h-4 w-4" strokeWidth={1.5} />
+        </div>
       </button>
     </div>
   )
@@ -154,6 +164,7 @@ interface AddToCartFormProps {
   // When provided, the form delegates add-to-cart and buy-now to the parent
   // (ProductMain owns the unified state). If absent, the form handles it internally.
   externalIsAdding?: boolean
+  externalIsSuccess?: boolean
   onAddToCart?: () => Promise<boolean>
   onBuyNow?: () => Promise<void>
 }
@@ -167,6 +178,7 @@ export function AddToCartForm({
   customizationRule,
   productCategory,
   externalIsAdding,
+  externalIsSuccess,
   onAddToCart: externalOnAddToCart,
   onBuyNow: externalOnBuyNow,
   ...props
@@ -299,6 +311,7 @@ export function AddToCartForm({
   }
 
   const effectiveIsAdding = externalIsAdding ?? isAdding
+  const effectiveIsSuccess = externalIsSuccess ?? false
 
   const selectedColorOption = colors.find((c) => c.name === selectedColor)
 
@@ -306,7 +319,15 @@ export function AddToCartForm({
     <div className="flex flex-col gap-6">
       {/* Price & Stock info */}
       <div className="flex flex-col gap-1">
-        <span className="text-2xl font-black text-amber-500">{format(priceCents)}</span>
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-black text-amber-500">{format(priceCents)}</span>
+          {selectedVariant?.compare_at_price_cents &&
+            selectedVariant.compare_at_price_cents > priceCents && (
+              <span className="text-base text-zinc-500 line-through">
+                {format(selectedVariant.compare_at_price_cents)}
+              </span>
+            )}
+        </div>
         {stock > 0 ? (
           <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">
             {t('inStock')}
@@ -340,7 +361,7 @@ export function AddToCartForm({
                   setSelectedColor(c.name)
                   props.onColorChange?.(c.name)
                 }}
-                className={`h-8 w-8 rounded-full border-2 transition-all ${selectedColor === c.name ? 'border-amber-500 ring-4 ring-amber-500/10 scale-110 shadow-lg shadow-amber-500/10' : 'border-white/10 hover:border-white/30'}`}
+                className={`h-8 w-8 rounded-full border-2 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${selectedColor === c.name ? 'border-amber-500 ring-4 ring-amber-500/10 scale-110 shadow-lg shadow-amber-500/10' : 'border-white/10 hover:border-white/30'}`}
                 style={{
                   background:
                     c.hex2 && c.hex
@@ -379,7 +400,7 @@ export function AddToCartForm({
                   disabled={outOfStock}
                   aria-pressed={isSelected}
                   aria-label={`Size ${sizeLabel}${outOfStock ? ' (out of stock)' : ''}`}
-                  className={`relative h-10 min-w-[2.5rem] px-3 rounded-lg border text-xs font-bold transition-all
+                  className={`relative h-10 min-w-[2.5rem] px-3 rounded-lg border text-xs font-bold transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]
                     ${
                       isSelected
                         ? 'border-amber-500 bg-amber-500/10 text-amber-400'
@@ -430,6 +451,7 @@ export function AddToCartForm({
         ) : (
           <ProductActionButtons
             isAdding={effectiveIsAdding}
+            isSuccess={effectiveIsSuccess}
             stock={stock}
             onSubmit={handleAddToCart}
             onBuyNow={handleBuyNow}

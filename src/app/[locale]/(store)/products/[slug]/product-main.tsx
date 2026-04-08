@@ -26,6 +26,7 @@ import { useCurrency } from '@/components/currency/CurrencyContext'
 import type { CustomizationRuleDef } from '@/types/customization'
 import { ProductRatingSummary } from '@/components/product/ProductRatingSummary'
 import { TrustBadges } from '@/components/product/TrustBadges'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 import { useRouter, useParams } from 'next/navigation'
 import { addToCart } from '@/actions/cart'
 import { colorToHex } from '@/lib/color-swatch'
@@ -103,6 +104,7 @@ export function ProductMain({
   gpsrInfo,
 }: Props) {
   const t = useTranslations('product')
+  const tCommon = useTranslations('common')
   const { format, currency } = useCurrency()
   const router = useRouter()
   const params = useParams()
@@ -259,17 +261,23 @@ export function ProductMain({
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-0 md:py-8 md:px-8">
-      {/* Change 6: Breadcrumb */}
+      {/* Breadcrumb */}
       <nav
         aria-label="Breadcrumb"
         className="flex items-center gap-2 text-xs text-zinc-500 mb-6 px-0"
       >
-        <Link href="/" className="hover:text-zinc-300 transition-colors">
-          Home
+        <Link
+          href="/"
+          className="transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-300"
+        >
+          {tCommon('home')}
         </Link>
         <span>/</span>
-        <Link href="/products" className="hover:text-zinc-300 transition-colors">
-          Products
+        <Link
+          href="/products"
+          className="transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-300"
+        >
+          {tCommon('products')}
         </Link>
         {product.categories?.name && (
           <>
@@ -282,11 +290,10 @@ export function ProductMain({
       </nav>
 
       {/* ── TOP SECTION ─────────────────────────────────────────── */}
-      {/* Change 1 + 4 + 5: Mobile = flex-col vertical stack; desktop = grid-cols-2 */}
       <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-12 mt-4">
-        {/* LEFT: Image System */}
-        <div>
-          {/* Mobile image — full width, no 2-col grid */}
+        {/* LEFT: Image System — sticky on desktop */}
+        <div className="md:sticky md:top-20 md:self-start">
+          {/* Mobile image — full width, dot indicators */}
           <div className="md:hidden">
             <ProductImageGallery
               images={images}
@@ -297,7 +304,7 @@ export function ProductMain({
             />
           </div>
 
-          {/* Desktop thumbnails gallery */}
+          {/* Desktop gallery — vertical thumbnail strip */}
           <div className="hidden md:block">
             <ProductImageGallery
               images={images}
@@ -314,7 +321,11 @@ export function ProductMain({
           {/* Name + category + share button (Change 11: share next to product name on mobile) */}
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 flex-1 min-w-0">
-              {/* Change 5: text-2xl on mobile */}
+              {isBestseller && (
+                <span className="mb-1 inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">
+                  {t('bestseller')}
+                </span>
+              )}
               <h1 className="text-2xl font-black leading-tight text-white">{product.name}</h1>
               {product.categories?.name && (
                 <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
@@ -359,11 +370,22 @@ export function ProductMain({
         </div>
 
         {/* RIGHT: Desktop info + form */}
-        <div className="hidden md:flex flex-col gap-6">
+        <div className="hidden md:flex flex-col gap-6 relative">
+          {/* Ambient amber glow — behind price/CTA zone */}
+          <div className="pointer-events-none absolute -top-12 -left-12 h-72 w-72 rounded-full bg-amber-500/5 blur-[90px]" />
+          <div className="pointer-events-none absolute top-1/3 right-0 h-48 w-48 rounded-full bg-amber-600/4 blur-[70px]" />
+
           {/* Name + category + wishlist/share row */}
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 relative">
             <div className="space-y-2">
-              <h1 className="text-4xl font-black tracking-tight text-white">{product.name}</h1>
+              {isBestseller && (
+                <span className="mb-1 inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400">
+                  {t('bestseller')}
+                </span>
+              )}
+              <h1 className="[font-size:clamp(1.75rem,3.5vw,3.25rem)] font-black tracking-tight text-white">
+                {product.name}
+              </h1>
               {product.categories?.name && (
                 <p className="text-xs font-bold text-zinc-500 uppercase tracking-[0.3em]">
                   {product.categories.name}
@@ -409,6 +431,7 @@ export function ProductMain({
               productCategory={product.categories?.name}
               sizeGuideUrl={product.size_guide_url}
               externalIsAdding={isAdding}
+              externalIsSuccess={isSuccess}
               onAddToCart={handleAddToCart}
               onBuyNow={handleBuyNow}
             />
@@ -439,7 +462,7 @@ export function ProductMain({
                     onClick={() => setSelectedColor(c.name)}
                     aria-label={`${c.name}${!hasStock ? ' (out of stock)' : ''}`}
                     aria-pressed={selectedColor === c.name}
-                    className={`relative h-10 w-10 rounded-full border-2 transition-all ${
+                    className={`relative h-10 w-10 rounded-full border-2 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                       selectedColor === c.name
                         ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-lg shadow-amber-500/10'
                         : 'border-white/10 hover:border-white/30'
@@ -490,7 +513,7 @@ export function ProductMain({
                     disabled={outOfStock}
                     aria-pressed={isSelected}
                     aria-label={`Size ${sizeLabel}${outOfStock ? ' (out of stock)' : ''}`}
-                    className={`relative h-11 min-w-[3rem] px-4 rounded-lg border text-sm font-bold transition-all ${
+                    className={`relative h-11 min-w-[3rem] px-4 rounded-lg border text-sm font-bold transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                       isSelected
                         ? 'border-amber-500 bg-amber-500/10 text-amber-400'
                         : outOfStock
@@ -573,73 +596,83 @@ export function ProductMain({
       </div>
 
       {/* ── TRUST BADGES ────────────────────────────────────────── */}
-      <div className="mt-10 mb-16">
-        <TrustBadges />
-      </div>
+      <ScrollReveal>
+        <div className="mt-10 mb-16">
+          <TrustBadges />
+        </div>
+      </ScrollReveal>
 
       {/* ── DESCRIPTION ─────────────────────────────────────────── */}
-      <div className="max-w-4xl">
-        <h2 className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-6 flex items-center gap-4">
-          {t('details')}
-          <div className="h-px flex-1 bg-white/5" />
-        </h2>
-        <div className="rounded-[2.5rem] border border-white/5 bg-zinc-900/20 p-8 md:p-12">
-          <div
-            className="styled-description prose prose-invert prose-sm md:prose-base max-w-none text-zinc-400 font-sans leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: product.description || '' }}
-          />
-        </div>
-
-        {/* Change 8: Product tags */}
-        {tags.length > 0 && (
-          <div className="mt-6 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <Link
-                key={tag.id}
-                href={`/products?tag=${tag.slug}`}
-                className="rounded-full border border-white/10 bg-zinc-900/50 px-3 py-1 text-xs font-medium text-zinc-400 hover:border-amber-500/40 hover:text-amber-400 transition-colors"
-              >
-                #{tag.name}
-              </Link>
-            ))}
+      <ScrollReveal>
+        <div className="max-w-4xl">
+          <h2 className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-6 flex items-center gap-4">
+            {t('details')}
+            <div className="h-px flex-1 bg-white/5" />
+          </h2>
+          <div className="rounded-[2.5rem] border border-white/5 bg-zinc-900/20 p-8 md:p-12">
+            <div
+              className="styled-description prose prose-invert prose-sm md:prose-base max-w-none text-zinc-400 font-sans leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: product.description || '' }}
+            />
           </div>
-        )}
-      </div>
+
+          {/* Product tags */}
+          {tags.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <Link
+                  key={tag.id}
+                  href={`/products?tag=${tag.slug}`}
+                  className="rounded-full border border-white/10 bg-zinc-900/50 px-3 py-1 text-xs font-medium text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-amber-500/40 hover:text-amber-400"
+                >
+                  #{tag.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </ScrollReveal>
 
       {/* ── INFO TABS (Material / Care & Print / Shipment / GPSR) ── */}
-      <div className="mt-10 max-w-4xl">
-        <ProductInfoTabs
-          materialInfo={product.material_info ?? null}
-          careInstructions={product.care_instructions ?? null}
-          printMethod={product.print_method ?? null}
-          originCountry={product.origin_country ?? null}
-          avgFulfillmentTime={product.avg_fulfillment_time ?? null}
-          shipmentInfo={shipmentInfo ?? null}
-          gpsrInfo={gpsrInfo ?? null}
-        />
-      </div>
+      <ScrollReveal delay={0.05}>
+        <div className="mt-10 max-w-4xl">
+          <ProductInfoTabs
+            materialInfo={product.material_info ?? null}
+            careInstructions={product.care_instructions ?? null}
+            printMethod={product.print_method ?? null}
+            originCountry={product.origin_country ?? null}
+            avgFulfillmentTime={product.avg_fulfillment_time ?? null}
+            shipmentInfo={shipmentInfo ?? null}
+            gpsrInfo={gpsrInfo ?? null}
+          />
+        </div>
+      </ScrollReveal>
 
       {/* ── STORY — before reviews to build purchase intent ────── */}
       {storyContent && (
-        <div className="mt-12">
-          <ProductStory story={storyContent} />
-        </div>
+        <ScrollReveal delay={0.05}>
+          <div className="mt-12">
+            <ProductStory story={storyContent} />
+          </div>
+        </ScrollReveal>
       )}
 
       {/* ── REVIEWS ─────────────────────────────────────────────── */}
-      <div className="mt-24 border-t border-white/5 pt-20">
-        <div id="reviews-section">
-          <ProductReviews
-            productId={product.id}
-            productSlug={product.slug}
-            reviews={reviews}
-            userReview={userReview}
-            canSubmit={canSubmitReview}
-            userId={userId}
-            orderIdFromQuery={orderIdFromQuery}
-          />
+      <ScrollReveal>
+        <div className="mt-24 border-t border-white/5 pt-20">
+          <div id="reviews-section">
+            <ProductReviews
+              productId={product.id}
+              productSlug={product.slug}
+              reviews={reviews}
+              userReview={userReview}
+              canSubmit={canSubmitReview}
+              userId={userId}
+              orderIdFromQuery={orderIdFromQuery}
+            />
+          </div>
         </div>
-      </div>
+      </ScrollReveal>
 
       {/* ── SOCIAL PROOF ────────────────────────────────────────── */}
       <div className="mt-12">
