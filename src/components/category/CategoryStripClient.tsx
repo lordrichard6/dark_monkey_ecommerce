@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { Link } from '@/i18n/navigation'
 import { ArrowRight } from 'lucide-react'
 import { FeaturedCategoryCard, type CategoryItem } from './FeaturedCategoryCard'
-import { useScrollReveal } from '@/hooks/useScrollReveal'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 type Props = {
   categories: CategoryItem[]
@@ -27,28 +27,32 @@ export function CategoryStripClient({
   return (
     <section className="relative mx-auto max-w-7xl px-4 py-12 md:py-16">
       {/* Section header */}
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <p className="mb-1 text-xs font-bold uppercase tracking-[0.3em] text-amber-500/80">
-            {collectionsLabel}
-          </p>
-          <h2 className="text-2xl font-black tracking-tight text-zinc-50 md:text-3xl">{title}</h2>
+      <ScrollReveal>
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.3em] text-amber-500/80">
+              {collectionsLabel}
+            </p>
+            <h2 className="text-2xl font-black tracking-tight text-zinc-50 md:text-3xl">{title}</h2>
+          </div>
+          <Link
+            href="/categories"
+            className="group flex items-center gap-1.5 text-sm font-medium text-zinc-400 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-100"
+          >
+            {viewAllLabel}
+            <ArrowRight className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5" />
+          </Link>
         </div>
-        <Link
-          href="/categories"
-          className="group flex items-center gap-1.5 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
-        >
-          {viewAllLabel}
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      </div>
+      </ScrollReveal>
 
       {/* Featured gold card — full width, above the regular strip */}
       {featured.length > 0 && (
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:gap-5">
           {featured.map((cat, i) => (
             <div key={cat.id} className="sm:col-span-2" style={{ minHeight: '240px' }}>
-              <FeaturedCategoryCard category={cat} index={i} />
+              <ScrollReveal delay={i * 0.05}>
+                <FeaturedCategoryCard category={cat} index={i} />
+              </ScrollReveal>
             </div>
           ))}
         </div>
@@ -75,21 +79,10 @@ function RegularCategoryCard({
   index: number
   exploreLabel: string
 }) {
-  const { ref, visible } = useScrollReveal()
-  const delay = Math.min(index % 4, 3) * 80
+  const delay = Math.min(index % 4, 3) * 0.08
 
   return (
-    <div
-      ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(28px)',
-        transitionProperty: 'opacity, transform',
-        transitionDuration: '0.55s',
-        transitionTimingFunction: 'ease',
-        transitionDelay: `${delay}ms`,
-      }}
-    >
+    <ScrollReveal delay={delay}>
       <Link
         href={`/categories/${cat.slug}`}
         className="group relative overflow-hidden rounded-2xl block"
@@ -102,7 +95,7 @@ function RegularCategoryCard({
               src={cat.image_url}
               alt={cat.name}
               fill
-              className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-110"
+              className="object-cover object-center transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
               unoptimized={cat.image_url.includes('/storage/')}
             />
@@ -111,11 +104,11 @@ function RegularCategoryCard({
           )}
 
           {/* Gradient overlay — stronger at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 group-hover:from-black/90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-500 group-hover:from-black/90" />
 
           {/* Subtle top-left glow on hover */}
           <div
-            className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            className="absolute inset-0 opacity-0 transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-100"
             style={{
               background:
                 'radial-gradient(ellipse at 20% 20%, rgba(251,191,36,0.08) 0%, transparent 60%)',
@@ -123,25 +116,22 @@ function RegularCategoryCard({
           />
 
           {/* Border ring */}
-          <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 transition-all duration-300 group-hover:ring-amber-500/30" />
+          <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:ring-amber-500/30" />
 
           {/* Bottom content */}
           <div className="absolute inset-x-0 bottom-0 p-3">
-            {/* Category name */}
-            <p className="text-sm font-bold leading-tight text-zinc-50 transition-transform duration-300 group-hover:-translate-y-0.5 md:text-base">
+            <p className="text-sm font-bold leading-tight text-zinc-50 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 md:text-base">
               {cat.name}
             </p>
-
-            {/* "Explore" label — slides up on hover */}
             <div className="flex items-center gap-1 overflow-hidden">
-              <span className="translate-y-4 text-[11px] font-medium text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+              <span className="translate-y-4 text-[11px] font-medium text-amber-400/90 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-y-0 group-hover:opacity-100">
                 {exploreLabel}
               </span>
-              <ArrowRight className="h-3 w-3 translate-y-4 text-amber-400/90 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100" />
+              <ArrowRight className="h-3 w-3 translate-y-4 text-amber-400/90 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-y-0 group-hover:opacity-100" />
             </div>
           </div>
         </div>
       </Link>
-    </div>
+    </ScrollReveal>
   )
 }

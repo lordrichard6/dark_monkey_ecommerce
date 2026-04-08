@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { Link } from '@/i18n/navigation'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 const INSTAGRAM_URL = 'https://www.instagram.com/dark_monkey_store/'
 const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61574367719121'
@@ -30,10 +30,13 @@ export async function SocialSection() {
       url: INSTAGRAM_URL,
       Icon: InstagramIcon,
       gradient: 'from-purple-600 via-pink-600 to-orange-500',
-      glow: 'shadow-pink-500/20',
-      ring: 'ring-pink-500/30',
-      buttonBg: 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 hover:from-purple-500 hover:via-pink-400 hover:to-orange-400',
+      glow: 'rgba(236,72,153,0.12)',
+      outerBorder: 'border-pink-500/15',
+      innerBorder: 'border-pink-500/8',
+      buttonBg:
+        'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 hover:from-purple-500 hover:via-pink-400 hover:to-orange-400',
       iconBg: 'bg-gradient-to-br from-purple-500/20 to-pink-500/20',
+      iconRing: 'ring-pink-500/20',
     },
     {
       name: 'Facebook',
@@ -41,83 +44,123 @@ export async function SocialSection() {
       url: FACEBOOK_URL,
       Icon: FacebookIcon,
       gradient: 'from-blue-700 to-blue-500',
-      glow: 'shadow-blue-500/20',
-      ring: 'ring-blue-500/30',
+      glow: 'rgba(59,130,246,0.12)',
+      outerBorder: 'border-blue-500/15',
+      innerBorder: 'border-blue-500/8',
       buttonBg: 'bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400',
       iconBg: 'bg-blue-500/10',
+      iconRing: 'ring-blue-500/20',
     },
   ]
 
   return (
-    <section className="relative overflow-hidden bg-zinc-950 py-24">
+    <section className="relative overflow-hidden bg-zinc-950 py-24 md:py-32">
       {/* Ambient glows */}
       <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-pink-600/5 blur-[120px]" />
       <div className="pointer-events-none absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-blue-600/5 blur-[120px]" />
 
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-14 text-center">
-          <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-amber-400">
-            {t('socialEyebrow')}
-          </span>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl font-serif lowercase italic">
-            {t('socialTitle')}
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-zinc-400">
-            {t('socialSubtitle')}
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="mb-14 text-center">
+            <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">
+              {t('socialEyebrow')}
+            </span>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl font-serif lowercase italic">
+              {t('socialTitle')}
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-zinc-400">{t('socialSubtitle')}</p>
+          </div>
+        </ScrollReveal>
 
-        {/* Platform cards */}
+        {/* Platform cards — double-bezel */}
         <div className="grid gap-6 sm:grid-cols-2">
-          {platforms.map(({ name, handle, url, Icon, gradient, glow, ring, buttonBg, iconBg }) => (
-            <a
-              key={name}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`group relative flex flex-col gap-6 overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/60 p-8 shadow-xl ${glow} ring-1 ${ring} backdrop-blur-sm transition duration-300 hover:border-white/10 hover:bg-zinc-900/80 hover:shadow-2xl hover:-translate-y-1`}
-            >
-              {/* Subtle gradient wash in the corner */}
-              <div className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br ${gradient} opacity-10 blur-2xl transition group-hover:opacity-20`} />
+          {platforms.map(
+            (
+              {
+                name,
+                handle,
+                url,
+                Icon,
+                gradient,
+                glow,
+                outerBorder,
+                innerBorder,
+                buttonBg,
+                iconBg,
+                iconRing,
+              },
+              i
+            ) => (
+              <ScrollReveal key={name} delay={i * 0.1}>
+                {/* Outer shell */}
+                <div className={`rounded-[1.75rem] border ${outerBorder} bg-white/[0.02] p-1.5`}>
+                  {/* Inner core */}
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`group relative flex flex-col gap-6 overflow-hidden rounded-[1.375rem] border ${innerBorder} bg-zinc-900/70 p-7 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-900/90 hover:-translate-y-0.5`}
+                    style={{
+                      boxShadow: `inset 0 1px 1px rgba(255,255,255,0.05), 0 0 40px ${glow}`,
+                    }}
+                  >
+                    {/* Corner gradient wash */}
+                    <div
+                      className={`pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-gradient-to-br ${gradient} opacity-[0.08] blur-2xl transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:opacity-[0.16]`}
+                    />
 
-              <div className="flex items-start justify-between">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${iconBg} ring-1 ${ring}`}>
-                  <Icon className="h-7 w-7 text-zinc-100" />
+                    <div className="flex items-start justify-between">
+                      <div
+                        className={`flex h-14 w-14 items-center justify-center rounded-2xl ${iconBg} ring-1 ${iconRing}`}
+                      >
+                        <Icon className="h-7 w-7 text-zinc-100" />
+                      </div>
+                      {/* Arrow hint — diagonal kinetic on hover */}
+                      <svg
+                        className="h-5 w-5 text-zinc-600 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-zinc-300"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M7 17L17 7M17 7H7M17 7v10"
+                        />
+                      </svg>
+                    </div>
+
+                    <div>
+                      <p className="text-lg font-bold text-zinc-100">{name}</p>
+                      <p className="mt-0.5 text-sm font-medium text-zinc-500">{handle}</p>
+                    </div>
+
+                    <div
+                      className={`inline-flex w-full items-center justify-center gap-2 rounded-xl ${buttonBg} px-5 py-3 text-sm font-bold text-white shadow-lg transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {t('socialFollowButton', { platform: name })}
+                    </div>
+                  </a>
                 </div>
-                {/* Arrow hint */}
-                <svg
-                  className="h-5 w-5 translate-x-0 translate-y-0 text-zinc-600 transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-zinc-400"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
-                </svg>
-              </div>
-
-              <div>
-                <p className="text-lg font-bold text-zinc-100">{name}</p>
-                <p className="mt-0.5 text-sm font-medium text-zinc-500">{handle}</p>
-              </div>
-
-              <div
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl ${buttonBg} px-5 py-3 text-sm font-bold text-white shadow-lg transition-all duration-200`}
-              >
-                <Icon className="h-4 w-4" />
-                {t('socialFollowButton', { platform: name })}
-              </div>
-            </a>
-          ))}
+              </ScrollReveal>
+            )
+          )}
         </div>
 
         {/* Perks strip */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[13px] text-zinc-500">
-          {[t('socialPerk1'), t('socialPerk2'), t('socialPerk3')].map((perk) => (
-            <span key={perk} className="flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-amber-500" />
-              {perk}
-            </span>
-          ))}
-        </div>
+        <ScrollReveal delay={0.2}>
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[13px] text-zinc-500">
+            {[t('socialPerk1'), t('socialPerk2'), t('socialPerk3')].map((perk) => (
+              <span key={perk} className="flex items-center gap-2">
+                <span className="h-1 w-1 rounded-full bg-amber-500" />
+                {perk}
+              </span>
+            ))}
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   )

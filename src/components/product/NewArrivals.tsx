@@ -6,7 +6,8 @@ import { ProductCardWithWishlist } from './ProductCardWithWishlist'
 import type { HomeProduct } from '@/actions/products'
 type Category = { id: string; name: string; slug: string; subcategories?: { id: string }[] }
 import { useTranslations } from 'next-intl'
-import { ChevronRight, ChevronLeft } from 'lucide-react'
+import { ChevronRight, ChevronLeft, ArrowRight } from 'lucide-react'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 type Props = {
   products: HomeProduct[]
@@ -32,7 +33,6 @@ export function NewArrivals({ products, categories }: Props) {
               ?.subcategories?.some((s) => s.id === p.categoryId)
         )
 
-  // Limit to 8 items for homepage display
   const displayedProducts = filteredProducts.slice(0, 8)
   const hasMore = filteredProducts.length > 8
 
@@ -42,97 +42,90 @@ export function NewArrivals({ products, categories }: Props) {
     setScrollLeft(scrollRef.current?.scrollLeft || 0)
   }
 
-  const handleMouseLeave = () => {
-    setIsDragging(false)
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
+  const handleMouseLeave = () => setIsDragging(false)
+  const handleMouseUp = () => setIsDragging(false)
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return
     e.preventDefault()
     const x = e.pageX - (scrollRef.current?.offsetLeft || 0)
     const walk = (x - startX) * 2
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollLeft - walk
-    }
+    if (scrollRef.current) scrollRef.current.scrollLeft = scrollLeft - walk
+  }
+
+  const categorySlugKeyMap: Record<string, string> = {
+    'mens-clothing': 'categoryMens',
+    'womens-clothing': 'categoryWomens',
+    'kids-youth-clothing': 'categoryKids',
+    hats: 'categoryHats',
+    accessories: 'categoryAccessories',
+    'home-living': 'categoryHome',
   }
 
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
-          <div className="w-full overflow-hidden">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 font-serif lowercase italic">
+        {/* Header row */}
+        <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <ScrollReveal className="w-full md:flex-1 overflow-hidden">
+            {/* Eyebrow */}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">
+              {t('newArrivals')}
+            </span>
+
+            <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 font-serif lowercase italic">
               {t('newArrivals')}
             </h2>
-            {/* Scrollable Tabs for Mobile */}
-            <div className="mt-4 md:mt-6 flex gap-6 md:gap-8 items-center border-b border-white/5 pb-2 md:pb-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [ms-overflow-style:none] [scrollbar-width:none]">
+
+            {/* Category filter pills */}
+            <div className="mt-5 flex gap-2 flex-wrap">
               <button
                 onClick={() => setActiveCategory('all')}
-                className={`text-xs sm:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 white-nowrap flex-shrink-0 ${
-                  activeCategory === 'all' ? 'text-zinc-50' : 'text-zinc-500 hover:text-zinc-300'
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  activeCategory === 'all'
+                    ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
+                    : 'border border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'
                 }`}
               >
                 {t('all')}
-                {activeCategory === 'all' && (
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-50" />
-                )}
               </button>
               {categories.slice(0, 6).map((cat) => {
-                const categoryKey =
-                  cat.slug === 'mens-clothing'
-                    ? 'categoryMens'
-                    : cat.slug === 'womens-clothing'
-                      ? 'categoryWomens'
-                      : cat.slug === 'kids-youth-clothing'
-                        ? 'categoryKids'
-                        : cat.slug === 'hats'
-                          ? 'categoryHats'
-                          : cat.slug === 'accessories'
-                            ? 'categoryAccessories'
-                            : cat.slug === 'home-living'
-                              ? 'categoryHome'
-                              : null
-
+                const key = categorySlugKeyMap[cat.slug]
                 return (
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
-                    className={`text-xs sm:text-sm font-semibold uppercase tracking-widest transition-all relative py-2 whitespace-nowrap flex-shrink-0 ${
+                    className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest whitespace-nowrap transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                       activeCategory === cat.id
-                        ? 'text-zinc-50'
-                        : 'text-zinc-500 hover:text-zinc-300'
+                        ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
+                        : 'border border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'
                     }`}
                   >
-                    {categoryKey ? t(categoryKey) : cat.name}
-                    {activeCategory === cat.id && (
-                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-50" />
-                    )}
+                    {key ? t(key) : cat.name}
                   </button>
                 )
               })}
             </div>
-          </div>
+          </ScrollReveal>
 
-          <div className="hidden md:flex gap-2">
+          {/* Scroll chevrons */}
+          <div className="hidden md:flex gap-2 pt-1 shrink-0">
             <button
               onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: 'smooth' })}
-              className="p-3 rounded-full border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 transition"
+              className="p-3 rounded-full border border-white/10 text-zinc-400 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-white hover:border-white/20 hover:scale-105 active:scale-95"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => scrollRef.current?.scrollBy({ left: 400, behavior: 'smooth' })}
-              className="p-3 rounded-full border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 transition"
+              className="p-3 rounded-full border border-white/10 text-zinc-400 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-white hover:border-white/20 hover:scale-105 active:scale-95"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
         </div>
 
+        {/* Product scroll track */}
         <div
           ref={scrollRef}
           onMouseDown={handleMouseDown}
@@ -145,7 +138,7 @@ export function NewArrivals({ products, categories }: Props) {
             displayedProducts.map((product, i) => (
               <div
                 key={product.slug}
-                className="md:min-w-[280px] md:w-[280px] flex-shrink-0 transition-transform hover:-translate-y-1"
+                className="md:min-w-[280px] md:w-[280px] flex-shrink-0 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1"
               >
                 <ProductCardWithWishlist
                   index={i}
@@ -177,14 +170,17 @@ export function NewArrivals({ products, categories }: Props) {
           )}
         </div>
 
+        {/* View all — button-in-button */}
         {hasMore && (
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex justify-center">
             <Link
               href="/products"
-              className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-8 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/10 hover:text-zinc-50"
+              className="group inline-flex items-center justify-between rounded-full border border-white/15 bg-white/5 py-2 pl-7 pr-2 text-sm font-semibold text-zinc-300 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/30 hover:bg-white/10 active:scale-[0.97]"
             >
-              {t('seeAllNewArrivals')}
-              <ChevronRight className="h-4 w-4" />
+              <span className="pr-4">{t('seeAllNewArrivals')}</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                <ArrowRight className="h-4 w-4" />
+              </div>
             </Link>
           </div>
         )}

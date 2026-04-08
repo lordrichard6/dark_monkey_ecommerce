@@ -8,6 +8,7 @@ import { ProductGridSkeleton } from './ProductGridSkeleton'
 import { ChevronDown, Search, X, ArrowRight } from 'lucide-react'
 import { useRef } from 'react'
 import { Link } from '@/i18n/navigation'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 type Tag = { id: string; name: string; slug: string }
 
@@ -83,13 +84,42 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
 
   return (
     <section>
+      {/* Section eyebrow + sort pills */}
+      <ScrollReveal>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">
+              {tCommon('allProducts')}
+            </span>
+            <h2 className="mt-3 text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>
+          </div>
+
+          {/* Custom sort pill group */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleSortChange(opt.value)}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  sort === opt.value
+                    ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
+                    : 'border border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'
+                }`}
+              >
+                {t(opt.labelKey)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+
       {/* Tag filter pills */}
       {tags.length > 0 && (
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => handleTagClick(undefined)}
-              className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+              className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                 !selectedTag
                   ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
                   : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300'
@@ -102,7 +132,7 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
               <button
                 key={tag.id}
                 onClick={() => handleTagClick(tag.slug)}
-                className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                   selectedTag === tag.slug
                     ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
                     : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300'
@@ -126,7 +156,7 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen((v) => !v)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                     dropdownOpen || selectedInHidden
                       ? 'border border-amber-500/40 bg-amber-500/10 text-amber-400'
                       : 'border border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
@@ -134,7 +164,7 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
                 >
                   {selectedInHidden ? t('tagFilterActive') : `+${remainingCount} more`}
                   <ChevronDown
-                    className={`h-3.5 w-3.5 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
+                    className={`h-3.5 w-3.5 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
@@ -159,14 +189,16 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
                     </div>
                     <div className="max-h-64 overflow-y-auto p-2">
                       {filteredHidden.length === 0 ? (
-                        <p className="py-4 text-center text-xs text-zinc-600">{t('tagNoTagsFound')}</p>
+                        <p className="py-4 text-center text-xs text-zinc-600">
+                          {t('tagNoTagsFound')}
+                        </p>
                       ) : (
                         <div className="flex flex-wrap gap-1.5 p-1">
                           {filteredHidden.map((tag) => (
                             <button
                               key={tag.id}
                               onClick={() => handleTagClick(tag.slug)}
-                              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                                 selectedTag === tag.slug
                                   ? 'bg-amber-500 text-zinc-950'
                                   : 'border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
@@ -185,22 +217,6 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
           </div>
         </div>
       )}
-
-      {/* Header: title + sort */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold text-zinc-50 md:text-3xl">{title}</h2>
-        <select
-          value={sort}
-          onChange={(e) => handleSortChange(e.target.value)}
-          className="w-fit rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {t(opt.labelKey)}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {/* Grid */}
       {isPending ? (
@@ -236,15 +252,17 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
         </div>
       )}
 
-      {/* View All CTA */}
+      {/* View All CTA — button-in-button */}
       {!isPending && products.length > 0 && (
         <div className="mt-12 flex justify-center">
           <Link
             href="/products"
-            className="group inline-flex items-center gap-2.5 rounded-full border border-zinc-700 bg-zinc-900 px-8 py-3.5 text-sm font-semibold text-zinc-300 transition-all hover:border-amber-500/50 hover:bg-zinc-800 hover:text-amber-400"
+            className="group inline-flex items-center justify-between rounded-full border border-white/15 bg-white/5 py-2 pl-7 pr-2 text-sm font-semibold text-zinc-300 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-amber-500/30 hover:bg-zinc-800/60 hover:text-amber-400 active:scale-[0.97]"
           >
-            {t('seeAllProducts')}
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <span className="pr-4">{t('seeAllProducts')}</span>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-amber-500/30 group-hover:bg-amber-500/10 group-hover:text-amber-400">
+              <ArrowRight className="h-4 w-4" />
+            </div>
           </Link>
         </div>
       )}

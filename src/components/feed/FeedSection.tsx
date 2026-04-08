@@ -1,14 +1,17 @@
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { getFeedPosts, getUserLikedPosts, getComments } from '@/actions/feed'
 import FeedPost from '@/components/feed/FeedPost'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
+import { ArrowRight } from 'lucide-react'
 
 interface FeedSectionProps {
   locale: string
 }
 
 export default async function FeedSection({ locale }: FeedSectionProps) {
-  const posts = await getFeedPosts(1, 3)
+  const [t, posts] = await Promise.all([getTranslations('feed'), getFeedPosts(1, 3)])
   if (!posts.length) return null
 
   const supabase = await createClient()
@@ -18,7 +21,6 @@ export default async function FeedSection({ locale }: FeedSectionProps) {
 
   const currentUserId = user?.id ?? null
 
-  // Check admin status
   let isAdmin = false
   if (user) {
     const { data: profile } = await supabase
@@ -31,37 +33,61 @@ export default async function FeedSection({ locale }: FeedSectionProps) {
 
   const postIds = posts.map((p) => p.id)
 
-  // Fetch liked posts and comments in parallel
   const [likedIds, ...commentsPerPost] = await Promise.all([
     getUserLikedPosts(postIds),
     ...posts.map((p) => getComments(p.id)),
   ])
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16">
-      {/* Heading row */}
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-100">What&apos;s happening</h2>
-        <Link
-          href={`/${locale}/feed`}
-          className="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors"
-        >
-          View all →
-        </Link>
+    <section className="relative mx-auto max-w-6xl px-4 py-24">
+      <ScrollReveal>
+        <div className="mb-10 flex items-end justify-between">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400">
+              {t('subtitle')}
+            </span>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-zinc-100 sm:text-3xl md:text-4xl font-serif lowercase italic">
+              {t('whatsHappening')}
+            </h2>
+          </div>
+
+          <Link
+            href={`/${locale}/feed`}
+            className="group hidden items-center justify-between rounded-full border border-white/15 bg-white/5 py-2 pl-5 pr-2 text-sm font-semibold text-zinc-300 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/30 hover:bg-white/10 active:scale-[0.97] sm:inline-flex"
+          >
+            <span className="pr-3">{t('viewAll')}</span>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+              <ArrowRight className="h-3.5 w-3.5" />
+            </div>
+          </Link>
+        </div>
+      </ScrollReveal>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {posts.map((post, i) => (
+          <ScrollReveal key={post.id} delay={i * 0.08}>
+            <FeedPost
+              post={post}
+              currentUserId={currentUserId}
+              isAdmin={isAdmin}
+              userHasLiked={likedIds.includes(post.id)}
+              initialComments={commentsPerPost[i]}
+            />
+          </ScrollReveal>
+        ))}
       </div>
 
-      {/* Grid of up to 3 posts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {posts.map((post, i) => (
-          <FeedPost
-            key={post.id}
-            post={post}
-            currentUserId={currentUserId}
-            isAdmin={isAdmin}
-            userHasLiked={likedIds.includes(post.id)}
-            initialComments={commentsPerPost[i]}
-          />
-        ))}
+      {/* Mobile view-all */}
+      <div className="mt-8 flex justify-center sm:hidden">
+        <Link
+          href={`/${locale}/feed`}
+          className="group inline-flex items-center justify-between rounded-full border border-white/15 bg-white/5 py-2 pl-5 pr-2 text-sm font-semibold text-zinc-300 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/30 hover:bg-white/10 active:scale-[0.97]"
+        >
+          <span className="pr-3">{t('viewAll')}</span>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+            <ArrowRight className="h-3.5 w-3.5" />
+          </div>
+        </Link>
       </div>
     </section>
   )
