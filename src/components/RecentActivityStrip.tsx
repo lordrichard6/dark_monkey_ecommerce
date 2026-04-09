@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { ShoppingBag, Star } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -143,25 +144,34 @@ export async function RecentActivityStrip() {
   if (items.length === 0) return null
 
   return (
-    <div className="border-t border-zinc-800/50 bg-zinc-950/60">
+    <div className="border-t border-white/5 bg-zinc-950/40">
       <div className="mx-auto max-w-6xl px-4 py-3">
         {/* Label */}
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
-          Recent Activity
-        </p>
+        <div className="mb-2.5 flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-600">
+            Recent Activity
+          </p>
+        </div>
 
         {/* Pill row — pure CSS, zero JS, horizontally scrollable on mobile */}
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex shrink-0 items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1.5"
+              className="flex shrink-0 items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5"
             >
-              <span className="text-sm leading-none" aria-hidden>
-                {item.type === 'purchase' ? '🛒' : '⭐'}
-              </span>
-              <span className="max-w-[200px] truncate text-xs text-zinc-300">{item.text}</span>
-              <span className="shrink-0 text-[10px] text-zinc-600">{item.subtext}</span>
+              {item.type === 'purchase' ? (
+                <ShoppingBag className="h-3 w-3 shrink-0 text-amber-500/70" strokeWidth={1.5} />
+              ) : (
+                <Star
+                  className="h-3 w-3 shrink-0 text-amber-400"
+                  strokeWidth={0}
+                  fill="currentColor"
+                />
+              )}
+              <span className="max-w-[160px] truncate text-[11px] text-zinc-400">{item.text}</span>
+              <span className="shrink-0 text-[9px] text-zinc-600">{item.subtext}</span>
             </div>
           ))}
         </div>

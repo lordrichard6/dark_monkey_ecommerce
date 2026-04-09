@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation'
 import { Footer } from '@/components/Footer'
 import { BackToTop } from '@/components/BackToTop'
-import { SupportWidget } from '@/components/SupportWidget'
 import { CompareBar } from '@/components/product/CompareBar'
 import { useIsMounted } from '@/hooks/useIsMounted'
 
@@ -19,7 +18,6 @@ export function StorefrontShell() {
     <>
       <Footer />
       <BackToTop />
-      <SupportWidget />
       <CompareBar />
     </>
   )

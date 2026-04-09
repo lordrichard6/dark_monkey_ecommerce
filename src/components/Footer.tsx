@@ -100,7 +100,7 @@ function CurrencySelector() {
 
   return (
     <div className="flex flex-col gap-2" ref={ref}>
-      <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+      <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
         {t('currency')}
       </span>
       <div className="relative">
@@ -108,15 +108,15 @@ function CurrencySelector() {
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="flex min-w-[100px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition-[border-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/20"
+          className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-[13px] text-zinc-100 transition-[border-color,background-color] duration-200 hover:border-white/20 hover:bg-white/[0.05]"
         >
           <span>{currency}</span>
           <ChevronIcon
-            className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${open ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           />
         </button>
         {open && (
-          <ul className="absolute bottom-full left-0 z-10 mb-1 max-h-60 w-full overflow-auto rounded-lg border border-white/10 bg-zinc-900 py-1 shadow-xl">
+          <ul className="absolute bottom-full left-0 z-10 mb-1 max-h-60 w-full overflow-auto rounded-xl border border-white/10 bg-zinc-900 py-1 shadow-2xl">
             {SUPPORTED_CURRENCIES.map((c) => (
               <li key={c}>
                 <button
@@ -125,7 +125,7 @@ function CurrencySelector() {
                     setCurrency(c)
                     setOpen(false)
                   }}
-                  className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ${
                     currency === c
                       ? 'bg-amber-500/20 text-amber-400'
                       : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
@@ -213,7 +213,7 @@ export function Footer() {
     <footer className="relative mt-auto border-t border-white/10 bg-zinc-950/95 backdrop-blur-sm">
       {/* Newsletter Section */}
       <div className="border-b border-white/10">
-        <div className="mx-auto max-w-6xl px-4 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-4 py-10 md:py-20">
           <div className="flex flex-col items-center justify-between gap-12 lg:flex-row">
             <div className="max-w-md text-center lg:text-left">
               <ScrollReveal>
@@ -238,18 +238,21 @@ export function Footer() {
                   <span className="font-medium">{t('newsletterSuccess')}</span>
                 </div>
               ) : (
-                <form onSubmit={handleNewsletterSubmit} className="relative group">
+                <form
+                  onSubmit={handleNewsletterSubmit}
+                  className="flex flex-col gap-3 sm:relative sm:flex-row sm:gap-0 sm:group"
+                >
                   <input
                     type="email"
                     name="email"
                     required
                     placeholder={t('newsletterPlaceholder')}
-                    className="w-full rounded-full border border-white/10 bg-zinc-900 px-6 py-4 text-sm text-white placeholder-zinc-500 transition-[border-color,box-shadow] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 group-hover:border-white/20"
+                    className="w-full rounded-full border border-white/10 bg-zinc-900 px-6 py-4 text-sm text-white placeholder-zinc-500 transition-[border-color,box-shadow] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 sm:group-hover:border-white/20"
                   />
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="absolute right-2 top-2 bottom-2 rounded-full bg-white px-6 text-sm font-bold text-zinc-950 transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-200 active:scale-95 disabled:opacity-50"
+                    className="flex w-full items-center justify-center rounded-full bg-amber-500 py-3.5 text-[11px] font-black uppercase tracking-[0.15em] text-zinc-950 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-amber-400 active:scale-[0.98] disabled:opacity-50 sm:absolute sm:right-2 sm:top-2 sm:bottom-2 sm:w-auto sm:px-6 sm:py-0 sm:text-sm sm:tracking-normal"
                   >
                     {submitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
@@ -265,34 +268,38 @@ export function Footer() {
       </div>
 
       {/* Top: logo + selectors + payment icons */}
-      <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto max-w-6xl px-4 py-8 md:py-16">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12 lg:grid-cols-4">
           {/* Logo & Info */}
           <ScrollReveal>
             <div className="flex flex-col gap-6">
-              <Link href="/" className="shrink-0">
+              {/* Logo */}
+              <Link href="/" className="shrink-0 self-start">
                 <DarkMonkeyLogo size="lg" className="text-zinc-50" noLink />
               </Link>
 
-              {/* Customer Service Info */}
-              <div className="flex flex-col gap-4 pt-4 border-t border-white/5">
-                <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              {/* Customer Service */}
+              <div className="flex flex-col gap-3 pt-5 border-t border-white/5">
+                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
                   {t('customerService')}
                 </span>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3 text-sm text-zinc-400">
-                    <Clock className="h-4 w-4 text-zinc-500" strokeWidth={1.5} />
-                    <span>{t('operatingHours')}</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3">
+                    <Clock className="h-4 w-4 text-amber-500/60 shrink-0" strokeWidth={1.5} />
+                    <span className="text-[13px] text-zinc-300">{t('operatingHours')}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-zinc-400">
-                    <Mail className="h-4 w-4 text-zinc-500" strokeWidth={1.5} />
-                    <a
-                      href="mailto:support@dark-monkey.ch"
-                      className="transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-amber-400"
-                    >
+                  <a
+                    href="mailto:support@dark-monkey.ch"
+                    className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 transition-all duration-200 hover:border-amber-500/30 hover:bg-amber-500/5 group"
+                  >
+                    <Mail
+                      className="h-4 w-4 text-amber-500/60 shrink-0 group-hover:text-amber-400"
+                      strokeWidth={1.5}
+                    />
+                    <span className="text-[13px] text-zinc-300 group-hover:text-amber-400 transition-colors duration-200">
                       support@dark-monkey.ch
-                    </a>
-                  </div>
+                    </span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -300,72 +307,79 @@ export function Footer() {
 
           {/* Configuration block */}
           <ScrollReveal delay={0.08} className="flex flex-col gap-8 lg:col-span-2">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-12">
-              <div className="flex flex-col gap-2" ref={countryRef}>
-                <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  {t('countryRegion')}
-                </span>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setCountryOpen(!countryOpen)}
-                    aria-expanded={countryOpen}
-                    className="flex min-w-[200px] items-center justify-between gap-2 rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-2.5 text-left text-sm text-zinc-100 transition-[border-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/20"
-                  >
-                    <span className="flex items-center gap-2 truncate">
-                      <span>{COUNTRY_FLAGS[countryValue] || '🌐'}</span>
-                      <span>{currentCountry?.label ?? 'Switzerland'}</span>
-                    </span>
-                    <ChevronIcon
-                      className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${countryOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                  {countryOpen && (
-                    <ul
-                      className="absolute bottom-full left-0 z-10 mb-1 max-h-60 min-w-[200px] overflow-auto rounded-lg border border-white/10 bg-zinc-900 py-1 shadow-xl"
-                      role="listbox"
-                    >
-                      {COUNTRY_REGION_OPTIONS.map((opt) => (
-                        <li
-                          key={opt.value}
-                          role="option"
-                          aria-selected={countryValue === opt.value}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => selectCountry(opt.value)}
-                            className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                              countryValue === opt.value
-                                ? 'bg-amber-500/20 text-amber-400'
-                                : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
-                            }`}
-                          >
-                            <span className="flex items-center gap-3">
-                              <span className="text-lg">{COUNTRY_FLAGS[opt.value] || '🌐'}</span>
-                              <span>{opt.label}</span>
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              <CurrencySelector />
+            <div className="flex flex-col gap-4">
+              {/* Language — full width, first */}
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
                   {t('language')}
                 </span>
-                <div className="min-w-[200px]">
-                  <LanguageSwitcher variant="desktop" />
+                <LanguageSwitcher variant="desktop" />
+              </div>
+
+              {/* Country + Currency — side by side */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Country / Region */}
+                <div className="flex flex-col gap-2" ref={countryRef}>
+                  <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                    {t('countryRegion')}
+                  </span>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setCountryOpen(!countryOpen)}
+                      aria-expanded={countryOpen}
+                      className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-zinc-100 transition-[border-color,background-color] duration-200 hover:border-white/20 hover:bg-white/[0.05]"
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        <span>{COUNTRY_FLAGS[countryValue] || '🌐'}</span>
+                        <span className="truncate text-[13px]">
+                          {currentCountry?.label ?? 'Switzerland'}
+                        </span>
+                      </span>
+                      <ChevronIcon
+                        className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${countryOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {countryOpen && (
+                      <ul
+                        className="absolute bottom-full left-0 z-10 mb-1 w-full overflow-auto rounded-xl border border-white/10 bg-zinc-900 py-1 shadow-2xl max-h-60"
+                        role="listbox"
+                      >
+                        {COUNTRY_REGION_OPTIONS.map((opt) => (
+                          <li
+                            key={opt.value}
+                            role="option"
+                            aria-selected={countryValue === opt.value}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => selectCountry(opt.value)}
+                              className={`block w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 ${
+                                countryValue === opt.value
+                                  ? 'bg-amber-500/20 text-amber-400'
+                                  : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-50'
+                              }`}
+                            >
+                              <span className="flex items-center gap-3">
+                                <span className="text-lg">{COUNTRY_FLAGS[opt.value] || '🌐'}</span>
+                                <span>{opt.label}</span>
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
+
+                {/* Currency */}
+                <CurrencySelector />
               </div>
             </div>
 
             {/* Payment icons */}
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+            <div className="flex flex-col gap-3">
+              <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
                 {t('weAccept')}
               </span>
               <div className="flex flex-wrap items-center gap-2">
@@ -378,7 +392,7 @@ export function Footer() {
                 ].map(({ name, src, width, height }) => (
                   <div
                     key={name}
-                    className="flex h-8 w-[50px] items-center justify-center rounded bg-white px-1 py-1 transition-opacity duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:opacity-80"
+                    className="flex h-8 w-[50px] items-center justify-center rounded-lg bg-white px-1 py-1 transition-opacity duration-200 hover:opacity-80"
                     aria-label={name}
                   >
                     <Image
@@ -395,28 +409,28 @@ export function Footer() {
             </div>
 
             {/* Social Links */}
-            <div className="flex flex-col gap-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+            <div className="flex flex-col gap-3">
+              <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
                 {t('followUs')}
               </span>
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <a
                   href="https://www.instagram.com/dark_monkey_store/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-zinc-400 transition-all duration-200 hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                   aria-label="Instagram"
                 >
-                  <Instagram className="h-5 w-5" strokeWidth={1.5} />
+                  <Instagram className="h-4 w-4" strokeWidth={1.5} />
                 </a>
                 <a
                   href="https://www.facebook.com/profile.php?id=61574367719121"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.03] text-zinc-400 transition-all duration-200 hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                   aria-label="Facebook"
                 >
-                  <Facebook className="h-5 w-5" strokeWidth={1.5} />
+                  <Facebook className="h-4 w-4" strokeWidth={1.5} />
                 </a>
               </div>
             </div>

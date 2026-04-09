@@ -72,10 +72,10 @@ export function WishlistButton({
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className={`inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium transition hover:border-zinc-600 disabled:opacity-50 ${
+        className={`group inline-flex h-13 items-center gap-2.5 rounded-full border py-2 pl-7 pr-2 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] disabled:opacity-50 ${
           inWishlist
-            ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
-            : 'text-zinc-400 hover:text-zinc-300'
+            ? 'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:border-amber-500/60'
+            : 'border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/20 hover:text-zinc-200'
         } ${className}`}
       >
         <HeartIcon filled={inWishlist} />

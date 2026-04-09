@@ -2,92 +2,104 @@
 
 import { usePathname } from 'next/navigation'
 import { Link } from '@/i18n/navigation'
-import { ChevronRight, Home } from 'lucide-react'
+import { ChevronRight, ArrowLeft, Home } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 type BreadcrumbItem = {
-    label: string
-    href: string
-    active?: boolean
+  label: string
+  href: string
+  active?: boolean
 }
 
 type Props = {
-    items?: BreadcrumbItem[]
+  items?: BreadcrumbItem[]
 }
 
 export function Breadcrumbs({ items }: Props) {
-    const t = useTranslations('common')
-    const pathname = usePathname()
+  const t = useTranslations('common')
+  const pathname = usePathname()
 
-    // Auto-generate items if not provided
-    const generateItems = () => {
-        const paths = pathname.split('/').filter(Boolean)
-        // Remove locale if present (first segment)
-        const filteredPaths = paths.length > 0 && ['en', 'pt', 'de', 'fr', 'it'].includes(paths[0])
-            ? paths.slice(1)
-            : paths
+  // Auto-generate items if not provided
+  const generateItems = () => {
+    const paths = pathname.split('/').filter(Boolean)
+    // Remove locale if present (first segment)
+    const filteredPaths =
+      paths.length > 0 && ['en', 'pt', 'de', 'fr', 'it'].includes(paths[0]) ? paths.slice(1) : paths
 
-        const breadcrumbs: BreadcrumbItem[] = [
-            { label: t('shop'), href: '/' }
-        ]
+    const breadcrumbs: BreadcrumbItem[] = [{ label: t('shop'), href: '/' }]
 
-        let currentPath = ''
-        filteredPaths.forEach((path, index) => {
-            currentPath += `/${path}`
-            const label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')
-            breadcrumbs.push({
-                label,
-                href: currentPath,
-                active: index === filteredPaths.length - 1
-            })
-        })
+    let currentPath = ''
+    filteredPaths.forEach((path, index) => {
+      currentPath += `/${path}`
+      const label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')
+      breadcrumbs.push({
+        label,
+        href: currentPath,
+        active: index === filteredPaths.length - 1,
+      })
+    })
 
-        return breadcrumbs
-    }
+    return breadcrumbs
+  }
 
-    const breadcrumbItems = items || generateItems()
+  const breadcrumbItems = items || generateItems()
 
-    if (breadcrumbItems.length <= 1) return null
+  if (breadcrumbItems.length <= 1) return null
 
-    // JSON-LD for Search Engines
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: breadcrumbItems.map((item, index) => ({
-            '@type': 'ListItem',
-            position: index + 1,
-            name: item.label,
-            item: `${process.env.NEXT_PUBLIC_SITE_URL || ''}${item.href === '/' ? '' : item.href}`
-        }))
-    }
+  // JSON-LD for Search Engines
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.label,
+      item: `${process.env.NEXT_PUBLIC_SITE_URL || ''}${item.href === '/' ? '' : item.href}`,
+    })),
+  }
 
-    return (
-        <>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-            <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 overflow-x-auto py-2 text-xs font-medium text-zinc-500 scrollbar-hide">
-                {breadcrumbItems.map((item, index) => (
-                    <div key={item.href} className="flex items-center gap-2 shrink-0">
-                        {index > 0 && <ChevronRight className="h-3 w-3 text-zinc-700" />}
-                        {item.active ? (
-                            <span className="text-zinc-300 font-bold">{item.label}</span>
-                        ) : (
-                            <Link
-                                href={item.href as '/'}
-                                className="hover:text-zinc-100 transition-colors whitespace-nowrap"
-                            >
-                                {index === 0 ? (
-                                    <Home className="h-3.5 w-3.5" />
-                                ) : (
-                                    item.label
-                                )}
-                            </Link>
-                        )}
-                    </div>
-                ))}
-            </nav>
-        </>
-    )
+  // The parent of the active item — used as the back-button target on mobile
+  const parentItem = breadcrumbItems[breadcrumbItems.length - 2] ?? breadcrumbItems[0]
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      {/* Mobile: premium pill back-button */}
+      <div className="md:hidden mb-6">
+        <Link
+          href={parentItem.href as '/'}
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/20 hover:text-zinc-200 active:scale-95"
+        >
+          <ArrowLeft className="h-3 w-3 flex-shrink-0" />
+          {parentItem.href === '/' ? <Home className="h-3 w-3" /> : <span>{parentItem.label}</span>}
+        </Link>
+      </div>
+
+      {/* Desktop: full breadcrumb trail */}
+      <nav
+        aria-label="Breadcrumb"
+        className="hidden md:flex mb-8 items-center gap-2 py-2 text-xs font-medium text-zinc-500"
+      >
+        {breadcrumbItems.map((item, index) => (
+          <div key={item.href} className="flex items-center gap-2 shrink-0">
+            {index > 0 && <ChevronRight className="h-3 w-3 text-zinc-700" />}
+            {item.active ? (
+              <span className="text-zinc-300 font-bold max-w-[240px] truncate">{item.label}</span>
+            ) : (
+              <Link
+                href={item.href as '/'}
+                className="hover:text-zinc-100 transition-colors whitespace-nowrap"
+              >
+                {index === 0 ? <Home className="h-3.5 w-3.5" /> : item.label}
+              </Link>
+            )}
+          </div>
+        ))}
+      </nav>
+    </>
+  )
 }

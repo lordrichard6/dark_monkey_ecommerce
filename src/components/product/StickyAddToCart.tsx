@@ -82,42 +82,57 @@ export function StickyAddToCart({
   }
 
   return (
-    <div className="fixed bottom-0 left-0 z-40 w-full border-t border-zinc-700 bg-zinc-900/95 p-4 backdrop-blur-md transition-transform md:hidden">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-zinc-700">
-            <ProductImageWithFallback
-              src={imageUrl}
-              alt={productName}
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
-          </div>
-          <div className="truncate">
-            <p className="truncate text-sm font-semibold text-white">{productName}</p>
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-amber-400">
-                {format(priceCents * quantity)}
-                {quantity > 1 && <span className="ml-1 text-xs text-zinc-500">×{quantity}</span>}
-              </p>
-              {isSale && (
-                <p className="text-xs text-zinc-500 line-through">{format(compareAtPriceCents)}</p>
-              )}
-            </div>
+    <div className="fixed bottom-0 left-0 z-40 w-full border-t border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl md:hidden">
+      <div className="flex items-center gap-3">
+        {/* Product thumbnail */}
+        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-white/10">
+          <ProductImageWithFallback
+            src={imageUrl}
+            alt={productName}
+            fill
+            className="object-cover"
+            sizes="44px"
+          />
+        </div>
+
+        {/* Name + price */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-semibold text-zinc-300">{productName}</p>
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            <span className="text-sm font-black text-amber-400">
+              {format(priceCents * quantity)}
+            </span>
+            {quantity > 1 && <span className="text-[10px] text-zinc-500">×{quantity}</span>}
+            {isSale && (
+              <span className="text-[10px] text-zinc-600 line-through">
+                {format(compareAtPriceCents)}
+              </span>
+            )}
           </div>
         </div>
+
+        {/* CTA — pill matching the main Add to Cart button */}
         <button
           onClick={handleClick}
           disabled={stock === 0 || isAdding}
-          className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold transition-all disabled:opacity-50 ${
+          className={`group flex h-11 shrink-0 items-center justify-between gap-2 rounded-full py-1.5 pl-5 pr-1.5 text-[10px] font-black uppercase tracking-[0.12em] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95 disabled:opacity-40 ${
             isSuccess
-              ? 'bg-green-500 text-white scale-95'
-              : 'bg-white text-zinc-950 hover:bg-zinc-200'
+              ? 'bg-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.25)]'
+              : stock === 0
+                ? 'bg-zinc-800 text-zinc-500'
+                : 'bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.15)]'
           }`}
         >
-          {isSuccess ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
-          {buttonLabel()}
+          <span>{buttonLabel()}</span>
+          <div
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${isSuccess ? 'bg-white/20' : 'bg-black/15'}`}
+          >
+            {isSuccess ? (
+              <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+            ) : (
+              <ShoppingCart className="h-3.5 w-3.5" strokeWidth={1.5} />
+            )}
+          </div>
         </button>
       </div>
     </div>

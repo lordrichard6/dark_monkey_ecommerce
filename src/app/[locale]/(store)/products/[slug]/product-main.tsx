@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { Link } from '@/i18n/navigation'
 import { ProductImageGallery } from '@/components/product/ProductImageGallery'
 import {
   AddToCartForm,
@@ -17,10 +18,10 @@ import { ProductReviews } from '@/components/reviews/ProductReviews'
 import type { ReviewRow } from '@/components/reviews/ProductReviews'
 import { useTranslations } from 'next-intl'
 import { ColorOption } from '@/types/product'
-import { LivePurchaseIndicator } from '@/components/product/LivePurchaseIndicator'
-import { RecentPurchaseToast } from '@/components/product/RecentPurchaseToast'
+import { PurchaseSocialProof } from '@/components/product/PurchaseSocialProof'
 import { ProductStory } from '@/components/product/ProductStory'
 import type { StoryContent } from '@/lib/story-content'
+import { hasStoryContent } from '@/lib/story-content'
 import { trackProductView, trackAddToCart } from '@/lib/analytics'
 import { useCurrency } from '@/components/currency/CurrencyContext'
 import type { CustomizationRuleDef } from '@/types/customization'
@@ -35,7 +36,6 @@ import { StockNotificationButton } from '@/components/product/StockNotificationB
 import { ProductInfoTabs } from '@/components/product/ProductInfoTabs'
 import { BackToTop } from '@/components/BackToTop'
 import { toast } from 'sonner'
-import { Link } from '@/i18n/navigation'
 
 type Props = {
   product: {
@@ -104,7 +104,6 @@ export function ProductMain({
   gpsrInfo,
 }: Props) {
   const t = useTranslations('product')
-  const tCommon = useTranslations('common')
   const { format, currency } = useCurrency()
   const router = useRouter()
   const params = useParams()
@@ -261,34 +260,6 @@ export function ProductMain({
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-0 md:py-8 md:px-8">
-      {/* Breadcrumb */}
-      <nav
-        aria-label="Breadcrumb"
-        className="flex items-center gap-2 text-xs text-zinc-500 mb-6 px-0"
-      >
-        <Link
-          href="/"
-          className="transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-300"
-        >
-          {tCommon('home')}
-        </Link>
-        <span>/</span>
-        <Link
-          href="/products"
-          className="transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-300"
-        >
-          {tCommon('products')}
-        </Link>
-        {product.categories?.name && (
-          <>
-            <span>/</span>
-            <span className="text-zinc-400">{product.categories.name}</span>
-          </>
-        )}
-        <span>/</span>
-        <span className="text-zinc-300 truncate max-w-[120px] sm:max-w-xs">{product.name}</span>
-      </nav>
-
       {/* ── TOP SECTION ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-12 mt-4">
         {/* LEFT: Image System — sticky on desktop */}
@@ -315,57 +286,67 @@ export function ProductMain({
           </div>
         </div>
 
-        {/* Mobile info — below image on mobile, hidden on desktop (desktop uses right column) */}
-        {/* Change 1 + 4 + 5: Name + category + rating + price appear below image on mobile */}
-        <div className="flex flex-col gap-3 md:hidden">
-          {/* Name + category + share button (Change 11: share next to product name on mobile) */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1 flex-1 min-w-0">
-              {isBestseller && (
-                <span className="mb-1 inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">
+        {/* Mobile info — below image on mobile, hidden on desktop */}
+        <div className="flex flex-col gap-4 md:hidden">
+          {/* Eyebrow: category + bestseller badge */}
+          <div className="flex items-center gap-2">
+            {product.categories?.name && (
+              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500">
+                {product.categories.name}
+              </span>
+            )}
+            {isBestseller && (
+              <>
+                {product.categories?.name && <span className="text-zinc-700">·</span>}
+                <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.2em] text-amber-400">
                   {t('bestseller')}
                 </span>
-              )}
-              <h1 className="text-2xl font-black leading-tight text-white">{product.name}</h1>
-              {product.categories?.name && (
-                <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
-                  {product.categories.name}
-                </p>
-              )}
-            </div>
-            {/* Share button next to product name on mobile */}
-            <div className="flex-shrink-0 mt-1">
-              <ShareButton
-                productName={product.name}
-                productUrl={`/${locale}/products/${product.slug}`}
-                productImage={images[0]?.url}
-              />
-            </div>
+              </>
+            )}
           </div>
+
+          {/* Product name */}
+          <h1 className="text-[1.65rem] font-black leading-[1.15] tracking-tight text-white">
+            {product.name}
+          </h1>
 
           <ProductRatingSummary reviews={reviews} />
 
-          {/* Price + stock + selected size — aria-live so screen readers announce updates */}
-          <div className="flex flex-col gap-0.5 mt-1" aria-live="polite" aria-atomic="true">
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-black text-amber-500">{format(priceCents)}</span>
-              {selectedVariant && hasSizes && (
-                <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">
-                  {(selectedVariant.attributes?.size as string) || selectedVariant.name || ''}
+          {/* Price + stock — separated by a thin rule */}
+          <div className="border-t border-white/5 pt-4" aria-live="polite" aria-atomic="true">
+            <div className="flex items-end justify-between">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[1.6rem] font-black tracking-tight text-amber-400">
+                  {format(priceCents)}
                 </span>
-              )}
+                {selectedVariant && hasSizes && (
+                  <span className="mb-0.5 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-zinc-400">
+                    {(selectedVariant.attributes?.size as string) || selectedVariant.name || ''}
+                  </span>
+                )}
+              </div>
+              {/* Stock pill */}
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.15em] ${
+                  stock === 0
+                    ? 'bg-zinc-800 text-zinc-500'
+                    : stock <= 5
+                      ? 'bg-amber-500/10 text-amber-400'
+                      : 'bg-green-500/10 text-green-400'
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    stock === 0 ? 'bg-zinc-600' : stock <= 5 ? 'bg-amber-400' : 'bg-green-400'
+                  }`}
+                />
+                {stock > 0
+                  ? stock <= 5
+                    ? t('onlyLeft', { count: stock })
+                    : t('inStock')
+                  : t('outOfStock')}
+              </span>
             </div>
-            <span
-              className={`text-[9px] font-bold uppercase tracking-widest ${
-                stock === 0 ? 'text-zinc-500' : stock <= 5 ? 'text-amber-500' : 'text-green-500/90'
-              }`}
-            >
-              {stock > 0
-                ? stock <= 5
-                  ? `⚠ ${t('onlyLeft', { count: stock })}`
-                  : t('inStock')
-                : t('outOfStock')}
-            </span>
           </div>
         </div>
 
@@ -440,159 +421,181 @@ export function ProductMain({
       </div>
 
       {/* ── MOBILE MIDDLE: Color + Size + Quantity ───────────────── */}
-      <div ref={addToCartFormRef} className="mt-6 md:hidden">
-        {/* Colors — full width, large tap targets */}
-        {colorItems.length > 1 && (
-          <div className="flex flex-col gap-2 mb-5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                {t('color')}
-              </span>
-              {selectedColor && (
-                <span className="text-[10px] font-semibold text-zinc-300">{selectedColor}</span>
+      <div ref={addToCartFormRef} className="mt-2 md:hidden">
+        {/* Selectors — divided sections */}
+        <div className="divide-y divide-white/5">
+          {/* Colors */}
+          {colorItems.length > 1 && (
+            <div className="py-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                  {t('color')}
+                </span>
+                {selectedColor && (
+                  <>
+                    <span className="text-zinc-700">·</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-zinc-300">
+                      {selectedColor}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {colorItems.map((c) => {
+                  const hasStock = colorStockMap.get(c.name) ?? false
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => setSelectedColor(c.name)}
+                      aria-label={`${c.name}${!hasStock ? ' (out of stock)' : ''}`}
+                      aria-pressed={selectedColor === c.name}
+                      className={`relative h-11 w-11 rounded-full transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                        selectedColor === c.name
+                          ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-zinc-950 scale-110 shadow-lg shadow-amber-500/20'
+                          : 'ring-1 ring-white/10 hover:ring-white/30'
+                      } ${!hasStock ? 'opacity-35' : ''}`}
+                      style={{
+                        background: c.hex2
+                          ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
+                          : c.hex,
+                      }}
+                    >
+                      {!hasStock && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <span className="absolute h-px w-[110%] rotate-45 bg-zinc-400/60" />
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Size */}
+          {hasSizes && (
+            <div className="py-5">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                  {t('size')}
+                </span>
+                <SizeGuideModal
+                  productCategory={product.categories?.name}
+                  sizeGuideUrl={product.size_guide_url}
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {sizedVariants.map((v) => {
+                  const sizeLabel = (v.attributes?.size as string) || v.name || '—'
+                  const isSelected = v.id === selectedVariantId
+                  const outOfStock = v.stock === 0
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setSelectedVariantId(v.id)}
+                      disabled={outOfStock}
+                      aria-pressed={isSelected}
+                      aria-label={`Size ${sizeLabel}${outOfStock ? ' (out of stock)' : ''}`}
+                      className={`relative h-12 min-w-[3.25rem] px-4 rounded-xl text-[13px] font-semibold tracking-wide transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                        isSelected
+                          ? 'border border-amber-500/60 bg-amber-500/10 text-amber-300 shadow-[0_0_0_1px_rgba(245,158,11,0.2)] shadow-amber-500/10'
+                          : outOfStock
+                            ? 'border border-white/5 bg-transparent text-zinc-700 cursor-not-allowed'
+                            : 'border border-white/10 bg-white/[0.03] text-zinc-300 hover:border-white/25 hover:bg-white/[0.06] hover:text-white active:scale-95'
+                      }`}
+                    >
+                      {sizeLabel}
+                      {outOfStock && (
+                        <span
+                          className="absolute inset-0 flex items-center justify-center"
+                          aria-hidden="true"
+                        >
+                          <span className="absolute left-1/2 top-1/2 h-px w-[70%] -translate-x-1/2 -translate-y-1/2 rotate-[-25deg] bg-zinc-700" />
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Low stock warning */}
+              {stock > 0 && stock <= 5 && (
+                <p className="mt-3 flex items-center gap-1.5 text-[10px] font-semibold text-amber-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  {t('lowStockSize', { count: stock })}
+                </p>
               )}
             </div>
-            <div className="flex flex-wrap gap-3">
-              {colorItems.map((c) => {
-                const hasStock = colorStockMap.get(c.name) ?? false
-                return (
-                  <button
-                    key={c.name}
-                    type="button"
-                    onClick={() => setSelectedColor(c.name)}
-                    aria-label={`${c.name}${!hasStock ? ' (out of stock)' : ''}`}
-                    aria-pressed={selectedColor === c.name}
-                    className={`relative h-10 w-10 rounded-full border-2 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                      selectedColor === c.name
-                        ? 'border-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-lg shadow-amber-500/10'
-                        : 'border-white/10 hover:border-white/30'
-                    } ${!hasStock ? 'opacity-40' : ''}`}
-                    style={{
-                      background: c.hex2
-                        ? `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)`
-                        : c.hex,
-                    }}
-                  >
-                    {!hasStock && (
-                      <span
-                        aria-hidden="true"
-                        className="absolute inset-0 flex items-center justify-center"
-                      >
-                        <span className="absolute h-px w-[110%] rotate-45 bg-zinc-400/60" />
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Mobile size selector */}
-        {hasSizes && (
-          <div className="flex flex-col gap-2 mb-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                {t('size')}
+          {stock > 0 && (
+            <div className="flex items-center justify-between py-5">
+              <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                {t('quantity')}
               </span>
-              <SizeGuideModal
-                productCategory={product.categories?.name}
-                sizeGuideUrl={product.size_guide_url}
+              <ProductQuantitySelector
+                quantity={quantity}
+                setQuantity={setQuantity}
+                stock={stock}
               />
             </div>
-            <div className="flex flex-wrap gap-2">
-              {sizedVariants.map((v) => {
-                const sizeLabel = (v.attributes?.size as string) || v.name || '—'
-                const isSelected = v.id === selectedVariantId
-                const outOfStock = v.stock === 0
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setSelectedVariantId(v.id)}
-                    disabled={outOfStock}
-                    aria-pressed={isSelected}
-                    aria-label={`Size ${sizeLabel}${outOfStock ? ' (out of stock)' : ''}`}
-                    className={`relative h-11 min-w-[3rem] px-4 rounded-lg border text-sm font-bold transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                      isSelected
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-400'
-                        : outOfStock
-                          ? 'border-white/5 text-zinc-600 cursor-not-allowed'
-                          : 'border-white/10 text-zinc-300 hover:border-white/30 hover:text-white'
-                    }`}
-                  >
-                    {sizeLabel}
-                    {outOfStock && (
-                      <span
-                        className="absolute inset-0 flex items-center justify-center"
-                        aria-hidden="true"
-                      >
-                        <span className="absolute left-1/2 top-1/2 h-px w-[80%] -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] bg-zinc-600" />
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Low stock warning near size selector — visible immediately after picking a size */}
-        {hasSizes && stock > 0 && stock <= 5 && (
-          <p className="mb-3 text-xs font-bold text-amber-500 flex items-center gap-1">
-            <span>⚠</span>
-            {t('lowStockSize', { count: stock })}
-          </p>
-        )}
-
-        {stock > 0 && (
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-              {t('quantity')}
-            </span>
-            <ProductQuantitySelector quantity={quantity} setQuantity={setQuantity} stock={stock} />
-          </div>
-        )}
+          )}
+        </div>
+        {/* end divide-y selectors */}
 
         {/* Mobile customization panel */}
         {customizationRule && (
-          <div className="mb-4">
+          <div className="mt-5 mb-4">
             <CustomizationPanel ruleDef={customizationRule} config={config} onChange={setConfig} />
           </div>
         )}
 
         {/* Mobile action buttons OR out-of-stock notification */}
-        {stock === 0 ? (
-          <StockNotificationButton
-            productId={product.id}
-            variantId={selectedVariantId || ''}
-            productName={product.name}
-            variantName={selectedVariant?.name || null}
-          />
-        ) : (
-          <ProductActionButtons
-            isAdding={isAdding}
-            isSuccess={isSuccess}
-            stock={stock}
-            onSubmit={handleAddToCart}
-            onBuyNow={handleBuyNow}
-            disabled={!selectedVariantId}
-          />
-        )}
+        <div className="mt-6 flex flex-col gap-3">
+          {stock === 0 ? (
+            <StockNotificationButton
+              productId={product.id}
+              variantId={selectedVariantId || ''}
+              productName={product.name}
+              variantName={selectedVariant?.name || null}
+            />
+          ) : (
+            <ProductActionButtons
+              isAdding={isAdding}
+              isSuccess={isSuccess}
+              stock={stock}
+              onSubmit={handleAddToCart}
+              onBuyNow={handleBuyNow}
+              disabled={!selectedVariantId}
+            />
+          )}
 
-        {/* Mobile wishlist — below action buttons (share is now next to product name) */}
-        <div className="flex items-center gap-3 mt-4">
-          <WishlistButton
-            productId={product.id}
-            productSlug={product.slug}
-            productName={product.name}
-            productPrice={priceCents}
-            productCurrency={currency}
-            isInWishlist={isInWishlist}
-            variant="button"
-            className="flex-1 justify-center"
-          />
+          {/* Mobile secondary actions — wishlist + share */}
+          <div className="flex items-center gap-2">
+            <WishlistButton
+              productId={product.id}
+              productSlug={product.slug}
+              productName={product.name}
+              productPrice={priceCents}
+              productCurrency={currency}
+              isInWishlist={isInWishlist}
+              variant="button"
+              className="flex-1 justify-center"
+            />
+            <ShareButton
+              productName={product.name}
+              productUrl={`/${locale}/products/${product.slug}`}
+              productImage={images[0]?.url}
+              iconOnly
+            />
+          </div>
         </div>
+        {/* end CTA wrapper */}
       </div>
 
       {/* ── TRUST BADGES ────────────────────────────────────────── */}
@@ -609,12 +612,27 @@ export function ProductMain({
             {t('details')}
             <div className="h-px flex-1 bg-white/5" />
           </h2>
-          <div className="rounded-[2.5rem] border border-white/5 bg-zinc-900/20 p-8 md:p-12">
-            <div
-              className="styled-description prose prose-invert prose-sm md:prose-base max-w-none text-zinc-400 font-sans leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: product.description || '' }}
-            />
-          </div>
+          <div
+            className={[
+              'text-sm leading-relaxed text-zinc-400',
+              // Paragraphs
+              '[&_p]:mb-4 [&_p:last-child]:mb-0',
+              // Headings
+              '[&_h1]:text-base [&_h1]:font-bold [&_h1]:text-zinc-200 [&_h1]:mb-3 [&_h1]:mt-6 [&_h1:first-child]:mt-0',
+              '[&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-zinc-200 [&_h2]:mb-2 [&_h2]:mt-5 [&_h2:first-child]:mt-0',
+              '[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mb-2 [&_h3]:mt-4 [&_h3:first-child]:mt-0',
+              // Lists
+              '[&_ul]:mb-4 [&_ul]:space-y-1.5 [&_ul]:pl-0',
+              '[&_ol]:mb-4 [&_ol]:space-y-1.5 [&_ol]:pl-0',
+              '[&_li]:flex [&_li]:items-start [&_li]:gap-2',
+              '[&_li]:before:mt-[0.4em] [&_li]:before:h-1 [&_li]:before:w-1 [&_li]:before:shrink-0 [&_li]:before:rounded-full [&_li]:before:bg-amber-500/60 [&_li]:before:content-[""]',
+              // Inline
+              '[&_strong]:font-semibold [&_strong]:text-zinc-200',
+              '[&_em]:italic [&_em]:text-zinc-300',
+              '[&_a]:text-amber-400 [&_a]:underline-offset-2 [&_a:hover]:text-amber-300',
+            ].join(' ')}
+            dangerouslySetInnerHTML={{ __html: product.description || '' }}
+          />
 
           {/* Product tags */}
           {tags.length > 0 && (
@@ -649,37 +667,33 @@ export function ProductMain({
       </ScrollReveal>
 
       {/* ── STORY — before reviews to build purchase intent ────── */}
-      {storyContent && (
+      {hasStoryContent(storyContent) && (
         <ScrollReveal delay={0.05}>
           <div className="mt-12">
-            <ProductStory story={storyContent} />
+            <ProductStory story={storyContent ?? null} />
           </div>
         </ScrollReveal>
       )}
 
       {/* ── REVIEWS ─────────────────────────────────────────────── */}
       <ScrollReveal>
-        <div className="mt-24 border-t border-white/5 pt-20">
-          <div id="reviews-section">
-            <ProductReviews
-              productId={product.id}
-              productSlug={product.slug}
-              reviews={reviews}
-              userReview={userReview}
-              canSubmit={canSubmitReview}
-              userId={userId}
-              orderIdFromQuery={orderIdFromQuery}
-            />
-          </div>
+        <div id="reviews-section">
+          <ProductReviews
+            productId={product.id}
+            productSlug={product.slug}
+            reviews={reviews}
+            userReview={userReview}
+            canSubmit={canSubmitReview}
+            userId={userId}
+            orderIdFromQuery={orderIdFromQuery}
+          />
         </div>
       </ScrollReveal>
 
-      {/* ── SOCIAL PROOF ────────────────────────────────────────── */}
+      {/* ── SOCIAL PROOF — single channel for both count + toast ── */}
       <div className="mt-12">
-        <LivePurchaseIndicator productId={product.id} />
+        <PurchaseSocialProof productId={product.id} />
       </div>
-
-      <RecentPurchaseToast productId={product.id} />
 
       {/* Sticky bar — compare price + quantity-aware button text */}
       <StickyAddToCart

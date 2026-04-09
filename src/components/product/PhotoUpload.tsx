@@ -77,38 +77,52 @@ export function PhotoUpload({ userId, onPhotosChange, maxPhotos = MAX_PHOTOS }: 
   }
 
   return (
-    <div className="space-y-4">
-      {/* Upload Button */}
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading || photos.length >= maxPhotos}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-neutral-700 hover:border-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {uploading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Upload className="w-5 h-5" />
-          )}
-          <span>
-            {uploading
-              ? `Uploading ${progress.uploaded}/${progress.total}...`
-              : `Add Photos (${photos.length}/${maxPhotos})`}
-          </span>
-        </button>
+    <div className="space-y-3">
+      {/* Mobile: compact tap button */}
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading || photos.length >= maxPhotos}
+        className="sm:hidden inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400 transition-all duration-200 hover:border-white/20 hover:text-zinc-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {uploading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500" />
+        ) : (
+          <Upload className="h-3.5 w-3.5" />
+        )}
+        {uploading
+          ? `Uploading ${progress.uploaded}/${progress.total}…`
+          : `Add Photos (${photos.length}/${maxPhotos})`}
+      </button>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+      {/* Desktop: drop zone */}
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading || photos.length >= maxPhotos}
+        className="hidden sm:flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-5 text-zinc-500 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.04] hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {uploading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+        ) : (
+          <Upload className="h-5 w-5" />
+        )}
+        <span className="text-[11px] font-semibold uppercase tracking-[0.15em]">
+          {uploading
+            ? `Uploading ${progress.uploaded}/${progress.total}…`
+            : `Add Photos (${photos.length}/${maxPhotos})`}
+        </span>
+        <span className="text-[10px] text-zinc-600">JPEG, PNG, WebP · max 5MB</span>
+      </button>
 
-        <span className="text-sm text-neutral-400">JPEG, PNG, WebP up to 5MB</span>
-      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/heic"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
 
       {/* Error Messages */}
       {errors.length > 0 && (

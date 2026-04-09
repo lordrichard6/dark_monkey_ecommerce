@@ -63,21 +63,25 @@ export function ProductQuantitySelector({
 }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <div className="flex h-10 items-center rounded-xl border border-white/10 bg-zinc-900/50 p-1">
+      <div className="flex h-12 items-center rounded-xl border border-white/10 bg-white/[0.03] p-1">
         <button
           type="button"
           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          className="flex h-full w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/5 hover:text-zinc-100"
+          disabled={quantity <= 1}
+          className="flex h-full w-10 items-center justify-center rounded-lg text-zinc-400 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/5 hover:text-zinc-100 disabled:opacity-30 active:scale-90"
         >
-          <Minus className="h-4 w-4" strokeWidth={1.5} />
+          <Minus className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
-        <div className="flex w-8 justify-center font-bold text-zinc-100 text-sm">{quantity}</div>
+        <div className="flex w-10 justify-center text-sm font-black tracking-tight text-zinc-100">
+          {quantity}
+        </div>
         <button
           type="button"
           onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-          className="flex h-full w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/5 hover:text-zinc-100"
+          disabled={quantity >= stock}
+          className="flex h-full w-10 items-center justify-center rounded-lg text-zinc-400 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/5 hover:text-zinc-100 disabled:opacity-30 active:scale-90"
         >
-          <Plus className="h-4 w-4" strokeWidth={1.5} />
+          <Plus className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
       </div>
     </div>

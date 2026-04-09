@@ -16,8 +16,20 @@ type Props = {
   gpsrInfo: string | null
 }
 
-const RICH_TEXT_CLASSES =
-  'styled-description prose prose-invert prose-sm max-w-none text-zinc-400 font-sans leading-relaxed'
+const RICH_TEXT_CLASSES = [
+  'text-sm leading-relaxed text-zinc-400',
+  '[&_p]:mb-4 [&_p:last-child]:mb-0',
+  '[&_h1]:text-base [&_h1]:font-bold [&_h1]:text-zinc-200 [&_h1]:mb-3 [&_h1]:mt-6 [&_h1:first-child]:mt-0',
+  '[&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-zinc-200 [&_h2]:mb-2 [&_h2]:mt-5 [&_h2:first-child]:mt-0',
+  '[&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mb-2 [&_h3]:mt-4 [&_h3:first-child]:mt-0',
+  '[&_ul]:mb-4 [&_ul]:space-y-1.5 [&_ul]:pl-0',
+  '[&_ol]:mb-4 [&_ol]:space-y-1.5 [&_ol]:pl-0',
+  '[&_li]:flex [&_li]:items-start [&_li]:gap-2',
+  '[&_li]:before:mt-[0.4em] [&_li]:before:h-1 [&_li]:before:w-1 [&_li]:before:shrink-0 [&_li]:before:rounded-full [&_li]:before:bg-amber-500/60 [&_li]:before:content-[""]',
+  '[&_strong]:font-semibold [&_strong]:text-zinc-200',
+  '[&_em]:italic [&_em]:text-zinc-300',
+  '[&_a]:text-amber-400 [&_a]:underline-offset-2 [&_a:hover]:text-amber-300',
+].join(' ')
 
 export function ProductInfoTabs({
   materialInfo,
@@ -54,26 +66,26 @@ export function ProductInfoTabs({
   return (
     <div className="max-w-4xl">
       {/* Tab bar */}
-      <div className="flex gap-1 rounded-2xl bg-zinc-900/60 p-1 border border-white/5">
+      <div className="flex gap-px rounded-2xl bg-white/[0.05] p-px border border-white/5 overflow-hidden">
         {visibleTabs.map(({ id, labelKey, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActiveTab(id)}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-[14px] px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
               activeTab === id
-                ? 'bg-zinc-800 text-zinc-100 shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-300'
+                ? 'bg-zinc-900 text-zinc-100 shadow-sm'
+                : 'bg-transparent text-zinc-600 hover:text-zinc-400'
             }`}
           >
-            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <Icon className={`h-4 w-4 shrink-0 ${activeTab === id ? 'text-amber-500' : ''}`} />
             <span className="hidden sm:inline">{t(labelKey as Parameters<typeof t>[0])}</span>
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div className="mt-4 rounded-2xl border border-white/5 bg-zinc-900/20 px-6 py-6 md:px-10 md:py-8">
+      <div className="mt-3 rounded-2xl border border-white/5 bg-zinc-900/20 px-5 py-5 md:px-8 md:py-7">
         {activeTab === 'material' && (
           <TabContent>
             {originCountry && (
