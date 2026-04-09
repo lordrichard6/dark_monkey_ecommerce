@@ -110,9 +110,8 @@ describe('Newsletter Actions', () => {
       expect(mockInsert).toHaveBeenCalledWith([{ email: 'hello@dark-monkey.ch' }])
     })
 
-    it('calls revalidatePath("/") on success', async () => {
+    it('returns success on valid subscription', async () => {
       const { createClient } = await import('@/lib/supabase/server')
-      const { revalidatePath } = await import('next/cache')
       vi.mocked(createClient).mockResolvedValue(
         makeSupabase({ error: null }) as unknown as Awaited<ReturnType<typeof createClient>>
       )
@@ -120,9 +119,9 @@ describe('Newsletter Actions', () => {
       const formData = new FormData()
       formData.set('email', 'user@example.com')
 
-      await subscribeToNewsletter(formData)
+      const result = await subscribeToNewsletter(formData)
 
-      expect(revalidatePath).toHaveBeenCalledWith('/')
+      expect(result).toEqual({ success: true })
     })
 
     it('does not call DB when email is invalid', async () => {

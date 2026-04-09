@@ -104,8 +104,7 @@ describe('Wishlist Actions', () => {
 
       await addToWishlist('product-1')
 
-      expect(revalidatePath).toHaveBeenCalledWith('/')
-      expect(revalidatePath).toHaveBeenCalledWith('/account/wishlist')
+      expect(revalidatePath).toHaveBeenCalledWith('/account/wishlist', 'page')
     })
   })
 

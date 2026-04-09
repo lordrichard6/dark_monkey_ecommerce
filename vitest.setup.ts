@@ -4,43 +4,44 @@ import { afterEach, vi } from 'vitest'
 
 // Cleanup after each test
 afterEach(() => {
-    cleanup()
+  cleanup()
 })
 
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({
-        push: vi.fn(),
-        replace: vi.fn(),
-        prefetch: vi.fn(),
-        back: vi.fn(),
-        forward: vi.fn(),
-        refresh: vi.fn(),
-    }),
-    usePathname: () => '/',
-    useSearchParams: () => new URLSearchParams(),
-    useParams: () => ({}),
-    redirect: vi.fn(),
-    notFound: vi.fn(),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
 }))
 
 // Mock Next.js headers
 vi.mock('next/headers', () => ({
-    cookies: () => ({
-        get: vi.fn(),
-        set: vi.fn(),
-        delete: vi.fn(),
-        getAll: vi.fn(() => []),
-    }),
-    headers: () => ({
-        get: vi.fn(),
-    }),
+  cookies: () => ({
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    getAll: vi.fn(() => []),
+  }),
+  headers: () => ({
+    get: vi.fn(),
+  }),
 }))
 
 // Mock Next.js cache
 vi.mock('next/cache', () => ({
-    revalidatePath: vi.fn(),
-    revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+  unstable_cache: vi.fn((fn: (...args: unknown[]) => unknown) => fn),
 }))
 
 // Mock environment variables
