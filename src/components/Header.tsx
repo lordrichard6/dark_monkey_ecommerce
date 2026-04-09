@@ -1,12 +1,31 @@
 import { unstable_cache } from 'next/cache'
 import { createClient, getUserSafe } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
-import { getCategories, type Category } from '@/actions/admin-categories'
+import { type Category } from '@/actions/admin-categories'
 import { SideNav } from '@/components/SideNav'
 import { MobileHeader } from '@/components/MobileHeader'
 import { DesktopTopBar } from '@/components/DesktopTopBar'
 
 type NavCategory = Category & { subcategories: Category[] }
+
+// Categories change rarely — cache for 5 minutes across all requests.
+// Uses admin client (service-role key) so cookies() is never called inside cache.
+const getCachedCategories = unstable_cache(
+  async () => {
+    const { getAdminClient } = await import('@/lib/supabase/admin')
+    const supabase = getAdminClient()
+    if (!supabase) return [] as Category[]
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, name, slug, parent_id, sort_order, image_url, is_featured, subtitle')
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true })
+    if (error) return [] as Category[]
+    return (data ?? []).map((c) => ({ ...c, product_count: 0 })) as Category[]
+  },
+  ['header-nav-categories'],
+  { revalidate: 300 }
+)
 
 /**
  * Badge counts are cached for 60 seconds across all requests.
@@ -124,7 +143,7 @@ export async function Header() {
   }
 
   try {
-    const allCats = await getCategories()
+    const allCats = await getCachedCategories()
     navCategories = allCats
       .filter((c) => !c.parent_id)
       .map((c) => ({ ...c, subcategories: allCats.filter((sc) => sc.parent_id === c.id) }))

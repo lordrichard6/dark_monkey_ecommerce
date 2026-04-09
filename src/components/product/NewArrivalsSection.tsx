@@ -1,27 +1,28 @@
 import { createClient } from '@/lib/supabase/server'
-import { fetchHomeProducts } from '@/actions/products'
+import type { HomeProduct } from '@/actions/products'
 import { NewArrivals } from './NewArrivals'
 
-export async function NewArrivalsSection() {
+interface Props {
+  products: HomeProduct[]
+}
+
+export async function NewArrivalsSection({ products }: Props) {
   const supabase = await createClient()
 
-  const [products, categoriesData] = await Promise.all([
-    fetchHomeProducts({ sort: 'newest', limit: 10 }),
-    supabase.from('categories').select('*').order('sort_order'),
-  ])
+  const { data: categoriesData } = await supabase.from('categories').select('*').order('sort_order')
 
   // Build category tree
   const categoriesMap = new Map()
   const rootCategories: { id: string; name: string; slug: string }[] = []
 
-  if (categoriesData.data) {
+  if (categoriesData) {
     // First pass: create nodes
-    categoriesData.data.forEach((cat) => {
+    categoriesData.forEach((cat) => {
       categoriesMap.set(cat.id, { ...cat, subcategories: [] })
     })
 
     // Second pass: build tree
-    categoriesData.data.forEach((cat) => {
+    categoriesData.forEach((cat) => {
       if (cat.parent_id) {
         const parent = categoriesMap.get(cat.parent_id)
         if (parent) {

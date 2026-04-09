@@ -1,20 +1,21 @@
-import { fetchHomeProducts } from '@/actions/products'
+import type { HomeProduct } from '@/actions/products'
 import { ProductGrid } from './ProductGrid'
 import { getTranslations } from 'next-intl/server'
 import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
-export async function FeaturedProductsSection() {
-  const [products, t] = await Promise.all([
-    fetchHomeProducts({ featured: true, limit: 8 }),
-    getTranslations('home'),
-  ])
+interface Props {
+  products: HomeProduct[]
+}
+
+export async function FeaturedProductsSection({ products }: Props) {
+  const t = await getTranslations('home')
 
   if (products.length === 0) return null
 
   return (
     <section className="relative overflow-hidden bg-zinc-950 py-24 md:py-32">
       {/* Ambient glow */}
-      <div className="pointer-events-none absolute left-1/4 top-0 h-96 w-96 rounded-full bg-amber-500/5 blur-[120px]" />
+      <div className="pointer-events-none absolute left-1/4 top-0 h-64 w-64 rounded-full bg-amber-500/5 blur-[80px]" />
 
       <div className="mx-auto max-w-6xl px-4">
         {/* ── Section header — scroll reveal ── */}

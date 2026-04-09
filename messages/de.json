@@ -121,7 +121,7 @@
     "premium": "Premium",
     "qualityCraftedFor": "Qualität gefertigt für",
     "you": "Dich",
-    "heroSubtitle": "Erleben Sie den Inbegriff von Handwerkskunst und Design. Unsere exklusive Kollektion ist für diejenigen konzipiert, die Exzellenz verlangen.",
+    "heroSubtitle": "Jedes Stück erzählt eine Geschichte. Wähle eines, das sich nach dir anfühlt – oder gestalte es von Grund auf.",
     "shopNow": "Jetzt shoppen",
     "browseCategories": "Kategorien durchsuchen",
     "sortNewest": "Neueste",
@@ -194,7 +194,11 @@
     "customEmailBody": "",
     "heroStatReviews": "4.9 · 120+ Bewertungen",
     "heroStatShipping": "Kostenloser Versand CH",
-    "heroStatCheckout": "Sicherer Checkout"
+    "heroStatCheckout": "Sicherer Checkout",
+    "heroLine1": "Trag, was",
+    "heroGold": "du",
+    "heroPink": "fühlst",
+    "featuredEyebrow": "Handverlesen"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",

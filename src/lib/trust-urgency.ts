@@ -1,28 +1,25 @@
 import { getAdminClient } from '@/lib/supabase/admin'
+import { unstable_cache } from 'next/cache'
 
 const COMPLETED_ORDER_STATUSES = ['paid', 'processing', 'shipped', 'delivered'] as const
 const TOP_N = 10
 
-/**
- * Returns product IDs that are bestsellers (most units sold in completed orders).
- * Used for "Bestseller" badges on product cards and product detail.
- */
-export async function getBestsellerProductIds(): Promise<Set<string>> {
+async function _getBestsellerProductIds(): Promise<string[]> {
   const supabase = getAdminClient()
-  if (!supabase) return new Set()
+  if (!supabase) return []
 
   const { data: orderIds } = await supabase
     .from('orders')
     .select('id')
     .in('status', [...COMPLETED_ORDER_STATUSES])
   const ids = orderIds?.map((o) => o.id) ?? []
-  if (ids.length === 0) return new Set()
+  if (ids.length === 0) return []
 
   const { data: items } = await supabase
     .from('order_items')
     .select('variant_id, quantity')
     .in('order_id', ids)
-  if (!items?.length) return new Set()
+  if (!items?.length) return []
 
   const variantIds = [...new Set(items.map((i) => i.variant_id))]
   const { data: variants } = await supabase
@@ -40,8 +37,24 @@ export async function getBestsellerProductIds(): Promise<Set<string>> {
     soldByProduct.set(productId, (soldByProduct.get(productId) ?? 0) + item.quantity)
   }
 
-  const sorted = [...soldByProduct.entries()]
+  return [...soldByProduct.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, TOP_N)
-  return new Set(sorted.map(([id]) => id))
+    .map(([id]) => id)
+}
+
+// Cached for 5 minutes — bestseller ranks change slowly
+const getCachedBestsellerIds = unstable_cache(
+  _getBestsellerProductIds,
+  ['bestseller-product-ids'],
+  { revalidate: 300 }
+)
+
+/**
+ * Returns product IDs that are bestsellers (most units sold in completed orders).
+ * Cached for 5 minutes to avoid repeated heavy multi-join queries.
+ */
+export async function getBestsellerProductIds(): Promise<Set<string>> {
+  const ids = await getCachedBestsellerIds()
+  return new Set(ids)
 }

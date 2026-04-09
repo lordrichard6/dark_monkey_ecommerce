@@ -149,8 +149,7 @@ export async function createFeedPost(data: {
 
     if (insertError) return { ok: false, error: insertError.message }
 
-    revalidatePath('/')
-    revalidatePath('/feed')
+    revalidatePath('/feed', 'page')
 
     return { ok: true, id: newPost.id }
   } catch (err) {
@@ -204,8 +203,7 @@ export async function updateFeedPost(
 
     if (updateError) return { ok: false, error: updateError.message }
 
-    revalidatePath('/')
-    revalidatePath('/feed')
+    revalidatePath('/feed', 'page')
 
     return { ok: true }
   } catch (err) {
@@ -235,8 +233,7 @@ export async function deleteFeedPost(id: string): Promise<{ ok: boolean; error?:
 
     if (deleteError) return { ok: false, error: deleteError.message }
 
-    revalidatePath('/')
-    revalidatePath('/feed')
+    revalidatePath('/feed', 'page')
 
     return { ok: true }
   } catch (err) {

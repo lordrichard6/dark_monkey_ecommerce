@@ -6,7 +6,7 @@ export async function CategoryStrip() {
   const supabase = await createClient()
   const t = await getTranslations('home')
 
-  const [{ data: rawCategories }, { data: subCatCounts }, { data: rootProductCounts }] =
+  const [{ data: rawCategories }, { data: allCategories }, { data: productRows }] =
     await Promise.all([
       supabase
         .from('categories')
@@ -16,25 +16,24 @@ export async function CategoryStrip() {
         .order('is_featured', { ascending: false })
         .order('sort_order', { ascending: true })
         .order('name', { ascending: true }),
-      supabase
-        .from('categories')
-        .select('id, parent_id, products(id)')
-        .not('parent_id', 'is', null),
-      // Also count products assigned directly to root categories (no subcategory intermediary)
-      supabase.from('categories').select('id, products(id)').is('parent_id', null),
+      // Lightweight: only need id + parent_id to build the hierarchy map
+      supabase.from('categories').select('id, parent_id'),
+      // One column per row instead of nested product arrays
+      supabase.from('products').select('category_id').eq('is_active', true).is('deleted_at', null),
     ])
 
-  // Roll up subcategory product counts to their parent root category
-  const countByParent: Record<string, number> = {}
-  for (const sub of subCatCounts ?? []) {
-    if (!sub.parent_id) continue
-    const count = Array.isArray(sub.products) ? sub.products.length : 0
-    countByParent[sub.parent_id] = (countByParent[sub.parent_id] ?? 0) + count
+  // Build a child→root lookup so we can roll up subcategory products
+  const childToRoot: Record<string, string> = {}
+  for (const cat of allCategories ?? []) {
+    if (cat.parent_id) childToRoot[cat.id] = cat.parent_id
   }
-  // Also count products assigned directly to root categories
-  for (const root of rootProductCounts ?? []) {
-    const count = Array.isArray(root.products) ? root.products.length : 0
-    if (count > 0) countByParent[root.id] = (countByParent[root.id] ?? 0) + count
+
+  // Count products per root category (direct + via subcategory)
+  const countByParent: Record<string, number> = {}
+  for (const row of productRows ?? []) {
+    if (!row.category_id) continue
+    const rootId = childToRoot[row.category_id] ?? row.category_id
+    countByParent[rootId] = (countByParent[rootId] ?? 0) + 1
   }
 
   const categories = (rawCategories ?? []).filter((cat) => (countByParent[cat.id] ?? 0) > 0)

@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
 
 /**
  * Subscribes an email address to the DarkMonkey newsletter.
@@ -30,6 +29,6 @@ export async function subscribeToNewsletter(formData: FormData) {
     return { error: 'Failed to subscribe' }
   }
 
-  revalidatePath('/')
+  // Newsletter subscription has no server-rendered state to invalidate
   return { success: true }
 }

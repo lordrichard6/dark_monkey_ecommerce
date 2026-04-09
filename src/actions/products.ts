@@ -3,8 +3,10 @@
 import { getProductBySlug, getProductCustomizationRule } from '@/lib/queries'
 import { sanitizeProductHtml } from '@/lib/sanitize-html.server'
 import { createClient, getUserSafe } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { getVoteCountsForProducts } from './public-votes'
+import { unstable_cache } from 'next/cache'
 
 export type ProductCardStats = {
   timesBought: number
@@ -16,7 +18,8 @@ export async function getProductCardStatsMap(
   productIds: string[]
 ): Promise<Record<string, ProductCardStats>> {
   if (productIds.length === 0) return {}
-  const supabase = await createClient()
+  // Use admin client — public stats, safe inside unstable_cache
+  const supabase = getAdminClient() ?? (await createClient())
 
   const [reviewData, orderItemData] = await Promise.all([
     // reviews: rating + count per product
@@ -91,34 +94,31 @@ type FetchHomeProductsOptions = {
   tag?: string
   featured?: boolean
   limit?: number
+  categoryIds?: string[]
 }
 
-export async function fetchHomeProducts(
-  sortOrOptions: string | FetchHomeProductsOptions = 'newest',
-  tag?: string
-): Promise<HomeProduct[]> {
-  const supabase = await createClient()
+// ---------------------------------------------------------------------------
+// Public (non-user-specific) product data — safe to cache across requests.
+// Wishlist per-user data is merged on top in fetchHomeProducts().
+// ---------------------------------------------------------------------------
 
-  // Normalise arguments: accept either (sort, tag?) or an options object
-  let sort: string
-  let resolvedTag: string | undefined
-  let featured: boolean | undefined
-  let limit: number | undefined
+type PublicHomeProduct = Omit<HomeProduct, 'isInWishlist'>
 
-  if (typeof sortOrOptions === 'object') {
-    sort = sortOrOptions.sort ?? 'newest'
-    resolvedTag = sortOrOptions.tag
-    featured = sortOrOptions.featured
-    limit = sortOrOptions.limit
-  } else {
-    sort = sortOrOptions
-    resolvedTag = tag
-  }
+async function _fetchPublicHomeProducts(
+  sort: string,
+  tag: string | undefined,
+  featured: boolean | undefined,
+  limit: number | undefined,
+  categoryIds: string[] | undefined
+): Promise<PublicHomeProduct[]> {
+  // Use admin client — no cookies needed for public product data
+  const supabase = getAdminClient()
+  if (!supabase) return []
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query: any
 
-  if (resolvedTag) {
+  if (tag) {
     query = supabase
       .from('products')
       .select(
@@ -130,7 +130,7 @@ export async function fetchHomeProducts(
       .eq('is_active', true)
       .is('deleted_at', null)
       .eq('is_exclusive', false)
-      .eq('product_tags.tags.slug', resolvedTag)
+      .eq('product_tags.tags.slug', tag)
   } else {
     query = supabase
       .from('products')
@@ -144,41 +144,20 @@ export async function fetchHomeProducts(
       .eq('is_exclusive', false)
   }
 
-  if (featured !== undefined) {
-    query = query.eq('is_featured', featured)
-  }
-
+  if (featured !== undefined) query = query.eq('is_featured', featured)
+  if (categoryIds && categoryIds.length > 0) query = query.in('category_id', categoryIds)
   query = query.order('created_at', { ascending: false })
+  if (limit !== undefined) query = query.limit(limit)
 
-  if (limit !== undefined) {
-    query = query.limit(limit)
-  }
-
-  const [productsResult, user, bestsellerIds, wishlistCountData] = await Promise.all([
-    query,
-    getUserSafe(supabase),
-    getBestsellerProductIds(),
-    supabase.from('user_wishlist').select('product_id'),
-  ])
+  const [productsResult, bestsellerIds] = await Promise.all([query, getBestsellerProductIds()])
 
   const { data: products } = productsResult
   const productIds = ((products ?? []) as ProductRow[]).map((p) => p.id)
+
   const [publicVoteCounts, cardStats] = await Promise.all([
     getVoteCountsForProducts(productIds),
     getProductCardStatsMap(productIds),
   ])
-
-  // Build wishlist count map: product_id → number of users who liked it
-  const likesMap: Record<string, number> = {}
-  for (const row of wishlistCountData.data ?? []) {
-    likesMap[row.product_id] = (likesMap[row.product_id] ?? 0) + 1
-  }
-
-  const wishlistProductIds = user?.id
-    ? ((await supabase.from('user_wishlist').select('product_id').eq('user_id', user.id)).data?.map(
-        (w) => w.product_id
-      ) ?? [])
-    : []
 
   const mapped = ((products ?? []) as ProductRow[]).map((p) => {
     const variants = p.product_variants
@@ -208,16 +187,15 @@ export async function fetchHomeProducts(
       imageAlt: primary?.alt ?? p.name,
       imageUrl2: p.dual_image_mode ? (second?.url ?? null) : null,
       dualImageMode: p.dual_image_mode && !!second,
-      isInWishlist: wishlistProductIds.includes(p.id),
       isBestseller: bestsellerIds.has(p.id),
       isOnSale: !!(compareAtPriceCents && compareAtPriceCents > priceCents),
-      upvotes: likesMap[p.id] ?? 0,
+      upvotes: 0, // likes are user-wishlist count — omitted from cache
       publicUp: publicVoteCounts[p.id]?.up ?? 0,
       publicDown: publicVoteCounts[p.id]?.down ?? 0,
       timesBought: cardStats[p.id]?.timesBought ?? 0,
       reviewCount: cardStats[p.id]?.reviewCount ?? 0,
       avgRating: cardStats[p.id]?.avgRating ?? null,
-    }
+    } satisfies PublicHomeProduct
   })
 
   return sort === 'price-asc'
@@ -225,6 +203,74 @@ export async function fetchHomeProducts(
     : sort === 'price-desc'
       ? mapped.sort((a, b) => b.priceCents - a.priceCents)
       : mapped
+}
+
+// Cache key encodes all query params so different calls get different buckets.
+// Revalidates every 3 minutes — products change infrequently on the homepage.
+function getCachedPublicHomeProducts(
+  sort: string,
+  tag: string | undefined,
+  featured: boolean | undefined,
+  limit: number | undefined,
+  categoryIds: string[] | undefined
+): Promise<PublicHomeProduct[]> {
+  const catKey = categoryIds?.length ? categoryIds.sort().join(',') : 'all'
+  const key = `home-products-${sort}-${tag ?? 'all'}-${featured ?? 'any'}-${limit ?? 'nolimit'}-${catKey}`
+  return unstable_cache(
+    () => _fetchPublicHomeProducts(sort, tag, featured, limit, categoryIds),
+    [key],
+    { revalidate: 180 }
+  )()
+}
+
+export async function fetchHomeProducts(
+  sortOrOptions: string | FetchHomeProductsOptions = 'newest',
+  tag?: string
+): Promise<HomeProduct[]> {
+  // Normalise arguments
+  let sort: string
+  let resolvedTag: string | undefined
+  let featured: boolean | undefined
+  let limit: number | undefined
+  let categoryIds: string[] | undefined
+
+  if (typeof sortOrOptions === 'object') {
+    sort = sortOrOptions.sort ?? 'newest'
+    resolvedTag = sortOrOptions.tag
+    featured = sortOrOptions.featured
+    limit = sortOrOptions.limit
+    categoryIds = sortOrOptions.categoryIds
+  } else {
+    sort = sortOrOptions
+    resolvedTag = tag
+  }
+
+  // Fetch cached public data + per-user wishlist in parallel
+  const supabase = await createClient()
+  const [publicProducts, user] = await Promise.all([
+    getCachedPublicHomeProducts(sort, resolvedTag, featured, limit, categoryIds),
+    getUserSafe(supabase),
+  ])
+
+  // Scope wishlist to current user only (was previously fetching ALL rows)
+  const wishlistProductIds = user?.id
+    ? ((await supabase.from('user_wishlist').select('product_id').eq('user_id', user.id)).data?.map(
+        (w) => w.product_id
+      ) ?? [])
+    : []
+
+  return publicProducts.map((p) => ({
+    ...p,
+    isInWishlist: wishlistProductIds.includes(p.productId),
+  }))
+}
+
+/** Fetch products for a specific category (+ its subcategories) — called from client on filter change. */
+export async function fetchProductsByCategory(
+  categoryIds: string[],
+  limit = 10
+): Promise<HomeProduct[]> {
+  return fetchHomeProducts({ categoryIds, limit, sort: 'newest' })
 }
 
 export async function getProductQuickView(slug: string) {

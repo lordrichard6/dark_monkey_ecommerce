@@ -48,7 +48,8 @@ export async function addToCart(item: Omit<CartItem, 'quantity'> & { quantity?: 
     sameSite: config.sameSite,
     secure: config.secure,
   })
-  revalidatePath('/', 'layout')
+  // Cart lives in a cookie — no server page data to invalidate.
+  // CartProvider handles optimistic updates client-side.
 }
 
 /**
@@ -84,7 +85,8 @@ export async function updateCartItem(
     sameSite: config.sameSite,
     secure: config.secure,
   })
-  revalidatePath('/', 'layout')
+  // Cart lives in a cookie — no server page data to invalidate.
+  // CartProvider handles optimistic updates client-side.
 }
 
 /**

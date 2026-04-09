@@ -5,13 +5,19 @@ import { getFeedPosts, getUserLikedPosts, getComments } from '@/actions/feed'
 import FeedPost from '@/components/feed/FeedPost'
 import { ScrollReveal } from '@/components/motion/ScrollReveal'
 import { ArrowRight } from 'lucide-react'
+import { sanitizeProductHtml } from '@/lib/sanitize-html.server'
 
 interface FeedSectionProps {
   locale: string
 }
 
 export default async function FeedSection({ locale }: FeedSectionProps) {
-  const [t, posts] = await Promise.all([getTranslations('feed'), getFeedPosts(1, 3)])
+  const [t, rawPosts] = await Promise.all([getTranslations('feed'), getFeedPosts(1, 3)])
+  // Sanitize post bodies server-side before any HTML reaches the client
+  const posts = rawPosts.map((p) => ({
+    ...p,
+    body: p.body ? sanitizeProductHtml(p.body) : null,
+  }))
   if (!posts.length) return null
 
   const supabase = await createClient()
@@ -21,22 +27,18 @@ export default async function FeedSection({ locale }: FeedSectionProps) {
 
   const currentUserId = user?.id ?? null
 
-  let isAdmin = false
-  if (user) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-    isAdmin = profile?.is_admin ?? false
-  }
-
   const postIds = posts.map((p) => p.id)
 
-  const [likedIds, ...commentsPerPost] = await Promise.all([
-    getUserLikedPosts(postIds),
+  // For anonymous visitors, skip the admin check and liked-posts query entirely
+  const [likedIds, adminProfile, ...commentsPerPost] = await Promise.all([
+    currentUserId ? getUserLikedPosts(postIds) : Promise.resolve([] as string[]),
+    currentUserId
+      ? supabase.from('user_profiles').select('is_admin').eq('id', currentUserId).single()
+      : Promise.resolve({ data: null }),
     ...posts.map((p) => getComments(p.id)),
   ])
+
+  const isAdmin = (adminProfile?.data as { is_admin?: boolean } | null)?.is_admin ?? false
 
   return (
     <section className="relative mx-auto max-w-6xl px-4 py-24">

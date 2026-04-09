@@ -46,7 +46,7 @@ const ALLOWED_TAGS = [
 const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions['allowedAttributes'] = {
   a: ['href', 'target', 'rel'],
   img: ['src', 'alt', 'width', 'height', 'loading'],
-  '*': ['class', 'style'],
+  '*': ['class'],
 }
 
 /**

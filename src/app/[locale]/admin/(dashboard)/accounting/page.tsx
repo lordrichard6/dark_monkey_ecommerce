@@ -6,7 +6,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { AdminNotConfigured } from '@/components/admin/AdminNotConfigured'
 import { getAccountingData } from '@/actions/accounting'
 import { FIXED_COSTS, TOTAL_FIXED_MONTHLY } from '@/lib/accounting-utils'
-import { AccountingCharts } from './accounting-charts'
+import { AccountingChartsLoader as AccountingCharts } from './accounting-charts-loader'
 import { SyncPrintfulCostsButton } from './sync-button'
 import {
   TrendingUp,

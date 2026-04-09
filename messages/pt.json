@@ -123,7 +123,7 @@
     "craftedFor": "Feita Para",
     "qualityCraftedFor": "Qualidade Feita Para",
     "you": "Ti",
-    "heroSubtitle": "Experimenta o auge do artesanato e design. A nossa coleção exclusiva foi pensada para quem exige excelência.",
+    "heroSubtitle": "Cada peça conta uma história. Escolhe uma que te represente, ou cria a tua do zero.",
     "shopNow": "Comprar Agora",
     "browseCategories": "Explorar Categorias",
     "sortNewest": "Mais recentes",
@@ -194,7 +194,11 @@
     "customEmailBody": "",
     "heroStatReviews": "4.9 · 120+ avaliações",
     "heroStatShipping": "Envio grátis CH",
-    "heroStatCheckout": "Checkout seguro"
+    "heroStatCheckout": "Checkout seguro",
+    "heroLine1": "Veste o Que",
+    "heroGold": "Tu",
+    "heroPink": "Sentes",
+    "featuredEyebrow": "Selecionado a dedo"
   },
   "cookie": {
     "message": "Usamos cookies para persistência do carrinho, autenticação e uma melhor experiência de compra.",

@@ -79,6 +79,7 @@ const nextConfig: NextConfig = {
       'https://analytics.google.com',
       'https://region1.google-analytics.com',
       'https://vitals.vercel-insights.com',
+      'https://va.vercel-scripts.com',
       'https://o4510900578680832.ingest.de.sentry.io',
       ...(isDev
         ? ['http://localhost:54321', 'ws://localhost:54321', 'http://127.0.0.1:54321']

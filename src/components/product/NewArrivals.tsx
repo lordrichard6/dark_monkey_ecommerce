@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useTransition } from 'react'
 import { Link } from '@/i18n/navigation'
 import { ProductCardWithWishlist } from './ProductCardWithWishlist'
 import type { HomeProduct } from '@/actions/products'
+import { fetchProductsByCategory } from '@/actions/products'
 type Category = { id: string; name: string; slug: string; subcategories?: { id: string }[] }
 import { useTranslations } from 'next-intl'
 import { ChevronRight, ChevronLeft, ArrowRight } from 'lucide-react'
@@ -17,24 +18,29 @@ type Props = {
 export function NewArrivals({ products, categories }: Props) {
   const t = useTranslations('home')
   const [activeCategory, setActiveCategory] = useState<string | 'all'>('all')
+  const [displayedProducts, setDisplayedProducts] = useState<HomeProduct[]>(products.slice(0, 8))
+  const [hasMore, setHasMore] = useState(products.length > 8)
+  const [isPending, startTransition] = useTransition()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [scrollLeft, setScrollLeft] = useState(0)
 
-  const filteredProducts =
-    activeCategory === 'all'
-      ? products
-      : products.filter(
-          (p) =>
-            p.categoryId === activeCategory ||
-            categories
-              .find((c) => c.id === activeCategory)
-              ?.subcategories?.some((s) => s.id === p.categoryId)
-        )
-
-  const displayedProducts = filteredProducts.slice(0, 8)
-  const hasMore = filteredProducts.length > 8
+  function selectCategory(categoryId: string | 'all') {
+    setActiveCategory(categoryId)
+    if (categoryId === 'all') {
+      setDisplayedProducts(products.slice(0, 8))
+      setHasMore(products.length > 8)
+      return
+    }
+    const cat = categories.find((c) => c.id === categoryId)
+    const ids = [categoryId, ...(cat?.subcategories?.map((s) => s.id) ?? [])]
+    startTransition(async () => {
+      const results = await fetchProductsByCategory(ids, 9)
+      setDisplayedProducts(results.slice(0, 8))
+      setHasMore(results.length > 8)
+    })
+  }
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -80,7 +86,7 @@ export function NewArrivals({ products, categories }: Props) {
             {/* Category filter pills */}
             <div className="mt-5 flex gap-2 flex-wrap">
               <button
-                onClick={() => setActiveCategory('all')}
+                onClick={() => selectCategory('all')}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                   activeCategory === 'all'
                     ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
@@ -94,8 +100,9 @@ export function NewArrivals({ products, categories }: Props) {
                 return (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest whitespace-nowrap transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                    onClick={() => selectCategory(cat.id)}
+                    disabled={isPending}
+                    className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest whitespace-nowrap transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] disabled:opacity-60 ${
                       activeCategory === cat.id
                         ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
                         : 'border border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'
@@ -132,7 +139,7 @@ export function NewArrivals({ products, categories }: Props) {
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
-          className={`grid grid-cols-2 gap-3 sm:gap-4 md:flex md:gap-6 overflow-x-auto pb-8 md:pb-12 md:[&::-webkit-scrollbar]:hidden md:[ms-overflow-style:none] md:[scrollbar-width:none] md:cursor-grab md:active:cursor-grabbing md:select-none md:scroll-smooth ${isDragging ? 'md:scroll-auto' : ''}`}
+          className={`grid grid-cols-2 gap-3 sm:gap-4 md:flex md:gap-6 overflow-x-auto pb-8 md:pb-12 md:[&::-webkit-scrollbar]:hidden md:[ms-overflow-style:none] md:[scrollbar-width:none] md:cursor-grab md:active:cursor-grabbing md:select-none md:scroll-smooth transition-opacity duration-300 ${isPending ? 'opacity-40 pointer-events-none' : 'opacity-100'} ${isDragging ? 'md:scroll-auto' : ''}`}
         >
           {displayedProducts.length > 0 ? (
             displayedProducts.map((product, i) => (

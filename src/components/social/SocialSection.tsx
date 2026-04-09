@@ -56,8 +56,8 @@ export async function SocialSection() {
   return (
     <section className="relative overflow-hidden bg-zinc-950 py-24 md:py-32">
       {/* Ambient glows */}
-      <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-pink-600/5 blur-[120px]" />
-      <div className="pointer-events-none absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-blue-600/5 blur-[120px]" />
+      <div className="pointer-events-none absolute -left-32 top-0 h-64 w-64 rounded-full bg-pink-600/5 blur-[80px]" />
+      <div className="pointer-events-none absolute -right-32 bottom-0 h-64 w-64 rounded-full bg-blue-600/5 blur-[80px]" />
 
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* Header */}

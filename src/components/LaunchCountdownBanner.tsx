@@ -48,54 +48,49 @@ export function LaunchCountdownBanner({ position }: Props) {
 
   const pill = (
     <div
-      className="rounded-2xl p-px sm:rounded-full"
+      className="rounded-full p-px"
       style={{
         background:
           'linear-gradient(135deg, rgba(251,191,36,0.5) 0%, rgba(251,191,36,0.08) 50%, rgba(251,191,36,0.4) 100%)',
         boxShadow: '0 0 20px rgba(251,191,36,0.18)',
       }}
     >
-      <div className="flex flex-col items-center gap-2 rounded-2xl bg-black/70 px-4 py-3 backdrop-blur-xl sm:flex-row sm:gap-3 sm:rounded-full sm:px-5 sm:py-2.5">
-        {/* Row 1 on mobile: icon + label + dot + countdown */}
-        <div className="flex items-center gap-2">
-          {/* Rocket icon */}
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/20 ring-1 ring-amber-500/30">
-            <Rocket className="h-3 w-3 text-amber-400" />
-          </div>
-
-          {/* Label */}
-          <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400 sm:text-xs">
-            Free Shipping
-          </span>
-
-          {/* Dot */}
-          <span className="text-zinc-600">·</span>
-
-          {/* Countdown — numbers stand out large, labels tiny */}
-          <span className="flex items-baseline gap-1 font-mono tabular-nums">
-            <CountUnit value={days} label="d" />
-            <CountUnit value={hours} label="h" />
-            <CountUnit value={minutes} label="m" />
-            <CountUnit value={seconds} label="s" />
-          </span>
+      <div className="flex flex-row items-center gap-2 rounded-full bg-black/70 px-3 py-2 backdrop-blur-xl sm:gap-3 sm:px-5 sm:py-2.5">
+        {/* Rocket icon */}
+        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 ring-1 ring-amber-500/30 sm:h-6 sm:w-6">
+          <Rocket className="h-2.5 w-2.5 text-amber-400 sm:h-3 sm:w-3" />
         </div>
 
-        {/* Separator dot — desktop only */}
-        <span className="hidden text-zinc-600 sm:inline">·</span>
+        {/* Label — hidden on xs to save space */}
+        <span className="hidden text-[11px] font-bold uppercase tracking-widest text-amber-400 xs:inline sm:text-xs">
+          Free Shipping
+        </span>
+        <span className="hidden text-zinc-600 xs:inline">·</span>
 
-        {/* Row 2 on mobile: promo code button */}
+        {/* Countdown */}
+        <span className="flex items-baseline gap-1 font-mono tabular-nums">
+          <CountUnit value={days} label="d" />
+          <CountUnit value={hours} label="h" />
+          <CountUnit value={minutes} label="m" />
+          <CountUnit value={seconds} label="s" />
+        </span>
+
+        {/* Separator dot */}
+        <span className="text-zinc-600">·</span>
+
+        {/* Promo code button */}
         <button
           onClick={handleCopy}
-          className="group flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 transition-all hover:border-amber-400/50 hover:bg-amber-500/20 active:scale-95"
+          className="group flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 transition-all hover:border-amber-400/50 hover:bg-amber-500/20 active:scale-95 sm:gap-1.5 sm:px-2.5 sm:py-1"
         >
-          <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 sm:text-xs">
+          <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 sm:text-[11px]">
             LAUNCH
           </span>
-          <span className="flex h-4 w-4 items-center justify-center rounded bg-amber-500/20">
+          <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-amber-500/20 sm:h-4 sm:w-4">
             {copied ? (
-              <Check className="h-2.5 w-2.5 text-emerald-400" />
+              <Check className="h-2 w-2 text-emerald-400 sm:h-2.5 sm:w-2.5" />
             ) : (
-              <Copy className="h-2.5 w-2.5 text-amber-400" />
+              <Copy className="h-2 w-2 text-amber-400 sm:h-2.5 sm:w-2.5" />
             )}
           </span>
         </button>

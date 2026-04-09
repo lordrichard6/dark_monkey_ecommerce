@@ -3,9 +3,9 @@
 import { useRef } from 'react'
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import { Link } from '@/i18n/navigation'
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { HeroLogo } from './HeroLogo'
-import { ArrowRight, ChevronDown } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { LaunchCountdownBanner } from './LaunchCountdownBanner'
 
 // Custom spring cubic-bezier — physical, snappy, premium
@@ -44,7 +44,6 @@ function AnimatedWord({
 
 export function Hero() {
   const t = useTranslations('home')
-  const locale = useLocale()
   const heroRef = useRef<HTMLElement>(null)
   const shouldReduceMotion = useReducedMotion()
 
@@ -66,7 +65,8 @@ export function Hero() {
   return (
     <section
       ref={heroRef}
-      className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4"
+      className="relative flex flex-col items-center justify-center overflow-hidden px-4"
+      style={{ minHeight: 'calc(100dvh - 3.5rem - var(--ann-bar-h, 0rem))' }}
     >
       {/* ── Video background with scroll-linked scale + fade ── */}
       <motion.video
@@ -81,7 +81,7 @@ export function Hero() {
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
       />
 
       {/* ── Gradient vignette — brand-tinted (zinc-950), not pure black ── */}
@@ -110,7 +110,7 @@ export function Hero() {
           transition={
             shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0, ease: SPRING }
           }
-          className="mb-8 mt-8 flex justify-center"
+          className="mb-3 mt-2 flex justify-center sm:mb-6 sm:mt-6"
         >
           <LaunchCountdownBanner position="inline" />
         </motion.div>
@@ -122,44 +122,29 @@ export function Hero() {
           transition={
             shouldReduceMotion ? { duration: 0 } : { duration: 0.85, delay: 0.15, ease: SPRING }
           }
-          className="mb-3 md:mb-5"
+          className="mb-1 md:mb-5"
         >
           <HeroLogo />
         </motion.div>
 
         {/* ── Headline — fluid type, tight tracking, word-level stagger ── */}
-        <h1 className="font-bold tracking-tight text-zinc-50 [font-size:clamp(1.75rem,5.5vw,4.5rem)] tracking-[-0.025em]">
-          {locale === 'pt' ? (
-            <>
-              <AnimatedWord delay={0.3}>{t('quality')}</AnimatedWord>{' '}
-              <AnimatedWord
-                delay={0.4}
-                className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
-              >
-                {t('premium')}
-              </AnimatedWord>{' '}
-              <AnimatedWord delay={0.5}>{t('craftedFor')}</AnimatedWord>{' '}
-            </>
-          ) : (
-            <>
-              <AnimatedWord
-                delay={0.3}
-                className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
-              >
-                {t('premium')}
-              </AnimatedWord>{' '}
-              <AnimatedWord delay={0.4}>{t('qualityCraftedFor')}</AnimatedWord>{' '}
-            </>
-          )}
+        <h1 className="font-bold text-zinc-50 [font-size:clamp(2.5rem,8vw,5.5rem)] tracking-[-0.03em] leading-tight">
+          <AnimatedWord delay={0.3}>{t('heroLine1')}</AnimatedWord>{' '}
+          <AnimatedWord
+            delay={0.4}
+            className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
+          >
+            {t('heroGold')}
+          </AnimatedWord>{' '}
           <AnimatedWord
             delay={0.5}
             style={{
               fontFamily: 'var(--font-pacifico), cursive',
               color: '#ff2d55',
-              textShadow: '0 0 5px #ff2d55, 0 0 10px #ff2d55, 0 0 20px #ff2d55, 0 0 40px #ff2d55',
+              textShadow: '0 0 12px rgba(255,45,85,0.6), 0 0 30px rgba(255,45,85,0.25)',
             }}
           >
-            {t('you')}
+            {t('heroPink')}
           </AnimatedWord>
         </h1>
 
@@ -170,7 +155,7 @@ export function Hero() {
           transition={
             shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.62, ease: SPRING }
           }
-          className="mt-4 text-sm text-zinc-400 sm:mt-6 sm:text-lg md:text-xl"
+          className="mt-2 text-sm text-zinc-400 sm:mt-5 sm:text-lg md:text-xl"
         >
           {t('heroSubtitle')}
         </motion.p>
@@ -182,7 +167,7 @@ export function Hero() {
           transition={
             shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.76, ease: SPRING }
           }
-          className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row sm:gap-4"
+          className="mt-4 flex flex-col items-center justify-center gap-2 sm:mt-10 sm:flex-row sm:gap-4"
         >
           {/* Primary — amber gradient pill */}
           <button
@@ -215,43 +200,41 @@ export function Hero() {
             </div>
           </Link>
         </motion.div>
-
-        {/* ── Social proof micro-stats ── */}
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={
-            shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.92, ease: SPRING }
-          }
-          className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 sm:gap-5"
-        >
-          <span className="flex items-center gap-1.5">
-            <span className="text-amber-400">★</span>
-            <span>{t('heroStatReviews')}</span>
-          </span>
-          <span className="hidden h-1 w-1 rounded-full bg-zinc-700 sm:block" aria-hidden />
-          <span>{t('heroStatShipping')}</span>
-          <span className="hidden h-1 w-1 rounded-full bg-zinc-700 sm:block" aria-hidden />
-          <span>{t('heroStatCheckout')}</span>
-        </motion.div>
       </motion.div>
 
-      {/* ── Scroll indicator — pulsing chevron ── */}
+      {/* ── Scroll indicator — premium travel-line ── */}
       <motion.div
         initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={
-          shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 1.3, ease: SPRING }
+          shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 1.5, ease: SPRING }
         }
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2"
         aria-hidden
       >
-        <motion.div
-          animate={shouldReduceMotion ? {} : { y: [0, 8, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <ChevronDown className="h-5 w-5 text-zinc-500" />
-        </motion.div>
+        {/* Label */}
+        <span className="text-[9px] font-semibold uppercase tracking-[0.35em] text-zinc-500 select-none">
+          Scroll
+        </span>
+
+        {/* Line + traveling dot */}
+        <div className="relative h-12 w-px overflow-hidden">
+          {/* Static line */}
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-600/60 to-transparent" />
+          {/* Traveling glow dot */}
+          {!shouldReduceMotion && (
+            <motion.div
+              className="absolute left-1/2 -translate-x-1/2 h-3 w-px rounded-full"
+              style={{
+                background:
+                  'linear-gradient(to bottom, rgba(251,191,36,0) 0%, rgba(251,191,36,0.9) 50%, rgba(251,191,36,0) 100%)',
+                boxShadow: '0 0 6px 1px rgba(251,191,36,0.5)',
+              }}
+              animate={{ top: ['-10%', '110%'] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.3 }}
+            />
+          )}
+        </div>
       </motion.div>
     </section>
   )

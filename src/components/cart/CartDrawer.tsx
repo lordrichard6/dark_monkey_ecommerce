@@ -5,8 +5,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useCart } from './CartProvider'
-import { updateCartItem, removeFromCart } from '@/actions/cart'
-import { useRouter } from 'next/navigation'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 function formatPrice(cents: number): string {
@@ -20,27 +18,12 @@ function formatPrice(cents: number): string {
 export function CartDrawer() {
   const t = useTranslations('cart')
   const tCommon = useTranslations('common')
-  const { cart, isOpen, closeCart } = useCart()
-  const router = useRouter()
+  const { cart, isOpen, isPending, closeCart, updateItem, removeItem } = useCart()
   const drawerRef = useRef<HTMLElement>(null)
   const totalCents = cart.items.reduce((s, i) => s + i.priceCents * i.quantity, 0)
   const itemCount = cart.items.reduce((s, i) => s + i.quantity, 0)
 
   useFocusTrap(drawerRef, isOpen)
-
-  async function handleUpdate(
-    variantId: string,
-    quantity: number,
-    config?: Record<string, unknown>
-  ) {
-    await updateCartItem(variantId, quantity, config)
-    router.refresh()
-  }
-
-  async function handleRemove(variantId: string, config?: Record<string, unknown>) {
-    await removeFromCart(variantId, config)
-    router.refresh()
-  }
 
   return (
     <>
@@ -60,7 +43,7 @@ export function CartDrawer() {
           <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-4">
             <h2
               id="cart-drawer-title"
-              className="flex items-center gap-2 text-lg font-semibold text-zinc-50"
+              className={`flex items-center gap-2 text-lg font-semibold text-zinc-50 transition-opacity duration-150 ${isPending ? 'opacity-60' : ''}`}
             >
               <Image
                 src="/logo.webp"
@@ -146,7 +129,7 @@ export function CartDrawer() {
                         <select
                           value={item.quantity}
                           onChange={(e) =>
-                            handleUpdate(item.variantId, parseInt(e.target.value, 10), item.config)
+                            updateItem(item.variantId, parseInt(e.target.value, 10), item.config)
                           }
                           className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-100"
                         >
@@ -157,7 +140,7 @@ export function CartDrawer() {
                           ))}
                         </select>
                         <button
-                          onClick={() => handleRemove(item.variantId, item.config)}
+                          onClick={() => removeItem(item.variantId, item.config)}
                           className="text-sm text-zinc-500 underline hover:text-red-400"
                         >
                           {t('remove')}

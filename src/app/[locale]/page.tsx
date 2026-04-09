@@ -52,9 +52,13 @@ export default async function HomePage({ params }: Props) {
   const t = await getTranslations('home')
   const supabase = await createClient()
 
-  // Fetch initial data server-side for instant render
-  const [initialProducts, activePtData] = await Promise.all([
+  // Fetch all product sets in a single parallel round-trip.
+  // FeaturedProductsSection and NewArrivalsSection receive these as props
+  // so they never call fetchHomeProducts themselves.
+  const [initialProducts, featuredProducts, newestProducts, activePtData] = await Promise.all([
     fetchHomeProducts('newest'),
+    fetchHomeProducts({ featured: true, limit: 8 }),
+    fetchHomeProducts({ sort: 'newest', limit: 10 }),
     supabase
       .from('product_tags')
       .select('tag_id, products!inner(id)')
@@ -77,7 +81,7 @@ export default async function HomePage({ params }: Props) {
       <Hero />
 
       <Suspense fallback={<ProductCarouselSkeleton />}>
-        <FeaturedProductsSection />
+        <FeaturedProductsSection products={featuredProducts} />
       </Suspense>
 
       {/* Diagonal slash transition — dark → gradient */}
@@ -94,7 +98,7 @@ export default async function HomePage({ params }: Props) {
       </div>
 
       <Suspense fallback={null}>
-        <NewArrivalsSection />
+        <NewArrivalsSection products={newestProducts} />
       </Suspense>
 
       <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-12 h-64 animate-pulse" />}>

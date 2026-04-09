@@ -204,7 +204,7 @@
     "craftedFor": "Crafted For",
     "qualityCraftedFor": "Quality Crafted For",
     "you": "You",
-    "heroSubtitle": "Experience the pinnacle of craftsmanship and design. Our exclusive collection is designed for those who demand excellence.",
+    "heroSubtitle": "Every piece tells a story. Choose one that feels like yours, or design it from scratch.",
     "shopNow": "Shop Now",
     "browseCategories": "Browse Categories",
     "sortNewest": "Newest",
@@ -275,7 +275,11 @@
     "customEmailBody": "",
     "heroStatReviews": "4.9 · 120+ reviews",
     "heroStatShipping": "Free shipping CH",
-    "heroStatCheckout": "Secure checkout"
+    "heroStatCheckout": "Secure checkout",
+    "heroLine1": "Wear What",
+    "heroGold": "You",
+    "heroPink": "Feel",
+    "featuredEyebrow": "Hand-picked"
   },
   "userMenu": {
     "account": "Account",

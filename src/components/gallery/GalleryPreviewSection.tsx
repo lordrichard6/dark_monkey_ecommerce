@@ -1,45 +1,25 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Heart } from 'lucide-react'
-import { GalleryItem, getGalleryItems } from '@/actions/gallery'
-import { useTranslations } from 'next-intl'
+import { getGalleryItems } from '@/actions/gallery'
+import { getTranslations } from 'next-intl/server'
 
-export function GalleryPreviewSection() {
-  const [items, setItems] = useState<GalleryItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const t = useTranslations('common') // Assuming there's a common namespace, or I can use raw strings if needed
+export async function GalleryPreviewSection() {
+  const [{ items }, t] = await Promise.all([getGalleryItems(10), getTranslations('common')])
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        // Fetch more items to ensure smooth loop (20 items)
-        const { items } = await getGalleryItems(10)
-        setItems(items)
-      } catch (error) {
-        console.error('Failed to fetch gallery preview', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchItems()
-  }, [])
+  if (items.length === 0) return null
 
-  if (loading || items.length === 0) return null
-
-  // If we only have 1 item, don't loop, just center it.
   const isSingleItem = items.length === 1
-  const loopItems = isSingleItem ? items : [...items, ...items, ...items, ...items] // More duplication for smoother loop if needed
+  // 2× duplication is enough for a seamless marquee loop
+  const loopItems = isSingleItem ? items : [...items, ...items]
 
   return (
     <section className="relative overflow-hidden py-24 bg-zinc-950">
       {/* Background elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-        <div className="absolute left-0 right-0 top-0 m-auto h-[500px] w-[500px] rounded-full bg-amber-500/20 blur-[100px]" />
-        <div className="absolute right-0 bottom-0 h-[500px] w-[500px] rounded-full bg-purple-500/20 blur-[100px]" />
+        <div className="absolute left-0 right-0 top-0 m-auto h-[300px] w-[300px] rounded-full bg-amber-500/15 blur-[80px]" />
+        <div className="absolute right-0 bottom-0 h-[300px] w-[300px] rounded-full bg-purple-500/15 blur-[80px]" />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 mb-12 text-center">
@@ -54,15 +34,14 @@ export function GalleryPreviewSection() {
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95"
         >
           {t('viewFullGallery')}
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
         </Link>
       </div>
 
-      {/* Gallery Display - Centered if Single, Marquee if Multiple */}
+      {/* Gallery Display */}
       <div
         className={`relative w-full ${isSingleItem ? 'flex justify-center' : 'overflow-hidden group'}`}
       >
-        {/* Gradient Masks (Only for marquee) */}
         {!isSingleItem && (
           <>
             <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-zinc-950 to-transparent z-20 pointer-events-none" />
@@ -70,7 +49,6 @@ export function GalleryPreviewSection() {
           </>
         )}
 
-        {/* Track */}
         <div
           className={`flex gap-6 ${!isSingleItem ? 'animate-marquee hover:[animation-play-state:paused]' : ''}`}
           style={!isSingleItem ? { width: 'max-content' } : {}}
@@ -87,13 +65,7 @@ export function GalleryPreviewSection() {
                 className="object-cover"
                 sizes="(max-width: 768px) 200px, 260px"
                 loading="lazy"
-                onError={(e) => {
-                  // Fallback to placeholder if image fails
-                  const target = e.target as HTMLImageElement
-                  target.src = 'https://placehold.co/400x600/18181b/52525b?text=Image+Error'
-                }}
               />
-              {/* Vote Count Badge */}
               <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 z-10">
                 <Heart className="w-3 h-3 text-white fill-white" />
                 <span className="text-[10px] font-bold text-white">{item.votes_count}</span>
@@ -108,20 +80,6 @@ export function GalleryPreviewSection() {
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(calc(-100% / ${isSingleItem ? 1 : 4}));
-          }
-        }
-        .animate-marquee {
-          animation: marquee 50s linear infinite;
-        }
-      `}</style>
     </section>
   )
 }

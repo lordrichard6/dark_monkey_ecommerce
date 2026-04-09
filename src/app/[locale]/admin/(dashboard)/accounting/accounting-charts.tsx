@@ -22,9 +22,11 @@ function chf(cents: number) {
   }).format(cents / 100)
 }
 
-interface Props {
+export interface AccountingChartsProps {
   monthly: MonthlyData[]
 }
+
+type Props = AccountingChartsProps
 
 export function AccountingCharts({ monthly }: Props) {
   const [isMobile, setIsMobile] = useState(false)

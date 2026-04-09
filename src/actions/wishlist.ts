@@ -17,11 +17,7 @@ export async function addToWishlist(
     .upsert({ user_id: user.id, product_id: productId }, { onConflict: 'user_id,product_id' })
 
   if (error) return { ok: false, error: error.message }
-  revalidatePath('/')
-  revalidatePath('/account/wishlist')
-  revalidatePath('/categories')
-  revalidatePath(`/products`)
-  revalidatePath(`/products/[slug]`)
+  revalidatePath('/account/wishlist', 'page')
   return { ok: true }
 }
 
@@ -41,11 +37,7 @@ export async function removeFromWishlist(
     .eq('product_id', productId)
 
   if (error) return { ok: false, error: error.message }
-  revalidatePath('/')
-  revalidatePath('/account/wishlist')
-  revalidatePath('/categories')
-  revalidatePath(`/products`)
-  revalidatePath(`/products/[slug]`)
+  revalidatePath('/account/wishlist', 'page')
   return { ok: true }
 }
 
@@ -80,6 +72,6 @@ export async function setWishlistPublic(
     .eq('id', user.id)
 
   if (error) return { ok: false, error: error.message }
-  revalidatePath('/account/wishlist')
+  revalidatePath('/account/wishlist', 'page')
   return { ok: true }
 }

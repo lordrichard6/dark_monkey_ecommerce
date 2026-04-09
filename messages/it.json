@@ -202,7 +202,7 @@
     "premium": "Premium",
     "qualityCraftedFor": "Qualità artigianale per",
     "you": "Te",
-    "heroSubtitle": "Vivi l'apice dell'artigianato e del design. La nostra collezione esclusiva è pensata per chi esige l'eccellenza.",
+    "heroSubtitle": "Ogni pezzo racconta una storia. Scegline uno che ti somiglia, o progettalo da zero.",
     "shopNow": "Acquista ora",
     "browseCategories": "Sfoglia categorie",
     "sortNewest": "Più recente",
@@ -275,7 +275,11 @@
     "customEmailBody": "",
     "heroStatReviews": "4.9 · 120+ recensioni",
     "heroStatShipping": "Spedizione gratuita CH",
-    "heroStatCheckout": "Pagamento sicuro"
+    "heroStatCheckout": "Pagamento sicuro",
+    "heroLine1": "Indossa ciò che",
+    "heroGold": "tu",
+    "heroPink": "senti",
+    "featuredEyebrow": "Selezionato a mano"
   },
   "userMenu": {
     "account": "Account",

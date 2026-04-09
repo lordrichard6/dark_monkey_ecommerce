@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 
 export type PublicVote = 'up' | 'down'
 
@@ -10,7 +11,10 @@ export type VoteCounts = {
   userVote: PublicVote | null
 }
 
-export async function getProductVoteCounts(productId: string, sessionId: string): Promise<VoteCounts> {
+export async function getProductVoteCounts(
+  productId: string,
+  sessionId: string
+): Promise<VoteCounts> {
   const supabase = await createClient()
 
   const { data } = await supabase
@@ -72,7 +76,8 @@ export async function getVoteCountsForProducts(
   productIds: string[]
 ): Promise<Record<string, { up: number; down: number }>> {
   if (productIds.length === 0) return {}
-  const supabase = await createClient()
+  // Use admin client — no per-user data needed, safe inside unstable_cache
+  const supabase = getAdminClient() ?? (await createClient())
 
   const { data } = await supabase
     .from('public_product_votes')
