@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { updateProductTags } from '@/actions/admin-products'
-import { Tag as TagIcon, X, Plus } from 'lucide-react'
+import { updateProductTags, createTag } from '@/actions/admin-products'
+import { Tag as TagIcon, X, Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Tag = { id: string; name: string }
@@ -19,7 +19,9 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
   const router = useRouter()
   const t = useTranslations('admin')
   const [selectedIds, setSelectedIds] = useState<string[]>(initialTagIds)
+  const [allTags, setAllTags] = useState<Tag[]>(availableTags)
   const [loading, setLoading] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -47,10 +49,36 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
     }
   }
 
-  const selectedTags = availableTags.filter((t) => selectedIds.includes(t.id))
-  const unselectedTags = availableTags
+  async function handleCreateTag() {
+    if (!search.trim() || creating) return
+    setCreating(true)
+    try {
+      const result = await createTag(search.trim())
+      if (!result.ok) {
+        toast.error(result.error)
+        return
+      }
+      const newTag = result.tag
+      setAllTags((prev) => [...prev, newTag])
+      setSelectedIds((prev) => [...prev, newTag.id])
+      await updateProductTags(productId, [...selectedIds, newTag.id])
+      router.refresh()
+      setSearch('')
+      setIsDropdownOpen(false)
+      toast.success(`Tag "${newTag.name}" created`)
+    } catch {
+      toast.error('Failed to create tag')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const selectedTags = allTags.filter((t) => selectedIds.includes(t.id))
+  const unselectedTags = allTags
     .filter((t) => !selectedIds.includes(t.id))
     .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
+
+  const exactMatch = allTags.some((t) => t.name.toLowerCase() === search.trim().toLowerCase())
 
   return (
     <div className="space-y-3">
@@ -108,23 +136,38 @@ export function ProductTagsField({ productId, initialTagIds, availableTags }: Pr
                   />
                 </div>
                 <div className="max-h-52 overflow-auto p-1">
-                  {unselectedTags.length > 0 ? (
-                    unselectedTags.map((tag) => (
-                      <button
-                        key={tag.id}
-                        onClick={() => {
-                          handleToggleTag(tag.id)
-                          setIsDropdownOpen(false)
-                          setSearch('')
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 rounded-md transition-colors"
-                      >
-                        {tag.name}
-                      </button>
-                    ))
-                  ) : (
+                  {unselectedTags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => {
+                        handleToggleTag(tag.id)
+                        setIsDropdownOpen(false)
+                        setSearch('')
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 rounded-md transition-colors"
+                    >
+                      {tag.name}
+                    </button>
+                  ))}
+
+                  {search.trim() && !exactMatch && (
+                    <button
+                      onClick={handleCreateTag}
+                      disabled={creating}
+                      className="w-full text-left px-3 py-2 text-sm text-amber-400 hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {creating ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Plus className="h-3 w-3" />
+                      )}
+                      Create &ldquo;{search.trim()}&rdquo;
+                    </button>
+                  )}
+
+                  {unselectedTags.length === 0 && (!search.trim() || exactMatch) && (
                     <p className="px-3 py-2 text-xs text-zinc-500 italic">
-                      {search ? `No tags matching "${search}"` : t('products.noMoreTags')}
+                      {t('products.noMoreTags')}
                     </p>
                   )}
                 </div>

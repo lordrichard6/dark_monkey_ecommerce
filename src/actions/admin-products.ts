@@ -788,6 +788,39 @@ export async function updateProductTags(
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to update tags' }
   }
 }
+
+export async function createTag(
+  name: string
+): Promise<{ ok: true; tag: { id: string; name: string } } | { ok: false; error: string }> {
+  try {
+    const user = await getAdminUser()
+    if (!user) return { ok: false, error: 'Unauthorized' }
+
+    const supabase = getAdminClient()
+    if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+    const trimmed = name.trim()
+    if (!trimmed) return { ok: false, error: 'Tag name cannot be empty' }
+
+    const { data, error } = await supabase
+      .from('tags')
+      .insert({ name: trimmed })
+      .select('id, name')
+      .single()
+
+    if (error) {
+      if (error.code === '23505') return { ok: false, error: 'Tag already exists' }
+      throw error
+    }
+
+    revalidatePath('/admin/products')
+    return { ok: true, tag: data }
+  } catch (err: unknown) {
+    console.error('Create tag error:', err)
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to create tag' }
+  }
+}
+
 export async function updateProductImageColor(imageId: string, color: string | null) {
   try {
     const user = await getAdminUser()

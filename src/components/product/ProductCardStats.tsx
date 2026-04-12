@@ -53,21 +53,7 @@ export function ProductCardStats({ timesBought, reviewCount, avgRating }: Props)
   const hasAny = timesBought > 0 || reviewCount > 0 || avgRating !== null
 
   if (!hasAny) {
-    return (
-      <div className="mt-2 flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((s) => (
-          <svg key={s} width="9" height="9" viewBox="0 0 24 24" className="shrink-0 opacity-20">
-            <path
-              fill="#fbbf24"
-              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            />
-          </svg>
-        ))}
-        <span className="ml-1 whitespace-nowrap text-[10px] font-medium tracking-wide text-zinc-600 uppercase">
-          {t('noReviewsYet')}
-        </span>
-      </div>
-    )
+    return <div className="mt-2 h-[18px]" />
   }
 
   const rating = avgRating !== null ? Math.round(avgRating * 10) / 10 : null
