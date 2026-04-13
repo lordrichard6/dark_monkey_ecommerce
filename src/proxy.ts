@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Standard Next.js route matcher: exclude static files and internals
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json|mp4|webm|ogg|mp3|wav)$).*)',
+    // Exclude static files, internals, and SEO files that must bypass i18n middleware
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sitemap.xml|robots.txt|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json|mp4|webm|ogg|mp3|wav)$).*)',
   ],
 }
