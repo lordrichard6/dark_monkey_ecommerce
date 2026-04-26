@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCachedAllCategories } from '@/lib/supabase/server'
 import type { HomeProduct } from '@/actions/products'
 import { NewArrivals } from './NewArrivals'
 
@@ -6,32 +6,41 @@ interface Props {
   products: HomeProduct[]
 }
 
+type CategoryNode = {
+  id: string
+  name: string
+  slug: string
+  parent_id: string | null
+  subcategories: CategoryNode[]
+}
+
 export async function NewArrivalsSection({ products }: Props) {
-  const supabase = await createClient()
+  // Cached across the request — coalesces with CategoryStrip's category fetch.
+  const categoriesData = await getCachedAllCategories()
 
-  const { data: categoriesData } = await supabase.from('categories').select('*').order('sort_order')
+  // Build category tree from the flat list
+  const categoriesMap = new Map<string, CategoryNode>()
+  const rootCategories: CategoryNode[] = []
 
-  // Build category tree
-  const categoriesMap = new Map()
-  const rootCategories: { id: string; name: string; slug: string }[] = []
-
-  if (categoriesData) {
-    // First pass: create nodes
-    categoriesData.forEach((cat) => {
-      categoriesMap.set(cat.id, { ...cat, subcategories: [] })
+  for (const cat of categoriesData) {
+    categoriesMap.set(cat.id, {
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      parent_id: cat.parent_id,
+      subcategories: [],
     })
+  }
 
-    // Second pass: build tree
-    categoriesData.forEach((cat) => {
-      if (cat.parent_id) {
-        const parent = categoriesMap.get(cat.parent_id)
-        if (parent) {
-          parent.subcategories.push(categoriesMap.get(cat.id))
-        }
-      } else {
-        rootCategories.push(categoriesMap.get(cat.id))
-      }
-    })
+  for (const cat of categoriesData) {
+    const node = categoriesMap.get(cat.id)
+    if (!node) continue
+    if (cat.parent_id) {
+      const parent = categoriesMap.get(cat.parent_id)
+      if (parent) parent.subcategories.push(node)
+    } else {
+      rootCategories.push(node)
+    }
   }
 
   return <NewArrivals products={products} categories={rootCategories} />

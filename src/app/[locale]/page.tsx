@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import { Hero } from '@/components/Hero'
 import { NewArrivalsSection } from '@/components/product/NewArrivalsSection'
-import { FeaturedProductsSection } from '@/components/product/FeaturedProductsSection'
 import { ProductCarouselSkeleton } from '@/components/product/ProductCarouselSkeleton'
 import { AllProductsSection } from '@/components/product/AllProductsSection'
 import { getTranslations } from 'next-intl/server'
@@ -66,54 +65,66 @@ export default async function HomePage({ params }: Props) {
   const supabase = await createClient()
 
   // Fetch all product sets in a single parallel round-trip.
-  // FeaturedProductsSection and NewArrivalsSection receive these as props
-  // so they never call fetchHomeProducts themselves.
-  const [initialProducts, featuredProducts, newestProducts, heroProducts, activePtData] =
-    await Promise.all([
-      fetchHomeProducts('newest'),
-      fetchHomeProducts({ featured: true, limit: 8 }),
-      fetchHomeProducts({ sort: 'newest', limit: 10 }),
-      // Admin-curated 2 hero picks (with featured/newest fallback so it's never empty)
-      fetchHeroProducts(),
-      supabase
-        .from('product_tags')
-        .select('tag_id, products!inner(id)')
-        .eq('products.is_active', true)
-        .is('products.deleted_at', null),
-    ])
+  // The hero now curates its own picks (admin-set, with fallback), so we no
+  // longer need a separate "featured" carousel section — it duplicated what
+  // the hero already shows. NewArrivalsSection and AllProductsSection take
+  // their data as props so they don't re-fetch on render.
+  const [initialProducts, newestProducts, heroProducts, activeTagsData] = await Promise.all([
+    // Cap initial fetch — AllProductsSection only renders 8 with a "See all"
+    // link to /products, so pulling more than 24 from DB was wasteful.
+    fetchHomeProducts({ sort: 'newest', limit: 24 }),
+    fetchHomeProducts({ sort: 'newest', limit: 10 }),
+    // Admin-curated 2 hero picks (with featured/newest fallback so it's never empty)
+    fetchHeroProducts(),
+    // Single denormalized query for active tags — was previously a tag_id
+    // lookup followed by a serial second query for tag details.
+    supabase
+      .from('tags')
+      .select('id, name, slug, product_tags!inner(products!inner(id, is_active, deleted_at))')
+      .eq('product_tags.products.is_active', true)
+      .is('product_tags.products.deleted_at', null)
+      .order('name', { ascending: true }),
+  ])
 
-  const activeTagIds = [...new Set((activePtData.data ?? []).map((pt) => pt.tag_id))]
-  const { data: tagsData } =
-    activeTagIds.length > 0
-      ? await supabase
-          .from('tags')
-          .select('id, name, slug')
-          .in('id', activeTagIds)
-          .order('name', { ascending: true })
-      : { data: [] }
+  // Dedupe — a tag matched once per active product, we only need it listed once.
+  const tagsData = Array.from(
+    new Map(
+      (activeTagsData.data ?? []).map((row) => [
+        row.id,
+        { id: row.id, name: row.name, slug: row.slug },
+      ])
+    ).values()
+  )
+
+  // FAQ JSON-LD — answers Google's "People also ask" carousel for clothing-store
+  // intents (shipping, returns, on-demand printing, custom design). Localized via
+  // existing home.faqQ*/faqA* keys, so non-English locales emit translated FAQs too.
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [1, 2, 3, 4, 5].map((i) => ({
+      '@type': 'Question',
+      name: t(`faqQ${i}` as 'faqQ1'),
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: t(`faqA${i}` as 'faqA1'),
+      },
+    })),
+  }
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <Hero products={heroProducts} />
 
+      {/* Visual beat — subtle amber gradient line between major sections so the
+          stack of dark-on-dark sections doesn't read as one undifferentiated wall */}
+      <SectionDivider tone="amber" />
+
       <Suspense fallback={<ProductCarouselSkeleton />}>
-        <FeaturedProductsSection products={featuredProducts} />
-      </Suspense>
-
-      {/* Diagonal slash transition — dark → gradient */}
-      <div className="relative -mb-1 h-20 overflow-hidden">
-        <svg
-          viewBox="0 0 1440 80"
-          preserveAspectRatio="none"
-          className="absolute inset-0 h-full w-full"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <polygon points="0,0 1440,0 1440,20 0,80" fill="#09090b" />
-          <line x1="0" y1="80" x2="1440" y2="20" stroke="rgba(251,191,36,0.15)" strokeWidth="2" />
-        </svg>
-      </div>
-
-      <Suspense fallback={null}>
         <NewArrivalsSection products={newestProducts} />
       </Suspense>
 
@@ -127,9 +138,13 @@ export default async function HomePage({ params }: Props) {
         <RecentlyViewed />
       </div>
 
+      <SectionDivider tone="pink" />
+
       <div id="products" className="mx-auto max-w-6xl px-4 py-16 scroll-mt-4">
-        <AllProductsSection initialProducts={initialProducts} tags={tagsData ?? []} />
+        <AllProductsSection initialProducts={initialProducts} tags={tagsData} />
       </div>
+
+      <SectionDivider tone="amber" />
 
       <GalleryPreviewSection />
       <CustomDesignSection />
@@ -195,6 +210,24 @@ export default async function HomePage({ params }: Props) {
           </ul>
         </div>
       </section>
+    </div>
+  )
+}
+
+/**
+ * Thin gradient divider — gives the eye a beat between major sections.
+ * Pure decoration, GPU-cheap (no animation, no image, just a 1px line).
+ * `tone` swaps between the two brand colors so consecutive dividers don't
+ * look identical.
+ */
+function SectionDivider({ tone = 'amber' }: { tone?: 'amber' | 'pink' }) {
+  const color = tone === 'amber' ? 'rgba(251,191,36,0.18)' : 'rgba(255,45,85,0.16)'
+  return (
+    <div className="relative mx-auto h-px max-w-6xl px-4" aria-hidden>
+      <div
+        className="h-px w-full"
+        style={{ background: `linear-gradient(to right, transparent, ${color}, transparent)` }}
+      />
     </div>
   )
 }

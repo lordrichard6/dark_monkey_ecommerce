@@ -1,14 +1,13 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-import { getUserSafe } from '@/lib/supabase/server'
-import { createClient } from '@/lib/supabase/server'
+import { getCachedUser } from '@/lib/supabase/server'
 import { ArrowRight } from 'lucide-react'
 import { ScrollReveal } from '@/components/motion/ScrollReveal'
 
 export async function CustomDesignSection() {
   const t = await getTranslations('home')
-  const supabase = await createClient()
-  const user = await getUserSafe(supabase)
+  // Cached across the request — coalesces with FeedSection / AuthCTASection
+  const user = await getCachedUser()
   const ctaHref = user ? '/account/customize' : '/signup?redirectTo=/account/customize'
 
   const steps = [

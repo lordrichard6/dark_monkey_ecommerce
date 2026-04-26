@@ -1,7 +1,7 @@
 import { Link } from '@/i18n/navigation'
 import { getTranslations } from 'next-intl/server'
-import { createClient } from '@/lib/supabase/server'
-import { getFeedPosts, getUserLikedPosts, getComments } from '@/actions/feed'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
+import { getFeedPosts, getUserLikedPosts, getCommentsByPostIds } from '@/actions/feed'
 import FeedPost from '@/components/feed/FeedPost'
 import { ScrollReveal } from '@/components/motion/ScrollReveal'
 import { ArrowRight } from 'lucide-react'
@@ -20,22 +20,25 @@ export default async function FeedSection({ locale }: FeedSectionProps) {
   }))
   if (!posts.length) return null
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  // Cached across the request — same call from AuthCTASection / CustomDesignSection
+  // resolves once, not three times.
+  const user = await getCachedUser()
   const currentUserId = user?.id ?? null
 
   const postIds = posts.map((p) => p.id)
 
-  // For anonymous visitors, skip the admin check and liked-posts query entirely
-  const [likedIds, adminProfile, ...commentsPerPost] = await Promise.all([
+  // Need the supabase client only for the admin lookup; comments + likes go
+  // through their own server-action helpers.
+  const supabase = currentUserId ? await createClient() : null
+
+  // For anonymous visitors, skip the admin check and liked-posts query entirely.
+  // Comments are batched into a single IN(...) query — was previously N round-trips.
+  const [likedIds, adminProfile, commentsByPost] = await Promise.all([
     currentUserId ? getUserLikedPosts(postIds) : Promise.resolve([] as string[]),
-    currentUserId
+    currentUserId && supabase
       ? supabase.from('user_profiles').select('is_admin').eq('id', currentUserId).single()
       : Promise.resolve({ data: null }),
-    ...posts.map((p) => getComments(p.id)),
+    getCommentsByPostIds(postIds),
   ])
 
   const isAdmin = (adminProfile?.data as { is_admin?: boolean } | null)?.is_admin ?? false
@@ -73,7 +76,7 @@ export default async function FeedSection({ locale }: FeedSectionProps) {
               currentUserId={currentUserId}
               isAdmin={isAdmin}
               userHasLiked={likedIds.includes(post.id)}
-              initialComments={commentsPerPost[i]}
+              initialComments={commentsByPost.get(post.id) ?? []}
             />
           </ScrollReveal>
         ))}

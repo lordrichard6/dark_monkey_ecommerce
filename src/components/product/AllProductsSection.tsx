@@ -52,7 +52,10 @@ export function AllProductsSection({ initialProducts, tags }: Props) {
 
   function applyFilters(newSort: string, newTag: string | undefined) {
     startTransition(async () => {
-      const result = await fetchHomeProducts(newSort, newTag)
+      // We only render the first 8 in this section (with a "See all" link to
+      // the dedicated /products page), so cap the fetch — no point pulling
+      // hundreds of rows over the wire just to slice them off.
+      const result = await fetchHomeProducts({ sort: newSort, tag: newTag, limit: 24 })
       setProducts(result)
     })
   }

@@ -1,5 +1,4 @@
 import { NextIntlClientProvider } from 'next-intl'
-import { LenisProvider } from '@/components/providers/LenisProvider'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
@@ -96,7 +95,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <LenisProvider>
+      <>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -141,7 +140,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             <Toaster position="top-center" richColors />
           </CartProvider>
         </CurrencyProvider>
-      </LenisProvider>
+      </>
     </NextIntlClientProvider>
   )
 }

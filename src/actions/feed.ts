@@ -364,6 +364,36 @@ export async function getComments(postId: string): Promise<FeedComment[]> {
   }
 }
 
+/**
+ * Batched comments fetch — one query for many posts, returns a Map keyed by
+ * post_id. Use this when rendering a feed where you'd otherwise fan out N
+ * `getComments(postId)` calls. The homepage FeedSection drops from N+1
+ * round-trips to 1.
+ */
+export async function getCommentsByPostIds(postIds: string[]): Promise<Map<string, FeedComment[]>> {
+  const out = new Map<string, FeedComment[]>()
+  if (postIds.length === 0) return out
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('feed_post_comments')
+      .select('*, author:user_profiles(display_name, avatar_url)')
+      .in('post_id', postIds)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: true })
+
+    if (error || !data) return out
+    for (const row of data as FeedComment[]) {
+      const list = out.get(row.post_id) ?? []
+      list.push(row)
+      out.set(row.post_id, list)
+    }
+  } catch {
+    // swallow — empty map is the safe fallback
+  }
+  return out
+}
+
 export async function deleteComment(commentId: string): Promise<{ ok: boolean; error?: string }> {
   try {
     const supabase = await createClient()
