@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { allArticles, getReadingTime } from '@/content/blog'
 
@@ -7,21 +7,8 @@ type Props = {
   params: Promise<{ locale: string }>
 }
 
-const titles: Record<string, string> = {
-  en: 'Blog | Dark Monkey',
-  pt: 'Blog | Dark Monkey',
-  de: 'Blog | Dark Monkey',
-  fr: 'Blog | Dark Monkey',
-  it: 'Blog | Dark Monkey',
-}
-
-const descriptions: Record<string, string> = {
-  en: 'Stories, culture and updates from Dark Monkey.',
-  pt: 'Histórias, cultura e novidades da Dark Monkey.',
-  de: 'Geschichten, Kultur und Neuigkeiten von Dark Monkey.',
-  fr: 'Histoires, culture et actualités de Dark Monkey.',
-  it: 'Storie, cultura e aggiornamenti da Dark Monkey.',
-}
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
+const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
 
 export async function generateMetadata({
   params,
@@ -29,9 +16,33 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await params
+  const t = await getTranslations('blog')
+  const title = t('metaTitle')
+  const description = t('metaDescription')
+
   return {
-    title: titles[locale] ?? titles.en,
-    description: descriptions[locale] ?? descriptions.en,
+    title,
+    description,
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/blog`,
+      languages: {
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${SITE_URL}/${l}/blog`])),
+        'x-default': `${SITE_URL}/en/blog`,
+      },
+    },
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: `${SITE_URL}/${locale}/blog`,
+      siteName: 'Dark Monkey',
+      locale,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   }
 }
 
@@ -47,12 +58,13 @@ const TYPE_BADGE: Record<string, { label: string; className: string }> = {
 export default async function BlogPage({ params }: Props) {
   const { locale } = await params
   setRequestLocale(locale)
+  const t = await getTranslations('blog')
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 min-h-screen">
       <header className="mb-12">
-        <h1 className="text-4xl font-bold text-zinc-50 mb-3">Blog</h1>
-        <p className="text-zinc-400 text-lg">Stories, culture and the world behind the brand.</p>
+        <h1 className="text-4xl font-bold text-zinc-50 mb-3">{t('pageTitle')}</h1>
+        <p className="text-zinc-400 text-lg">{t('pageSubtitle')}</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -116,7 +116,7 @@
     "rating": "Melhor avaliados"
   },
   "home": {
-    "metaDescription": "E-commerce premium gamificado — comércio, personalização e progressão. Explora a nossa coleção.",
+    "metaDescription": "Compra streetwear premium, T-shirts, hoodies e acessórios personalizados na Dark Monkey. Impressão por encomenda, envio mundial a partir da Suíça.",
     "featuredProducts": "Produtos em Destaque",
     "premium": "Premium",
     "quality": "Qualidade",
@@ -198,7 +198,28 @@
     "heroLine1": "Veste o Que",
     "heroGold": "Tu",
     "heroPink": "Sentes",
-    "featuredEyebrow": "Selecionado a dedo"
+    "heroEyebrow": "Nova Coleção — Já a enviar",
+    "heroDropLabel": "Selecionados pelo editor",
+    "heroSeeAll": "Ver todos",
+    "designYourOwn": "Cria o teu design",
+    "heroTrustPrinted": "Impressão sob demanda",
+    "heroTrustShipping": "Envio mundial",
+    "heroTrustReturns": "Devoluções em 14 dias",
+    "heroTileShop": "Comprar",
+    "heroTileBestseller": "Mais vendido",
+    "featuredEyebrow": "Selecionado a dedo",
+    "seoSectionTitle": "Streetwear Premium. Designs Personalizados. Envio Mundial.",
+    "seoSectionBody": "A Dark Monkey é uma marca de streetwear premium sediada na Suíça. Cada T-shirt, hoodie e acessório é impresso por encomenda para reduzir o desperdício e entregar qualidade excepcional. Cria o teu próprio design ou explora coleções curadas.",
+    "seoLinksTitle": "Populares na Dark Monkey",
+    "seoLinkTshirts": "T-shirts",
+    "seoLinkHoodies": "Hoodies",
+    "seoLinkHats": "Chapéus",
+    "seoLinkAccessories": "Acessórios",
+    "seoLinkCustom": "Designs Personalizados",
+    "seoLinkAllProducts": "Todos os produtos",
+    "seoLinkAllCategories": "Todas as categorias",
+    "seoLinkBlog": "Blog",
+    "viewCollection": "Ver coleção"
   },
   "cookie": {
     "message": "Usamos cookies para persistência do carrinho, autenticação e uma melhor experiência de compra.",
@@ -322,7 +343,7 @@
   },
   "store": {
     "categoriesTitle": "Categorias",
-    "categoriesMetaDescription": "Navegue por categoria. Vestuário, merchandising e mais.",
+    "categoriesMetaDescription": "Explora a coleção completa da Dark Monkey: T-shirts, hoodies, sweatshirts, chapéus, acessórios e peças personalizadas. Envio mundial desde a Suíça.",
     "shopCategory": "Comprar {name} →",
     "noCategories": "Ainda não há categorias.",
     "categoryProductsTitle": "{name} produtos",
@@ -418,7 +439,18 @@
     "badgeSale": "Promoção",
     "badgeNew": "Novo",
     "badgeBestseller": "🔥 Hot",
-    "badgeFeatured": "Destaque"
+    "badgeFeatured": "Destaque",
+    "sizeGuideNoteInches": "As medidas são aproximadas e podem variar ligeiramente. Todas as medidas estão em polegadas.",
+    "sizeGuideUnitsHint": "Mudar unidades",
+    "sizeGuideFitTipLabel": "Dica de caimento",
+    "sizeGuideFitTipBody": "Os nossos modelos têm 178 cm (5'10\") e normalmente vestem tamanho M. Corte unissexo com ajuste descontraído — se estiver entre dois tamanhos, escolha o maior para um visual mais largo.",
+    "sizeGuideAccessoryNote": "Não é preciso escolher tamanho — tamanho único.",
+    "sizeGuideAccessoryBody": "Desenhado para a maioria dos dispositivos ou utilizações descritas acima. Se precisar das dimensões exatas, consulte os detalhes do produto ou contacte-nos.",
+    "sizeOneSize": "Tamanho único",
+    "sizeYouth": "Juvenil",
+    "hatCircumference": "Circunferência da cabeça",
+    "hatMeasurement": "Passe uma fita métrica em volta da cabeça, cerca de 1 cm acima das orelhas e das sobrancelhas — essa é a circunferência da sua cabeça.",
+    "close": "Fechar"
   },
   "cart": {
     "cartWithItems": "Carrinho com {count} artigos",
@@ -1580,5 +1612,11 @@
       "new_product": "Novo Produto",
       "sale": "Saldo"
     }
+  },
+  "blog": {
+    "metaTitle": "Blog — Histórias de Streetwear e Guias de Design",
+    "metaDescription": "Histórias, guias de design e novidades da Dark Monkey. Explora a cultura por trás de cada peça.",
+    "pageTitle": "Blog",
+    "pageSubtitle": "Histórias, cultura e o mundo por trás da marca."
   }
 }

@@ -197,7 +197,7 @@
     "namePlaceholder": "Votre nom"
   },
   "home": {
-    "metaDescription": "E-commerce premium gamifié — commerce, personnalisation et progression. Parcourez notre collection.",
+    "metaDescription": "Achetez du streetwear premium, des T-shirts, sweats et accessoires personnalisés chez Dark Monkey. Impression à la demande, livraison mondiale depuis la Suisse.",
     "featuredProducts": "Produits en vedette",
     "premium": "Premium",
     "qualityCraftedFor": "Qualité artisanale pour",
@@ -279,7 +279,28 @@
     "heroLine1": "Portez ce que",
     "heroGold": "vous",
     "heroPink": "ressentez",
-    "featuredEyebrow": "Sélection soignée"
+    "heroEyebrow": "Nouvelle collection — Expédition en cours",
+    "heroDropLabel": "Sélection de la rédaction",
+    "heroSeeAll": "Voir tout",
+    "designYourOwn": "Créez le vôtre",
+    "heroTrustPrinted": "Imprimé à la demande",
+    "heroTrustShipping": "Livraison mondiale",
+    "heroTrustReturns": "Retours sous 14 jours",
+    "heroTileShop": "Acheter",
+    "heroTileBestseller": "Best-seller",
+    "featuredEyebrow": "Sélection soignée",
+    "seoSectionTitle": "Streetwear Premium. Designs Personnalisés. Livraison Mondiale.",
+    "seoSectionBody": "Dark Monkey est une marque de streetwear premium basée en Suisse. Chaque T-shirt, sweat et accessoire est imprimé à la demande pour réduire les déchets et offrir une qualité exceptionnelle. Créez votre propre design ou explorez nos collections.",
+    "seoLinksTitle": "Populaire chez Dark Monkey",
+    "seoLinkTshirts": "T-shirts",
+    "seoLinkHoodies": "Sweats à capuche",
+    "seoLinkHats": "Casquettes",
+    "seoLinkAccessories": "Accessoires",
+    "seoLinkCustom": "Designs personnalisés",
+    "seoLinkAllProducts": "Tous les produits",
+    "seoLinkAllCategories": "Toutes les catégories",
+    "seoLinkBlog": "Blog",
+    "viewCollection": "Voir la collection"
   },
   "userMenu": {
     "account": "Compte",
@@ -322,7 +343,7 @@
   },
   "store": {
     "categoriesTitle": "Catégories",
-    "categoriesMetaDescription": "Parcourir les produits par catégorie. Vêtements, goodies et plus.",
+    "categoriesMetaDescription": "Explorez toute la collection Dark Monkey : T-shirts, sweats, casquettes, accessoires et pièces personnalisées. Livraison mondiale depuis la Suisse.",
     "shopCategory": "Acheter {name} →",
     "noCategories": "Pas encore de catégories.",
     "categoryProductsTitle": "Produits {name}",
@@ -418,7 +439,18 @@
     "badgeSale": "Promo",
     "badgeNew": "Nouveau",
     "badgeBestseller": "🔥 Hot",
-    "badgeFeatured": "À la une"
+    "badgeFeatured": "À la une",
+    "sizeGuideNoteInches": "Les mesures sont approximatives et peuvent légèrement varier. Toutes les mesures sont en pouces.",
+    "sizeGuideUnitsHint": "Changer d'unité",
+    "sizeGuideFitTipLabel": "Conseil de coupe",
+    "sizeGuideFitTipBody": "Nos mannequins mesurent 178 cm (5'10\") et portent habituellement la taille M. Taille ajustée avec une coupe unisexe décontractée — entre deux tailles, prenez la taille au-dessus pour un porter plus ample.",
+    "sizeGuideAccessoryNote": "Pas de taille à choisir — taille unique.",
+    "sizeGuideAccessoryBody": "Conçu pour s'adapter à la plupart des appareils ou usages décrits dans la fiche produit. Pour les dimensions exactes, consultez les détails du produit ou contactez-nous.",
+    "sizeOneSize": "Taille unique",
+    "sizeYouth": "Enfant",
+    "hatCircumference": "Tour de tête",
+    "hatMeasurement": "Placez un mètre ruban autour de votre tête, environ 1 cm au-dessus des oreilles et des sourcils — c'est votre tour de tête.",
+    "close": "Fermer"
   },
   "cart": {
     "cartWithItems": "Panier avec {count} articles",
@@ -1580,5 +1612,11 @@
       "new_product": "Nouveau Produit",
       "sale": "Soldes"
     }
+  },
+  "blog": {
+    "metaTitle": "Blog — Histoires de Streetwear et Guides de Design",
+    "metaDescription": "Histoires, guides de design et actualités de Dark Monkey. Explorez la culture derrière chaque pièce.",
+    "pageTitle": "Blog",
+    "pageSubtitle": "Histoires, culture et le monde derrière la marque."
   }
 }

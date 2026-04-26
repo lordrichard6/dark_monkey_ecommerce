@@ -15,6 +15,7 @@ import {
   getAvailableFilters,
 } from '@/lib/product-filtering'
 import { SlidersHorizontal, X } from 'lucide-react'
+import { buildProductImageAlt } from '@/lib/product-image-alt'
 
 type Category = {
   id: string
@@ -89,7 +90,7 @@ export function SearchResults({ products, categories, query, title, initialCateg
     priceCents: p.priceCents,
     compareAtPriceCents: null,
     imageUrl: p.imageUrl || '/placeholder.png',
-    imageAlt: p.name,
+    imageAlt: buildProductImageAlt(p.name, null, p.categoryName ?? null),
     imageUrl2: p.imageUrl2 ?? null,
     dualImageMode: p.dualImageMode ?? false,
     isInWishlist: false,

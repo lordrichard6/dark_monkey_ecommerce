@@ -1028,6 +1028,74 @@ export async function updateProductFeatured(
   return { ok: true }
 }
 
+/**
+ * Toggle whether a product appears in the homepage hero lookbook.
+ *
+ * Soft cap: only **2** products can be hero picks at a time. If a third toggle-on
+ * is attempted, the oldest pick is dropped to make room — better UX than an error,
+ * and keeps the storefront query simple (it already limits to 2).
+ *
+ * Note: writes go through the service-role admin client, which bypasses RLS.
+ * The hero_picks table has public-read RLS for the storefront query.
+ */
+export async function updateProductHeroPick(
+  productId: string,
+  isHeroPick: boolean
+): Promise<{ ok: true; replacedId?: string } | { ok: false; error: string }> {
+  const user = await getAdminUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
+  const supabase = getAdminClient()
+  if (!supabase) return { ok: false, error: 'Admin not configured' }
+
+  if (!isHeroPick) {
+    const { error } = await supabase.from('hero_picks').delete().eq('product_id', productId)
+    if (error) return { ok: false, error: error.message }
+  } else {
+    // Cap at 2 — if there are already 2 picks, drop the oldest.
+    let replacedId: string | undefined
+    const { data: existing } = await supabase
+      .from('hero_picks')
+      .select('id, product_id, sort_order, created_at')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false })
+
+    const already = (existing ?? []).find((row) => row.product_id === productId)
+    if (already) {
+      // Idempotent — nothing to do
+      revalidatePath(`/admin/products/${productId}`)
+      revalidatePath('/')
+      return { ok: true }
+    }
+
+    if ((existing ?? []).length >= 2) {
+      // Drop the last in display order (sort_order desc, oldest created_at)
+      const sorted = [...(existing ?? [])].sort((a, b) => {
+        if (a.sort_order !== b.sort_order) return b.sort_order - a.sort_order
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      })
+      const toDrop = sorted[0]
+      replacedId = toDrop.product_id
+      const { error: delErr } = await supabase.from('hero_picks').delete().eq('id', toDrop.id)
+      if (delErr) return { ok: false, error: delErr.message }
+    }
+
+    const nextSortOrder = ((existing ?? []).length === 0 ? 0 : (existing ?? []).length) + 1
+    const { error: insErr } = await supabase
+      .from('hero_picks')
+      .insert({ product_id: productId, sort_order: nextSortOrder })
+    if (insErr) return { ok: false, error: insErr.message }
+
+    revalidatePath(`/admin/products/${productId}`)
+    revalidatePath('/')
+    return { ok: true, replacedId }
+  }
+
+  revalidatePath(`/admin/products/${productId}`)
+  revalidatePath('/')
+  return { ok: true }
+}
+
 export async function updateProductExclusive(
   productId: string,
   isExclusive: boolean,

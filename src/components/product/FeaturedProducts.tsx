@@ -3,6 +3,7 @@ import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { getUserSafe } from '@/lib/supabase/server'
 import { ProductGrid } from './ProductGrid'
 import { getTranslations } from 'next-intl/server'
+import { buildProductImageAlt } from '@/lib/product-image-alt'
 
 type Props = {
   sort?: string
@@ -126,7 +127,7 @@ function mapProducts(data: ProductRow[], wishlistProductIds: string[], bestselle
       priceCents,
       compareAtPriceCents,
       imageUrl: primary?.url ?? '',
-      imageAlt: primary?.alt ?? p.name,
+      imageAlt: buildProductImageAlt(p.name, primary?.alt),
       imageUrl2: p.dual_image_mode ? (second?.url ?? null) : null,
       dualImageMode: p.dual_image_mode && !!second,
       isInWishlist: wishlistProductIds.includes(p.id),

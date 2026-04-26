@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { Link } from '@/i18n/navigation'
 import { createClient, getUserSafe } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { notFound } from 'next/navigation'
 import { VirtualProductGrid } from '@/components/product/VirtualProductGrid'
@@ -9,11 +10,14 @@ import type { Metadata } from 'next'
 import { getCategoryMetadata, getCategoryBySlug, getUserWishlistProductIds } from '@/lib/queries'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { ScrollOnParamChange } from '@/components/ScrollOnParamChange'
+import { buildProductImageAlt } from '@/lib/product-image-alt'
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>
   searchParams: Promise<{ sort?: string; subcategory?: string }>
 }
+
+const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params
@@ -33,11 +37,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/categories/${slug}`,
+      languages: {
+        ...Object.fromEntries(
+          SUPPORTED_LOCALES.map((l) => [l, `${SITE_URL}/${l}/categories/${slug}`])
+        ),
+        'x-default': `${SITE_URL}/en/categories/${slug}`,
+      },
+    },
     openGraph: {
       type: 'website',
       title,
       description,
       url: `${SITE_URL}/${locale}/categories/${slug}`,
+      siteName: 'Dark Monkey',
+      locale,
       ...(ogImages.length > 0 && { images: ogImages }),
     },
     twitter: {
@@ -53,8 +68,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export const revalidate = 1800
 export const dynamicParams = true
 
+export async function generateStaticParams() {
+  const supabase = getAdminClient()
+  if (!supabase) return []
+
+  const { data: categories } = await supabase.from('categories').select('slug')
+  return (categories ?? []).flatMap((c) =>
+    SUPPORTED_LOCALES.map((locale) => ({ slug: c.slug, locale }))
+  )
+}
+
 export default async function CategoryPage({ params, searchParams }: Props) {
-  const { slug } = await params
+  const { slug, locale } = await params
   const { sort = 'newest', subcategory } = await searchParams
 
   const supabase = await createClient()
@@ -103,7 +128,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       priceCents: minPrice,
       compareAtPriceCents: compareAtPrice,
       imageUrl: primaryImage?.url ?? '',
-      imageAlt: primaryImage?.alt ?? p.name,
+      imageAlt: buildProductImageAlt(p.name, primaryImage?.alt, category.name),
       imageUrl2: dualImageMode ? (secondImage?.url ?? null) : null,
       dualImageMode: dualImageMode && !!secondImage,
       isInWishlist: wishlistProductIds.includes(p.id),
@@ -158,8 +183,80 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     subcategories.map((s) => [s.id, products.filter((p) => p.category_id === s.id).length])
   )
 
+  // JSON-LD: CollectionPage + BreadcrumbList for category page
+  const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch').replace(
+    /\/$/,
+    ''
+  )
+  const categoryUrl = `${SITE_URL}/${locale}/categories/${category.slug}`
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: tCommon('shop'), item: `${SITE_URL}/${locale}` },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: tCommon('categories'),
+        item: `${SITE_URL}/${locale}/categories`,
+      },
+      ...(parent
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: parent.name,
+              item: `${SITE_URL}/${locale}/categories/${parent.slug}`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 4,
+              name: category.name,
+              item: categoryUrl,
+            },
+          ]
+        : [
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: category.name,
+              item: categoryUrl,
+            },
+          ]),
+    ],
+  }
+
+  const collectionJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${categoryUrl}#collection`,
+    name: category.name,
+    description: category.description ?? `${category.name} — Dark Monkey`,
+    url: categoryUrl,
+    isPartOf: { '@type': 'WebSite', '@id': `${SITE_URL}/#website` },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: sortedProducts.length,
+      itemListElement: sortedProducts.slice(0, 30).map((p, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        url: `${SITE_URL}/${locale}/products/${p.slug}`,
+        name: p.name,
+      })),
+    },
+  }
+
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <div className="mx-auto max-w-6xl px-4 py-8">
         <Breadcrumbs items={breadcrumbItems} />
 

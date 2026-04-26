@@ -10,6 +10,7 @@ import { AchievementGrid } from '@/components/profile/AchievementBadge'
 import { Edit, ShoppingBag, Heart, Shield, Bell, LifeBuoy, Palette } from 'lucide-react'
 import { NotificationsBadge } from '@/components/account/NotificationsBadge'
 import { ExclusiveProductShowcase } from '@/components/account/ExclusiveProductShowcase'
+import { buildProductImageAlt } from '@/lib/product-image-alt'
 import md5 from 'md5'
 
 export default async function AccountPage() {
@@ -230,7 +231,7 @@ export default async function AccountPage() {
                   priceCents: minPrice,
                   compareAtPriceCents: compareAt,
                   imageUrl: imgs[0]?.url ?? '',
-                  imageAlt: imgs[0]?.alt ?? p.name,
+                  imageAlt: buildProductImageAlt(p.name, imgs[0]?.alt),
                   imageUrl2: imgs[1]?.url ?? null,
                   dualImageMode:
                     ((p as Record<string, unknown>).dual_image_mode as boolean) ?? false,

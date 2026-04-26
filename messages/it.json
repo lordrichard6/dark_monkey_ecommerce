@@ -197,7 +197,7 @@
     "namePlaceholder": "Il tuo nome"
   },
   "home": {
-    "metaDescription": "E-commerce premium gamificato — commercio, personalizzazione e progressione. Sfoglia la nostra collezione.",
+    "metaDescription": "Acquista streetwear premium, T-shirt, felpe e accessori personalizzati da Dark Monkey. Stampa on-demand, spedizione mondiale dalla Svizzera.",
     "featuredProducts": "Prodotti in evidenza",
     "premium": "Premium",
     "qualityCraftedFor": "Qualità artigianale per",
@@ -279,7 +279,28 @@
     "heroLine1": "Indossa ciò che",
     "heroGold": "tu",
     "heroPink": "senti",
-    "featuredEyebrow": "Selezionato a mano"
+    "heroEyebrow": "Nuovo Drop — In spedizione",
+    "heroDropLabel": "Scelti dalla redazione",
+    "heroSeeAll": "Vedi tutti",
+    "designYourOwn": "Crea il tuo design",
+    "heroTrustPrinted": "Stampa on demand",
+    "heroTrustShipping": "Spedizione mondiale",
+    "heroTrustReturns": "Resi entro 14 giorni",
+    "heroTileShop": "Acquista",
+    "heroTileBestseller": "Più venduto",
+    "featuredEyebrow": "Selezionato a mano",
+    "seoSectionTitle": "Streetwear Premium. Design Personalizzati. Spedizione Mondiale.",
+    "seoSectionBody": "Dark Monkey è un marchio streetwear premium con sede in Svizzera. Ogni T-shirt, felpa e accessorio è stampato on-demand per ridurre gli sprechi e garantire qualità eccezionale. Crea il tuo design o scopri le collezioni curate.",
+    "seoLinksTitle": "Popolari su Dark Monkey",
+    "seoLinkTshirts": "T-shirt",
+    "seoLinkHoodies": "Felpe",
+    "seoLinkHats": "Cappelli",
+    "seoLinkAccessories": "Accessori",
+    "seoLinkCustom": "Design Personalizzati",
+    "seoLinkAllProducts": "Tutti i prodotti",
+    "seoLinkAllCategories": "Tutte le categorie",
+    "seoLinkBlog": "Blog",
+    "viewCollection": "Vedi la collezione"
   },
   "userMenu": {
     "account": "Account",
@@ -322,7 +343,7 @@
   },
   "store": {
     "categoriesTitle": "Categorie",
-    "categoriesMetaDescription": "Sfoglia i prodotti per categoria. Abbigliamento, merchandising e altro.",
+    "categoriesMetaDescription": "Esplora l'intera collezione Dark Monkey: T-shirt, felpe, cappelli, accessori e capi personalizzati. Spedizione mondiale dalla Svizzera.",
     "shopCategory": "Acquista {name} →",
     "noCategories": "Ancora nessuna categoria.",
     "categoryProductsTitle": "Prodotti {name}",
@@ -418,7 +439,18 @@
     "badgeSale": "Offerta",
     "badgeNew": "Nuovo",
     "badgeBestseller": "🔥 Hot",
-    "badgeFeatured": "In evidenza"
+    "badgeFeatured": "In evidenza",
+    "sizeGuideNoteInches": "Le misure sono approssimative e possono variare leggermente. Tutte le misure sono in pollici.",
+    "sizeGuideUnitsHint": "Cambia unità",
+    "sizeGuideFitTipLabel": "Consiglio di vestibilità",
+    "sizeGuideFitTipBody": "I nostri modelli sono alti 178 cm (5'10\") e solitamente indossano la taglia M. Veste fedele alla taglia con un taglio unisex rilassato — in caso di dubbio tra due taglie, scegli quella più grande per una vestibilità più larga.",
+    "sizeGuideAccessoryNote": "Nessuna taglia da scegliere — taglia unica.",
+    "sizeGuideAccessoryBody": "Progettato per adattarsi alla maggior parte dei dispositivi o usi descritti nella scheda prodotto. Se hai bisogno delle dimensioni esatte, consulta i dettagli del prodotto o contattaci.",
+    "sizeOneSize": "Taglia unica",
+    "sizeYouth": "Ragazzi",
+    "hatCircumference": "Circonferenza della testa",
+    "hatMeasurement": "Avvolgi un metro da sarto intorno alla testa a circa 1 cm sopra orecchie e sopracciglia — questa è la circonferenza della tua testa.",
+    "close": "Chiudi"
   },
   "cart": {
     "cartWithItems": "Carrello con {count} articoli",
@@ -1580,5 +1612,11 @@
       "new_product": "Nuovo Prodotto",
       "sale": "Saldi"
     }
+  },
+  "blog": {
+    "metaTitle": "Blog — Storie di Streetwear e Guide al Design",
+    "metaDescription": "Storie, guide di design e aggiornamenti da Dark Monkey. Scopri la cultura dietro ogni capo.",
+    "pageTitle": "Blog",
+    "pageSubtitle": "Storie, cultura e il mondo dietro il marchio."
   }
 }

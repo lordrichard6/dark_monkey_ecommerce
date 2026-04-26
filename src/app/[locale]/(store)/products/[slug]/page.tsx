@@ -56,7 +56,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           .slice(0, 160)
       : `Shop ${product.name} at Dark Monkey`)
 
-  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch').replace(
+    /\/$/,
+    ''
+  )
 
   // Sort images and pick the first for OG image
   const rawImages = Array.isArray(product.product_images) ? product.product_images : []
@@ -126,9 +129,11 @@ export async function generateStaticParams() {
   const { data: products } = await supabase.from('products').select('slug').eq('is_active', true)
   // .is('deleted_at', null)
 
-  return (products ?? []).map((p) => ({
-    slug: p.slug,
-  }))
+  // Cross-product every slug with every supported locale so all locale variants
+  // get pre-rendered at build time (avoids cold ISR miss on first crawl per locale).
+  return (products ?? []).flatMap((p) =>
+    SUPPORTED_LOCALES.map((locale) => ({ slug: p.slug, locale }))
+  )
 }
 
 export default async function ProductPage({ params, searchParams }: Props) {
@@ -212,28 +217,89 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const avgRating =
     reviewCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : null
 
-  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch').replace(
+    /\/$/,
+    ''
+  )
+
+  // priceValidUntil — 1 year from today (Google recommends <= 1 year out)
+  const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+
+  const productCategory = Array.isArray(product.categories)
+    ? product.categories[0]?.name
+    : (product.categories as { name?: string } | null | undefined)?.name
 
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
+    '@id': `${siteUrl}/${locale}/products/${product.slug}#product`,
     name: product.name,
     description: product.description
-      ? product.description.replace(/<[^>]+>/g, '').trim()
+      ? product.description
+          .replace(/<[^>]+>/g, '')
+          .trim()
+          .slice(0, 5000)
       : undefined,
     image: sortedImages.map((img) => img.url),
     url: `${siteUrl}/${locale}/products/${product.slug}`,
     sku: product.id,
+    mpn: product.id,
+    ...(productCategory ? { category: productCategory } : {}),
     brand: {
       '@type': 'Brand',
       name: 'Dark Monkey',
     },
     offers: {
       '@type': 'Offer',
-      price: minPrice / 100,
+      '@id': `${siteUrl}/${locale}/products/${product.slug}#offer`,
+      price: (minPrice / 100).toFixed(2),
       priceCurrency: 'CHF',
+      priceValidUntil,
       availability,
+      itemCondition: 'https://schema.org/NewCondition',
       url: `${siteUrl}/${locale}/products/${product.slug}`,
+      seller: {
+        '@type': 'Organization',
+        name: 'Dark Monkey',
+        url: siteUrl,
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'CH',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 14,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn',
+      },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: '0.00',
+          currency: 'CHF',
+        },
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: 'CH',
+        },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 1,
+            maxValue: 3,
+            unitCode: 'DAY',
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 3,
+            maxValue: 7,
+            unitCode: 'DAY',
+          },
+        },
+      },
     },
   }
 
@@ -246,6 +312,23 @@ export default async function ProductPage({ params, searchParams }: Props) {
       bestRating: 5,
       worstRating: 1,
     }
+
+    // Include up to 5 most recent reviews as individual Review entries
+    jsonLd.review = reviews.slice(0, 5).map((r) => ({
+      '@type': 'Review',
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: r.rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      author: {
+        '@type': 'Person',
+        name: r.reviewer_display_name || 'Verified Buyer',
+      },
+      ...(r.created_at ? { datePublished: r.created_at } : {}),
+      ...(r.comment ? { reviewBody: r.comment } : {}),
+    }))
   }
 
   const tCommon = await getTranslations('common')
@@ -261,11 +344,52 @@ export default async function ProductPage({ params, searchParams }: Props) {
     { label: product.name, href: `/products/${product.slug}`, active: true },
   ]
 
+  // BreadcrumbList JSON-LD for product — mirrors the visible breadcrumb
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: tCommon('shop'),
+        item: `${siteUrl}/${locale}`,
+      },
+      ...(category?.name && category?.slug
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: category.name,
+              item: `${siteUrl}/${locale}/categories/${category.slug}`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: product.name,
+              item: `${siteUrl}/${locale}/products/${product.slug}`,
+            },
+          ]
+        : [
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: product.name,
+              item: `${siteUrl}/${locale}/products/${product.slug}`,
+            },
+          ]),
+    ],
+  }
+
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <div className="mx-auto max-w-6xl px-4 py-8">
         <Breadcrumbs items={breadcrumbItems} />

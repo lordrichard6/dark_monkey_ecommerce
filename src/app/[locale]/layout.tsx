@@ -37,18 +37,60 @@ export default async function LocaleLayout({ children, params }: Props) {
     getAnnouncements(locale),
   ])
 
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
+
   const organizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'DARKMONKEY',
-    url: process.env.NEXT_PUBLIC_SITE_URL,
-    logo: `${process.env.NEXT_PUBLIC_SITE_URL}/logo.webp`,
-    sameAs: ['https://instagram.com/darkmonkey', 'https://facebook.com/darkmonkey'],
+    '@id': `${SITE_URL}/#organization`,
+    name: 'Dark Monkey',
+    alternateName: 'DARKMONKEY',
+    url: SITE_URL,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/logo.webp`,
+      width: 512,
+      height: 512,
+    },
+    description:
+      'Premium streetwear label based in Switzerland. Custom T-shirts, hoodies, and accessories printed on-demand and shipped worldwide.',
+    foundingDate: '2025',
+    sameAs: [
+      'https://instagram.com/darkmonkey',
+      'https://facebook.com/darkmonkey',
+      'https://tiktok.com/@darkmonkey',
+    ],
     contactPoint: {
       '@type': 'ContactPoint',
+      email: 'hello@dark-monkey.ch',
       contactType: 'customer service',
-      areaServed: 'CH',
-      availableLanguage: ['English', 'Portuguese', 'German'],
+      areaServed: ['CH', 'EU', 'Worldwide'],
+      availableLanguage: ['English', 'Portuguese', 'German', 'French', 'Italian'],
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'CH',
+      addressLocality: 'Zürich',
+    },
+  }
+
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
+    url: SITE_URL,
+    name: 'Dark Monkey',
+    description:
+      'Shop premium streetwear, custom T-shirts, hoodies & accessories. On-demand printing. Worldwide shipping from Switzerland.',
+    publisher: { '@id': `${SITE_URL}/#organization` },
+    inLanguage: locale,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${SITE_URL}/${locale}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
     },
   }
 
@@ -58,6 +100,10 @@ export default async function LocaleLayout({ children, params }: Props) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <CurrencyProvider>
           <CartProvider initialCart={cart}>

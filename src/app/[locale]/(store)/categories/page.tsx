@@ -8,6 +8,8 @@ type Props = { params: Promise<{ locale: string }> }
 
 export const revalidate = 3600
 
+const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations('store')
@@ -18,11 +20,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/categories`,
+      languages: {
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${SITE_URL}/${l}/categories`])),
+        'x-default': `${SITE_URL}/en/categories`,
+      },
+    },
     openGraph: {
       type: 'website',
       title,
       description,
       url: `${SITE_URL}/${locale}/categories`,
+      siteName: 'Dark Monkey',
+      locale,
     },
     twitter: {
       card: 'summary_large_image',

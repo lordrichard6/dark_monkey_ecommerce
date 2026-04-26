@@ -42,14 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: 'article',
-      publishedTime: article.publishedAt,
-      ...(article.coverImage ? { images: [{ url: article.coverImage }] } : {}),
-    },
     alternates: {
+      canonical: `${SITE_URL}/${locale}/blog/${slug}`,
       languages: {
         en: `${SITE_URL}/en/blog/${slug}`,
         pt: `${SITE_URL}/pt/blog/${slug}`,
@@ -58,6 +52,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         it: `${SITE_URL}/it/blog/${slug}`,
         'x-default': `${SITE_URL}/en/blog/${slug}`,
       },
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      url: `${SITE_URL}/${locale}/blog/${slug}`,
+      publishedTime: article.publishedAt,
+      siteName: 'Dark Monkey',
+      locale,
+      ...(article.coverImage ? { images: [{ url: article.coverImage }] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(article.coverImage ? { images: [article.coverImage] } : {}),
     },
   }
 }

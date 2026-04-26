@@ -506,3 +506,72 @@ body {
 .animate-marquee {
   animation: marquee 50s linear infinite;
 }
+
+/* ── Hero motion ─────────────────────────────────────────────────────────────
+   Persistent, GPU-cheap motion for the homepage hero. All keyframes use
+   transform/opacity only (no layout-triggering props) and respect the global
+   prefers-reduced-motion override above. */
+
+/* Slow Ken Burns drift on lookbook tile images — makes garments feel cinematic
+   without competing for attention. Pause on hover so the hover scale takes over. */
+@keyframes hero-ken-burns {
+  0%,
+  100% {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.08) translate3d(-1.5%, 1%, 0);
+  }
+}
+.animate-hero-ken-burns {
+  animation: hero-ken-burns 18s ease-in-out infinite;
+  will-change: transform;
+}
+.group:hover .animate-hero-ken-burns {
+  animation-play-state: paused;
+}
+
+/* Eyebrow sparkle twinkle */
+@keyframes hero-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.92) rotate(-4deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12) rotate(4deg);
+  }
+}
+.animate-hero-twinkle {
+  animation: hero-twinkle 3.4s ease-in-out infinite;
+}
+
+/* Gold word shimmer — animates a wide gradient's background-position so the
+   highlight sweeps through the text. Distinct from the unrelated .gold-shimmer
+   keyframe used by .custom-products-shimmer. */
+@keyframes hero-gold-text-sweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+.animate-hero-gold-text-sweep {
+  background-image: linear-gradient(
+    110deg,
+    #fbbf24 0%,
+    #fde68a 25%,
+    #f59e0b 45%,
+    #fcd34d 55%,
+    #fde68a 75%,
+    #fbbf24 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: hero-gold-text-sweep 6s ease-in-out infinite;
+}

@@ -6,6 +6,7 @@ import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { getTranslations } from 'next-intl/server'
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { buildProductImageAlt } from '@/lib/product-image-alt'
 
 const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
 
@@ -17,7 +18,10 @@ type Props = {
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { locale } = await params
   const { q: query } = await searchParams
-  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://dark-monkey.ch').replace(/\/$/, '')
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch').replace(
+    /\/$/,
+    ''
+  )
   const url = `${siteUrl}/${locale}/search`
 
   const title = query ? `Search: ${query}` : 'Search'
@@ -174,7 +178,7 @@ export default async function SearchPage({ searchParams }: Props) {
           .filter(Boolean) as string[]) ?? [],
       priceCents: minPrice,
       imageUrl: primaryImage?.url || '/placeholder.png',
-      imageAlt: primaryImage?.alt || p.name,
+      imageAlt: buildProductImageAlt(p.name, primaryImage?.alt, category?.name),
     })
 
     // Filterable product

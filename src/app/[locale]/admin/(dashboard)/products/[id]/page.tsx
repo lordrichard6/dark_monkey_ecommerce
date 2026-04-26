@@ -14,6 +14,7 @@ import { ProductTagsField } from './product-tags-field'
 import { ProductToggleStatus } from './product-toggle-status'
 import { ProductToggleDualImage } from './product-toggle-dual-image'
 import { ProductToggleFeatured } from './product-toggle-featured'
+import { ProductToggleHeroPick } from './product-toggle-hero-pick'
 import { ProductToggleExclusive } from './product-toggle-exclusive'
 import { ProductDangerZone } from './product-danger-zone'
 import { ProductInfoFields } from './product-info-fields'
@@ -95,6 +96,14 @@ export default async function AdminProductDetailPage({ params }: Props) {
       // Use rpc instead of auth.admin.listUsers() — avoids GoTrue JWT issues in local dev
       supabase.rpc('get_users_list'),
     ])
+
+  // Is this product currently a homepage hero pick? (Separate query — single row.)
+  const { data: heroPickRow } = await supabase
+    .from('hero_picks')
+    .select('id')
+    .eq('product_id', id)
+    .maybeSingle()
+  const isHeroPick = !!heroPickRow
 
   // Build user list for the exclusive dropdown
   const adminUsers = (
@@ -259,6 +268,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
                   ((product as Record<string, unknown>).is_featured as boolean) ?? false
                 }
               />
+              <ProductToggleHeroPick productId={product.id} initialIsHeroPick={isHeroPick} />
               <ProductToggleExclusive
                 productId={product.id}
                 initialIsExclusive={

@@ -116,7 +116,7 @@
     "rating": "Am besten bewertet"
   },
   "home": {
-    "metaDescription": "Premium gamifiziertes E-Commerce — Handel, Anpassung und Fortschritt. Durchsuchen Sie unsere Kollektion.",
+    "metaDescription": "Kaufe Premium-Streetwear, massgeschneiderte T-Shirts, Hoodies und Accessoires bei Dark Monkey. On-Demand-Druck, weltweiter Versand aus der Schweiz.",
     "featuredProducts": "Ausgewählte Produkte",
     "premium": "Premium",
     "qualityCraftedFor": "Qualität gefertigt für",
@@ -198,7 +198,28 @@
     "heroLine1": "Trag, was",
     "heroGold": "du",
     "heroPink": "fühlst",
-    "featuredEyebrow": "Handverlesen"
+    "heroEyebrow": "Neue Kollektion — Jetzt versandfertig",
+    "heroDropLabel": "Redaktionsfavoriten",
+    "heroSeeAll": "Alle ansehen",
+    "designYourOwn": "Eigenes Design",
+    "heroTrustPrinted": "Auf Bestellung gedruckt",
+    "heroTrustShipping": "Weltweiter Versand",
+    "heroTrustReturns": "14 Tage Rückgabe",
+    "heroTileShop": "Shop",
+    "heroTileBestseller": "Bestseller",
+    "featuredEyebrow": "Handverlesen",
+    "seoSectionTitle": "Premium-Streetwear. Individuelle Designs. Weltweiter Versand.",
+    "seoSectionBody": "Dark Monkey ist ein Premium-Streetwear-Label aus der Schweiz. Jedes T-Shirt, jeder Hoodie und jedes Accessoire wird on-demand gedruckt, um Abfall zu reduzieren und höchste Qualität zu liefern. Gestalte dein eigenes Design oder entdecke kuratierte Kollektionen.",
+    "seoLinksTitle": "Beliebt bei Dark Monkey",
+    "seoLinkTshirts": "T-Shirts",
+    "seoLinkHoodies": "Hoodies",
+    "seoLinkHats": "Hüte",
+    "seoLinkAccessories": "Accessoires",
+    "seoLinkCustom": "Individuelle Designs",
+    "seoLinkAllProducts": "Alle Produkte",
+    "seoLinkAllCategories": "Alle Kategorien",
+    "seoLinkBlog": "Blog",
+    "viewCollection": "Kollektion ansehen"
   },
   "cookie": {
     "message": "Wir verwenden Cookies für Warenkorb-Persistenz, Authentifizierung und ein besseres Einkaufserlebnis.",
@@ -322,7 +343,7 @@
   },
   "store": {
     "categoriesTitle": "Kategorien",
-    "categoriesMetaDescription": "Produkte nach Kategorie durchsuchen. Bekleidung, Merchandise und mehr.",
+    "categoriesMetaDescription": "Entdecke die gesamte Dark Monkey Kollektion: T-Shirts, Hoodies, Sweatshirts, Hüte, Accessoires & individuelle Mode. Weltweiter Versand aus der Schweiz.",
     "shopCategory": "{name} einkaufen →",
     "noCategories": "Noch keine Kategorien.",
     "categoryProductsTitle": "{name} Produkte",
@@ -418,7 +439,18 @@
     "badgeSale": "Angebot",
     "badgeNew": "Neu",
     "badgeBestseller": "🔥 Hot",
-    "badgeFeatured": "Empfohlen"
+    "badgeFeatured": "Empfohlen",
+    "sizeGuideNoteInches": "Die Maße sind ungefähre Angaben und können leicht abweichen. Alle Maße in Zoll.",
+    "sizeGuideUnitsHint": "Einheiten wechseln",
+    "sizeGuideFitTipLabel": "Passform-Tipp",
+    "sizeGuideFitTipBody": "Unsere Models sind 178 cm (5'10\") groß und tragen üblicherweise Größe M. Fällt größengerecht aus mit entspanntem, Unisex-Schnitt — bei Zwischengrößen eine Nummer größer für legere Passform wählen.",
+    "sizeGuideAccessoryNote": "Keine Größenauswahl nötig — Einheitsgröße.",
+    "sizeGuideAccessoryBody": "Entwickelt für die meisten Geräte oder in der Produktbeschreibung genannten Verwendungen. Für exakte Maße siehe Produktdetails oder kontaktiere uns.",
+    "sizeOneSize": "Einheitsgröße",
+    "sizeYouth": "Jugend",
+    "hatCircumference": "Kopfumfang",
+    "hatMeasurement": "Lege ein Maßband etwa 1 cm über den Ohren und Augenbrauen um den Kopf — das ist dein Kopfumfang.",
+    "close": "Schließen"
   },
   "cart": {
     "cartWithItems": "Warenkorb mit {count} Artikeln",
@@ -1580,5 +1612,11 @@
       "new_product": "Neues Produkt",
       "sale": "Sale"
     }
+  },
+  "blog": {
+    "metaTitle": "Blog — Streetwear-Geschichten und Design-Guides",
+    "metaDescription": "Streetwear-Geschichten, Design-Guides und Updates von Dark Monkey. Entdecke die Kultur hinter jedem Stück.",
+    "pageTitle": "Blog",
+    "pageSubtitle": "Geschichten, Kultur und die Welt hinter der Marke."
   }
 }

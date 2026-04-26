@@ -7,6 +7,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { getBestsellerProductIds } from '@/lib/trust-urgency'
 import { getVoteCountsForProducts } from './public-votes'
 import { unstable_cache } from 'next/cache'
+import { buildProductImageAlt } from '@/lib/product-image-alt'
 
 export type ProductCardStats = {
   timesBought: number
@@ -184,7 +185,7 @@ async function _fetchPublicHomeProducts(
       priceCents,
       compareAtPriceCents,
       imageUrl: primary?.url ?? '',
-      imageAlt: primary?.alt ?? p.name,
+      imageAlt: buildProductImageAlt(p.name, primary?.alt),
       imageUrl2: p.dual_image_mode ? (second?.url ?? null) : null,
       dualImageMode: p.dual_image_mode && !!second,
       isBestseller: bestsellerIds.has(p.id),
@@ -271,6 +272,127 @@ export async function fetchProductsByCategory(
   limit = 10
 ): Promise<HomeProduct[]> {
   return fetchHomeProducts({ categoryIds, limit, sort: 'newest' })
+}
+
+/**
+ * Hero picks — admin-curated products for the homepage hero (max 2).
+ *
+ * Resolution order (each is independent — first non-empty wins, then we top up
+ * to 2 with the next source so the hero is **never empty**):
+ *   1. `hero_picks` table, ordered by sort_order ASC then created_at DESC
+ *   2. `is_featured = true`, newest first
+ *   3. Newest active products
+ *
+ * Returns at most 2 distinct products. Pure server-side, deduplicated by id.
+ */
+export async function fetchHeroProducts(): Promise<HomeProduct[]> {
+  const HERO_LIMIT = 2
+  const adminClient = getAdminClient()
+
+  // 1. Pull admin-picked product ids
+  let pickedIds: string[] = []
+  if (adminClient) {
+    const { data } = await adminClient
+      .from('hero_picks')
+      .select('product_id, sort_order, created_at')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false })
+      .limit(HERO_LIMIT)
+    pickedIds = (data ?? []).map((row) => row.product_id)
+  }
+
+  const seen = new Set<string>()
+  const result: HomeProduct[] = []
+
+  // Resolve picked ids by direct query (preserves admin-defined order)
+  if (pickedIds.length > 0 && adminClient) {
+    const { data: rows } = await adminClient
+      .from('products')
+      .select(
+        `id, name, slug, category_id, dual_image_mode,
+         product_images (url, alt, sort_order),
+         product_variants (price_cents, compare_at_price_cents)`
+      )
+      .in('id', pickedIds)
+      .eq('is_active', true)
+      .is('deleted_at', null)
+
+    const [bestsellerSet, voteCounts, cardStats] = await Promise.all([
+      getBestsellerProductIds(),
+      getVoteCountsForProducts(pickedIds),
+      getProductCardStatsMap(pickedIds),
+    ])
+
+    const orderMap = new Map(pickedIds.map((id, i) => [id, i]))
+    const ordered = ((rows ?? []) as ProductRow[])
+      .slice()
+      .sort((a, b) => (orderMap.get(a.id) ?? 99) - (orderMap.get(b.id) ?? 99))
+
+    for (const p of ordered) {
+      if (seen.has(p.id)) continue
+      const variants = p.product_variants
+      const images = p.product_images
+
+      let priceCents = 0
+      let compareAtPriceCents: number | null = null
+      if (variants && variants.length > 0) {
+        const sorted = [...variants].sort((a, b) => (a.price_cents || 0) - (b.price_cents || 0))
+        priceCents = sorted[0].price_cents || 0
+        compareAtPriceCents = sorted[0].compare_at_price_cents || null
+      }
+
+      const sortedImages = images?.sort((a, b) => a.sort_order - b.sort_order) ?? []
+      const primary = sortedImages[0]
+      const second = sortedImages[1]
+
+      result.push({
+        productId: p.id,
+        slug: p.slug,
+        name: p.name,
+        categoryId: p.category_id ?? undefined,
+        priceCents,
+        compareAtPriceCents,
+        imageUrl: primary?.url ?? '',
+        imageAlt: buildProductImageAlt(p.name, primary?.alt),
+        imageUrl2: p.dual_image_mode ? (second?.url ?? null) : null,
+        dualImageMode: p.dual_image_mode && !!second,
+        isBestseller: bestsellerSet.has(p.id),
+        isOnSale: !!(compareAtPriceCents && compareAtPriceCents > priceCents),
+        upvotes: 0,
+        publicUp: voteCounts[p.id]?.up ?? 0,
+        publicDown: voteCounts[p.id]?.down ?? 0,
+        timesBought: cardStats[p.id]?.timesBought ?? 0,
+        reviewCount: cardStats[p.id]?.reviewCount ?? 0,
+        avgRating: cardStats[p.id]?.avgRating ?? null,
+        isInWishlist: false,
+      })
+      seen.add(p.id)
+    }
+  }
+
+  // 2. Top up from featured products if we still need slots
+  if (result.length < HERO_LIMIT) {
+    const featured = await fetchHomeProducts({ featured: true, limit: HERO_LIMIT * 2 })
+    for (const p of featured) {
+      if (result.length >= HERO_LIMIT) break
+      if (seen.has(p.productId)) continue
+      result.push(p)
+      seen.add(p.productId)
+    }
+  }
+
+  // 3. Top up from newest as last resort
+  if (result.length < HERO_LIMIT) {
+    const newest = await fetchHomeProducts({ sort: 'newest', limit: HERO_LIMIT * 2 })
+    for (const p of newest) {
+      if (result.length >= HERO_LIMIT) break
+      if (seen.has(p.productId)) continue
+      result.push(p)
+      seen.add(p.productId)
+    }
+  }
+
+  return result.slice(0, HERO_LIMIT)
 }
 
 export async function getProductQuickView(slug: string) {

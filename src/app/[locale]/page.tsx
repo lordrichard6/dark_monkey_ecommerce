@@ -12,13 +12,17 @@ import { SocialSection } from '@/components/social/SocialSection'
 import { CustomDesignSection } from '@/components/custom/CustomDesignSection'
 import FeedSection from '@/components/feed/FeedSection'
 import { CategoryStrip } from '@/components/category/CategoryStrip'
-import { fetchHomeProducts } from '@/actions/products'
+import { RecentlyViewed } from '@/components/product/RecentlyViewed'
+import { fetchHomeProducts, fetchHeroProducts } from '@/actions/products'
 import { createClient } from '@/lib/supabase/server'
+import { Link } from '@/i18n/navigation'
 
 type Props = {
   params: Promise<{ locale: string }>
   searchParams: Promise<Record<string, string | undefined>>
 }
+
+const SUPPORTED_LOCALES = ['en', 'pt', 'de', 'it', 'fr'] as const
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
@@ -30,11 +34,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: `${SITE_URL}/${locale}`,
+      languages: {
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${SITE_URL}/${l}`])),
+        'x-default': `${SITE_URL}/en`,
+      },
+    },
     openGraph: {
       type: 'website',
       title,
       description,
       url: `${SITE_URL}/${locale}`,
+      siteName: 'Dark Monkey',
+      locale,
     },
     twitter: {
       card: 'summary_large_image',
@@ -55,16 +68,19 @@ export default async function HomePage({ params }: Props) {
   // Fetch all product sets in a single parallel round-trip.
   // FeaturedProductsSection and NewArrivalsSection receive these as props
   // so they never call fetchHomeProducts themselves.
-  const [initialProducts, featuredProducts, newestProducts, activePtData] = await Promise.all([
-    fetchHomeProducts('newest'),
-    fetchHomeProducts({ featured: true, limit: 8 }),
-    fetchHomeProducts({ sort: 'newest', limit: 10 }),
-    supabase
-      .from('product_tags')
-      .select('tag_id, products!inner(id)')
-      .eq('products.is_active', true)
-      .is('products.deleted_at', null),
-  ])
+  const [initialProducts, featuredProducts, newestProducts, heroProducts, activePtData] =
+    await Promise.all([
+      fetchHomeProducts('newest'),
+      fetchHomeProducts({ featured: true, limit: 8 }),
+      fetchHomeProducts({ sort: 'newest', limit: 10 }),
+      // Admin-curated 2 hero picks (with featured/newest fallback so it's never empty)
+      fetchHeroProducts(),
+      supabase
+        .from('product_tags')
+        .select('tag_id, products!inner(id)')
+        .eq('products.is_active', true)
+        .is('products.deleted_at', null),
+    ])
 
   const activeTagIds = [...new Set((activePtData.data ?? []).map((pt) => pt.tag_id))]
   const { data: tagsData } =
@@ -78,7 +94,7 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <div>
-      <Hero />
+      <Hero products={heroProducts} />
 
       <Suspense fallback={<ProductCarouselSkeleton />}>
         <FeaturedProductsSection products={featuredProducts} />
@@ -105,6 +121,12 @@ export default async function HomePage({ params }: Props) {
         <CategoryStrip />
       </Suspense>
 
+      {/* Recently viewed — only renders when the user has history (client-side no-op otherwise).
+          Placed here so returning visitors re-engage with products they already liked. */}
+      <div className="mx-auto max-w-6xl px-4">
+        <RecentlyViewed />
+      </div>
+
       <div id="products" className="mx-auto max-w-6xl px-4 py-16 scroll-mt-4">
         <AllProductsSection initialProducts={initialProducts} tags={tagsData ?? []} />
       </div>
@@ -116,6 +138,63 @@ export default async function HomePage({ params }: Props) {
       </Suspense>
       <SocialSection />
       <AuthCTASection />
+
+      {/* SEO content block — keyword-rich, crawlable internal links.
+          Renders on every locale, helps non-brand discovery. */}
+      <section aria-label={t('seoSectionTitle')} className="border-t border-white/5 bg-zinc-950">
+        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+          <h2 className="mb-4 text-2xl font-bold text-zinc-50 md:text-3xl">
+            {t('seoSectionTitle')}
+          </h2>
+          <p className="mb-8 max-w-3xl text-zinc-400 leading-relaxed">{t('seoSectionBody')}</p>
+
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-amber-400">
+            {t('seoLinksTitle')}
+          </h3>
+          <ul className="grid grid-cols-2 gap-3 text-sm text-zinc-300 sm:grid-cols-3 md:grid-cols-4">
+            <li>
+              <Link href="/products?tag=t-shirts" className="hover:text-amber-400">
+                {t('seoLinkTshirts')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/products?tag=hoodies" className="hover:text-amber-400">
+                {t('seoLinkHoodies')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/products?tag=hats" className="hover:text-amber-400">
+                {t('seoLinkHats')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/products?tag=accessories" className="hover:text-amber-400">
+                {t('seoLinkAccessories')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/account/customize" className="hover:text-amber-400">
+                {t('seoLinkCustom')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/products" className="hover:text-amber-400">
+                {t('seoLinkAllProducts')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/categories" className="hover:text-amber-400">
+                {t('seoLinkAllCategories')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog" className="hover:text-amber-400">
+                {t('seoLinkBlog')}
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </section>
     </div>
   )
 }

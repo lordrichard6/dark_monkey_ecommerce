@@ -197,7 +197,7 @@
     "namePlaceholder": "Your name"
   },
   "home": {
-    "metaDescription": "Premium gamified e-commerce — commerce, customization, and progression. Browse our collection.",
+    "metaDescription": "Shop premium streetwear, custom T-shirts, hoodies & accessories at Dark Monkey. On-demand printing, worldwide shipping from Switzerland. Design your own today.",
     "featuredProducts": "Featured Products",
     "premium": "Premium",
     "quality": "Quality",
@@ -279,7 +279,28 @@
     "heroLine1": "Wear What",
     "heroGold": "You",
     "heroPink": "Feel",
-    "featuredEyebrow": "Hand-picked"
+    "heroEyebrow": "New Drop — Shipping Now",
+    "heroDropLabel": "Editor's Picks",
+    "heroSeeAll": "See all",
+    "designYourOwn": "Design your own",
+    "heroTrustPrinted": "Printed on demand",
+    "heroTrustShipping": "Worldwide shipping",
+    "heroTrustReturns": "14-day returns",
+    "heroTileShop": "Shop",
+    "heroTileBestseller": "Bestseller",
+    "featuredEyebrow": "Hand-picked",
+    "seoSectionTitle": "Premium Streetwear. Custom Designs. Worldwide Shipping.",
+    "seoSectionBody": "Dark Monkey is a premium streetwear label based in Switzerland. Every T-shirt, hoodie, and accessory is printed on-demand to reduce waste and deliver gallery-grade quality. Design your own, or shop curated collections crafted for every mood.",
+    "seoLinksTitle": "Popular at Dark Monkey",
+    "seoLinkTshirts": "T-Shirts",
+    "seoLinkHoodies": "Hoodies",
+    "seoLinkHats": "Hats",
+    "seoLinkAccessories": "Accessories",
+    "seoLinkCustom": "Custom Designs",
+    "seoLinkAllProducts": "All Products",
+    "seoLinkAllCategories": "All Categories",
+    "seoLinkBlog": "Blog",
+    "viewCollection": "View collection"
   },
   "userMenu": {
     "account": "Account",
@@ -322,7 +343,7 @@
   },
   "store": {
     "categoriesTitle": "Categories",
-    "categoriesMetaDescription": "Browse products by category. Apparel, merchandise, and more.",
+    "categoriesMetaDescription": "Browse Dark Monkey's full collection: premium T-shirts, hoodies, sweatshirts, hats, accessories & custom apparel. Shop by category, ship worldwide from Switzerland.",
     "shopCategory": "Shop {name} →",
     "noCategories": "No categories yet.",
     "categoryProductsTitle": "{name} products",
@@ -418,7 +439,18 @@
     "badgeSale": "Sale",
     "badgeNew": "New",
     "badgeBestseller": "🔥 Hot",
-    "badgeFeatured": "Featured"
+    "badgeFeatured": "Featured",
+    "sizeGuideNoteInches": "Measurements are approximate and may vary slightly. All measurements are in inches.",
+    "sizeGuideUnitsHint": "Switch units",
+    "sizeGuideFitTipLabel": "Fit tip",
+    "sizeGuideFitTipBody": "Our models are 178 cm (5'10\") and typically wear size M. Fits true to size with a relaxed, unisex cut — if between sizes, size up for a looser fit.",
+    "sizeGuideAccessoryNote": "No size selection needed — one-size item.",
+    "sizeGuideAccessoryBody": "Designed to fit most devices or uses listed in the product description. If you need exact dimensions, see the product details above or contact us.",
+    "sizeOneSize": "One Size",
+    "sizeYouth": "Youth",
+    "hatCircumference": "Head circumference",
+    "hatMeasurement": "Wrap a soft tape measure around your head about 1 cm above your ears and eyebrows — that is your head circumference.",
+    "close": "Close"
   },
   "cart": {
     "cartWithItems": "Cart with {count} items",
@@ -1580,5 +1612,11 @@
       "new_product": "New Product",
       "sale": "Sale"
     }
+  },
+  "blog": {
+    "metaTitle": "Blog — Streetwear Stories & Design Guides",
+    "metaDescription": "Streetwear stories, design guides, and updates from Dark Monkey. Explore the culture behind every custom piece.",
+    "pageTitle": "Blog",
+    "pageSubtitle": "Stories, culture and the world behind the brand."
   }
 }
