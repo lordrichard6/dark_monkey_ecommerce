@@ -368,8 +368,12 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
   const successUrl = `${baseUrl}${localePrefix}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
   const cancelUrl = `${baseUrl}${localePrefix}/checkout`
 
-  // Metadata should probably store original CHF amounts and the currency used
+  // Metadata should probably store original CHF amounts and the currency used.
+  // `business` is the brand discriminator on the shared Lopes2Tech Stripe account
+  // — every Stripe charge across all our products tags itself so dashboards,
+  // reports, and webhooks can route by brand. See directives/ops/manage_stripe.md.
   const metadata: Record<string, string> = {
+    business: 'dark_monkey',
     // cartItems removed to avoid 500 char limit - stored in abandoned_checkouts
     totalCents: String(totalCents),
     currency: requestedCurrency,
@@ -418,6 +422,13 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
       mode: 'payment',
       line_items: lineItems,
       ...(stripeDiscounts ? { discounts: stripeDiscounts } : {}),
+      payment_intent_data: {
+        // Bank-statement label (5–22 chars ASCII). Customers see "DARKMONKEY"
+        // not "LOPES2TECH SANDBOX" → fewer "I don't recognize this charge"
+        // chargebacks. Keep in sync across all brands; see manage_stripe.md.
+        statement_descriptor_suffix: 'DARKMONKEY',
+        metadata: { business: 'dark_monkey' },
+      },
       success_url: successUrl,
       cancel_url: cancelUrl,
       customer_email: input?.email ?? undefined,
