@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { SITE_URL, DEFAULT_DESCRIPTION, TWITTER_HANDLE } from '@/lib/site-config'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,10 +28,8 @@ const pacifico = Pacifico({
   display: 'swap',
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
 const SITE_NAME = 'DarkMonkey'
-const DEFAULT_TITLE = 'DarkMonkey — Premium quality e-commerce'
-const DEFAULT_DESCRIPTION = 'Premium gamified e-commerce — commerce, customization, progression'
+const DEFAULT_TITLE = 'DarkMonkey — Premium streetwear, printed in Switzerland'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -56,7 +55,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@darkmonkey',
+    site: TWITTER_HANDLE,
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
     images: ['/opengraph-image.png'],
@@ -98,6 +97,17 @@ export default async function RootLayout({
   const lang = headersList.get('x-next-intl-locale') ?? 'en'
   return (
     <html lang={lang} suppressHydrationWarning>
+      <head>
+        {/* Preconnect to image origins so the first product image lands ~100ms faster. */}
+        <link
+          rel="preconnect"
+          href="https://ehkwnyiktjsmegzxbpph.supabase.co"
+          crossOrigin="anonymous"
+        />
+        <link rel="preconnect" href="https://files.cdn.printful.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://ehkwnyiktjsmegzxbpph.supabase.co" />
+        <link rel="dns-prefetch" href="https://files.cdn.printful.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
         suppressHydrationWarning

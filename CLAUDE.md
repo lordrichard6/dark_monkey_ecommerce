@@ -91,7 +91,7 @@ Node PATH gotcha: if `tsc`/`npx` fail with "command not found", wrap with extend
 
 ---
 
-## 5. Database — Supabase (READ `directives/manage_database.md` FIRST)
+## 5. Database — Supabase (READ `directives/ops/manage_database.md` FIRST)
 
 - **Project ref:** `ehkwnyiktjsmegzxbpph`
 - **NEVER run `supabase db reset`** — it destroys data. Only `supabase db push`.
@@ -159,7 +159,7 @@ These have all bitten us. Do not repeat.
 - E2E: `npm run test:e2e` (Playwright, 3 browsers matrix). Skipped in CI if Supabase secrets are unset.
 - i18n: `npm run check:i18n` checks that all `messages/*.json` files have the same key shape.
 - Lint + types: `npm run lint` and `npx tsc --noEmit`.
-- **Sensitive paths (auth, checkout, billing, webhooks) require both `npm test` and `npm run test:e2e` before commit.** See top-level `directives/testing.md`.
+- **Sensitive paths (auth, checkout, billing, webhooks) require both `npm test` and `npm run test:e2e` before commit.** See top-level `directives/reference/testing.md`.
 
 ---
 
@@ -169,7 +169,7 @@ These have all bitten us. Do not repeat.
 - **Checkout** — server actions in `src/actions/checkout.ts`. Stripe webhook at `src/app/api/webhooks/stripe/`. On order completion, creates Printful order via `src/actions/sync-printful.ts`.
 - **Printful webhook** at `src/app/api/webhooks/printful/`. Secret-verified.
 - **Cron jobs** — `src/app/api/cron/{abandoned-cart,review-request,wishlist-reminder}` — require `Authorization: Bearer <CRON_SECRET>`. Scheduled via Vercel Cron (see `vercel.json` if added there or the Vercel dashboard).
-- **Rate limiting** — `src/lib/rate-limit.ts` wraps `@upstash/ratelimit`. Apply to public POST endpoints.
+- **Rate limiting** — `src/lib/rate-limit.ts` wraps `@upstash/ratelimit`. **Currently dormant by design** (decided 2026-05-01): `UPSTASH_REDIS_REST_URL/TOKEN` are intentionally unset in Vercel because traffic doesn't justify the dependency yet. The lib falls open quietly. Wired into `/api/votes`, `/api/auth/verify-turnstile`, and the three `/api/push/*` endpoints — those calls return `{ success: true }` until Upstash is configured. **To enable**: add the two Upstash env vars + `RATE_LIMIT_REQUIRED=true` in Vercel; redeploy. The `RATE_LIMIT_REQUIRED` flag turns the missing-Upstash warning back into a Sentry-loud error so a misconfigured deploy can't silently drop protection.
 - **CSP / security headers** live in `next.config.ts` — any new third-party script (analytics, embeds) must be added to `script-src` / `connect-src` / `frame-src` or the browser will block it silently. Sentry DSN host is allowlisted explicitly.
 
 ---

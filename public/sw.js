@@ -1,6 +1,10 @@
 // DarkMonkey PWA Service Worker
 // Version 1.0.0
 
+// Set to true locally to see SW lifecycle in DevTools. Leave false in prod.
+const SW_DEBUG = false
+const log = (...args) => SW_DEBUG && log(...args)
+const warn = (...args) => SW_DEBUG && warn(...args)
 const CACHE_NAME = 'darkmonkey-v1'
 const OFFLINE_URL = '/offline'
 
@@ -15,11 +19,11 @@ const PRECACHE_URLS = [
 
 // Install event - precache critical assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker...')
+    log('[SW] Installing service worker...')
 
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[SW] Precaching critical assets')
+            log('[SW] Precaching critical assets')
             return cache.addAll(PRECACHE_URLS)
         })
     )
@@ -30,7 +34,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker...')
+    log('[SW] Activating service worker...')
 
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -38,7 +42,7 @@ self.addEventListener('activate', (event) => {
                 cacheNames
                     .filter((name) => name !== CACHE_NAME)
                     .map((name) => {
-                        console.log('[SW] Deleting old cache:', name)
+                        log('[SW] Deleting old cache:', name)
                         return caches.delete(name)
                     })
             )
@@ -106,7 +110,7 @@ self.addEventListener('fetch', (event) => {
 
 // Push notification event
 self.addEventListener('push', (event) => {
-    console.log('[SW] Push notification received')
+    log('[SW] Push notification received')
 
     const data = event.data?.json() ?? {}
     const title = data.title || 'DarkMonkey'
@@ -126,7 +130,7 @@ self.addEventListener('push', (event) => {
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
-    console.log('[SW] Notification clicked')
+    log('[SW] Notification clicked')
 
     event.notification.close()
 
@@ -153,7 +157,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Background sync event (for offline cart sync, etc.)
 self.addEventListener('sync', (event) => {
-    console.log('[SW] Background sync:', event.tag)
+    log('[SW] Background sync:', event.tag)
 
     if (event.tag === 'sync-cart') {
         event.waitUntil(syncCart())
@@ -162,12 +166,12 @@ self.addEventListener('sync', (event) => {
 
 async function syncCart() {
     // This will be implemented later for offline cart sync
-    console.log('[SW] Syncing cart...')
+    log('[SW] Syncing cart...')
 }
 
 // Message event (for communication with pages)
 self.addEventListener('message', (event) => {
-    console.log('[SW] Message received:', event.data)
+    log('[SW] Message received:', event.data)
 
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting()

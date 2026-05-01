@@ -73,7 +73,7 @@ export function AccountingCharts({ monthly }: Props) {
             contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8 }}
             labelStyle={{ color: '#e4e4e7', fontSize: 12, fontWeight: 600 }}
             itemStyle={{ fontSize: 12 }}
-            formatter={(value: number | undefined) => (value != null ? chf(value) : '')}
+            formatter={(value) => (typeof value === 'number' ? chf(value) : '')}
           />
           <Legend
             iconType="square"

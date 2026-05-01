@@ -95,7 +95,10 @@ export function StatsCharts({ data, revenueTitle, ordersTitle }: StatsChartsProp
                   fontSize: 13,
                 }}
                 itemStyle={{ color: '#10b981' }}
-                formatter={(value: number | undefined) => [formatPrice(value || 0), 'Revenue']}
+                formatter={(value) => [
+                  formatPrice(typeof value === 'number' ? value : 0),
+                  'Revenue',
+                ]}
                 labelFormatter={(label) =>
                   new Date(label).toLocaleDateString('en-US', {
                     month: 'long',
@@ -159,7 +162,7 @@ export function StatsCharts({ data, revenueTitle, ordersTitle }: StatsChartsProp
                   fontSize: 13,
                 }}
                 itemStyle={{ color: '#f59e0b' }}
-                formatter={(value: number | undefined) => [value || 0, 'Orders']}
+                formatter={(value) => [typeof value === 'number' ? value : 0, 'Orders']}
                 labelFormatter={(label) =>
                   new Date(label).toLocaleDateString('en-US', {
                     month: 'long',

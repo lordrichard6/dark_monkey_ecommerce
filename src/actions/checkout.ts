@@ -342,22 +342,25 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
     })
   }
 
-  // Recalculate discount in target currency
+  // Discounts are NOT applied as negative line items — Stripe rejects negative
+  // unit_amount with "Invalid non-negative integer". Instead, we create a
+  // single-use Stripe Coupon and pass it via the `discounts` parameter on the
+  // session. Stripe then renders the discount line natively in the checkout UI.
+  // See: https://docs.stripe.com/api/coupons/create
+  let stripeDiscounts: { coupon: string }[] | undefined
   if (discountCents > 0 && discountId) {
     const convertedDiscount = convertPrice(discountCents, requestedCurrency)
-    lineItems.push({
-      price_data: {
+    if (convertedDiscount > 0) {
+      const coupon = await stripe.coupons.create({
+        amount_off: Math.round(convertedDiscount),
         currency: requestedCurrency.toLowerCase(),
-        product_data: {
-          name: isFreeShippingDiscount ? 'Free Shipping' : 'Discount',
-          description: isFreeShippingDiscount
-            ? 'Shipping waived by discount code'
-            : 'Discount applied',
-        },
-        unit_amount: -convertedDiscount,
-      },
-      quantity: 1,
-    })
+        duration: 'once',
+        name: isFreeShippingDiscount ? 'Free Shipping' : 'Discount',
+        max_redemptions: 1,
+        metadata: { discount_id: discountId },
+      })
+      stripeDiscounts = [{ coupon: coupon.id }]
+    }
   }
 
   // Include locale prefix — next-intl uses localePrefix: 'always', so every route needs /{locale}/
@@ -414,6 +417,7 @@ export async function createCheckoutSession(input?: GuestCheckoutInput): Promise
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: lineItems,
+      ...(stripeDiscounts ? { discounts: stripeDiscounts } : {}),
       success_url: successUrl,
       cancel_url: cancelUrl,
       customer_email: input?.email ?? undefined,

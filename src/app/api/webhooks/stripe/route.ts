@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { processSuccessfulCheckout } from '@/lib/orders'
 import { markChangeRequestPaid } from '@/actions/custom-products'
+import { claimWebhookEvent } from '@/lib/webhook-dedup'
 
 // Allow up to 60s — Stripe requires a response within 30s, and we need time for
 // Stripe API + DB writes + Printful API calls. Default Vercel timeout (10s) is too short.
@@ -33,6 +34,17 @@ export async function POST(request: NextRequest) {
   if (eventBytes.type !== 'checkout.session.completed') {
     console.log(`[Stripe Webhook] Ignoring event type: ${eventBytes.type}`)
     return NextResponse.json({ received: true })
+  }
+
+  // Idempotency — Stripe retries on network errors / 5xx. Without this,
+  // a retried checkout could create a duplicate order or double-charge a
+  // custom change request. processSuccessfulCheckout has its own
+  // order-level dedup, but markChangeRequestPaid does not, and defense-in-
+  // depth at the webhook level makes both paths safe.
+  const claim = await claimWebhookEvent('stripe', eventBytes.id, eventBytes.type)
+  if (claim.alreadyProcessed) {
+    console.log(`[Stripe Webhook] Duplicate delivery — event ${eventBytes.id} already processed`)
+    return NextResponse.json({ received: true, duplicate: true })
   }
 
   const session = eventBytes.data.object as {

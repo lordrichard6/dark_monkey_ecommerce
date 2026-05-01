@@ -3,6 +3,7 @@ import { verifyPrintfulWebhook } from '@/lib/printful/webhook-verify'
 import { PRINTFUL_CONFIG } from '@/lib/printful/config'
 import { logger } from '@/lib/printful/logger'
 import { handleWebhookEvent } from '@/lib/printful/webhook-handlers'
+import { claimWebhookEvent } from '@/lib/webhook-dedup'
 
 /**
  * POST /api/webhooks/printful
@@ -45,6 +46,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Idempotency — Printful webhooks don't carry an event.id; we hash the raw
+  // body so byte-identical retries (the common case) are deduped. The
+  // `retries` counter increments on each delivery attempt, so genuine retries
+  // produce a different hash and are correctly NOT treated as duplicates —
+  // good, because we want to log them. The bad case we're guarding against is
+  // a request being processed once successfully but Printful never receiving
+  // our 200, then re-delivering the same payload.
+  const dedupKey = await sha256Hex(body)
+  const claim = await claimWebhookEvent('printful', dedupKey, event.type)
+  if (claim.alreadyProcessed) {
+    logger.info('Printful webhook duplicate delivery — skipping', {
+      operation: 'webhook',
+      type: event.type,
+      dedupKey,
+    })
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
   logger.info('Printful Webhook Received', {
     operation: 'webhook',
     type: event.type,
@@ -69,4 +88,12 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json({ error: 'Processing error' }, { status: 500 })
   }
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input)
+  const hash = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
 }

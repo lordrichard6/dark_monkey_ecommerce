@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { routing } from '@/i18n/routing'
 import { getAllSlugs } from '@/content/blog'
+import { SITE_URL as BASE_URL } from '@/lib/site-config'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dark-monkey.ch'
 const locales = routing.locales
 
 type SitemapChangeFreq = NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>
